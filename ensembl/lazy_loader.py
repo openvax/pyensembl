@@ -46,7 +46,7 @@ class LazyLoader(object):
 			return self._df_cache[key]
 		
 		local_path = self.get_path(release, species)
-		df = pd.read_csv(local_path, sep='\t')
+		df = pd.read_csv(local_path, sep='\t', names = self.header)
 		
 		self._df_cache[key] = df
 		return df
