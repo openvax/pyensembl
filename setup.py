@@ -31,7 +31,7 @@ from setuptools import setup
 if __name__ == '__main__':
     setup(
         name='ensembl',
-        version="0.1",
+        version="0.2",
         description="Python interface to ensembl reference genome metadata",
         url="https://github.com/hammerlab/ensembl",
         license="http://www.apache.org/licenses/LICENSE-2.0.html",
@@ -47,9 +47,7 @@ if __name__ == '__main__':
         requires=[
             'numpy(>=1.7)',
             'pandas(>=0.13.1)',
-            'scikit.learn(>=0.14.1)',
-            'biopython',
-	   
+	    'datacache', 
         ],
         long_description=readme,
         packages=['ensembl'],
