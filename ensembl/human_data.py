@@ -1,4 +1,5 @@
 import datacache
+import pandas as pd
 
 MIN_ENSEMBL_RELEASE = 48
 MAX_ENSEMBL_RELEASE = 77
@@ -73,3 +74,24 @@ def local_gtf_path(release):
         decompress=True,
         subdir="ensembl")
     return local_path
+
+GTF_COLS = [
+    'seqname',
+    'source',
+    'feature',
+    'start',
+    'end',
+    'score',
+    'strand',
+    'frame',
+    'attribute'
+]
+
+def load_dataframe(release):
+    """
+    Download GTF annotation data for given release (if not already present),
+    parse it into a dataframe.
+    """
+    path = local_gtf_path(release)
+    return pd.read_csv(path, comment='#', sep='\t', names = GTF_COLS)
+
