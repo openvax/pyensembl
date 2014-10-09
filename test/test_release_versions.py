@@ -1,32 +1,34 @@
 from os.path import exists
 
-from ensembl.human_data import local_gtf_path
+from ensembl.human_data import HumanData
 
 from nose.tools import raises
 
 
 @raises(Exception)
 def test_version_too_old_1():
-    local_gtf_path(1)
+    HumanData(1)
 
 @raises(Exception)
 def test_version_too_old_47():
-    local_gtf_path(47)
+    HumanData(47)
 
 @raises(Exception)
 def test_version_is_not_numeric():
-    local_gtf_path("wuzzle")
+    HumanData("wuzzle")
 
 @raises(Exception)
 def test_version_is_none():
-    local_gtf_path(None)
+    HumanData(None)
 
 def test_version_75():
-    path = local_gtf_path(75)
+    data = HumanData(75)
+    path = data.local_gtf_path()
     assert exists(path)
-    assert path.endswith(".gtf")
+    assert path.endswith(".gtf.gz")
 
 def test_version_75_string():
-    path = local_gtf_path("75")
+    data = HumanData("75")
+    path = data.local_gtf_path()
     assert exists(path)
-    assert path.endswith(".gtf")
+    assert path.endswith(".gtf.gz")

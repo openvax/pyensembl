@@ -1,10 +1,17 @@
+from os.path import join
+
+from gtf import load_gtf_as_dataframe
+from locus import normalize_chromosome
+
 import datacache
 import pandas as pd
 
 MIN_ENSEMBL_RELEASE = 48
 MAX_ENSEMBL_RELEASE = 77
 
-def check_release(release):
+
+
+def _check_release(release):
     """
     Convert a user-provided release number into
     an integer, check to make sure it's in the
@@ -18,13 +25,6 @@ def check_release(release):
     assert release <= MAX_ENSEMBL_RELEASE
     return release
 
-
-# directory which contains GTF files, missing the release number
-URL_DIR_TEMPLATE = 'ftp://ftp.ensembl.org/pub/release-%d/gtf/homo_sapiens/'
-
-def gtf_url_dir(release):
-    release = check_release(release)
-    return URL_DIR_TEMPLATE % release
 
 
 # mapping from Ensembl release to which reference assembly it uses
@@ -42,56 +42,81 @@ for i in xrange(55,76):
 for i in xrange(76,78):
     _human_references[i] = 'GRCh38'
 
-def which_human_reference(release):
-    release = check_release(release)
+def _which_human_reference(release):
+    release = _check_release(release)
     assert release in _human_references, \
         "No reference found for release %d" % release
     return _human_references[release]
 
+
+# directory which contains GTF files, missing the release number
+URL_DIR_TEMPLATE = 'ftp://ftp.ensembl.org/pub/release-%d/gtf/homo_sapiens/'
 FILENAME_TEMPLATE = "Homo_sapiens.%s.%d.gtf.gz"
 
-def gtf_filename(release):
-    release = check_release(release)
-    reference_name = which_human_reference(release)
-    return FILENAME_TEMPLATE % (reference_name, release)
+class HumanData(object):
+    def __init__(self, release):
+        self.release = _check_release(release)
+        self.gtf_url_dir = URL_DIR_TEMPLATE % self.release
+        self.reference_name =  _which_human_reference(self.release)
+        self.gtf_filename = FILENAME_TEMPLATE  % (
+            self.reference_name, self.release
+        )
+        self.gtf_url = join(self.gtf_url_dir, self.gtf_filename)
+
+        # lazily download GTF data if anything beyond path/URL is necessary
+        self._local_gtf_path = None
+
+        # lazily load DataFrame if necessary
+        self._df = None
+
+    def local_gtf_path(self):
+        """
+        Returns local path to GTF file for given release of Ensembl,
+        download from the Ensembl FTP server if not already cached.
+        """
+        if self._local_gtf_path is None:
+            self._local_gtf_path = datacache.fetch_file(
+                self.gtf_url,
+                filename=self.gtf_filename,
+                decompress=False,
+                subdir="ensembl")
+        assert self._local_gtf_path
+        return self._local_gtf_path
+
+    def dataframe(self):
+        if self._df is None:
+            path = self.local_gtf_path()
+            print "Reading GTF %s into DataFrame" % path
+            self._df = load_gtf_as_dataframe(path)
+        assert self._df is not None
+        return self._df
+
+    def genes_at_locus(self, chromosome, position):
+        df = self.dataframe()
+        chromosome = normalize_chromosome(chromosome)
+        df_genes = df[df.feature == 'gene']
+        df_chr = df_genes[df_genes.seqname == chromosome]
+
+        # find genes whose start/end boundaries overlap with the position
+        overlap_start = df_chr.start <= position
+        overlap_end = df_chr.end >= position
+        overlap = overlap_start & overlap_end
+        df_overlap = df_chr[overlap]
+
+        # making a set to only keep unique genes
+        genes = set([])
+        # parse gene_id from semi-colon separated attribute list
+        for attr_string in df_overlap.attribute:
+            attrs_list = attr_string.split("; ")
+            attrs = {}
+            for attr_pair in attrs_list:
+                name, value = attr_pair.split(" ")
+                value = value.replace('\"', "")
+                attrs[name] = value
+            if 'gene_id' in attrs:
+                genes.add(attrs['gene_id'])
+        return genes
 
 
-def gtf_url(release):
-    base_url = gtf_url_dir(release)
-    filename = gtf_filename(release)
-    return base_url + filename
 
-def local_gtf_path(release):
-    """
-    Returns local path to GTF file for given release of Ensembl,
-    download from the Ensembl FTP server if not already cached.
-    """
-    filename = gtf_filename(release)
-    url = gtf_url(release)
-    local_path = datacache.fetch_file(
-        url,
-        filename=filename,
-        decompress=True,
-        subdir="ensembl")
-    return local_path
-
-GTF_COLS = [
-    'seqname',
-    'source',
-    'feature',
-    'start',
-    'end',
-    'score',
-    'strand',
-    'frame',
-    'attribute'
-]
-
-def load_dataframe(release):
-    """
-    Download GTF annotation data for given release (if not already present),
-    parse it into a dataframe.
-    """
-    path = local_gtf_path(release)
-    return pd.read_csv(path, comment='#', sep='\t', names = GTF_COLS)
 
