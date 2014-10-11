@@ -69,6 +69,7 @@ class HumanData(object):
         # lazily load DataFrame if necessary
         self._df = None
 
+
     def local_gtf_path(self):
         """
         Returns local path to GTF file for given release of Ensembl,
@@ -86,8 +87,7 @@ class HumanData(object):
     def dataframe(self):
         if self._df is None:
             path = self.local_gtf_path()
-            print "Reading GTF %s into DataFrame" % path
-            self._df = load_gtf_as_dataframe(path)
+            df = load_gtf_as_dataframe(path)
         assert self._df is not None
         return self._df
 
@@ -106,15 +106,7 @@ class HumanData(object):
         # making a set to only keep unique genes
         genes = set([])
         # parse gene_id from semi-colon separated attribute list
-        for attr_string in df_overlap.attribute:
-            attrs_list = attr_string.split("; ")
-            attrs = {}
-            for attr_pair in attrs_list:
-                name, value = attr_pair.split(" ")
-                value = value.replace('\"', "")
-                attrs[name] = value
-            if 'gene_id' in attrs:
-                genes.add(attrs['gene_id'])
+
         return genes
 
 

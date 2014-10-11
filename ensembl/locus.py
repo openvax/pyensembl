@@ -1,7 +1,7 @@
 def normalize_chromosome(c):
     if isinstance(c, (int, long)):
-        assert c > 0
-        return c
+        assert c > 0, "Invalid chromosome %d" % c
+        c = str(c)
 
     assert isinstance(c, str), "Invalid chromosome %s : %s" % (c, type(c))
     if c.startswith("chr"):
