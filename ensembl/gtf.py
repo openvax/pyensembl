@@ -80,7 +80,7 @@ def _extend_with_attributes(df):
         # and we might be runniung low on memory
         del extra_columns[k]
         # remove quotes around values
-        df[k] = df[k].replace("\"", "")
+        df[k] = df[k].str.replace("\"", "")
     return df
 
 def load_gtf_as_dataframe(filename):

@@ -1,4 +1,4 @@
-from os.path import join
+from os.path import join, exists
 
 from gtf import load_gtf_as_dataframe
 from locus import normalize_chromosome
@@ -53,7 +53,7 @@ def _which_human_reference(release):
 URL_DIR_TEMPLATE = 'ftp://ftp.ensembl.org/pub/release-%d/gtf/homo_sapiens/'
 FILENAME_TEMPLATE = "Homo_sapiens.%s.%d.gtf.gz"
 
-class HumanData(object):
+class EnsemblRelease(object):
     def __init__(self, release):
         self.release = _check_release(release)
         self.gtf_url_dir = URL_DIR_TEMPLATE % self.release
@@ -69,6 +69,8 @@ class HumanData(object):
         # lazily load DataFrame if necessary
         self._df = None
 
+        # lazily cache DataFrame with expanded attribute columns
+        self._local_csv_path = None
 
     def local_gtf_path(self):
         """
@@ -84,10 +86,48 @@ class HumanData(object):
         assert self._local_gtf_path
         return self._local_gtf_path
 
+    def local_csv_path(self):
+        """
+        Path to CSV which the annotation data with expanded columns
+        for optional attributes
+        """
+        if self._local_csv_path is None:
+            gtf_path = self.local_gtf_path()
+            if gtf_path.endswith(".gtf"):
+                base = gtf_path[:-4]
+            else:
+                assert gtf_path.endswith(".gtf.gz"), \
+                    "Invalid file extension for GTF: %s" % gtf_path
+                base = gtf_path[:-7]
+            self._local_csv_path = base + ".column_attributes.csv"
+        return self._local_csv_path
+
+    def _load_from_gtf(self):
+        """
+        Parse this release's GTF file and load it as a Pandas DataFrame
+        """
+        path = self.local_gtf_path()
+        return load_gtf_as_dataframe(path)
+
+    def _load_from_csv(self):
+        """
+        If we've already saved the DataFrame as a CSV
+        (with the attributes field expanded into columns),
+        then load it. Otherwise parse the GTF file, and save it
+        as a CSV
+        """
+        csv_path = self.local_csv_path()
+        if exists(csv_path):
+            print "Reading Dataframe from %s" % csv_path
+            return pd.read_csv(csv_path)
+        else:
+            df = self._load_from_gtf()
+            df.to_csv(csv_path)
+            return df
+
     def dataframe(self):
         if self._df is None:
-            path = self.local_gtf_path()
-            df = load_gtf_as_dataframe(path)
+            self._df = self._load_from_csv()
         assert self._df is not None
         return self._df
 
