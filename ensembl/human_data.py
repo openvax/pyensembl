@@ -122,7 +122,8 @@ class EnsemblRelease(object):
             return pd.read_csv(csv_path)
         else:
             df = self._load_from_gtf()
-            df.to_csv(csv_path)
+            print "Saving expanded DataFrame to %s" % csv_path
+            df.to_csv(csv_path, index=False)
             return df
 
     def dataframe(self):
