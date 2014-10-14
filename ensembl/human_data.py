@@ -72,6 +72,10 @@ class EnsemblRelease(object):
         # lazily cache DataFrame with expanded attribute columns
         self._local_csv_path = None
 
+        # if we load a subset of the entries for a specific contig
+        # cache it by the contig name in this dictionary
+        self._contig_dfs = {}
+
     def local_gtf_path(self):
         """
         Returns local path to GTF file for given release of Ensembl,
@@ -101,6 +105,13 @@ class EnsemblRelease(object):
                 base = gtf_path[:-7]
             self._local_csv_path = base + ".column_attributes.csv"
         return self._local_csv_path
+
+    def local_csv_path_for_contig(self, contig_name):
+        """
+        Path to CSV file containing subset of Ensembl data
+        restricted to given contig_name
+        """
+        assert False
 
     def _load_from_gtf(self):
         """
@@ -132,9 +143,25 @@ class EnsemblRelease(object):
         assert self._df is not None
         return self._df
 
-    def genes_at_locus(self, chromosome, position):
+    def dataframe_for_contig(self, contig_name):
+        """
+        Load a subset of the Ensembl data for a specific contig
+        """
+        contig_name = normalize_chromosome(contig_name)
+        if contig_name not in self._contig_dfs:
+            contig_csv_path = self.local_csv_path_for_contig(contig_name)
+            df = self.dataframe()
+            mask = df.seqname == contig_name
+            subset = df[mask]
+            assert len(subset) > 0, "Contig not found: %s" % contig_name
+            self._contig_dfs[contig_name] = subset
+        return self._contig_dfs[contig_name]
+
+
+
+    def genes_at_locus(self, contig_name, position):
         df = self.dataframe()
-        chromosome = normalize_chromosome(chromosome)
+        contig_name = normalize_chromosome(contig_name)
         df_genes = df[df.feature == 'gene']
         df_chr = df_genes[df_genes.seqname == chromosome]
 
