@@ -25,14 +25,15 @@ def _read_gtf(filename):
     assert filename.endswith(".gtf") or filename.endswith(".gtf.gz"), \
         "Must be a GTF file (%s)" % filename
     compression = "gzip" if filename.endswith(".gz") else None
-    return pd.read_csv(
+    df = pd.read_csv(
         filename,
         comment='#',
         sep='\t',
         names = GTF_COLS,
         na_filter=False,
-        compression = compression,
-        converters = {'seqname':str})
+        compression = compression)
+    df['seqname'] = df['seqname'].map(str)
+    return df
 
 def _attribute_dictionaries(df):
     """
