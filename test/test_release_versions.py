@@ -22,13 +22,13 @@ def test_version_is_none():
     EnsemblRelease(None)
 
 def test_version_75():
-    data = EnsemblRelease(75)
-    path = data.local_gtf_path()
+    ensembl = EnsemblRelease(75)
+    path = ensembl.local_gtf_path()
     assert exists(path)
     assert path.endswith(".gtf.gz")
 
 def test_version_75_string():
-    data = EnsemblRelease("75")
-    path = data.local_gtf_path()
+    ensembl = EnsemblRelease("75")
+    path = ensembl.local_gtf_path()
     assert exists(path)
     assert path.endswith(".gtf.gz")

@@ -5,6 +5,7 @@ from os import remove
 
 from gtf import load_gtf_as_dataframe
 from locus import normalize_chromosome
+from memory_cache import load_csv, clear_cached_objects
 
 import datacache
 import numpy as np
@@ -12,8 +13,6 @@ import pandas as pd
 
 MIN_ENSEMBL_RELEASE = 48
 MAX_ENSEMBL_RELEASE = 77
-
-
 
 def _check_release(release):
     """
@@ -58,6 +57,7 @@ URL_DIR_TEMPLATE = 'ftp://ftp.ensembl.org/pub/release-%d/gtf/homo_sapiens/'
 FILENAME_TEMPLATE = "Homo_sapiens.%s.%d.gtf.gz"
 
 class EnsemblRelease(object):
+
     def __init__(self, release):
         self.release = _check_release(release)
         self.gtf_url_dir = URL_DIR_TEMPLATE % self.release
@@ -66,15 +66,21 @@ class EnsemblRelease(object):
             self.reference_name, self.release
         )
         self.gtf_url = join(self.gtf_url_dir, self.gtf_filename)
-        self.clear_cached_objects()
+        self._local_gtf_path = None
+
+    def __str__(self):
+        return "EnsemblRelease(release=%d, gtf_url='%s')" % (
+            self.release, self.gtf_url)
+
+    def __repr__(self):
+        return str(self)
 
     def clear_cached_objects(self):
         """
         Reset all the cached fields on this object, forcing
         everything to be reloaded from disk
         """
-         # lazily download GTF data if anything beyond path/URL is necessary
-        self._local_gtf_path = None
+        self._csv_paths = []
 
         # lazily load DataFrame if necessary
         self._df = None
@@ -101,14 +107,13 @@ class EnsemblRelease(object):
         parts = self.gtf_filename.split(".gtf")
         return parts[0]
 
-
     def delete_cached_files(self):
         base = self.base_gtf_filename()
         dirpath = self.local_gtf_dir()
         for path in glob(join(dirpath, base + "*")):
             logging.info("Deleting cached file %s", path)
             remove(path)
-        self.clear_cached_objects()
+        clear_cached_objects()
 
     def local_gtf_path(self):
         """
@@ -132,13 +137,11 @@ class EnsemblRelease(object):
         Path to CSV which the annotation data with expanded columns
         for optional attributes
         """
-        if self._local_csv_path is None:
-            gtf_path = self.local_gtf_path()
-            base = self.base_gtf_filename()
-            csv_filename = base + ".expanded.csv"
-            dirpath = self.local_gtf_dir()
-            self._local_csv_path = join(dirpath, csv_filename)
-        return self._local_csv_path
+        gtf_path = self.local_gtf_path()
+        base = self.base_gtf_filename()
+        csv_filename = base + ".expanded.csv"
+        dirpath = self.local_gtf_dir()
+        return join(dirpath, csv_filename)
 
     def local_csv_path_for_contig(self, contig_name):
         """
@@ -151,54 +154,31 @@ class EnsemblRelease(object):
         return join(dirpath, base + ".contig.%s.csv" % contig_name)
 
 
-    def _load_from_gtf(self):
+    def _load_dataframe_from_gtf(self):
         """
         Parse this release's GTF file and load it as a Pandas DataFrame
         """
         path = self.local_gtf_path()
         return load_gtf_as_dataframe(path)
 
-    def _load_from_csv(self):
-        """
-        If we've already saved the DataFrame as a CSV
-        (with the attributes field expanded into columns),
-        then load it. Otherwise parse the GTF file, and save it
-        as a CSV
-        """
-        csv_path = self.local_csv_path()
-        if exists(csv_path):
-            print "Reading Dataframe from %s" % csv_path
-            df = pd.read_csv(csv_path)
-            # by default, Pandas will infer the type as int,
-            # then switch to str when it hits non-numerical
-            # chromosomes. Make sure whole column has the same type
-            df['seqname'] = df['seqname'].map(str)
-            return df
-        else:
-            df = self._load_from_gtf()
-            print "Saving expanded DataFrame to %s" % csv_path
-            df.to_csv(csv_path, index=False)
-            return df
 
     def dataframe(self):
-        if self._df is None:
-            self._df = self._load_from_csv()
-        assert self._df is not None
-        return self._df
+        csv_path = self.local_csv_path()
+        return load_csv(csv_path, self._load_dataframe_from_gtf)
 
     def dataframe_for_contig(self, contig_name):
         """
         Load a subset of the Ensembl data for a specific contig
         """
         contig_name = normalize_chromosome(contig_name)
-        if contig_name not in self._contig_dfs:
-            contig_csv_path = self.local_csv_path_for_contig(contig_name)
+        contig_csv_path = self.local_csv_path_for_contig(contig_name)
+        def create_dataframe():
             df = self.dataframe()
             mask = df.seqname == contig_name
             subset = df[mask]
             assert len(subset) > 0, "Contig not found: %s" % contig_name
-            self._contig_dfs[contig_name] = subset
-        return self._contig_dfs[contig_name]
+            return subset
+        return load_csv(contig_csv_path, create_dataframe)
 
     def dataframe_at_loci(self, contig_name, start, stop):
         """
@@ -220,7 +200,7 @@ class EnsemblRelease(object):
             start=position,
             stop=position)
 
-    def property_values_at_loci(self, contig_name, start, stop, property_name):
+    def _property_values_at_loci(self, contig_name, start, stop, property_name):
         df = self.dataframe_at_loci(contig_name, start, stop)
         assert property_name in df, \
             "Unknown Ensembl property: %s" % property_name
@@ -231,60 +211,61 @@ class EnsemblRelease(object):
         ]
         return list(sorted(set(col)))
 
-    def property_values_at_locus(self, contig_name, position, property_name):
-        return self.property_values_at_loci(
+    def _property_values_at_locus(self, contig_name, position, property_name):
+        return self._property_values_at_loci(
             contig_name=contig_name,
             start=position,
             stop=position,
             property_name=property_name)
 
     def gene_ids_at_locus(self, contig_name, position):
-        return self.property_values_at_locus(contig_name, position, 'gene_id')
+        return self._property_values_at_locus(contig_name, position, 'gene_id')
 
     def gene_names_at_locus(self, contig_name, position):
-        return self.property_values_at_locus(contig_name, position, 'gene_name')
+        return self._property_values_at_locus(
+            contig_name, position, 'gene_name')
 
     def exon_ids_at_locus(self, contig_name, position):
-        return self.property_values_at_locus(contig_name, position, 'exon_id')
+        return self._property_values_at_locus(contig_name, position, 'exon_id')
 
     def transcript_ids_at_locus(self, contig_name, position):
-        return self.property_values_at_locus(
+        return self._property_values_at_locus(
             contig_name, position, 'transcript_id')
 
     def transcript_names_at_locus(self, contig_name, position):
-        return self.property_values_at_locus(
+        return self._property_values_at_locus(
             contig_name, position, 'transcript_name')
 
     def gene_ids_at_loci(self, contig_name, start, stop):
-        return self.property_values_at_loci(
+        return self._property_values_at_loci(
             contig_name=contig_name,
             start=start,
             stop=stop,
             property_name='gene_id')
 
     def gene_names_at_loci(self, contig_name, start, stop):
-        return self.property_values_at_loci(
+        return self._property_values_at_loci(
             contig_name=contig_name,
             start=start,
             stop=stop,
             property_name='gene_name')
 
     def exon_ids_at_loci(self, contig_name, start, stop):
-        return self.property_values_at_loci(
+        return self._property_values_at_loci(
             contig_name=contig_name,
             start=start,
             stop=stop,
             property_name='exon_id')
 
     def transcript_ids_at_loci(self, contig_name, start, stop):
-        return self.property_values_at_loci(
+        return self._property_values_at_loci(
             contig_name=contig_name,
             start=start,
             stop=stop,
             property_name='transcript_id')
 
     def transcript_names_at_loci(self, contig_name, start, stop):
-        return self.property_values_at_loci(
+        return self._property_values_at_loci(
             contig_name=contig_name,
             start=start,
             stop=stop,
