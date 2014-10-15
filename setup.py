@@ -31,7 +31,7 @@ from setuptools import setup
 if __name__ == '__main__':
     setup(
         name='ensembl',
-        version="0.2",
+        version="0.3",
         description="Python interface to ensembl reference genome metadata",
         url="https://github.com/hammerlab/ensembl",
         license="http://www.apache.org/licenses/LICENSE-2.0.html",
