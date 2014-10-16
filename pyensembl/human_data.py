@@ -409,8 +409,7 @@ class EnsemblRelease(object):
             filter_value=gene_name,
             feature="gene")
         assert results, "Gene not found: %s" % gene_name
-        loc = results[0]
-        return str(loc[0]), int(loc[1]), int(loc[2])
+        return results[0]
 
     def location_of_gene_id(self, gene_id):
         results = self._query(
@@ -419,10 +418,18 @@ class EnsemblRelease(object):
             filter_value=gene_id,
             feature="gene")
         assert results, "Gene ID not found: %s" % gene_id
-        loc = results[0]
-        return str(loc[0]), int(loc[1]), int(loc[2])
+        return results[0]
 
-    def name_of_gene_id(self, gene_id):
+    def location_of_transcript_id(self, transcript_id):
+        results = self._query(
+            cols=["seqname", "start", "end"],
+            filter_col="transcript_id",
+            filter_value=transcript_id,
+            feature="transcript")
+        assert results, "Transcript ID not found: %s" % transcript_id
+        return results[0]
+
+    def gene_name_of_gene_id(self, gene_id):
         results = self._query(
             cols=["gene_name"],
             filter_col="gene_id",
@@ -431,8 +438,7 @@ class EnsemblRelease(object):
         assert results, "Gene ID not found: %s" % gene_id
         return str(results[0][0])
 
-
-    def id_of_gene_name(self, gene_name):
+    def gene_id_of_gene_name(self, gene_name):
         results = self._query(
             cols=["gene_id"],
             filter_col="gene_name",
@@ -440,3 +446,21 @@ class EnsemblRelease(object):
             feature="gene")
         assert results, "Gene ID not found: %s" % gene_id
         return str(results[0][0])
+
+    def transcript_ids_of_gene_id(self, gene_id):
+        results = self._query(
+            cols = ['transcript_id'],
+            filter_col = 'gene_id',
+            filter_value = gene_id,
+            feature = 'transcript',
+        )
+
+    def transcript_ids_of_gene_name(self, gene_id):
+        results = self._query(
+            cols = ['transcript_id'],
+            filter_col = 'gene_name',
+            filter_value = gene_name,
+            feature = 'transcript',
+        )
+
+
