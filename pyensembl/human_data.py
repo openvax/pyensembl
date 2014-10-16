@@ -388,3 +388,55 @@ class EnsemblRelease(object):
             end=end,
             property_name='transcript_name')
 
+    def _query(self, cols, filter_col, filter_value, feature):
+        query = """
+            select %s
+            from ensembl
+            where
+                %s = '%s' and
+                feature='%s'
+        """ % (", ".join(cols), filter_col, filter_value, feature)
+        db = self.db()
+        return db.execute(query).fetchall()
+
+    def location_of_gene_name(self, gene_name):
+        """
+        Given a gene name returns (chromosome, start, stop)
+        """
+        results = self._query(
+            cols=["seqname", "start", "end"],
+            filter_col="gene_name",
+            filter_value=gene_name,
+            feature="gene")
+        assert results, "Gene not found: %s" % gene_name
+        loc = results[0]
+        return str(loc[0]), int(loc[1]), int(loc[2])
+
+    def location_of_gene_id(self, gene_id):
+        results = self._query(
+            cols=["seqname", "start", "end"],
+            filter_col="gene_id",
+            filter_value=gene_id,
+            feature="gene")
+        assert results, "Gene ID not found: %s" % gene_id
+        loc = results[0]
+        return str(loc[0]), int(loc[1]), int(loc[2])
+
+    def name_of_gene_id(self, gene_id):
+        results = self._query(
+            cols=["gene_name"],
+            filter_col="gene_id",
+            filter_value=gene_id,
+            feature="gene")
+        assert results, "Gene ID not found: %s" % gene_id
+        return str(results[0][0])
+
+
+    def id_of_gene_name(self, gene_name):
+        results = self._query(
+            cols=["gene_id"],
+            filter_col="gene_name",
+            filter_value=gene_name,
+            feature="gene")
+        assert results, "Gene ID not found: %s" % gene_id
+        return str(results[0][0])

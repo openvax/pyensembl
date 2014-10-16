@@ -31,7 +31,7 @@ from setuptools import setup
 if __name__ == '__main__':
     setup(
         name='pyensembl',
-        version="0.3.1",
+        version="0.3.2",
         description="Python interface to ensembl reference genome metadata",
       	author="Alex Rubinsteyn",
       	url="https://github.com/hammerlab/ensembl",
@@ -41,7 +41,7 @@ if __name__ == '__main__':
             'Environment :: Console',
             'Operating System :: OS Independent',
             'Intended Audience :: Science/Research',
-	          'License :: OSI Approved :: Apache Software License',
+            'License :: OSI Approved :: Apache Software License',
             'Programming Language :: Python',
             'Topic :: Scientific/Engineering :: Bio-Informatics',
              ],
@@ -51,5 +51,5 @@ if __name__ == '__main__':
 	          'datacache',
         ],
         long_description=readme,
-        packages=['ensembl'],
+        packages=['pyensembl'],
     )

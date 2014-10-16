@@ -1,6 +1,6 @@
 from os.path import exists
 
-from ensembl.human_data import EnsemblRelease
+from pyensembl import EnsemblRelease
 
 from nose.tools import raises
 

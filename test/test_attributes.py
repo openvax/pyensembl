@@ -1,5 +1,5 @@
 
-from ensembl.human_data import EnsemblRelease
+from pyensembl import EnsemblRelease
 
 def test_all_entries_have_gene_id():
     data = EnsemblRelease(75)

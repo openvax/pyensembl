@@ -1,4 +1,4 @@
-from ensembl import EnsemblRelease
+from pyensembl import EnsemblRelease
 
 ensembl = EnsemblRelease(75)
 
