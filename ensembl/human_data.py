@@ -2,6 +2,7 @@ from glob import glob
 import logging
 from os.path import join, exists, split
 from os import remove
+import sqlite3
 
 from gtf import load_gtf_as_dataframe
 from locus import normalize_chromosome
@@ -10,6 +11,7 @@ from memory_cache import load_csv, clear_cached_objects
 import datacache
 import numpy as np
 import pandas as pd
+
 
 MIN_ENSEMBL_RELEASE = 48
 MAX_ENSEMBL_RELEASE = 77
@@ -55,6 +57,7 @@ def _which_human_reference(release):
 # directory which contains GTF files, missing the release number
 URL_DIR_TEMPLATE = 'ftp://ftp.ensembl.org/pub/release-%d/gtf/homo_sapiens/'
 FILENAME_TEMPLATE = "Homo_sapiens.%s.%d.gtf.gz"
+CACHE_SUBDIR = "ensembl"
 
 class EnsemblRelease(object):
 
@@ -68,33 +71,21 @@ class EnsemblRelease(object):
         self.gtf_url = join(self.gtf_url_dir, self.gtf_filename)
         self._local_gtf_path = None
 
+        # lazily load DataFrame of all GTF entries
+        self._df = None
+
+        # lazily construct sqlite3 database
+        self._db = None
+
+        self.logger = logging.getLogger()
+        self.logger.setLevel(logging.INFO)
+
     def __str__(self):
         return "EnsemblRelease(release=%d, gtf_url='%s')" % (
             self.release, self.gtf_url)
 
     def __repr__(self):
         return str(self)
-
-    def clear_cached_objects(self):
-        """
-        Reset all the cached fields on this object, forcing
-        everything to be reloaded from disk
-        """
-        self._csv_paths = []
-
-        # lazily load DataFrame if necessary
-        self._df = None
-
-        # lazily cache DataFrame with expanded attribute columns
-        self._local_csv_path = None
-
-        # if we load a subset of the entries for a specific contig
-        # cache it by the contig name in this dictionary
-        self._contig_dfs = {}
-
-        # paths to partial DataFrames for particular contigs, saved as CSVs
-        self._contig_csv_paths = {}
-
 
     def base_gtf_filename(self):
         """
@@ -125,7 +116,7 @@ class EnsemblRelease(object):
                 self.gtf_url,
                 filename=self.gtf_filename,
                 decompress=False,
-                subdir="ensembl")
+                subdir=CACHE_SUBDIR)
         assert self._local_gtf_path
         return self._local_gtf_path
 
@@ -137,11 +128,19 @@ class EnsemblRelease(object):
         Path to CSV which the annotation data with expanded columns
         for optional attributes
         """
-        gtf_path = self.local_gtf_path()
         base = self.base_gtf_filename()
-        csv_filename = base + ".expanded.csv"
         dirpath = self.local_gtf_dir()
+        csv_filename = base + ".expanded.csv"
         return join(dirpath, csv_filename)
+
+    def local_db_filename(self):
+        base = self.base_gtf_filename()
+        return base + ".db"
+
+    def local_db_path(self):
+        dirpath = self.local_gtf_dir()
+        filename = self.local_db_filename()
+        return join(dirpath, filename)
 
     def local_csv_path_for_contig(self, contig_name):
         """
@@ -163,8 +162,44 @@ class EnsemblRelease(object):
 
 
     def dataframe(self):
-        csv_path = self.local_csv_path()
-        return load_csv(csv_path, self._load_dataframe_from_gtf)
+        if self._df is None:
+            csv_path = self.local_csv_path()
+            self._df = load_csv(csv_path, self._load_dataframe_from_gtf)
+        return self._df
+
+    def _create_database(self):
+        df = self.dataframe()
+        filename = self.local_db_filename()
+        db = datacache.db_from_dataframe(
+            db_filename=filename,
+            table_name="ensembl",
+            df=df,
+            subdir=CACHE_SUBDIR,
+            overwrite=False,
+            indices = [
+                ['seqname', 'start', 'end'],
+                ['seqname'],
+                ['gene_name'],
+                ['gene_id'],
+                ['transcript_id'],
+                ['exon_id'],
+            ])
+        return db
+
+    def _db_exists(self):
+        db_path = self.local_db_path()
+
+
+    def db(self):
+        if self._db is None:
+            db_path = self.local_db_path()
+            if exists(db_path):
+                db = sqlite3.connect(db_path)
+            # maybe file got created but not filled
+            if not datacache.db.db_table_exists(db, 'ensembl'):
+                db = self._create_database()
+            self._db = db
+        return self._db
 
     def dataframe_for_contig(self, contig_name):
         """
@@ -194,21 +229,54 @@ class EnsemblRelease(object):
         df_overlap = df_chr[overlap]
         return df_overlap
 
+
+    def dataframe_column_at_loci(self, contig_name, start, stop, col_name):
+        """
+        Subset of entries which overlap an inclusive range of loci
+        """
+        contig_name = normalize_chromosome(contig_name)
+        df_chr = self.dataframe_for_contig(contig_name)
+        assert col_name in df_chr, "Unknown Ensembl property: %s" % col_name
+        # find genes whose start/end boundaries overlap with the position
+        overlap_start = df_chr.start <= stop
+        overlap_end = df_chr.end >= start
+        overlap = overlap_start & overlap_end
+        return df_chr[col_name][overlap].dropna()
+
     def dataframe_at_locus(self, contig_name, position):
         return self.dataframe_at_loci(
             contig_name=contig_name,
             start=position,
             stop=position)
 
+    def _db_cols(self, db):
+        table_info = db.execute("PRAGMA table_info(ensembl);").fetchall()
+        return [info[1] for info in table_info]
+
+    def _db_col_exists(self, db, col_name):
+        return col_name in self._db_cols(db)
+
+    def db_column_values_at_loci(self, contig_name, start, stop, col_name):
+        db = self.db()
+
+        assert self._db_col_exists(db, col_name), \
+            "Unknown Ensembl property: %s" % col_name
+        query = """
+            select distinct %s
+            from ensembl
+            where
+                seqname='%s'
+                and start <= %d
+                and end >= %d
+        """  % (col_name, contig_name, stop, start)
+        # self.logger.info("Running query: %s" % query)
+        results = db.execute(query).fetchall()
+        # each result is a tuple, so pull out its first element
+        return [result[0] for result in results if result[0] is not None]
+
     def _property_values_at_loci(self, contig_name, start, stop, property_name):
-        df = self.dataframe_at_loci(contig_name, start, stop)
-        assert property_name in df, \
-            "Unknown Ensembl property: %s" % property_name
-        # drop empty strings and NaNs
-        col = [
-            x for  x in df[property_name]
-            if x and (not np.isreal(x) or not np.isnan(x))
-        ]
+        col = self.db_column_values_at_loci(
+            contig_name, start, stop, property_name)
         return list(sorted(set(col)))
 
     def _property_values_at_locus(self, contig_name, position, property_name):

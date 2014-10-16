@@ -22,7 +22,7 @@ try:
   import pypandoc
   readme = pypandoc.convert(readme, to='rst', format='md')
 except:
-  print "Conversion of long_description from markdown to reStructuredText failed, skipping..."
+  print "Conversion of long_description from MD to reStructuredText failed..."
   pass
 
 
@@ -30,24 +30,25 @@ from setuptools import setup
 
 if __name__ == '__main__':
     setup(
-        name='ensembl',
-        version="0.3",
+        name='pyensembl',
+        version="0.3.1",
         description="Python interface to ensembl reference genome metadata",
-        url="https://github.com/hammerlab/ensembl",
+      	author="Alex Rubinsteyn",
+      	url="https://github.com/hammerlab/ensembl",
         license="http://www.apache.org/licenses/LICENSE-2.0.html",
         classifiers=[
             'Development Status :: 3 - Alpha',
             'Environment :: Console',
             'Operating System :: OS Independent',
             'Intended Audience :: Science/Research',
-            'License :: OSI Approved :: Apache License',
+	          'License :: OSI Approved :: Apache Software License',
             'Programming Language :: Python',
             'Topic :: Scientific/Engineering :: Bio-Informatics',
              ],
         requires=[
             'numpy(>=1.7)',
             'pandas(>=0.13.1)',
-	    'datacache', 
+	          'datacache',
         ],
         long_description=readme,
         packages=['ensembl'],
