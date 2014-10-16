@@ -77,8 +77,42 @@ class EnsemblRelease(object):
         # lazily construct sqlite3 database
         self._db = None
 
+        # dictionary mapping each contig name to a dictionary of columns
+        self._contig_columns = {}
+
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
+
+    def _clear_contig_columns(self):
+        for d in self._contig_columns:
+            d.clear()
+        self._contig_columns.clear()
+
+    def _load_contig_column_from_db(self, contig_name, col_name):
+        db = self.db()
+        assert self._db_col_exists(db, col_name), \
+            "Column %s not in Ensembl database" % col_name
+        query = "select %s from ensembl where seqname='%s' order by ROWID;" % (
+            col_name, contig_name)
+        df = pd.read_sql(query, db)
+        return df[col_name]
+
+    def _contig_column(self, contig_name, col_name):
+        if contig_name not in self._contig_columns:
+            self._contig_columns[contig_name] = {}
+
+        d = self._contig_columns[contig_name]
+
+        # if this contig/column pair isn't already cached, then
+        # extract it from the database
+        if col_name in d:
+            col = d[col_name]
+        else:
+            col = self._load_contig_column_from_db(contig_name, col_name)
+            if not col.dtype.hasobject:
+              col = np.array(col)
+            d[col_name] = col
+        return col
 
     def __str__(self):
         return "EnsemblRelease(release=%d, gtf_url='%s')" % (
@@ -104,7 +138,10 @@ class EnsemblRelease(object):
         for path in glob(join(dirpath, base + "*")):
             logging.info("Deleting cached file %s", path)
             remove(path)
+        # TODO: combine caching of parsed CSV files and
+        # caching of partial reads from the database
         clear_cached_objects()
+        self._clear_contig_columns()
 
     def local_gtf_path(self):
         """
@@ -215,7 +252,7 @@ class EnsemblRelease(object):
             return subset
         return load_csv(contig_csv_path, create_dataframe)
 
-    def dataframe_at_loci(self, contig_name, start, stop):
+    def dataframe_at_loci(self, contig_name, start, end):
         """
         Subset of entries which overlap an inclusive range of loci
         """
@@ -223,25 +260,27 @@ class EnsemblRelease(object):
         df_chr = self.dataframe_for_contig(contig_name)
 
         # find genes whose start/end boundaries overlap with the position
-        overlap_start = df_chr.start <= stop
+        overlap_start = df_chr.start <= end
         overlap_end = df_chr.end >= start
         overlap = overlap_start & overlap_end
         df_overlap = df_chr[overlap]
         return df_overlap
 
+    def _slice_column(self, col, starts, ends, start, end):
+        overlap_start = starts <= end
+        overlap_end = ends >= start
+        # find genes whose start/end boundaries overlap with the position
+        return col[overlap_start & overlap_end]
 
-    def dataframe_column_at_loci(self, contig_name, start, stop, col_name):
+    def dataframe_column_at_loci(self, contig_name, start, end, col_name):
         """
         Subset of entries which overlap an inclusive range of loci
         """
         contig_name = normalize_chromosome(contig_name)
         df_chr = self.dataframe_for_contig(contig_name)
         assert col_name in df_chr, "Unknown Ensembl property: %s" % col_name
-        # find genes whose start/end boundaries overlap with the position
-        overlap_start = df_chr.start <= stop
-        overlap_end = df_chr.end >= start
-        overlap = overlap_start & overlap_end
-        return df_chr[col_name][overlap].dropna()
+        return self._slice_column(
+            df_chr[col_name], df_chr.start, df_chr.end, start, end)
 
     def dataframe_at_locus(self, contig_name, position):
         return self.dataframe_at_loci(
@@ -256,7 +295,11 @@ class EnsemblRelease(object):
     def _db_col_exists(self, db, col_name):
         return col_name in self._db_cols(db)
 
-    def db_column_values_at_loci(self, contig_name, start, stop, col_name):
+    def db_column_loci(self, contig_name, start, end, col_name):
+        """
+        Get the non-null values of a column from the database
+        at a particular range of loci
+        """
         db = self.db()
 
         assert self._db_col_exists(db, col_name), \
@@ -268,22 +311,28 @@ class EnsemblRelease(object):
                 seqname='%s'
                 and start <= %d
                 and end >= %d
-        """  % (col_name, contig_name, stop, start)
+        """  % (col_name, contig_name, end, start)
         # self.logger.info("Running query: %s" % query)
         results = db.execute(query).fetchall()
         # each result is a tuple, so pull out its first element
         return [result[0] for result in results if result[0] is not None]
 
-    def _property_values_at_loci(self, contig_name, start, stop, property_name):
-        col = self.db_column_values_at_loci(
-            contig_name, start, stop, property_name)
+    def column_at_loci(self, contig_name, start, end, property_name):
+        contig_name = normalize_chromosome(contig_name)
+        starts = self._contig_column(contig_name, 'start')
+        ends = self._contig_column(contig_name, 'end')
+        col = self._contig_column(contig_name, property_name)
+        return self._slice_column(col, starts, ends, start, end)
+
+    def _property_values_at_loci(self, contig_name, start, end, property_name):
+        col = self.column_at_loci(contig_name, start, end, property_name)
         return list(sorted(set(col)))
 
     def _property_values_at_locus(self, contig_name, position, property_name):
         return self._property_values_at_loci(
             contig_name=contig_name,
             start=position,
-            stop=position,
+            end=position,
             property_name=property_name)
 
     def gene_ids_at_locus(self, contig_name, position):
@@ -304,38 +353,38 @@ class EnsemblRelease(object):
         return self._property_values_at_locus(
             contig_name, position, 'transcript_name')
 
-    def gene_ids_at_loci(self, contig_name, start, stop):
+    def gene_ids_at_loci(self, contig_name, start, end):
         return self._property_values_at_loci(
             contig_name=contig_name,
             start=start,
-            stop=stop,
+            end=end,
             property_name='gene_id')
 
-    def gene_names_at_loci(self, contig_name, start, stop):
+    def gene_names_at_loci(self, contig_name, start, end):
         return self._property_values_at_loci(
             contig_name=contig_name,
             start=start,
-            stop=stop,
+            end=end,
             property_name='gene_name')
 
-    def exon_ids_at_loci(self, contig_name, start, stop):
+    def exon_ids_at_loci(self, contig_name, start, end):
         return self._property_values_at_loci(
             contig_name=contig_name,
             start=start,
-            stop=stop,
+            end=end,
             property_name='exon_id')
 
-    def transcript_ids_at_loci(self, contig_name, start, stop):
+    def transcript_ids_at_loci(self, contig_name, start, end):
         return self._property_values_at_loci(
             contig_name=contig_name,
             start=start,
-            stop=stop,
+            end=end,
             property_name='transcript_id')
 
-    def transcript_names_at_loci(self, contig_name, start, stop):
+    def transcript_names_at_loci(self, contig_name, start, end):
         return self._property_values_at_loci(
             contig_name=contig_name,
             start=start,
-            stop=stop,
+            end=end,
             property_name='transcript_name')
 
