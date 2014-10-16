@@ -429,6 +429,15 @@ class EnsemblRelease(object):
         assert results, "Transcript ID not found: %s" % transcript_id
         return results[0]
 
+     def location_of_exon_id(self, exon_id):
+        results = self._query(
+            cols=["seqname", "start", "end"],
+            filter_col="exon_id",
+            filter_value=exon_id,
+            feature="exon")
+        assert results, "Gene ID not found: %s" % gene_id
+        return results[0]
+
     def gene_name_of_gene_id(self, gene_id):
         results = self._query(
             cols=["gene_name"],
@@ -454,13 +463,34 @@ class EnsemblRelease(object):
             filter_value = gene_id,
             feature = 'transcript',
         )
+        return [result[0] for result in results]
 
-    def transcript_ids_of_gene_name(self, gene_id):
+    def transcript_ids_of_gene_name(self, gene_name):
         results = self._query(
             cols = ['transcript_id'],
             filter_col = 'gene_name',
             filter_value = gene_name,
             feature = 'transcript',
         )
+        return [result[0] for result in results]
+
+
+    def exon_ids_of_gene_id(self, gene_id):
+        results = self._query(
+            cols = ['exon_id'],
+            filter_col = 'gene_id',
+            filter_value = gene_id,
+            feature = 'exon',
+        )
+        return [result[0] for result in results]
+
+    def exon_ids_of_gene_name(self, gene_name):
+        results = self._query(
+            cols = ['exon_id'],
+            filter_col = 'gene_name',
+            filter_value = gene_name,
+            feature = 'exon',
+        )
+        return [result[0] for result in results]
 
 
