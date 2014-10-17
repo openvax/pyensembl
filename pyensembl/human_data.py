@@ -216,6 +216,7 @@ class EnsemblRelease(object):
             overwrite=False,
             indices = [
                 ['seqname', 'start', 'end'],
+                ['seqname', 'start', 'end', 'strand'],
                 ['seqname'],
                 ['gene_name'],
                 ['gene_id'],
@@ -231,8 +232,10 @@ class EnsemblRelease(object):
             db_path = self.local_db_path()
             if exists(db_path):
                 db = sqlite3.connect(db_path)
-            # maybe file got created but not filled
-            if not datacache.db.db_table_exists(db, 'ensembl'):
+                # maybe file got created but not filled
+                if not datacache.db.db_table_exists(db, 'ensembl'):
+                    db = self._create_database()
+            else:
                 db = self._create_database()
             self._db = db
         return self._db
@@ -342,7 +345,9 @@ class EnsemblRelease(object):
             contig_name, position, 'gene_name')
 
     def exon_ids_at_locus(self, contig_name, position):
-        return self._property_values_at_locus(contig_name, position, 'exon_id')
+        return self._property_values_at_locus(
+            contig_name, position, 'exon_id'
+        )
 
     def transcript_ids_at_locus(self, contig_name, position):
         return self._property_values_at_locus(
@@ -387,109 +392,230 @@ class EnsemblRelease(object):
             end=end,
             property_name='transcript_name')
 
-    def _query(self, cols, filter_col, filter_value, feature):
+    def _run_query(self, sql, required=False):
+        db = self.db()
+        cursor = db.execute(sql)
+        return cursor.fetchall()
+
+    def _query(
+            self,
+            select_column_names,
+            filter_column,
+            filter_value,
+            feature,
+            distinct=False,
+            required=False):
+        """
+        Run a SQL query against the ensembl sqlite3 database, filtered
+        both by the feature type and a user-provided column/value.
+        """
         query = """
-            select %s
+            select %s%s
             from ensembl
             where
                 %s = '%s' and
                 feature='%s'
-        """ % (", ".join(cols), filter_col, filter_value, feature)
-        db = self.db()
-        return db.execute(query).fetchall()
+        """ % ("distinct " if distinct else "",
+               ", ".join(select_column_names),
+               filter_column,
+               filter_value,
+               feature)
+        results = self._run_query(query, required=required)
+        if required:
+            assert len(results) > 0, \
+                "%s with %s = %s not found" % (
+                    feature,
+                    filter_column,
+                    filter_value
+                )
+        return results
+
+    def _query_feature(self, cols, feature, distinct=False):
+        """
+        Run a SQL query against the ensembl sqlite3 database, filtered
+        only on the feature type.
+        """
+        query = "select %s%s from ensembl where feature='%s'" % (
+               "distinct " if distinct else "",
+               ", ".join(cols),
+               feature
+        )
+        return self._run_query(query)
+
+    def _query_distinct_on_contig(self, col_name, feature, contig_name):
+        contig_name = normalize_chromosome(contig_name)
+        results = self._query(
+            select_column_names=[col_name],
+            filter_column="seqname",
+            filter_value=contig_name,
+            feature=feature,
+            distinct=True)
+        return [result[0] for result in results if result is not None]
+
+    ###################################################
+    #
+    #         Locations: (contig, start, stop)
+    #
+    ###################################################
+
+    def _get_location(self, property_name, property_value, feature_type):
+        """
+        We're currently assuming every gene/transcript/exon has a
+        single location.
+        This assumption doesn't hold for >1000 gene names!
+        TODO: Return multiple locations.
+        """
+        results = self._query(
+            select_column_names=["seqname", "start", "end", "strand"],
+            filter_column=property_name,
+            filter_value=property_value,
+            feature=feature_type,
+            distinct=True,
+            required=True)
+        return results[0]
 
     def location_of_gene_name(self, gene_name):
         """
         Given a gene name returns (chromosome, start, stop)
         """
-        results = self._query(
-            cols=["seqname", "start", "end"],
-            filter_col="gene_name",
-            filter_value=gene_name,
-            feature="gene")
-        assert results, "Gene not found: %s" % gene_name
-        return results[0]
+        return self._get_location('gene_name', gene_name, 'gene')
 
     def location_of_gene_id(self, gene_id):
-        results = self._query(
-            cols=["seqname", "start", "end"],
-            filter_col="gene_id",
-            filter_value=gene_id,
-            feature="gene")
-        assert results, "Gene ID not found: %s" % gene_id
-        return results[0]
+        """
+        Given a gene ID returns (chromosome, start, stop)
+        """
+        return self._get_location('gene_id', gene_id, 'gene')
 
     def location_of_transcript_id(self, transcript_id):
-        results = self._query(
-            cols=["seqname", "start", "end"],
-            filter_col="transcript_id",
-            filter_value=transcript_id,
-            feature="transcript")
-        assert results, "Transcript ID not found: %s" % transcript_id
-        return results[0]
+        return self._get_location('transcript_id', transcript_id, 'transcript')
 
     def location_of_exon_id(self, exon_id):
+        """
+        Given an exon ID returns (chromosome, start, stop)
+        """
+        return self._get_location('exon_id', exon_id, 'exon')
+
+    ###################################################
+    #
+    #             Gene Names
+    #
+    ###################################################
+
+    def _query_gene_name(self, property_name, property_value, feature_type):
         results = self._query(
-            cols=["seqname", "start", "end"],
-            filter_col="exon_id",
-            filter_value=exon_id,
-            feature="exon")
-        assert results, "Gene ID not found: %s" % gene_id
-        return results[0]
+            select_column_names=["gene_name"],
+            filter_col=property_name,
+            filter_value=property_value,
+            feature=feature_type,
+            distinct=True,
+            required=True)
+        return str(results[0][0])
+
+    def gene_names(self):
+        return self._query_feature('gene_name', distinct=True)
+
+    def gene_names_on_contig(self, contig_name):
+        """
+        Return all genes on given chromosome/contig
+        """
+        return self._query_distinct_on_contig('gene_name', 'gene', contig_name)
 
     def gene_name_of_gene_id(self, gene_id):
-        results = self._query(
-            cols=["gene_name"],
-            filter_col="gene_id",
-            filter_value=gene_id,
-            feature="gene")
-        assert results, "Gene ID not found: %s" % gene_id
-        return str(results[0][0])
+        return self._query_gene_name("gene_id", gene_id, 'gene')
+
+    def gene_name_of_transcript_id(self, transcript_id):
+        return self._query_gene_name("transcript_id", transcript_id, 'transcript')
+
+    def gene_name_of_transcript_id(self, transcript_id):
+        return self._query_gene_name(
+            "transcript_name", transcript_name, 'transcript')
+
+    def gene_name_of_exon_id(self, transcript_id):
+        return self._query_gene_name("exon_id", exon_id, 'exon')
+
+
+    ###################################################
+    #
+    #             Gene IDs
+    #
+    ###################################################
+
+    def gene_ids(self):
+        return self._query_feature('gene_id', distinct=True)
+
+    def gene_ids_on_contig(self, contig_name):
+        """
+        What are all the gene IDs on a given chromosome/contig?
+        """
+        return self._query_distinct_on_contig('gene_id', 'gene', contig_name)
 
     def gene_id_of_gene_name(self, gene_name):
+        """
+        What's the Ensembl gene ID of the given gene name?
+        """
         results = self._query(
-            cols=["gene_id"],
-            filter_col="gene_name",
+            select_column_names=["gene_id"],
+            filter_column="gene_name",
             filter_value=gene_name,
-            feature="gene")
-        assert results, "Gene ID not found: %s" % gene_id
+            feature="gene",
+            required=True)
+        assert results, "Gene name not found: %s" % gene_name
         return str(results[0][0])
 
-    def transcript_ids_of_gene_id(self, gene_id):
+
+    ###################################################
+    #
+    #            Transcript IDs
+    #
+    ###################################################
+
+    def _query_transcript_ids(self, property_name, value):
         results = self._query(
-            cols = ['transcript_id'],
-            filter_col = 'gene_id',
-            filter_value = gene_id,
-            feature = 'transcript',
-        )
+            select_column_names=['transcript_id'],
+            filter_column=property_name,
+            filter_value=value,
+            feature='transcript',
+            distinct=True,
+            required=True)
         return [result[0] for result in results]
+
+    def transcript_ids_of_gene_id(self, gene_id):
+        return self._query_transcript_ids('gene_id', gene_id)
 
     def transcript_ids_of_gene_name(self, gene_name):
-        results = self._query(
-            cols = ['transcript_id'],
-            filter_col = 'gene_name',
-            filter_value = gene_name,
-            feature = 'transcript',
-        )
-        return [result[0] for result in results]
+        return self._query_transcript_ids('gene_name', gene_name)
 
+
+    def transcript_ids_of_transcript_name(self, transcript_name):
+        return self._query_transcript_ids('transcript_name', transcript_name)
+
+    def transcript_ids_of_exon_id(self, exon_id):
+        return self._query_transcript_ids('exon_id', exon_id)
+
+    ###################################################
+    #
+    #                Exon IDs
+    #
+    ###################################################
+
+    def _query_exon_ids(self, property_name, value):
+        results = self._query(
+            select_column_names=['exon_id'],
+            filter_column=property_name,
+            filter_value=value,
+            feature='exon',
+            distinct=True,
+            required=True)
+        return [result[0] for result in results]
 
     def exon_ids_of_gene_id(self, gene_id):
-        results = self._query(
-            cols = ['exon_id'],
-            filter_col = 'gene_id',
-            filter_value = gene_id,
-            feature = 'exon',
-        )
-        return [result[0] for result in results]
+        return self._query_exon_ids('gene_id', gene_id)
 
     def exon_ids_of_gene_name(self, gene_name):
-        results = self._query(
-            cols = ['exon_id'],
-            filter_col = 'gene_name',
-            filter_value = gene_name,
-            feature = 'exon',
-        )
-        return [result[0] for result in results]
+        return self._query_exon_ids('gene_name', gene_name)
 
+    def exon_ids_of_transcript_name(self, transcript_name):
+        return self._query_exon_ids('transcript_name', transcript_name)
 
+    def exon_ids_of_transcript_id(self, transcript_id):
+        return self._query_exon_ids('transcript_id', transcript_id)

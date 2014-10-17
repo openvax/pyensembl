@@ -1,9 +1,12 @@
 
 from pyensembl import EnsemblRelease
 
-def test_all_entries_have_gene_id():
-    data = EnsemblRelease(75)
-    df = data.dataframe()
+ensembl75 = EnsemblRelease(75)
+
+
+def test_gene_ids():
+    # only load chromosome 1 to speed up tests
+    df = ensembl75.dataframe_for_contig("1")
     assert 'gene_id' in df
     # Ensembl gene ids are formatted like ENSG00000223972
     # which is always length 15
