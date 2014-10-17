@@ -207,6 +207,7 @@ class EnsemblRelease(object):
     def _create_database(self):
         df = self.dataframe()
         filename = self.local_db_filename()
+        print "Creating database: %s" % self.local_db_path()
         db = datacache.db_from_dataframe(
             db_filename=filename,
             table_name="ensembl",
@@ -220,11 +221,9 @@ class EnsemblRelease(object):
                 ['gene_id'],
                 ['transcript_id'],
                 ['exon_id'],
+                ['feature'],
             ])
         return db
-
-    def _db_exists(self):
-        db_path = self.local_db_path()
 
 
     def db(self):
@@ -429,7 +428,7 @@ class EnsemblRelease(object):
         assert results, "Transcript ID not found: %s" % transcript_id
         return results[0]
 
-     def location_of_exon_id(self, exon_id):
+    def location_of_exon_id(self, exon_id):
         results = self._query(
             cols=["seqname", "start", "end"],
             filter_col="exon_id",
