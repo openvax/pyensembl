@@ -430,14 +430,14 @@ class EnsemblRelease(object):
                 )
         return results
 
-    def _query_feature(self, cols, feature, distinct=False):
+    def _query_feature(self, column, feature, distinct=True):
         """
         Run a SQL query against the ensembl sqlite3 database, filtered
         only on the feature type.
         """
         query = "select %s%s from ensembl where feature='%s'" % (
                "distinct " if distinct else "",
-               ", ".join(cols),
+               column,
                feature
         )
         return self._run_query(query)
@@ -512,7 +512,7 @@ class EnsemblRelease(object):
         return str(results[0][0])
 
     def gene_names(self):
-        return self._query_feature('gene_name', distinct=True)
+        return self._query_feature('gene_name', 'gene')
 
     def gene_names_on_contig(self, contig_name):
         """
@@ -524,7 +524,8 @@ class EnsemblRelease(object):
         return self._query_gene_name("gene_id", gene_id, 'gene')
 
     def gene_name_of_transcript_id(self, transcript_id):
-        return self._query_gene_name("transcript_id", transcript_id, 'transcript')
+        return self._query_gene_name(
+            "transcript_id", transcript_id, 'transcript')
 
     def gene_name_of_transcript_name(self, transcript_id):
         return self._query_gene_name(
@@ -541,7 +542,7 @@ class EnsemblRelease(object):
     ###################################################
 
     def gene_ids(self):
-        return self._query_feature('gene_id', distinct=True)
+        return self._query_feature('gene_id', 'gene')
 
     def gene_ids_on_contig(self, contig_name):
         """
@@ -561,6 +562,23 @@ class EnsemblRelease(object):
             required=True)
         assert results, "Gene name not found: %s" % gene_name
         return str(results[0][0])
+
+
+    ###################################################
+    #
+    #            Transcript Names
+    #
+    ###################################################
+
+    def transcript_names(self):
+        return self._query_feature('transcript_name', 'transcript')
+
+    def transcript_names_on_contig(self, contig_name):
+        """
+        What are all the transcript names on a given chromosome/contig?
+        """
+        return self._query_distinct_on_contig(
+            'transcript_name', 'transcript', contig_name)
 
 
     ###################################################
@@ -586,8 +604,8 @@ class EnsemblRelease(object):
         return self._query_transcript_ids('gene_name', gene_name)
 
 
-    def transcript_ids_of_transcript_name(self, transcript_name):
-        return self._query_transcript_ids('transcript_name', transcript_name)
+    def transcript_id_of_transcript_name(self, transcript_name):
+        return self._query_transcript_ids('transcript_name', transcript_name)[0]
 
     def transcript_ids_of_exon_id(self, exon_id):
         return self._query_transcript_ids('exon_id', exon_id)
@@ -607,6 +625,9 @@ class EnsemblRelease(object):
             distinct=True,
             required=True)
         return [result[0] for result in results]
+
+    def exon_ids(self):
+        return self._query_feature('exon_id', 'exon')
 
     def exon_ids_of_gene_id(self, gene_id):
         return self._query_exon_ids('gene_id', gene_id)
