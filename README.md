@@ -26,11 +26,59 @@ these genomic elements (contig, start position, end position).
 ## Gene Names
 
 `gene_names()`
-: returns all possible gene names
+: returns all gene names in the annotation database
 
 `gene_names_at_locus(contig, position)`
 : names of genes overlapping with the given locus
+(returns a list to account for overlapping genes)
 
 `gene_names_at_loci(contig, start, end)`
 : names of genes overlapping with the given range of loci
 
+`gene_name_of_gene_id(gene_id)`
+: name of gene with given ID
+
+`gene_name_of_transcript_id(transcript_id)`
+: name of gene associated with given transcript ID
+
+`gene_name_of_transcript_name(transcript_name)`
+: name of gene associated with given transcript name
+
+`gene_name_of_exon_id(exon_id)`
+: name of gene associated with given exon ID
+
+## Gene IDs
+
+`gene_ids()`
+: returns all gene IDs in the annotation database
+
+## Transcript Names
+
+`transcript_names()`
+: returns all transcript names in the annotation database
+
+## Transcript IDs
+
+`transcript_ids()`
+: returns all transcript IDs in the annotation database
+
+## Exon IDs
+
+`exon_ids()`
+: returns all transcript IDs in the annotation database
+
+
+## Locations
+
+These functions currently assume that each gene maps to a single unique
+location, which is invalid both with heavily copied genes
+(e.g. [U1](http://en.wikipedia.org/wiki/U1_spliceosomal_RNA)) and with
+polymorphic regions (e.g. HLA genes).
+
+`location_of_gene_name(gene_name)`
+
+`location_of_gene_id(gene_id)`
+
+`location_of_transcript_id(transcript_id)`
+
+`location_of_exon_id(exon_id)`

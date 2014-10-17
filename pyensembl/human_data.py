@@ -526,7 +526,7 @@ class EnsemblRelease(object):
     def gene_name_of_transcript_id(self, transcript_id):
         return self._query_gene_name("transcript_id", transcript_id, 'transcript')
 
-    def gene_name_of_transcript_id(self, transcript_id):
+    def gene_name_of_transcript_name(self, transcript_id):
         return self._query_gene_name(
             "transcript_name", transcript_name, 'transcript')
 
