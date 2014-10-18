@@ -640,3 +640,54 @@ class EnsemblRelease(object):
 
     def exon_ids_of_transcript_id(self, transcript_id):
         return self._query_exon_ids('transcript_id', transcript_id)
+
+
+    ###################################################
+    #
+    #                Start Codons
+    #
+    ###################################################
+
+    def _query_start_codon_location(self, property_name, value):
+        return self._query(
+            select_column_names=['seqname', 'start', 'end', 'strand'],
+            filter_column=property_name,
+            filter_value=value,
+            feature='start_codon',
+            distinct=True,
+            required=True)
+
+    def start_codon_of_transcript_id(self, transcript_id):
+        return self._query_start_codon_location('transcript_id', transcript_id)
+
+    def start_codon_of_transcript_name(self, transcript_name):
+        return self._query_start_codon_location(
+            'transcript_name', transcript_name)
+
+    ###################################################
+    #
+    #                Stop Codons
+    #
+    ###################################################
+
+    def _query_stop_codon_location(self, property_name, value):
+        return self._query(
+            select_column_names=['seqname', 'start', 'end', 'strand'],
+            filter_column=property_name,
+            filter_value=value,
+            feature='start_codon',
+            distinct=True,
+            required=True)
+
+    def stop_codon_of_transcript_id(self, transcript_id):
+        return self._query_stop_codon_location('transcript_id', transcript_id)
+
+    def stop_codon_of_transcript_name(self, transcript_name):
+        return self._query_stop_codon_location(
+            'transcript_name', transcript_name)
+
+
+
+
+
+

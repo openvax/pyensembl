@@ -21,7 +21,7 @@ exon_ids  = data.exon_ids_for_gene_name('HLA-A')
 The `EnsemblRelease` object has methods to let you access all possible
 combinations of the annotation features *gene\_name*, *gene\_id*,
 *transcript\_name*, *transcript\_id*, *exon\_id* as well as the location of
-these genomic elements (contig, start position, end position).
+these genomic elements (contig, start position, end position, strand).
 
 ## Gene Names
 
@@ -50,6 +50,7 @@ these genomic elements (contig, start position, end position).
 `gene_name_of_exon_id(exon_id)`
 : name of gene associated with given exon ID
 
+
 ## Gene IDs
 
 `gene_ids()`
@@ -61,6 +62,7 @@ these genomic elements (contig, start position, end position).
 `gene_id_of_gene_name(gene_name)`
 : translate Ensembl gene ID to its corresponding name
 
+
 ## Transcript Names
 
 `transcript_names()`
@@ -68,6 +70,7 @@ these genomic elements (contig, start position, end position).
 
 `transcript_names_on_contig(contig)`
 : all transcript names on a particular chromosome/contig
+
 
 ## Transcript IDs
 
@@ -86,6 +89,7 @@ these genomic elements (contig, start position, end position).
 `transcript_ids_of_exon_id(exon_id)`
 : return IDs of all transcripts associatd with given exon ID
 
+
 ## Exon IDs
 
 `exon_ids()`
@@ -98,8 +102,6 @@ these genomic elements (contig, start position, end position).
 `exon_ids_of_transcript_name`
 
 `exon_ids_of_transcript_id`
-
-
 
 
 ## Locations
@@ -116,3 +118,17 @@ polymorphic regions (e.g. HLA genes).
 `location_of_transcript_id(transcript_id)`
 
 `location_of_exon_id(exon_id)`
+
+
+## Start Codons
+
+`start_codon_of_transcript_id`
+
+`start_codon_of_transcript_name`
+
+
+## Stop Codons
+
+`stop_codon_of_transcript_id`
+
+`stop_codon_of_transcript_name`
