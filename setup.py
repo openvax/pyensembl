@@ -48,7 +48,7 @@ if __name__ == '__main__':
         requires=[
             'numpy(>=1.7)',
             'pandas(>=0.13.1)',
-	          'datacache',
+	    'datacache(>=0.4.1)',
         ],
         long_description=readme,
         packages=['pyensembl'],
