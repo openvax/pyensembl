@@ -46,9 +46,9 @@ if __name__ == '__main__':
             'Topic :: Scientific/Engineering :: Bio-Informatics',
              ],
         install_requires=[
-            'numpy(>=1.7)',
-            'pandas(>=0.13.1)',
-	          'datacache',
+            'numpy>=1.7',
+            'pandas>=0.13.1',
+            'datacache',
         ],
         long_description=readme,
         packages=['pyensembl'],
