@@ -45,7 +45,7 @@ if __name__ == '__main__':
             'Programming Language :: Python',
             'Topic :: Scientific/Engineering :: Bio-Informatics',
              ],
-        requires=[
+        install_requires=[
             'numpy(>=1.7)',
             'pandas(>=0.13.1)',
 	          'datacache',
