@@ -2,8 +2,6 @@ from os.path import exists
 
 import pandas as pd
 
-import cython
-
 GTF_COLS = [
     'seqname',
     'source',
