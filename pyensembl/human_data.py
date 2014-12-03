@@ -244,7 +244,7 @@ class EnsemblRelease(object):
 
         return self._df_cache[key]
 
-    def _database_indices(available_columns):
+    def _database_indices(self, available_columns):
         """
         If a release is missing some column we want to index on,
         we have to drop any indices which use that column.
