@@ -1,14 +1,12 @@
 from locus import Locus
 
 class Transcript(Locus):
-    def __init__(
-            self,
-            transcript_id,
-            db):
-        assert isinstance(transcript_id, (unicode, str)), \
-            "Expected transcript ID to be string, got %s : %s" % (
-            transcript_id, type(transcript_id)
-        )
+    def __init__(self, transcript_id, db):
+
+        if not isinstance(transcript_id, (unicode, str)):
+            raise TypeError(
+                "Expected transcript ID to be string, got %s : %s" % (
+                transcript_id, type(transcript_id)))
 
         self.id = transcript_id
         self.db = db
@@ -19,6 +17,7 @@ class Transcript(Locus):
                 gene_name, gene_id
             FROM ensembl
             WHERE transcript_id = ?
+            AND feature='transcript'
         """
         cursor = db.execute(query, [transcript_id])
         result = cursor.fetchone()
@@ -57,12 +56,18 @@ class Transcript(Locus):
     def __repr__(self):
         return str(self)
 
-    """
-    TODO: Implement exon objects and this cached property
     @property
     def exons(self):
         if not hasattr(self, "_exons"):
-            exons = ...
-            self._exons = exons
+            exon_ids_query = """
+                SELECT exon_id
+                FROM ensembl
+                WHERE transcript_id = ?
+                AND feature='exon'
+            """
+            cursor = db.execute(exon_ids_query, [self.id])
+            results = cursor.fetchall()
+            exons = [Exon(result[0], self.db) for result in results]
+            # keep exons in order that they appear
+            self._exons = list(sorted(exons, key=lambda exon: exon.exon_number))
         return self._exons
-    """

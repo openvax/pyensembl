@@ -10,6 +10,7 @@ from os import remove
 import sqlite3
 from types import NoneType
 
+from exon import Exon
 from gene import Gene
 from gtf import load_gtf_as_dataframe
 from locus import normalize_chromosome
@@ -118,7 +119,7 @@ class EnsemblRelease(object):
             logging.info("Deleting cached file %s", path)
             remove(path)
 
-    def clear_cached_data():
+    def clear_cached_data(self):
         self._df_cache = {}
         self._delete_cached_files()
         # TODO: combine caching of parsed CSV files and
@@ -446,6 +447,13 @@ class EnsemblRelease(object):
             for transcript_id in transcript_ids
         ]
 
+    def exons_at_locus(self, contig, position, end=None):
+        exon_ids = self.exon_ids_at_locus(contig, position, end=end)
+        return [
+            self.exon_by_id(exon_id)
+            for exon_id in exon_ids
+        ]
+
     def gene_ids_at_locus(self, contig, position, end=None):
         return self._property_values_at_locus(
             'gene_id', contig, position, end=end)
@@ -761,6 +769,22 @@ class EnsemblRelease(object):
 
     def transcript_ids_of_exon_id(self, exon_id):
         return self._query_transcript_ids('exon_id', exon_id)
+
+    ###################################################
+    #
+    #             Exon Info Objects
+    #
+    ###################################################
+
+    def exon_by_id(self, exon_id):
+        return Exon(exon_id, self.db())
+
+    def exon_by_transcript_and_number(self, transcript_id, exon_number):
+        transcript = self.transcript_by_id(transcript_id)
+        if len(transcript.exons) > exon_number:
+            raise ValueError(
+                "Invalid exon number for transcript %s" % transcript_id)
+        return transcript.exons[exon_number-1]
 
     ###################################################
     #

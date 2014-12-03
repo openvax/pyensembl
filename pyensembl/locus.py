@@ -52,7 +52,17 @@ class Locus(object):
     on a particular chromosome/contig.
     """
 
-    def __init__(self, contig, start, end, strand):
+    def __init__(
+            self,
+            contig,
+            start,
+            end,
+            strand,
+            gene_id=None,
+            gene_name=None,
+            transcript_id=None,
+            transcript_name=None,
+            exon_id=None):
         """
         contig : str
             Chromosome or other sequence name in the reference assembly
@@ -83,11 +93,27 @@ class Locus(object):
 
         self.strand = normalize_strand(strand)
 
+
+    @property
     def on_forward_strand(self):
         return self.strand == "+"
 
+    @property
     def on_backward_strand(self):
         return self.strand == "-"
+
+    @property
+    def length(self):
+        if self.on_forward_strand:
+            return self.end - self.start + 1
+        else:
+            return self.start - self.end + 1
+
+    def position_offset(self, position):
+        if self.on_forward_strand:
+            return position - self.start
+        else:
+            return self.start - position
 
     def on_contig(self, contig):
         return normalize_chromosome(contig) == self.contig

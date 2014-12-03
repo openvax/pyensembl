@@ -49,14 +49,15 @@ class Gene(Locus):
         transcript IDs associated with this gene.
         """
         if not hasattr(self, "_transcripts"):
-            query = """
+            transcript_ids_query = """
                 SELECT transcript_id
                 FROM ensembl
                 WHERE gene_id = ?
                 AND feature = 'transcript'
             """
-            cursor = db.execute(query, [self.id])
+            cursor = db.execute(transcript_ids_query, [self.id])
             results = cursor.fetchall()
+
             # We're doing a SQL query for each transcript ID to fetch
             # its particular information, might be more efficient if we
             # just get all the columns here, but how do we keep that modular?
@@ -70,13 +71,11 @@ class Gene(Locus):
     @property
     def exons(self):
         if not hasattr(self, "_exons"):
-            exons = []
-            exon_id_set = {}
+            exons_dict = {}
             for transcript in self.transcripts:
                 for exon in transcript.exons:
-                    if exon.id not in exon_id_set:
-                        exon_id_set.add(exon.id)
-                        exons.append(exon)
-            self._exons = exons
+                    if exon.id not in exons_dict:
+                        exons_dict[exon.id] = exon
+            self._exons = list(exons.values())
         return self._exons
 
