@@ -99,8 +99,22 @@ class Locus(object):
         return self.strand == "+"
 
     @property
+    def on_positive_strand(self):
+        """
+        Alias for forward strand
+        """
+        return self.on_forward_strand
+
+    @property
     def on_backward_strand(self):
         return self.strand == "-"
+
+    @property
+    def on_negative_strand(self):
+        """
+        Alias for backward strand
+        """
+        return self.on_backward_strand
 
     @property
     def length(self):

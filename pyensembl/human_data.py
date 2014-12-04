@@ -727,6 +727,23 @@ class EnsemblRelease(object):
             for transcript_id in transcript_ids
         ]
 
+    def transcript_by_name(self, transcript_name):
+        """
+        Get the single transcript associated with a particular name,
+        raise an exception if there are zero or multiple transcripts.
+        """
+        transcripts = self.transcripts_by_name(transcript_name)
+
+        if len(transcripts) == 0:
+            raise ValueError(
+                "No transcripts found with name = %s" % transcript_name)
+        elif len(transcripts) > 1:
+            raise ValueError(
+                "Multiple transcripts found with name = %s (IDs = %s)" %(
+                    transcript_name,
+                    [transcript.id for transcript in transcripts]))
+        return transcripts[0]
+
     def transcript_by_protein_id(self, protein_id):
         transcript_id = self.transcript_id_of_protein_id(protein_id)
         return self.transcript_by_id(transcript_id)
@@ -807,7 +824,10 @@ class EnsemblRelease(object):
         if len(transcript.exons) > exon_number:
             raise ValueError(
                 "Invalid exon number for transcript %s" % transcript_id)
-        return transcript.exons[exon_number-1]
+
+        # exon numbers in Ensembl are 1-based, need to subtract 1 to get
+        # a list index
+        return transcript.exons[exon_number - 1]
 
     ###################################################
     #
@@ -884,8 +904,6 @@ class EnsemblRelease(object):
     def stop_codon_of_transcript_name(self, transcript_name):
         return self._query_stop_codon_location(
             'transcript_name', transcript_name)
-
-
 
 
 

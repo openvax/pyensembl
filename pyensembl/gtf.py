@@ -183,8 +183,14 @@ def _dataframe_from_groups(groups, feature, extra_column_names=[]):
         column = groups[column_name].first()
         columns.append(column)
     df = pd.concat(columns, axis=1).reset_index()
+
+    # score seems to be always this value, not sure why it's in the GTFs
     df['score'] = '.'
+
+    # frame values only make sense for CDS entries, but need this column
+    # so we concatenate these rows with the rest of the Ensembl entries
     df['frame'] = '.'
+
     df['feature'] = feature
     return df
 
@@ -227,7 +233,7 @@ def reconstruct_exon_id_column(df, inplace=True):
     if not inplace:
         df = df.copy()
 
-    # missing values indicated by NaN
+    # missing values in dataframes indicated by NaN
     df['exon_id'] = np.nan
 
     # assign exon IDs to any entry with an exon number

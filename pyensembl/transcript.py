@@ -1,4 +1,5 @@
 from locus import Locus
+from exon import Exon
 
 class Transcript(Locus):
     def __init__(self, transcript_id, db):
@@ -20,33 +21,30 @@ class Transcript(Locus):
             AND feature='transcript'
         """
         cursor = db.execute(query, [transcript_id])
+
         result = cursor.fetchone()
         if result is None:
             raise ValueError("Transcript ID not found: %s" % transcript_id)
 
         transcript_name, contig, start, end, strand, gene_name, gene_id = result
 
+        Locus.__init__(self, contig, start, end, strand)
 
         if not transcript_name:
             raise ValueError(
-                "Missing name for transcript with ID = %s" % transcript_name
-            )
-
+                "Missing name for transcript with ID = %s" % transcript_name)
         self.name = transcript_name
 
         if gene_name is None:
             raise ValueError(
-                "Missing gene name for transcript with ID = %s" % transcript_id
-            )
+                "Missing gene name for transcript with ID = %s" % transcript_id)
         self.gene_name = gene_name
 
         if gene_id is None:
             raise ValueError(
-                "Missing gene ID for transcript with ID = %s" % transcript_id
-            )
+                "Missing gene ID for transcript with ID = %s" % transcript_id)
         self.gene_id = gene_id
 
-        Locus.__init__(self, contig, start, end, strand)
 
 
     def __str__(self):
@@ -65,18 +63,31 @@ class Transcript(Locus):
                 WHERE transcript_id = ?
                 AND feature='exon'
             """
-            cursor = db.execute(exon_ids_query, [self.id])
+            cursor = self.db.execute(exon_ids_query, [self.id])
             results = cursor.fetchall()
-             # keep exons in order that they appear in Ensembl
 
+             # fill this list in its correct order (by exon_number) by using
+             # the exon_number as a 1-based list offset
             exons = [None] * len(results)
 
             for entry in results:
                 exon_number, exon_id = entry
+
                 exon = Exon(exon_id, self.db)
-                assert exon_number >= 1
-                assert exon_number <= len(exons)
-                exons[exon_number-1] = exon
+                exon_number = int(exon_number)
+                assert exon_number >= 1, "Invalid exon number: %s" % exon_number
+                assert exon_number <= len(exons), \
+                    "Invalid exon number: %s (max expected = %d)" % (
+                        exon_number, len(exons))
+
+                # exon_number is 1-based, convert to list index by subtracting 1
+                exons[exon_number - 1] = exon
+            assert all(exon is not None for exon in exons), \
+                "Missing exons %s for transcript %s" % (
+                    [i for i, exon in enumerate(exons) if exon is None],
+                    self.transcript_name
+                )
             self._exons = exons
 
         return self._exons
+

@@ -1,7 +1,13 @@
+"""
+Exon IDs of the TP53 gene and one of its transcripts (TP53-026) were copied
+from the Ensembl website, make sure same IDs are found by pyensembl.
+"""
+
 from pyensembl import EnsemblRelease
 
 ensembl = EnsemblRelease(77)
 
+# all exons associated with TP53 gene in Ensembl release 77
 TP53_EXON_IDS_RELEASE_77 = [
     'ENSE00002337729', 'ENSE00002419584',
     'ENSE00003625790', 'ENSE00003518480',
@@ -31,6 +37,10 @@ TP53_EXON_IDS_RELEASE_77 = [
 ]
 
 def test_exon_ids_of_gene_id():
+    """
+    test_exon_ids_of_gene_id: Ensure that gene_id ENSG00000141510 (name=TP53),
+    has all the same exon IDs found on the Ensembl website.
+    """
     exon_ids = ensembl.exon_ids_of_gene_id('ENSG00000141510')
     assert len(exon_ids) == len(TP53_EXON_IDS_RELEASE_77), \
         "Wrong number of exons, expected %d but got %d (n_distinct=%d)" % (
@@ -41,6 +51,10 @@ def test_exon_ids_of_gene_id():
     assert all(exon_id in TP53_EXON_IDS_RELEASE_77 for exon_id in exon_ids)
 
 def test_exon_ids_of_gene_name():
+    """
+    test_exon_ids_of_gene_name: Ensure that TP53 has the same exon IDs found
+    on the Ensembl website.
+    """
     exon_ids = ensembl.exon_ids_of_gene_name("TP53")
     assert len(exon_ids) == len(TP53_EXON_IDS_RELEASE_77), \
         "Wrong number of exons, expected %d but got %d (n_distinct=%d)" % (
@@ -50,6 +64,7 @@ def test_exon_ids_of_gene_name():
         )
     assert all(exon_id in TP53_EXON_IDS_RELEASE_77 for exon_id in exon_ids)
 
+# Exon IDs of transcript TP53-026
 TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77 = [
     'ENSE00002064269',
     'ENSE00003723991',
@@ -62,6 +77,11 @@ TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77 = [
 ]
 
 def test_exon_ids_of_transcript_name():
+    """
+    test_exon_ids_of_transcript_name : Look up exon IDs of transcript TP53-026
+    by name and ensure that the exon IDs match what we find on Ensembl's website
+    for release 77
+    """
     exon_ids = ensembl.exon_ids_of_transcript_name("TP53-026")
     assert len(exon_ids) == len(TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77), \
         "Expected %d exons, got %d"  % (
@@ -74,6 +94,11 @@ def test_exon_ids_of_transcript_name():
     )
 
 def exon_ids_of_transcript_id():
+    """
+    exon_ids_of_transcript_id : Look up exon IDs of transcript
+    ENST00000610623 (name: TP53-026) by its ID and make sure they match
+    what we find on the Ensembl website.
+    """
     exon_ids = ensembl.exon_ids_of_transcript_id("ENST00000610623")
     assert len(exon_ids) == len(TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77), \
         "Expected %d exons, got %d"  % (
