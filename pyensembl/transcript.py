@@ -60,14 +60,23 @@ class Transcript(Locus):
     def exons(self):
         if not hasattr(self, "_exons"):
             exon_ids_query = """
-                SELECT exon_id
+                SELECT exon_number, exon_id
                 FROM ensembl
                 WHERE transcript_id = ?
                 AND feature='exon'
             """
             cursor = db.execute(exon_ids_query, [self.id])
             results = cursor.fetchall()
-            exons = [Exon(result[0], self.db) for result in results]
-            # keep exons in order that they appear
-            self._exons = list(sorted(exons, key=lambda exon: exon.exon_number))
+             # keep exons in order that they appear in Ensembl
+
+            exons = [None] * len(results)
+
+            for entry in results:
+                exon_number, exon_id = entry
+                exon = Exon(exon_id, self.db)
+                assert exon_number >= 1
+                assert exon_number <= len(exons)
+                exons[exon_number-1] = exon
+            self._exons = exons
+
         return self._exons

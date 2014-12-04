@@ -8,7 +8,7 @@ class Exon(Locus):
         if not isinstance(exon_id, (unicode, str)):
             raise TypeError(
                 "Expected exon ID to be string, got %s : %s" % (
-                transcript_id, type(transcript_id)))
+                    exon_id, type(exon_id)))
 
         self.id = exon_id
         self.db = db
@@ -18,12 +18,8 @@ class Exon(Locus):
             'start',
             'end',
             'strand',
-            'frame',
-            'exon_number',
             'gene_name',
             'gene_id',
-            'transcript_name',
-            'transcript_id'
         ]
         columns_str = ", ".join(columns)
 
@@ -41,36 +37,22 @@ class Exon(Locus):
             raise ValueError("Exon ID not found: %s" % exon_id)
 
         result_dict = {}
-        for i, column_name in columns:
+        for i, column_name in enumerate(columns):
             result_dict[column_name] = result[i]
 
-        seqname = result['seqname']
-        start = int(result['start'])
-        end = int(result['end'])
-        strand = result['strand']
+        seqname = result_dict['seqname']
+        start = int(result_dict['start'])
+        end = int(result_dict['end'])
+        strand = result_dict['strand']
 
         Locus.__init__(self, seqname, start, end, strand)
 
-        self.frame = int(result['frame'])
-
-        assert 0 <= self.frame <= 2, "Invalid exon frame: %d" % self.frame
-
-        self.exon_number = int(result['exon_number'])
-        assert self.exon_number >= 0
-
-        self.transcript_id = result['transcript_id']
-        self.transcript_name = result['transcript_name']
-        self.gene_name = result['gene_name']
-        self.gene_id = result['gene_id']
+        self.gene_name = result_dict['gene_name']
+        self.gene_id = result_dict['gene_id']
 
 
     def __str__(self):
-        return "Exon(id=%s, transcript_id=%s, gene=%s, frame=%s, number=%d)" % (
-                    self.id,
-                    self.transcript_id,
-                    self.gene_name,
-                    self.frame,
-                    self.exon_number)
+        return "Exon(exon_id=%s, gene_name=%s)" % (self.id, self.gene_name)
 
     def __repr__(self):
         return str(self)
@@ -79,10 +61,9 @@ class Exon(Locus):
         query = """
             SELECT seqname, start, strand
             WHERE feature=%s
-            AND transcript_id = ?
-            AND exon_number = ?
+            AND exon_id = ?
         """ % (feature,)
-        cursor = db.execute(query, [self.transcript_id, self.exon_number])
+        cursor = db.execute(query, [self.exon_id])
         return cursor.fetchall()
 
 
@@ -119,8 +100,7 @@ class Exon(Locus):
 
         if len(results) == 0:
             raise ValueError(
-                "Exon %d of %s does not contain %s" % (
-                    self.exon_number, self.transcript_name, feature))
+                "Exon %s does not contain feature %s" % (self.id, feature))
 
         # in case there are multiple results, choose the
         # first, which is either a higher or lower position depending
@@ -143,8 +123,7 @@ class Exon(Locus):
         local_position = self.position_offset(earliest_position)
         if local_position < 0:
             raise ValueError(
-                "%s starts before exon %d of %s" % (
-                    feature, self.exon_number, self.transcript_name))
+                "%s starts before exon %s" % (feature, self.exon_id))
         return local_position
 
     @property

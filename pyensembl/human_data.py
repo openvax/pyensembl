@@ -13,7 +13,7 @@ from types import NoneType
 from exon import Exon
 from gene import Gene
 from gtf import load_gtf_as_dataframe
-from locus import normalize_chromosome
+from locus import normalize_chromosome, normalize_strand
 import memory_cache
 from transcript import Transcript
 
@@ -192,7 +192,7 @@ class EnsemblRelease(object):
         return memory_cache.load_csv(
             csv_path, self._load_full_dataframe_from_gtf)
 
-    def dataframe(self, contig=None, feature=None):
+    def dataframe(self, contig=None, feature=None, strand=None):
         """
         Load Ensembl entries as a DataFrame, optionally restricted to
         particular contig or feature type.
@@ -201,17 +201,17 @@ class EnsemblRelease(object):
         if contig:
             contig = normalize_chromosome(contig)
 
-        if not isinstance(contig, (NoneType, str, unicode)):
-            raise TypeError(
-                "Expected contig to be string, got %s : %s" % (
-                    contig, type(contig)))
+
+        if strand:
+            strand = normalize_strand(strand)
+
 
         if not isinstance(feature, (NoneType, str, unicode)):
             raise TypeError(
                     "Expected feature to be string, got %s : %s" % (
                         feature, type(feature)))
 
-        key = (contig, feature)
+        key = (contig, feature, strand)
 
         if key not in self._df_cache:
             csv_path = self.local_csv_path(contig=contig, feature=feature)
@@ -238,6 +238,9 @@ class EnsemblRelease(object):
                         if feature not in features:
                             raise ValueError(
                                 "Feature not found: %s" % (feature,))
+                if strand:
+                    df = df[df.strand == strand]
+
                 return df
 
             self._df_cache[key] = memory_cache.load_csv(
@@ -339,7 +342,8 @@ class EnsemblRelease(object):
             contig,
             start,
             end=None,
-            offset=None):
+            offset=None,
+            strand=None):
         """
         Subset of entries which overlap an inclusive range of loci
         """
@@ -348,13 +352,17 @@ class EnsemblRelease(object):
         elif offset is None:
             end = position + offset - 1
 
-        df_contig = self.dataframe(contig=contig)
+        df_contig = self.dataframe(contig=contig, strand=strand)
 
         assert column_name in df_contig, \
             "Unknown Ensembl property: %s" % column_name
 
         return self._slice_column(
-            df_contig[column_name], df_contig.start, df_contig.end, start, end)
+            df_contig[column_name],
+            df_contig.start,
+            df_contig.end,
+            start,
+            end)
 
     def dataframe_at_locus(self, contig, position, end=None, offset=None):
         """
@@ -381,7 +389,13 @@ class EnsemblRelease(object):
     def _db_column_exists(self, db, column_name):
         return column_name in self._db_columns(db)
 
-    def column_at_locus(self, column_name, contig, position, end=None):
+    def column_at_locus(
+            self,
+            column_name,
+            contig,
+            position,
+            end=None,
+            strand=None):
         """
         Get the non-null values of a column from the database
         at a particular range of loci
@@ -412,71 +426,80 @@ class EnsemblRelease(object):
             raise ValueError("Unknown Ensembl property: %s" % (column_name,))
 
         query = """
-            select %s
-            from ensembl
-            where
-                seqname='%s'
-                and start <= %d
-                and end >= %d
-        """  % (column_name, contig, end, position)
+            SELECT %s
+            FROM ensembl
+            WHERE seqname=?
+            AND start <= ?
+            AND end >= ?
+        """  % (column_name,)
+
+        query_params = [contig, end, position]
+
+        if strand:
+            query += " AND strand = ?"
+            query_params.append(strand)
+
         # self.logger.info("Running query: %s" % query)
-        results = db.execute(query).fetchall()
+        results = db.execute(query, query_params).fetchall()
         # each result is a tuple, so pull out its first element
         return [result[0] for result in results if result[0] is not None]
 
 
-    # TODO: add optional 'strand' parameter
     def _property_values_at_locus(
-            self, property_name, contig, position, end=None):
+            self, property_name, contig, position, end=None, strand=None):
         col = self.column_at_locus(
             property_name,
             contig,
             position,
-            end=end)
+            end=end,
+            strand=strand)
         return list(sorted({c for c in col if c}))
 
-    def genes_at_locus(self, contig, position, end=None):
-        gene_ids = self.gene_ids_at_locus(contig, position, end=end)
+    def genes_at_locus(self, contig, position, end=None, strand=None):
+        gene_ids = self.gene_ids_at_locus(
+            contig, position, end=end, strand=strand)
         return [self.gene_by_id(gene_id) for gene_id in gene_ids]
 
-    def transcripts_at_locus(self, contig, position, end=None):
+    def transcripts_at_locus(self, contig, position, end=None, strand=None):
         transcript_ids = self.transcript_ids_at_locus(
-            contig, position, end=end)
+            contig, position, end=end, strand=strand)
         return [
             self.transcript_by_id(transcript_id)
             for transcript_id in transcript_ids
         ]
 
-    def exons_at_locus(self, contig, position, end=None):
-        exon_ids = self.exon_ids_at_locus(contig, position, end=end)
+    def exons_at_locus(self, contig, position, end=None, strand=None):
+        exon_ids = self.exon_ids_at_locus(
+            contig, position, end=end, strand=strand)
         return [
             self.exon_by_id(exon_id)
             for exon_id in exon_ids
         ]
 
-    def gene_ids_at_locus(self, contig, position, end=None):
+    def gene_ids_at_locus(self, contig, position, end=None, strand=None):
         return self._property_values_at_locus(
-            'gene_id', contig, position, end=end)
+            'gene_id', contig, position, end=end, strand=strand)
 
-    def gene_names_at_locus(self, contig, position, end=None):
+    def gene_names_at_locus(self, contig, position, end=None, strand=None):
         return self._property_values_at_locus(
-             'gene_name', contig, position, end=end)
+             'gene_name', contig, position, end=end, strand=strand)
 
-    def exon_ids_at_locus(self, contig, position, end=None):
+    def exon_ids_at_locus(self, contig, position, end=None, strand=None):
         return self._property_values_at_locus(
-            'exon_id', contig, position, end=end)
+            'exon_id', contig, position, end=end, strand=strand)
 
-    def transcript_ids_at_locus(self, contig, position, end=None):
+    def transcript_ids_at_locus(self, contig, position, end=None, strand=None):
         return self._property_values_at_locus(
-            'transcript_id', contig, position, end=end)
+            'transcript_id', contig, position, end=end, strand=strand)
 
-    def transcript_names_at_locus(self, contig, position, end=None):
+    def transcript_names_at_locus(
+            self, contig, position, end=None, strand=None):
         return self._property_values_at_locus(
-            'transcript_name', contig, position, end=end)
+            'transcript_name', contig, position, end=end, strand=strand)
 
-    def protein_ids_at_locus(self, contig, position, end=None):
+    def protein_ids_at_locus(self, contig, position, end=None, strand=None):
         return self._property_values_at_locus(
-            'protein_id', contig, position, end=end)
+            'protein_id', contig, position, end=end, strand=strand)
 
     def run_sql_query(self, sql, required=False):
         """
