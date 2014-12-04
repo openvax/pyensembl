@@ -34,6 +34,7 @@ Columns of a GTF file:
 
 from os.path import exists
 
+import numpy as np
 import pandas as pd
 
 
@@ -182,9 +183,69 @@ def _dataframe_from_groups(groups, feature, extra_column_names=[]):
         column = groups[column_name].first()
         columns.append(column)
     df = pd.concat(columns, axis=1).reset_index()
+
+    # score seems to be always this value, not sure why it's in the GTFs
     df['score'] = '.'
+
+    # frame values only make sense for CDS entries, but need this column
+    # so we concatenate these rows with the rest of the Ensembl entries
     df['frame'] = '.'
+
     df['feature'] = feature
+    return df
+
+def reconstruct_gene_rows(df):
+    gene_id_groups = df.groupby(['gene_id'])
+    genes_df = _dataframe_from_groups(gene_id_groups, feature='gene')
+    return pd.concat([df, genes_df], ignore_index=True)
+
+def reconstruct_transcript_rows(df):
+    transcript_id_groups = df.groupby(['transcript_id'])
+    transcripts_df = _dataframe_from_groups(
+        transcript_id_groups,
+        feature='transcript',
+        extra_column_names=['transcript_name']
+    )
+    return pd.concat([df, transcripts_df], ignore_index=True)
+
+def reconstruct_exon_id_column(df, inplace=True):
+    """
+    Construct missing exon_id column for older GTFs by concatenating
+    transcript_id and exon_number
+
+        e.g. ENST00000400674.exon2
+
+    While not useful for joining against external data, these exon_ids are
+    needed for methods like ensembl_release.exon_ids_at_location.
+
+    Parameters
+    ----------
+
+    df : DataFrame
+        Must have columns 'transcript_id' and 'exon_number'
+
+    """
+
+    assert 'exon_id' not in df
+    assert 'transcript_id' in df
+    assert 'exon_number' in df
+
+    if not inplace:
+        df = df.copy()
+
+    # missing values in dataframes indicated by NaN
+    df['exon_id'] = np.nan
+
+    # assign exon IDs to any entry with an exon number
+    # this includes features = {'exon', 'CDS', 'start_codon', 'stop_codon'}
+    exon_id_mask = ~df.exon_number.isnull()
+
+    transcript_ids = df['transcript_id'][exon_id_mask]
+
+    # convert floating value to ints (to get rid of decimal) and then str
+    exon_numbers = df['exon_number'][exon_id_mask].astype(int).astype(str)
+
+    df['exon_id'][exon_id_mask] = transcript_ids + '.exon' + exon_numbers
     return df
 
 def load_gtf_as_dataframe(filename):
@@ -234,18 +295,14 @@ def load_gtf_as_dataframe(filename):
 
     if 'gene' not in distinct_features:
         print "Creating entries for feature='gene'"
-        gene_id_groups = df.groupby(['gene_id'])
-        genes_df = _dataframe_from_groups(gene_id_groups, feature='gene')
-        df = pd.concat([df, genes_df], ignore_index=True)
+        df = reconstruct_gene_rows(df)
 
     if 'transcript' not in distinct_features:
         print "Creating entries for feature='transcript'"
-        transcript_id_groups = df.groupby(['transcript_id'])
-        transcripts_df = _dataframe_from_groups(
-            transcript_id_groups,
-            feature='transcript',
-            extra_column_names=['transcript_name']
-        )
-        df = pd.concat([df, transcripts_df], ignore_index=True)
+        df = reconstruct_transcript_rows(df)
+
+    if 'exon_id' not in df:
+        print "Creating 'exon_id' column"
+        df = reconstruct_exon_id_column(df)
 
     return df

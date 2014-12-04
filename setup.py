@@ -34,6 +34,7 @@ if __name__ == '__main__':
         version="0.4.0",
         description="Python interface to ensembl reference genome metadata",
       	author="Alex Rubinsteyn",
+        author_email="alex {dot} rubinsteyn {at} mssm {dot} edu",
       	url="https://github.com/hammerlab/ensembl",
         license="http://www.apache.org/licenses/LICENSE-2.0.html",
         classifiers=[
