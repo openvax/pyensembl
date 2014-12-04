@@ -77,22 +77,22 @@ class Locus(object):
             Should we read the locus forwards ('+') or backwards ('-')?
         """
         self.contig = normalize_chromosome(contig)
-
-        self.start = int(start)
-        self.end = int(end)
-
-        if self.start == 0:
-            raise ValueError("Expected start > 0 (using base 1 coordinates)")
-        elif self.end == 0:
-            raise ValueError("Expected end > 0 (using base 1 coordinates)")
-        elif self.end < self.start:
-            raise ValueError(
-                "Expected start <= end, got start = %d, end = %d" % (
-                    self.start, self.end)
-            )
-
         self.strand = normalize_strand(strand)
 
+        start = int(start)
+        end = int(end)
+
+        if start == 0:
+            raise ValueError("Expected start > 0 (using base 1 coordinates)")
+        elif end == 0:
+            raise ValueError("Expected end > 0 (using base 1 coordinates)")
+
+        if end < start:
+            raise ValueError(
+                "Expected start <= end, got start = %d, end = %d" % (
+                    start, end))
+        self.start = start
+        self.end = end
 
     @property
     def on_forward_strand(self):
@@ -118,16 +118,13 @@ class Locus(object):
 
     @property
     def length(self):
-        if self.on_forward_strand:
-            return self.end - self.start + 1
-        else:
-            return self.start - self.end + 1
+        return self.end - self.start + 1
 
     def position_offset(self, position):
         if self.on_forward_strand:
             return position - self.start
         else:
-            return self.start - position
+            return self.end - position
 
     def on_contig(self, contig):
         return normalize_chromosome(contig) == self.contig

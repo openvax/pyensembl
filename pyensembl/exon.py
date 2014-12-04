@@ -24,7 +24,7 @@ class Exon(Locus):
         columns_str = ", ".join(columns)
 
         query = """
-            SELECT %s
+            SELECT DISTINCT %s
             FROM ensembl
             WHERE exon_id = ?
             AND feature='exon'
@@ -38,7 +38,9 @@ class Exon(Locus):
         if len(results) == 0:
             raise ValueError("Exon ID not found: %s" % exon_id)
 
-        assert len(results) == 1
+        assert len(results) == 1, \
+            "Found multiple entries with exon_id=%s (%s)" % (exon_id, results)
+
         result = results[0]
 
         result_dict = {}
@@ -57,7 +59,8 @@ class Exon(Locus):
 
 
     def __str__(self):
-        return "Exon(exon_id=%s, gene_name=%s)" % (self.id, self.gene_name)
+        return "Exon(exon_id=%s, gene_name=%s, contig=%s, start=%d, end=%s)" % (
+            self.id, self.gene_name, self.contig, self.start, self.end)
 
     def __repr__(self):
         return str(self)
@@ -65,23 +68,36 @@ class Exon(Locus):
     # possible annotations associated with exons
     _EXON_FEATURES = {'start_codon', 'stop_codon', 'UTR', 'CDS'}
 
-    def _query_exon_feature_locations(self, feature, required=False):
+    def _query_exon_feature_positions(self, feature, required=False):
+        """
+        Find features such as start codons which overlap with this exon.
+        """
+
         if feature not in self._EXON_FEATURES:
             raise ValueError("Invalid exon feature: %s" % feature)
 
         query = """
-            SELECT seqname, start, end, strand
+            SELECT start, end
             FROM ensembl
-            WHERE feature= ?
-            AND exon_id = ?
+            WHERE feature = ?
+            AND seqname = ?
+            AND strand = ?
+            AND start <= ?
+            AND end >= ?
         """
-        cursor = self.db.execute(query, [feature, self.id])
+        query_params = [
+            feature,
+            self.contig,
+            self.strand,
+            self.end,
+            self.start
+        ]
+        cursor = self.db.execute(query, query_params)
         results = cursor.fetchall()
         if required and len(results) == 0:
             raise ValueError(
                 "Exon %s does not contain feature %s" % (self.id, feature))
         return results
-
 
     @property
     def contains_start_codon(self):
@@ -89,7 +105,7 @@ class Exon(Locus):
         Does this exon contain a start codon?
         """
         if not hasattr(self, "_contains_start_codon"):
-            results = self._query_exon_feature_locations('start_codon')
+            results = self._query_exon_feature_positions('start_codon')
             self._contains_start_codon = len(results) > 0
         return self._contains_start_codon
 
@@ -99,7 +115,7 @@ class Exon(Locus):
         Does this exon contain a stop codon ?
         """
         if not hasattr(self, "_contains_stop_codon"):
-            results = self._query_exon_feature_locations('stop_codon')
+            results = self._query_exon_feature_positions('stop_codon')
             self._contains_stop_codon = len(results) > 0
         return self._contains_stop_codon
 
@@ -110,7 +126,7 @@ class Exon(Locus):
         coordinates relative to the start of this exon.
         """
 
-        results = self._query_exon_feature_locations(feature)
+        results = self._query_exon_feature_positions(feature, required=True)
 
         # in case there are multiple results, choose the
         # first, which is either a higher or lower position depending
@@ -119,16 +135,13 @@ class Exon(Locus):
         # position is "first" on the strand.
         positions = []
         for entry in results:
-            seqname, start, end, strand = entry
-            assert seqname == self.contig, \
-                "Wrong contig for exon: %s (should be %s)" % (
-                    seqname, self.contig)
-            assert strand in ("+", "-"), "Invalid strand: %s" % strand
-            assert strand == self.strand, \
-                "Wrong strand on %s, expected %s but got %s" % (
-                    feature, self.strand, strand)
-            assert isinstance(position, (int,long)), \
-                "Invalid type %s for position %s" % (type(position), position)
+            start, end = entry
+            assert isinstance(start, (int,long)), \
+                "Invalid type %s for start position %s" % (
+                    type(position), position)
+            assert isinstance(end, (int,long)), \
+                "Invalid type %s for end position %s" % (
+                    type(position), position)
             positions.append(start)
             positions.append(end)
 
@@ -137,7 +150,7 @@ class Exon(Locus):
         else:
             first_position = max(positions)
 
-        local_position = self.position_offset(earliest_position)
+        local_position = self.position_offset(first_position)
 
         if local_position < 0:
             raise ValueError(

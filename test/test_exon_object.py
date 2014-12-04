@@ -21,8 +21,8 @@ def test_exon_object_by_id():
     assert exon.strand == "+"
     assert exon.on_forward_strand
     assert exon.on_positive_strand
-    assert exon.start ==  41224526
-    assert exon.end == 41224753
+    assert exon.start ==  41224526, "Unexpected exon start: %s" % exon.start
+    assert exon.end == 41224753, "Unexpected exon end: %s" % exon.end
     assert exon.length ==  228
 
 def test_exon_object_by_id_on_negative_strand():
@@ -36,8 +36,8 @@ def test_exon_object_by_id_on_negative_strand():
     assert exon.strand == "-"
     assert exon.on_backward_strand
     assert exon.on_negative_strand
-    assert exon.start ==  71618517
-    assert exon.end == 71618438
+    assert exon.start ==  71618438, "Unexpected exon start: %s" % exon.start
+    assert exon.end == 71618517, "Unexpected exon end: %s" % exon.end
     assert exon.length ==  80
 
 
@@ -53,8 +53,8 @@ def test_exon_object_at_locus():
         assert exon.strand == "+"
         assert exon.on_forward_strand
         assert exon.on_positive_strand
-        assert exon.start <=  41224526
-        assert exon.end >= 41224526
+        assert exon.start <=  41224526, "Unexpected exon start: %s" % exon.start
+        assert exon.end >= 41224526, "Unexpected exon end: %s" % exon.end
 
 def test_exon_object_at_locus_on_negative_strand():
     """
@@ -68,8 +68,8 @@ def test_exon_object_at_locus_on_negative_strand():
         assert exon.strand == "-"
         assert exon.on_backward_strand
         assert exon.on_negative_strand
-        assert exon.start <=  71618517
-        assert exon.end >= 71618517
+        assert exon.start <=  71618517, "Unexpected exon start: %s" % exon.start
+        assert exon.end >= 71618517, "Unexpected exon end: %s" % exon.end
 
 
 def test_contains_start_codon():
@@ -78,6 +78,8 @@ def test_contains_start_codon():
     a start codon.
     """
     transcript = ensembl77.transcript_by_name("CXCR3-002")
+    print transcript
+    print transcript.exons
     exon = transcript.exons[0]
     assert exon.contains_start_codon
 
@@ -91,23 +93,25 @@ def test_contains_stop_codon():
 
 def test_start_codon_offset():
     """
-    Ensure that start codon in exon #1 of CXCR3-002 is 68 nucleotides from the
-    start of the exon.
+    test_start_codon_offset : Ensure that start codon in exon #1 of CXCR3-002
+    is 68 nucleotides from the start of the exon.
     """
     transcript = ensembl77.transcript_by_name("CXCR3-002")
-    exon = transcript.exons[1]
+    exon = transcript.exons[0]
     offset = exon.start_codon_offset
     assert offset == 68, \
         "Expected stop codon 68nt from start of exon #1, got %s" % (offset,)
 
 def test_stop_codon_offset():
     """
-    Ensure that stop codon in exon #2 of CXCR-002 is 1098 nucleotides from the
-    start of the exon.
+    test_stop_codon_offset : Ensure that stop codon in exon #2 of CXCR-002
+    is 1098 nucleotides from the start of the exon.
     """
     transcript = ensembl77.transcript_by_name("CXCR3-002")
+    print transcript
+    print transcript.exons
     exon = transcript.exons[1]
     offset = exon.stop_codon_offset
-    assert offset == 1098, \
-        "Expected stop codon 1098nt from start of exon #2, got %s" % (offset,)
+    assert offset == 1092, \
+        "Expected stop codon 1092nt from start of exon #2, got %s" % (offset,)
 
