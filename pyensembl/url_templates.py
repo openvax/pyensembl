@@ -74,6 +74,3 @@ def fasta_url(ensembl_release, species, contig, sequence_type="dna"):
         "contig" : contig
     }
     return join(sequence_subdir, filename)
-
-
-    }
