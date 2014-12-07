@@ -35,7 +35,7 @@ for i in xrange(76,78):
     _human_references[i] = 'GRCh38'
 
 def which_human_reference(release):
-    release = _check_release(release)
+    release = check_release_number(release)
     if release not in _human_references:
         raise ValueError(
             "No reference found for release %d" % release)

@@ -78,8 +78,6 @@ def test_contains_start_codon():
     a start codon.
     """
     transcript = ensembl77.transcript_by_name("CXCR3-002")
-    print transcript
-    print transcript.exons
     exon = transcript.exons[0]
     assert exon.contains_start_codon
 
@@ -98,20 +96,27 @@ def test_start_codon_offset():
     """
     transcript = ensembl77.transcript_by_name("CXCR3-002")
     exon = transcript.exons[0]
-    offset = exon.start_codon_offset
+    start_offsets = exon.start_codon_offsets
+    assert len(start_offsets) == 1, \
+        "First exon of CXCR3-002 should only overlap one start codon"
+    offset = start_offsets[0]
     assert offset == 68, \
         "Expected stop codon 68nt from start of exon #1, got %s" % (offset,)
 
 def test_stop_codon_offset():
     """
-    test_stop_codon_offset : Ensure that stop codon in exon #2 of CXCR-002
-    is 1098 nucleotides from the start of the exon.
+    test_stop_codon_offset : Ensure that the only stop codon
+    overlapping exon #2 of CXCR-002 is 1092 nucleotides
+    from the start of the exon.
     """
     transcript = ensembl77.transcript_by_name("CXCR3-002")
-    print transcript
-    print transcript.exons
     exon = transcript.exons[1]
-    offset = exon.stop_codon_offset
+    stop_offsets = exon.stop_codon_offsets
+    assert len(stop_offsets) == 1, \
+        "Last exon of CXCR3-002 should only overlap one stop codon, got: %s" % (
+        stop_offsets)
+
+    offset = stop_offsets[0]
     assert offset == 1092, \
         "Expected stop codon 1092nt from start of exon #2, got %s" % (offset,)
 

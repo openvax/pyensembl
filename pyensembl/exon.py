@@ -65,113 +65,101 @@ class Exon(Locus):
     def __repr__(self):
         return str(self)
 
+
+
     # possible annotations associated with exons
     _EXON_FEATURES = {'start_codon', 'stop_codon', 'UTR', 'CDS'}
 
-    def _query_exon_feature_positions(self, feature, required=False):
+    def _exon_feature_positions(self, feature):
         """
-        Find features such as start codons which overlap with this exon.
+        Find start and end positions of features (such as start codons)
+        which are contained within this exon.
         """
-
         if feature not in self._EXON_FEATURES:
             raise ValueError("Invalid exon feature: %s" % feature)
 
         query = """
-            SELECT start, end
+            SELECT DISTINCT start, end
             FROM ensembl
             WHERE feature = ?
             AND seqname = ?
             AND strand = ?
-            AND start <= ?
-            AND end >= ?
+            AND start >= ?
+            AND end <= ?
         """
         query_params = [
             feature,
             self.contig,
             self.strand,
+            self.start,
             self.end,
-            self.start
         ]
         cursor = self.db.execute(query, query_params)
-        results = cursor.fetchall()
-        if required and len(results) == 0:
-            raise ValueError(
-                "Exon %s does not contain feature %s" % (self.id, feature))
-        return results
-
-    @property
-    def contains_start_codon(self):
-        """
-        Does this exon contain a start codon?
-        """
-        if not hasattr(self, "_contains_start_codon"):
-            results = self._query_exon_feature_positions('start_codon')
-            self._contains_start_codon = len(results) > 0
-        return self._contains_start_codon
-
-    @property
-    def contains_stop_codon(self):
-        """
-        Does this exon contain a stop codon ?
-        """
-        if not hasattr(self, "_contains_stop_codon"):
-            results = self._query_exon_feature_positions('stop_codon')
-            self._contains_stop_codon = len(results) > 0
-        return self._contains_stop_codon
+        return cursor.fetchall()
 
 
-    def _feature_offset(self, feature):
+    def _exon_feature_offsets(self, feature):
         """
-        Return the position of feature (e.g. start_codon) in
-        coordinates relative to the start of this exon.
+        Start and end offsets (relative to this exon) of features such as
+        start_codon and stop_codon.
         """
+        # start and positions on the chromosome
+        absolute_positions = self._exon_feature_positions(feature)
 
-        results = self._query_exon_feature_positions(feature, required=True)
-
-        # in case there are multiple results, choose the
-        # first, which is either a higher or lower position depending
-        # on the strand. Since start/end ignore the strand (start always
-        # less than end), we need to look at both to determine which
-        # position is "first" on the strand.
-        positions = []
-        for entry in results:
-            start, end = entry
+        results = []
+        for start, end in absolute_positions:
             assert isinstance(start, (int,long)), \
                 "Invalid type %s for start position %s" % (
                     type(position), position)
             assert isinstance(end, (int,long)), \
                 "Invalid type %s for end position %s" % (
                     type(position), position)
-            positions.append(start)
-            positions.append(end)
 
-        if self.on_forward_strand:
-            first_position = min(positions)
-        else:
-            first_position = max(positions)
-
-        local_position = self.position_offset(first_position)
-
-        if local_position < 0:
-            raise ValueError(
-                "%s starts before exon %s" % (feature, self.id))
-
-        return local_position
+            if self.on_forward_strand:
+                first_position = min(start, end)
+                assert first_position >= self.start, \
+                    "%s starts before exon %s (%d < %d)" % (
+                        feature, self.id, first_position, self.start)
+                local_position = first_position - self.start
+            else:
+                first_position = max(start, end)
+                assert first_position <= self.end, \
+                    "%s starts before exon %s on negative strand (%d > %d)" % (
+                        feature, self.id, first_position, self.end)
+                local_position = self.end - first_position
+            results.append(local_position)
+        return results
 
     @property
-    def start_codon_offset(self):
+    def start_codon_offsets(self):
         """
         How many bases from the beginning of the exon (starting from 0)
         is the first base of the start codon?
         """
-        return self._feature_offset('start_codon')
+        return self._exon_feature_offsets('start_codon')
 
 
     @property
-    def stop_codon_offset(self):
+    def stop_codon_offsets(self):
         """
         How many bases from the beginning of the exon (starting from 0)
         is the first base of the stop codon?
         """
-        return self._feature_offset("stop_codon")
+        return self._exon_feature_offsets("stop_codon")
+
+
+    @property
+    def contains_start_codon(self):
+        """
+        Does this exon contain a start codon in any transcript?
+        """
+        return len(self.start_codon_offsets) > 0
+
+    @property
+    def contains_stop_codon(self):
+        """
+        Does this exon contain a stop codon in any transcript?
+        """
+        return len(self.stop_codon_offsets) > 0
+
 

@@ -91,3 +91,82 @@ class Transcript(Locus):
 
         return self._exons
 
+
+    # possible annotations associated with transcripts
+    _TRANSCRIPT_FEATURES = {'start_codon', 'stop_codon', 'UTR', 'CDS'}
+
+    def _transcript_feature_positions(self, feature, required=True):
+        """
+        Find features (such as start codon) of this transcript.
+        """
+
+        if feature not in self._TRANSCRIPT_FEATURES:
+            raise ValueError("Invalid transcript feature: %s" % feature)
+
+        query = """
+            SELECT DISTINCT start, end
+            FROM ensembl
+            WHERE feature = ?
+            AND transcript_id = ?
+        """
+        query_params = [
+            feature,
+            self.id
+        ]
+        cursor = self.db.execute(query, query_params)
+        results = cursor.fetchall()
+        if required and len(results) == 0:
+            raise ValueError(
+                "Transcript %s does not contain feature %s" % (
+                    self.id, feature))
+        return results
+
+    def _transcript_feature_positions(self, feature):
+        """
+        Get unique start and end positions for feature,
+        raise an error if feature is absent or has multiple entries
+        for this transcript.
+        """
+        results = self._transcript_feature_positions(feature, required=True)
+        if len(results) > 1:
+            raise ValueError(
+                "Expected %s to be unique for %s but got %d entries" % (
+                    feature, self.id, len(results)))
+        return results[0]
+
+
+    @property
+    def start_codon_locus(self):
+        return Locus(self.contig, start, end, self.strand)
+
+    @property
+    def start_codon_offset(self):
+
+        results = self._query_transcript_feature_positions(
+            feature, required=True)
+
+
+    def stop_codon_offset(self):
+        pass
+
+    @property
+    def coding_sequence_length(self):
+        pass
+
+    @property
+    def contains_start_codon(self):
+        pass
+
+    @property
+    def contains_stop_codon(self):
+        pass
+
+    @property
+    def complete(self):
+        """
+        Consider a transcript complete if it has start and stop codons and
+        a coding sequence whose length is divisible by 3
+        """
+        return self.contains_start_codon and self.contains_stop_codon
+
+

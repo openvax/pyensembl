@@ -15,7 +15,7 @@ from gene import Gene
 from gtf import load_gtf_as_dataframe
 from locus import normalize_chromosome, normalize_strand
 import memory_cache
-from release_info import which_human_reference, check_release_version
+from release_info import which_human_reference, check_release_number
 from transcript import Transcript
 
 
@@ -32,7 +32,7 @@ CACHE_SUBDIR = "ensembl"
 class EnsemblRelease(object):
 
     def __init__(self, release, lazy_loading=True):
-        self.release = check_release_version(release)
+        self.release = check_release_number(release)
         self.gtf_url_dir = URL_DIR_TEMPLATE % self.release
         self.reference_name =  which_human_reference(self.release)
         self.gtf_filename = FILENAME_TEMPLATE  % (
@@ -104,7 +104,7 @@ class EnsemblRelease(object):
     def local_gtf_dir(self):
         return split(self.local_gtf_path())[0]
 
-    def local_csv_path(self, contig=None, feature=None):
+    def local_csv_path(self, contig=None, feature=None, column=None):
         """
         Path to CSV which the annotation data with expanded columns
         for optional attributes.
@@ -116,6 +116,9 @@ class EnsemblRelease(object):
 
         feature : str, optional
             Path for subset of data restrict to given feature
+
+        column : str, optional
+            Restrict to single column
         """
         base = self.base_gtf_filename()
         dirpath = self.local_gtf_dir()
@@ -125,6 +128,8 @@ class EnsemblRelease(object):
             csv_filename += ".contig.%s" % (contig,)
         if feature:
             csv_filename += ".feature.%s" % (feature,)
+        if column:
+            csv_filename += ".column.%s" % (column,)
         csv_filename += ".csv"
         return join(dirpath, csv_filename)
 
@@ -276,6 +281,7 @@ class EnsemblRelease(object):
                 return db
         return self._create_database()
 
+    @property
     def db(self):
         """
         Return the sqlite3 database for this Ensembl release
@@ -380,9 +386,7 @@ class EnsemblRelease(object):
             raise TypeError(
                 "Expected end to be integer, got %s : %s" % (end, type(end)))
 
-        db = self.db()
-
-        if not self._db_column_exists(db, column_name):
+        if not self._db_column_exists(self.db, column_name):
             raise ValueError("Unknown Ensembl property: %s" % (column_name,))
 
         query = """
@@ -399,8 +403,7 @@ class EnsemblRelease(object):
             query += " AND strand = ?"
             query_params.append(strand)
 
-        # self.logger.info("Running query: %s" % query)
-        results = db.execute(query, query_params).fetchall()
+        results = self.db.execute(query, query_params).fetchall()
         # each result is a tuple, so pull out its first element
         return [result[0] for result in results if result[0] is not None]
 
@@ -461,13 +464,12 @@ class EnsemblRelease(object):
         return self._property_values_at_locus(
             'protein_id', contig, position, end=end, strand=strand)
 
-    def run_sql_query(self, sql, required=False):
+    def run_sql_query(self, sql, required=False, query_params=[]):
         """
         Given an arbitrary SQL query, run it against the Ensembl database
         and return the results.
         """
-        db = self.db()
-        cursor = db.execute(sql)
+        cursor = self.db.execute(sql, query_params)
         results = cursor.fetchall()
         if required and len(results) == 0:
             raise ValueError(
@@ -487,29 +489,75 @@ class EnsemblRelease(object):
         filtered both by the feature type and a user-provided column/value.
         """
         query = """
-            select %s%s
-            from ensembl
-            where
-                %s = '%s' and
-                feature='%s'
+            SELECT %s%s
+            FROM ensembl
+            WHERE %s = ?
+            AND feature= ?
         """ % ("distinct " if distinct else "",
                ", ".join(select_column_names),
-               filter_column,
-               filter_value,
-               feature)
-        return self.run_sql_query(query, required=required)
+               filter_column)
+        query_params = [filter_value, feature]
+        return self.run_sql_query(
+            query, required=required, query_params=query_params)
 
-    def _query_feature(self, column, feature, distinct=True):
+    def _query_feature_values(
+            self,
+            column,
+            feature,
+            distinct=True,
+            contig=None):
         """
         Run a SQL query against the ensembl sqlite3 database, filtered
         only on the feature type.
         """
-        query = "select %s%s from ensembl where feature='%s'" % (
-               "distinct " if distinct else "",
-               column,
-               feature
-        )
-        return self.run_sql_query(query)
+        query = """
+            SELECT %s%s
+            FROM ensembl
+            WHERE feature=?
+        """ % ("DISTINCT " if distinct else "", column)
+        query_params = [feature]
+
+        if contig:
+            contig = normalize_chromosome(contig)
+            query += " AND seqname = ?"
+            query_params.append(contig)
+
+        rows = self.run_sql_query(query, query_params = query_params)
+        return [row[0] for row in rows if row is not None]
+
+    def _all_feature_values(self, column, feature, distinct=True, contig=None):
+        """
+        Cached lookup of all values for a particular feature property
+
+        Parameters
+        ----------
+
+        column : str
+            Name of property (e.g. exon_id)
+
+        feature : str
+            Type of entry (e.g. exon)
+
+        distinct : bool, optional
+            Keep only unique values
+
+        contig : str, optional
+            Restrict query to particular contig
+
+        Returns a single column Pandas DataFrame constructed from query results.
+        """
+        csv_path = self.local_csv_path(
+            feature=feature,
+            column=column,
+            contig=contig)
+        def run_query():
+            values = self._query_feature_values(
+                column=column,
+                feature=feature,
+                distinct=distinct,
+                contig=contig)
+            return pd.DataFrame({column : values})
+        return memory_cache.load_csv(csv_path, expensive_action=run_query)
 
     def _query_distinct_on_contig(self, column_name, feature, contig):
         contig = normalize_chromosome(contig)
@@ -578,7 +626,7 @@ class EnsemblRelease(object):
     ###################################################
 
     def gene_by_id(self, gene_id):
-        return Gene(gene_id, self.db())
+        return Gene(gene_id, self.db)
 
     def genes_by_name(self, gene_name):
         gene_ids = self.gene_ids_of_gene_name(gene_name)
@@ -605,7 +653,7 @@ class EnsemblRelease(object):
         return str(results[0][0])
 
     def gene_names(self):
-        return self._query_feature('gene_name', 'gene')
+        return self._all_feature_values('gene_name', 'gene')
 
     def gene_names_on_contig(self, contig):
         """
@@ -637,7 +685,7 @@ class EnsemblRelease(object):
     ###################################################
 
     def gene_ids(self):
-        return self._query_feature('gene_id', 'gene')
+        return self._all_feature_values('gene_id', 'gene')
 
     def gene_ids_on_contig(self, contig):
         """
@@ -677,8 +725,22 @@ class EnsemblRelease(object):
     #
     ###################################################
 
+    def transcripts(self, contig=None):
+        """
+        Construct Transcript object for every transcript entry in
+        the Ensembl database. Optionally restrict to a particular
+        chromosome using the `contig` argument.
+        """
+        # DataFrame with single column 'transcript_id'
+        transcript_ids_df = self.transcript_ids(contig=contig)
+        db = self.db
+        return [
+            Transcript(transcript_id, db)
+            for transcript_id in transcript_ids_df['transcript_id']
+        ]
+
     def transcript_by_id(self, transcript_id):
-        return Transcript(transcript_id, self.db())
+        return Transcript(transcript_id, self.db)
 
     def transcripts_by_name(self, transcript_name):
         transcript_ids = self.transcript_ids_of_transcript_name(transcript_name)
@@ -724,8 +786,11 @@ class EnsemblRelease(object):
             required=True)
         return [result[0] for result in results]
 
-    def transcript_names(self):
-        return self._query_feature('transcript_name', 'transcript')
+    def transcript_names(self, contig=None):
+        return self._all_feature_values(
+            column='transcript_name',
+            feature='transcript',
+            contig=contig)
 
     def transcript_names_on_contig(self, contig):
         """
@@ -736,11 +801,18 @@ class EnsemblRelease(object):
             feature='transcript',
             contig=contig)
 
-    def transcript_name_of_gene_name(self, gene_name):
-        return _query_transcript_names('gene_name', gene_name)[0]
+    def transcript_names_of_gene_name(self, gene_name):
+        return self._query_transcript_names('gene_name', gene_name)
 
     def transcript_name_of_transcript_id(self, transcript_id):
-        return _query_transcript_names('transcript_id', transcript_id)[0]
+        transcript_names = self._query_transcript_names(
+            'transcript_id', transcript_id)
+        if len(transcript_names) == 0:
+            raise ValueError(
+                "No transcript names for transcript ID = %s" % transcript_id)
+        assert len(transcript_names) == 1, \
+            "Multiple transcript names for transcript ID = %s" % transcript_id
+        return transcript_names[0]
 
     ###################################################
     #
@@ -757,6 +829,12 @@ class EnsemblRelease(object):
             distinct=True,
             required=True)
         return [result[0] for result in results]
+
+    def transcript_ids(self, contig=None):
+        return self._all_feature_values(
+            column='transcript_id',
+            feature='transcript',
+            contig=contig)
 
     def transcript_ids_of_gene_id(self, gene_id):
         return self._query_transcript_ids('gene_id', gene_id)
@@ -776,10 +854,20 @@ class EnsemblRelease(object):
     #
     ###################################################
 
-    def exon_by_id(self, exon_id):
-        return Exon(exon_id, self.db())
+    def exons(self, contig=None):
+        """
+        Create exon object for all exons in the database, optionally
+        restrict to a particular chromosome using the `contig` argument.
+        """
+        # DataFrame with single column called 'exon_id'
+        exon_ids_df = self.exon_ids(contig=contig)
+        db = self.db
+        return [Exon(exon_id, db) for exon_id in exon_ids_df['exon_id']]
 
-    def exon_by_transcript_and_number(self, transcript_id, exon_number):
+    def exon_by_id(self, exon_id):
+        return Exon(exon_id, self.db)
+
+    def exon_by_transcript_id_and_number(self, transcript_id, exon_number):
         transcript = self.transcript_by_id(transcript_id)
         if len(transcript.exons) > exon_number:
             raise ValueError(
@@ -805,8 +893,11 @@ class EnsemblRelease(object):
             required=True)
         return [result[0] for result in results]
 
-    def exon_ids(self):
-        return self._query_feature('exon_id', 'exon')
+    def exon_ids(self, contig=None):
+        return self._all_feature_values(
+            column='exon_id',
+            feature='exon',
+            contig=contig)
 
     def exon_ids_of_gene_id(self, gene_id):
         return self._query_exon_ids('gene_id', gene_id)
