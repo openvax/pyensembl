@@ -97,6 +97,9 @@ class Exon(Locus):
         cursor = self.db.execute(query, query_params)
         return cursor.fetchall()
 
+    def first_offset(self, start, end):
+        relative_start, relative_end = self.range_offset(start, end)
+        return min(relative_start, relative_end)
 
     def _exon_feature_offsets(self, feature):
         """
@@ -115,18 +118,7 @@ class Exon(Locus):
                 "Invalid type %s for end position %s" % (
                     type(position), position)
 
-            if self.on_forward_strand:
-                first_position = min(start, end)
-                assert first_position >= self.start, \
-                    "%s starts before exon %s (%d < %d)" % (
-                        feature, self.id, first_position, self.start)
-                local_position = first_position - self.start
-            else:
-                first_position = max(start, end)
-                assert first_position <= self.end, \
-                    "%s starts before exon %s on negative strand (%d > %d)" % (
-                        feature, self.id, first_position, self.end)
-                local_position = self.end - first_position
+            local_position = self.first_offset(start, end)
             results.append(local_position)
         return results
 

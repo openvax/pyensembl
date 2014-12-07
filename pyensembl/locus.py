@@ -94,43 +94,72 @@ class Locus(object):
         self.start = start
         self.end = end
 
-    @property
-    def on_forward_strand(self):
-        return self.strand == "+"
+    def __str__(self):
+        return "Locus(contig=%s, start=%s, end=%s, strand=%s)" % (
+            self.contig, self.start, self.end, self.strand)
 
-    @property
-    def on_positive_strand(self):
-        """
-        Alias for forward strand
-        """
-        return self.on_forward_strand
-
-    @property
-    def on_backward_strand(self):
-        return self.strand == "-"
-
-    @property
-    def on_negative_strand(self):
-        """
-        Alias for backward strand
-        """
-        return self.on_backward_strand
+    def __repr__(self):
+        return str(self)
 
     @property
     def length(self):
         return self.end - self.start + 1
 
     def position_offset(self, position):
-        if self.on_forward_strand:
+        if position > self.end or position < self.start:
+            raise ValueError(
+                "Position %d outside valid range %d..%d of %s" % (
+                    position, self.start, self.end, self))
+        elif self.on_forward_strand:
             return position - self.start
         else:
             return self.end - position
+
+    def range_offset(self, start, end):
+        """
+        Database start/end entries are always ordered such that
+        start < end. This makes computing a relative position (e.g. of a stop
+        codon relative to its transcript) complicated since the "end"
+        position of a backwards locus is actually earlir on the strand.
+        This function correctly selects a start vs. end value depending
+        on this locuses's strand and determines that position's offset from
+        the earliest position in this locus.
+        """
+        assert start <= end, \
+            "Locations should always have start < end, got start=%d, end=%d" % (
+                start, end)
+
+        if start < self.start or end > self.end:
+            raise ValueError("Range (%d, %d) falls outside %s" % (
+                start, end, self))
+
+        if self.on_forward_strand:
+            return (start - self.start, end - self.start)
+
+        else:
+            return (self.end - end, self.end - start)
 
     def on_contig(self, contig):
         return normalize_chromosome(contig) == self.contig
 
     def on_strand(self, strand):
         return normalize_strand(strand) == self.strand
+
+    @property
+    def on_forward_strand(self):
+        return self.on_strand("+")
+
+    @property
+    def on_positive_strand(self):
+        return self.on_forward_strand
+
+    @property
+    def on_backward_strand(self):
+        return self.on_strand("-")
+
+    @property
+    def on_negative_strand(self):
+        return self.on_backward_strand
 
     def can_overlap(self, contig, strand=None):
         """

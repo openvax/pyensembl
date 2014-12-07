@@ -95,9 +95,10 @@ class Transcript(Locus):
     # possible annotations associated with transcripts
     _TRANSCRIPT_FEATURES = {'start_codon', 'stop_codon', 'UTR', 'CDS'}
 
-    def _transcript_feature_positions(self, feature, required=True):
+    def _transcript_feature_ranges(self, feature, required=True):
         """
-        Find features (such as start codon) of this transcript.
+        Find start/end range of features (such as start codon)
+        for this transcript.
         """
 
         if feature not in self._TRANSCRIPT_FEATURES:
@@ -121,33 +122,50 @@ class Transcript(Locus):
                     self.id, feature))
         return results
 
-    def _transcript_feature_positions(self, feature):
+    def _transcript_feature_range(self, feature):
         """
         Get unique start and end positions for feature,
         raise an error if feature is absent or has multiple entries
         for this transcript.
         """
-        results = self._transcript_feature_positions(feature, required=True)
-        if len(results) > 1:
+        ranges = self._transcript_feature_ranges(feature, required=True)
+        if len(ranges) > 1:
             raise ValueError(
                 "Expected %s to be unique for %s but got %d entries" % (
-                    feature, self.id, len(results)))
-        return results[0]
-
-
-    @property
-    def start_codon_locus(self):
-        return Locus(self.contig, start, end, self.strand)
+                    feature, self.id, len(ranges)))
+        return ranges[0]
 
     @property
-    def start_codon_offset(self):
+    def contains_start_codon(self):
+        start_codons = _transcript_feature_ranges('start_codon')
+        return len(start_codons) > 0
 
-        results = self._query_transcript_feature_positions(
-            feature, required=True)
+    @property
+    def contains_stop_codon(self):
+        stop_codons = _transcript_feature_ranges('stop_codon')
+        return len(stop_codons) > 0
 
+    @property
+    def start_codon_range(self):
+        return self._transcript_feature_range('start_codon')
 
-    def stop_codon_offset(self):
-        pass
+    @property
+    def stop_codon_range(self):
+        return self._transcript_feature_range('stop_codon')
+
+    @property
+    def start_codon_range_offset(self):
+        start, end = self.start_codon_range
+        return self.range_offset(start, end)
+
+    @property
+    def stop_codon_range_offset(self):
+        start, end = self.stop_codon_range
+        return self.range_offset(start, end)
+
+    @property
+    def coding_sequence_ranges(self):
+        return self._transcript_feature_ranges("CDS")
 
     @property
     def coding_sequence_length(self):

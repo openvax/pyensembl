@@ -101,3 +101,65 @@ def test_locus_contains():
     # wrong strand
     assert not locus.contains("1", 10, 20, "-")
 
+def test_position_offset():
+    forward_locus = Locus("1", 10, 20, "+")
+    assert forward_locus.position_offset(10) == 0
+    assert forward_locus.position_offset(15) == 5
+    assert forward_locus.position_offset(19) == 9
+    assert forward_locus.position_offset(20) == 10
+
+    negative_locus = Locus("1", 10, 20, "-")
+    assert negative_locus.position_offset(10) == 10
+    assert negative_locus.position_offset(15) == 5
+    assert negative_locus.position_offset(19) == 1
+    assert negative_locus.position_offset(20) == 0
+
+    # don't allow negative offsets
+    with assert_raises(ValueError):
+        forward_locus.position_offset(9)
+
+    # don't allow negative offsets
+    with assert_raises(ValueError):
+        negative_locus.position_offset(9)
+
+    # don't allow offset past the end of the locus
+    with assert_raises(ValueError):
+        forward_locus.position_offset(21)
+
+    # don't allow offset past the end of the locus
+    with assert_raises(ValueError):
+        negative_locus.position_offset(21)
+
+
+def test_range_offset():
+    forward_locus = Locus("1", 10, 20, "+")
+    assert forward_locus.range_offset(10, 20) == (0, 10)
+    assert forward_locus.range_offset(11, 14) == (1, 4)
+    assert forward_locus.range_offset(20, 20) == (10, 10)
+
+    negative_locus = Locus("1", 10, 20, "-")
+    assert negative_locus.range_offset(10, 20) == (0, 10)
+    assert negative_locus.range_offset(11, 14) == (6, 9)
+    assert negative_locus.range_offset(20, 20) == (0, 0)
+
+    # start shouldn't be larger than end
+    with assert_raises(AssertionError):
+        forward_locus.range_offset(21, 20)
+
+    # start shouldn't be larger than end
+    with assert_raises(AssertionError):
+        negative_locus.range_offset(21, 20)
+
+    # don't allow negative offsets
+    with assert_raises(ValueError):
+        forward_locus.range_offset(9, 10)
+
+    # don't allow negative offsets
+    with assert_raises(ValueError):
+        forward_locus.range_offset(9, 10)
+
+    # don't allow negative offsets
+    with assert_raises(ValueError):
+        negative_locus.range_offset(9, 10)
+
+
