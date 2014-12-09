@@ -8,15 +8,16 @@ import logging
 from os.path import join, exists, split
 from os import remove
 import sqlite3
-from types import NoneType
 
+from common import CACHE_SUBDIR
 from exon import Exon
 from gene import Gene
-from gtf import load_gtf_as_dataframe
+from gtf import GTF
 from locus import normalize_chromosome, normalize_strand
-import memory_cache
-from release_info import which_human_reference, check_release_number
+from reference_transcripts import ReferenceTranscripts
+from release_info import check_release_number
 from transcript import Transcript
+from url_templates import gtf_url, fasta_cdna_url, ENSEMBL_FTP_SERVER
 
 
 import datacache
@@ -24,26 +25,16 @@ import numpy as np
 import pandas as pd
 
 
-# directory which contains GTF files, missing the release number
-URL_DIR_TEMPLATE = 'ftp://ftp.ensembl.org/pub/release-%d/gtf/homo_sapiens/'
-FILENAME_TEMPLATE = "Homo_sapiens.%s.%d.gtf.gz"
-CACHE_SUBDIR = "ensembl"
-
 class EnsemblRelease(object):
 
-    def __init__(self, release, lazy_loading=True):
+    def __init__(self, release, lazy_loading=True, server=ENSEMBL_FTP_SERVER):
+        self.cache = datacache.Cache(CACHE_SUBDIR)
         self.release = check_release_number(release)
-        self.gtf_url_dir = URL_DIR_TEMPLATE % self.release
-        self.reference_name =  which_human_reference(self.release)
-        self.gtf_filename = FILENAME_TEMPLATE  % (
-            self.reference_name, self.release
-        )
-        self.gtf_url = join(self.gtf_url_dir, self.gtf_filename)
-        self._local_gtf_path = None
-
-        # lazily load DataFrame of all GTF entries if necessary
-        # for database construction
-        self._df_cache = {}
+        self.species = "homo_sapiens"
+        self.server = server
+        self.gtf = GTF(self.release, self.species, server)
+        self.reference = ReferenceTranscripts(
+            self.release, self.species, server)
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
@@ -55,163 +46,37 @@ class EnsemblRelease(object):
             self._db = self._connect_or_create_database()
 
     def __str__(self):
-        return "EnsemblRelease(release=%d, gtf_url='%s')" % (
-            self.release, self.gtf_url)
+        return "EnsemblRelease(release=%d, gtf_url='%s', fasta_url='%s')" % (
+            self.release, self.gtf.url, self.reference.url)
 
     def __repr__(self):
         return str(self)
 
-    def base_gtf_filename(self):
-        """
-        Trim extensions such as ".gtf" or ".gtf.gz",
-        leaving only the base filename which should be used
-        to construct other derived filenames for cached data.
-        """
-        assert ".gtf" in self.gtf_filename, \
-            "GTF filename must contain .gtf extension: %s" % self.gtf_filename
-        parts = self.gtf_filename.split(".gtf")
-        return parts[0]
-
     def _delete_cached_files(self):
-        base = self.base_gtf_filename()
+        """
+        Any files which start with the same name as our GTF file
+        is assumed to be some view of the this release's data and thus
+        safe to delete.
+        """
+        base = self.gtf.base_filename()
         dirpath = self.local_gtf_dir()
         for path in glob(join(dirpath, base + "*")):
             logging.info("Deleting cached file %s", path)
             remove(path)
 
-    def clear_cached_data(self):
-        self._df_cache = {}
+    def clear_cache(self):
+        self.gtf.clear_cache()
+        self.reference.clear_cache()
         self._delete_cached_files()
-        # TODO: combine caching of parsed CSV files and
-        # caching of partial reads from the database
-        memory_cache.clear_cached_objects()
-
-
-    def local_gtf_path(self):
-        """
-        Returns local path to GTF file for given release of Ensembl,
-        download from the Ensembl FTP server if not already cached.
-        """
-        if self._local_gtf_path is None:
-            self._local_gtf_path = datacache.fetch_file(
-                self.gtf_url,
-                filename=self.gtf_filename,
-                decompress=False,
-                subdir=CACHE_SUBDIR)
-        assert self._local_gtf_path is not None
-        return self._local_gtf_path
-
-    def local_gtf_dir(self):
-        return split(self.local_gtf_path())[0]
-
-    def local_csv_path(self, contig=None, feature=None, column=None):
-        """
-        Path to CSV which the annotation data with expanded columns
-        for optional attributes.
-
-        Parameters:
-
-        contig : str, optional
-            Path for subset of data restricted to given contig
-
-        feature : str, optional
-            Path for subset of data restrict to given feature
-
-        column : str, optional
-            Restrict to single column
-        """
-        base = self.base_gtf_filename()
-        dirpath = self.local_gtf_dir()
-        csv_filename = base + ".expanded"
-        if contig:
-            contig = normalize_chromosome(contig)
-            csv_filename += ".contig.%s" % (contig,)
-        if feature:
-            csv_filename += ".feature.%s" % (feature,)
-        if column:
-            csv_filename += ".column.%s" % (column,)
-        csv_filename += ".csv"
-        return join(dirpath, csv_filename)
 
     def local_db_filename(self):
-        base = self.base_gtf_filename()
+        base = self.gtf.base_filename()
         return base + ".db"
 
     def local_db_path(self):
-        dirpath = self.local_gtf_dir()
+        dirpath = self.gtf.local_dir()
         filename = self.local_db_filename()
         return join(dirpath, filename)
-
-    def _load_full_dataframe_from_gtf(self):
-        """
-        Parse this release's GTF file and load it as a Pandas DataFrame
-        """
-        path = self.local_gtf_path()
-        return load_gtf_as_dataframe(path)
-
-    def _load_full_dataframe(self):
-        """
-        Loads full dataframe from cached CSV or constructs it from GTF
-        """
-        csv_path = self.local_csv_path()
-        return memory_cache.load_csv(
-            csv_path, self._load_full_dataframe_from_gtf)
-
-    def dataframe(self, contig=None, feature=None, strand=None):
-        """
-        Load Ensembl entries as a DataFrame, optionally restricted to
-        particular contig or feature type.
-        """
-
-        if contig:
-            contig = normalize_chromosome(contig)
-
-
-        if strand:
-            strand = normalize_strand(strand)
-
-
-        if not isinstance(feature, (NoneType, str, unicode)):
-            raise TypeError(
-                    "Expected feature to be string, got %s : %s" % (
-                        feature, type(feature)))
-
-        key = (contig, feature, strand)
-
-        if key not in self._df_cache:
-            csv_path = self.local_csv_path(contig=contig, feature=feature)
-
-            def local_loader_fn():
-                full_df = self._load_full_dataframe()
-                assert len(full_df) > 0, \
-                    "Dataframe representation of Ensembl database empty!"
-
-                # rename since we're going to be filtering the entries but
-                # may still want to access the full dataset
-                df = full_df
-                if contig:
-                    df = df[df.seqname == contig]
-                    if len(df) == 0:
-                        raise ValueError("Contig not found: %s" % (contig,))
-
-                if feature:
-                    df = df[df.feature == feature]
-                    if len(df) == 0:
-                        # check to make sure feature was somewhere in
-                        # the full dataset before returning an empty dataframe
-                        features = full_df.feature.unique()
-                        if feature not in features:
-                            raise ValueError(
-                                "Feature not found: %s" % (feature,))
-                if strand:
-                    df = df[df.strand == strand]
-
-                return df
-
-            self._df_cache[key] = memory_cache.load_csv(
-                csv_path, local_loader_fn)
-
-        return self._df_cache[key]
 
     def _database_indices(self, available_columns):
         """
@@ -254,7 +119,7 @@ class EnsemblRelease(object):
     def _create_database(self):
         print "Creating database: %s" % self.local_db_path()
         filename = self.local_db_filename()
-        df = self.dataframe()
+        df = self.gtf.dataframe()
 
         available_columns = set(df.columns)
         indices = self._database_indices(available_columns)
@@ -302,51 +167,7 @@ class EnsemblRelease(object):
         # find genes whose start/end boundaries overlap with the position
         return values[overlap_start & overlap_end]
 
-    def dataframe_column_at_locus(
-            self,
-            column_name,
-            contig,
-            start,
-            end=None,
-            offset=None,
-            strand=None):
-        """
-        Subset of entries which overlap an inclusive range of loci
-        """
-        if end is None and offset is None:
-            end = position
-        elif offset is None:
-            end = position + offset - 1
 
-        df_contig = self.dataframe(contig=contig, strand=strand)
-
-        assert column_name in df_contig, \
-            "Unknown Ensembl property: %s" % column_name
-
-        return self._slice_column(
-            df_contig[column_name],
-            df_contig.start,
-            df_contig.end,
-            start,
-            end)
-
-    def dataframe_at_locus(self, contig, position, end=None, offset=None):
-        """
-        Subset of entries which overlap an inclusive range of
-        chromosomal positions
-        """
-        if end is None and offset is None:
-            end = position
-        elif offset is None:
-            end = position + offset - 1
-
-        df_contig = self.dataframe(contig=contig)
-
-        # find genes whose start/end boundaries overlap with the position
-        overlap_start = df_contig.start <= end
-        overlap_end = df_contig.end >= position
-        overlap = overlap_start & overlap_end
-        return df_contig[overlap]
 
     def _db_columns(self, db):
         table_info = db.execute("PRAGMA table_info(ensembl);").fetchall()
@@ -955,6 +776,7 @@ class EnsemblRelease(object):
     def stop_codon_of_transcript_name(self, transcript_name):
         return self._query_stop_codon_location(
             'transcript_name', transcript_name)
+
 
 
 

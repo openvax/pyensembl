@@ -92,7 +92,7 @@ _latin_to_common_names = {
 }
 
 _common_to_latin_name = {}
-for (latin_name, common_names) in _common_names.iteritems():
+for (latin_name, common_names) in _latin_to_common_names.iteritems():
     for common_name in common_names:
         assert common_name not in _common_to_latin_name, \
             "Common name %s (for %s) appears twice" % (common_name, latin_name)
@@ -108,7 +108,7 @@ def normalize_species_name(name):
     # if species name was "homo sapiens" then replace spaces with underscores
     # and return "homo_sapiens"
     if " " in name:
-        no_spaces = name.replace(" ", "_"):
+        no_spaces = name.replace(" ", "_")
         if no_spaces in _latin_to_common_names:
             return no_spaces
 

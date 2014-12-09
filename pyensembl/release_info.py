@@ -34,7 +34,7 @@ for i in xrange(55,76):
 for i in xrange(76,78):
     _human_references[i] = 'GRCh38'
 
-def which_human_reference(release):
+def which_human_reference_name(release):
     release = check_release_number(release)
     if release not in _human_references:
         raise ValueError(
