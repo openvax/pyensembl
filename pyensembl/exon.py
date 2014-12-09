@@ -1,7 +1,5 @@
 from locus import Locus
 
-import numpy as np
-
 class Exon(Locus):
     def __init__(self, exon_id, db):
 
@@ -138,10 +136,10 @@ class Exon(Locus):
             start, end = entry
             assert isinstance(start, (int,long)), \
                 "Invalid type %s for start position %s" % (
-                    type(position), position)
+                    type(start), start)
             assert isinstance(end, (int,long)), \
                 "Invalid type %s for end position %s" % (
-                    type(position), position)
+                    type(end), end)
             positions.append(start)
             positions.append(end)
 
