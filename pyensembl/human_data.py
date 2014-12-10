@@ -176,17 +176,23 @@ class EnsemblRelease(object):
     def _db_column_exists(self, db, column_name):
         return column_name in self._db_columns(db)
 
-    def column_at_locus(
+    def column_values_at_locus(
             self,
             column_name,
+            feature,
             contig,
             position,
             end=None,
-            strand=None):
+            strand=None,
+            distinct=False,
+            sorted=False):
         """
         Get the non-null values of a column from the database
         at a particular range of loci
         """
+
+        # TODO: combine with the query method, since they overlap
+        # significantly
 
         if not isinstance(column_name, (str, unicode)):
             raise TypeError(
@@ -210,34 +216,79 @@ class EnsemblRelease(object):
         if not self._db_column_exists(self.db, column_name):
             raise ValueError("Unknown Ensembl property: %s" % (column_name,))
 
+        if distinct:
+            distinct_string = "DISTINCT "
+        else:
+            distinct_string = ""
+
         query = """
-            SELECT %s
+            SELECT %s%s
             FROM ensembl
-            WHERE seqname=?
+            WHERE feature = ?
+            AND seqname=?
             AND start <= ?
             AND end >= ?
-        """  % (column_name,)
 
-        query_params = [contig, end, position]
+        """  % (distinct_string, column_name,)
+
+        query_params = [feature, contig, end, position]
 
         if strand:
             query += " AND strand = ?"
             query_params.append(strand)
 
-        results = self.db.execute(query, query_params).fetchall()
+        tuples = self.db.execute(query, query_params).fetchall()
         # each result is a tuple, so pull out its first element
-        return [result[0] for result in results if result[0] is not None]
+        results = [t[0] for t in tuples if t[0] is not None]
+        if sorted:
+            results.sort()
+        return results
 
 
-    def _property_values_at_locus(
-            self, property_name, contig, position, end=None, strand=None):
-        col = self.column_at_locus(
-            property_name,
+    def distinct_column_values_at_locus(
+            self,
+            column,
+            feature,
+            contig,
+            position,
+            end=None,
+            strand=None):
+        """
+        Gather all the distinct values for a property/column at some specified
+        locus.
+
+        Parameters
+        ----------
+        column : str
+            Which property are we getting the values of.
+
+        feature : str
+            Which type of entry (e.g. transcript, exon, gene) is the property
+            associated with?
+
+        contig : str
+            Chromosome or unplaced contig name
+
+        position : int
+            Chromosomal position
+
+        end : int, optional
+            End position of a range, if unspecified assume we're only looking
+            at the single given position.
+
+        strand : str, optional
+            Either the positive ('+') or negative strand ('-'). If unspecified
+            then check for values on either strand.
+        """
+        return self.column_values_at_locus(
+            column,
+            feature,
             contig,
             position,
             end=end,
-            strand=strand)
-        return list(sorted({c for c in col if c}))
+            strand=strand,
+            distinct=True,
+            sorted=True)
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
         gene_ids = self.gene_ids_at_locus(
@@ -261,29 +312,59 @@ class EnsemblRelease(object):
         ]
 
     def gene_ids_at_locus(self, contig, position, end=None, strand=None):
-        return self._property_values_at_locus(
-            'gene_id', contig, position, end=end, strand=strand)
+        return self.distinct_column_values_at_locus(
+            column='gene_id',
+            feature='gene',
+            contig=contig,
+            position=position,
+            end=end,
+            strand=strand)
 
     def gene_names_at_locus(self, contig, position, end=None, strand=None):
-        return self._property_values_at_locus(
-             'gene_name', contig, position, end=end, strand=strand)
+        return self.distinct_column_values_at_locus(
+             column='gene_name',
+             feature='gene',
+             contig=contig,
+             position=position,
+             end=end,
+             strand=strand)
 
     def exon_ids_at_locus(self, contig, position, end=None, strand=None):
-        return self._property_values_at_locus(
-            'exon_id', contig, position, end=end, strand=strand)
+        return self.distinct_column_values_at_locus(
+            column='exon_id',
+            feature='exon',
+            contig=contig,
+            position=position,
+            end=end,
+            strand=strand)
 
     def transcript_ids_at_locus(self, contig, position, end=None, strand=None):
-        return self._property_values_at_locus(
-            'transcript_id', contig, position, end=end, strand=strand)
+        return self.distinct_column_values_at_locus(
+            column='transcript_id',
+            feature='transcript',
+            contig=contig,
+            position=position,
+            end=end,
+            strand=strand)
 
     def transcript_names_at_locus(
             self, contig, position, end=None, strand=None):
-        return self._property_values_at_locus(
-            'transcript_name', contig, position, end=end, strand=strand)
+        return self.distinct_column_values_at_locus(
+            column='transcript_name',
+            feature='transcript',
+            contig=contig,
+            position=position,
+            end=end,
+            strand=strand)
 
     def protein_ids_at_locus(self, contig, position, end=None, strand=None):
-        return self._property_values_at_locus(
-            'protein_id', contig, position, end=end, strand=strand)
+        return self.distinct_column_values_at_locus(
+            column='protein_id',
+            feature='transcript',
+            contig=contig,
+            position=position,
+            end=end,
+            strand=strand)
 
     def run_sql_query(self, sql, required=False, query_params=[]):
         """
