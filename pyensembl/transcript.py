@@ -165,19 +165,29 @@ class Transcript(Locus):
 
     @property
     def coding_sequence_ranges(self):
+        """
+        Return absolute chromosome position ranges for CDS fragments
+        of this transcript
+        """
         return self._transcript_feature_ranges("CDS")
 
     @property
+    def coding_sequence_range_offsets(self):
+        """
+        Return offsets from start of this transcript for CDS fragments
+        """
+        ranges = self._transcript_feature_ranges("CDS")
+        return [self.range_offset(r) for r in ranges]
+
+    @property
     def coding_sequence_length(self):
-        pass
-
-    @property
-    def contains_start_codon(self):
-        pass
-
-    @property
-    def contains_stop_codon(self):
-        pass
+        total = 0
+        for (start, stop) in self.coding_sequence_range_offsets:
+            assert start <= stop, \
+                "Invalid offset range [%d..%d] for transcript %s" % (
+                    start, stop, self.id)
+            total += stop - start + 1
+        return total
 
     @property
     def complete(self):
@@ -185,6 +195,10 @@ class Transcript(Locus):
         Consider a transcript complete if it has start and stop codons and
         a coding sequence whose length is divisible by 3
         """
-        return self.contains_start_codon and self.contains_stop_codon
+        return (
+            self.contains_start_codon and
+            self.contains_stop_codon and
+            self.coding_sequence_length % 3 == 0
+        )
 
 
