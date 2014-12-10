@@ -50,6 +50,7 @@ if __name__ == '__main__':
             'numpy>=1.7',
             'pandas>=0.13.1',
             'datacache>=0.4.2',
+	    'pyfaidx',
         ],
         long_description=readme,
         packages=['pyensembl'],

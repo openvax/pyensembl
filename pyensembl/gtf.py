@@ -56,7 +56,6 @@ class GTF(object):
         parts = self.filename.split(".gtf")
         return parts[0]
 
-
     def local_gtf_path(self):
         """
         Returns local path to GTF file for given release of Ensembl,

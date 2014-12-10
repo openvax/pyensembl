@@ -23,6 +23,7 @@ SPECIES_SUBDIR_TEMPLATE = "/pub/release-%(release)d/%(filetype)s/%(species)s/"
 def _species_subdir(
         ensembl_release,
         species='homo_sapiens',
+        filetype="gtf",
         server=ENSEMBL_FTP_SERVER):
     """
     Assume ensembl_release has already been normalize by calling function
@@ -30,7 +31,7 @@ def _species_subdir(
     """
     return SPECIES_SUBDIR_TEMPLATE % {
         'release' : ensembl_release,
-        'filetype' : 'gtf',
+        'filetype' : filetype,
         'species' : species,
     }
 
@@ -70,6 +71,7 @@ def gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
     subdir = _species_subdir(
         ensembl_release,
         species=species,
+        filetype="gtf",
         server=server)
 
     url_subdir = _join_url_subdir(server, subdir)
@@ -83,7 +85,7 @@ def gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
 
 # DNA fasta file example: Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz
 FASTA_DNA_CHROMOSOME_FILENAME_TEMPLATE = \
-    "%(Species)s.%(reference)s.%(sequence_type)s.chromosome.%(contig)s.fa.gz"
+    "%(Species)s.%(reference)s.%(release)d.%(sequence_type)s.chromosome.%(contig)s.fa.gz"
 
 def fasta_dna_url(
         ensembl_release,
@@ -96,13 +98,18 @@ def fasta_dna_url(
     """
     ensembl_release, species, reference_name = _normalize_release_properties(
         ensembl_release, species)
-    subdir = _species_subdir(ensembl_release, species, server=server)
+    subdir = _species_subdir(
+        ensembl_release,
+        species=species,
+        filetype="fasta",
+        server=server,)
     server_subdir = _join_url_subdir(server, subdir)
 
     server_sequence_subdir = join(server_subdir, 'dna')
     filename = FASTA_DNA_CHROMOSOME_FILENAME_TEMPLATE % {
         "Species" : species.capitalize(),
         "reference" : reference_name,
+        "release" : ensembl_release,
         "sequence_type" : "dna",
         "contig" : contig
     }
@@ -111,7 +118,7 @@ def fasta_dna_url(
 
 # DNA fasta file example: Homo_sapiens.NCBI36.54.cdna.all.fa.gz
 FASTA_CDNA_FILENAME_TEMPLATE = \
-    "%(Species)s.%(reference)s.%(sequence_type)s.all.fa.gz"
+    "%(Species)s.%(reference)s.%(release)d.%(sequence_type)s.all.fa.gz"
 
 def fasta_cdna_url(
         ensembl_release,
@@ -123,12 +130,18 @@ def fasta_cdna_url(
     """
     ensembl_release, species, reference_name = _normalize_release_properties(
         ensembl_release, species)
-    subdir = _species_subdir(ensembl_release, species, server=server)
+    subdir = _species_subdir(
+        ensembl_release,
+        species=species,
+        filetype="fasta",
+        server=server)
+
     server_subdir = _join_url_subdir(server, subdir)
     server_sequence_subdir = join(server_subdir, 'cdna')
     filename = FASTA_CDNA_FILENAME_TEMPLATE % {
         "Species" : species.capitalize(),
         "reference" : reference_name,
-        "sequence_type" : "dna",
+        "release" : ensembl_release,
+        "sequence_type" : "cdna",
     }
     return server_sequence_subdir, filename
