@@ -55,7 +55,7 @@ class Gene(Locus):
                 WHERE gene_id = ?
                 AND feature = 'transcript'
             """
-            cursor = db.execute(transcript_ids_query, [self.id])
+            cursor = self.db.execute(transcript_ids_query, [self.id])
             results = cursor.fetchall()
 
             # We're doing a SQL query for each transcript ID to fetch
@@ -76,6 +76,6 @@ class Gene(Locus):
                 for exon in transcript.exons:
                     if exon.id not in exons_dict:
                         exons_dict[exon.id] = exon
-            self._exons = list(exons.values())
+            self._exons = list(exons_dict.values())
         return self._exons
 
