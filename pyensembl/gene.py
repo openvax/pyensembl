@@ -12,17 +12,26 @@ class Gene(Locus):
 
         self.id = gene_id
         self.db = db
-        query = """
-            SELECT gene_name, seqname, start, end, strand, gene_biotype
-            FROM ensembl
-            WHERE gene_id = ?
-            AND feature = 'gene'
-        """
-        cursor = db.execute(query, [gene_id])
-        result = cursor.fetchone()
-        if not result:
-            raise ValueError("Gene ID not found: %s" % gene_id)
+        columns = [
+            'gene_name',
+            'seqname',
+            'start',
+            'end',
+            'strand',
+            'gene_biotype'
+        ]
+        results = self.db.query(
+            columns,
+            filter_column='gene_id',
+            filter_value=gene_id,
+            feature='gene')
 
+        if len(results) == 0:
+            raise ValueError("Gene ID not found: %s" % gene_id)
+        elif len(results) > 1:
+            raise ValueError("Too many genes found for ID: %s" % gene_id)
+
+        result = results[0]
         gene_name, contig, start, end, strand, biotype = result
         if not gene_name:
             raise ValueError("Missing name for gene with ID = %s" % gene_id)
