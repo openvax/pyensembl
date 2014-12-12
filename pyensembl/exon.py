@@ -1,7 +1,5 @@
 from locus import Locus
 
-import numpy as np
-
 class Exon(Locus):
     def __init__(self, exon_id, db):
 

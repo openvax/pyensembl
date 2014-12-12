@@ -31,7 +31,7 @@ from setuptools import setup
 if __name__ == '__main__':
     setup(
         name='pyensembl',
-        version="0.4.0",
+        version="0.5.0",
         description="Python interface to ensembl reference genome metadata",
       	author="Alex Rubinsteyn",
         author_email="alex {dot} rubinsteyn {at} mssm {dot} edu",
