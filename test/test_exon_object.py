@@ -105,7 +105,7 @@ def test_partial_start_codons():
     for offset in exon.start_codon_offsets:
         assert offset >= 0, \
             "Invalid negative offset for start codon: %d" % offset
-        assert offset == 0, \
+        assert offset != 0, \
             "Partially overlapping start codon should not be included"
 
 def test_start_codon_offset():
