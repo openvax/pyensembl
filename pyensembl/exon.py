@@ -78,6 +78,9 @@ class Exon(Locus):
         if feature not in self._EXON_FEATURES:
             raise ValueError("Invalid exon feature: %s" % feature)
 
+        # query for distinct ranges since, for example, multiple transcripts
+        # often have the same start codon. Each transcript's start codon has
+        # its own feature='start_codon' entry
         query = """
             SELECT DISTINCT start, end
             FROM ensembl
@@ -95,7 +98,17 @@ class Exon(Locus):
             self.end,
         ]
         cursor = self.db.execute(query, query_params)
-        return cursor.fetchall()
+        results = cursor.fetchall()
+
+        # check to make sure we only got back integer values
+        for (start, end) in results:
+            assert isinstance(start, (int,long)), \
+                "Invalid type %s for start position %s" % (
+                    type(position), position)
+            assert isinstance(end, (int,long)), \
+                "Invalid type %s for end position %s" % (
+                    type(position), position)
+        return results
 
     def first_offset(self, start, end):
         relative_start, relative_end = self.range_offset(start, end)
@@ -106,18 +119,10 @@ class Exon(Locus):
         Start and end offsets (relative to this exon) of features such as
         start_codon and stop_codon.
         """
-        # start and positions on the chromosome
+        # start and end positions on the chromosome
         absolute_positions = self._exon_feature_positions(feature)
-
         results = []
         for start, end in absolute_positions:
-            assert isinstance(start, (int,long)), \
-                "Invalid type %s for start position %s" % (
-                    type(position), position)
-            assert isinstance(end, (int,long)), \
-                "Invalid type %s for end position %s" % (
-                    type(position), position)
-
             local_position = self.first_offset(start, end)
             results.append(local_position)
         return results
@@ -137,7 +142,7 @@ class Exon(Locus):
         How many bases from the beginning of the exon (starting from 0)
         is the first base of the stop codon?
         """
-        return self._exon_feature_offsets("stop_codon")
+        return self._exon_feature_offsets('stop_codon')
 
 
     @property

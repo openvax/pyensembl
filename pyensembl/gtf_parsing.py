@@ -100,7 +100,7 @@ def _attribute_dictionaries(df):
     Given a DataFrame with attributes in semi-colon
     separated string, split them apart into per-entry dictionaries
     """
-    # this crazy tripe-nested comprehensions
+    # this crazy triply-nested comprehensions
     # is unfortunately the best way to parse
     # ~2 million attribute strings while still using
     # vaguely Pythonic code

@@ -53,8 +53,7 @@ class GTF(object):
         """
         assert ".gtf" in self.filename, \
             "GTF filename must contain .gtf extension: %s" % self.filename
-        parts = self.filename.split(".gtf")
-        return parts[0]
+        return self.filename.split(".gtf")[0]
 
     def local_gtf_path(self):
         """
@@ -94,6 +93,7 @@ class GTF(object):
             csv_filename += ".column.%s" % (column,)
         csv_filename += ".csv"
         return join(dirpath, csv_filename)
+
     def _load_full_dataframe(self):
         """
         Loads full dataframe from cached CSV or constructs it from GTF
@@ -115,14 +115,11 @@ class GTF(object):
         Load Ensembl entries as a DataFrame, optionally restricted to
         particular contig or feature type.
         """
-
         if contig:
             contig = normalize_chromosome(contig)
 
-
         if strand:
             strand = normalize_strand(strand)
-
 
         if not isinstance(feature, (NoneType, str, unicode)):
             raise TypeError(

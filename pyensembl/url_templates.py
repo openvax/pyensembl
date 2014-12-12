@@ -8,6 +8,7 @@ For example, the human chromosomal DNA sequences for release 77 are in:
 
 """
 from os.path import join
+from urlparse import urljoin
 
 from species import normalize_species_name
 from release_info import which_human_reference_name, check_release_number
@@ -47,17 +48,6 @@ def _normalize_release_properties(ensembl_release, species):
     reference_name = which_human_reference_name(ensembl_release)
     return ensembl_release, species, reference_name
 
-def _join_url_subdir(server, subdir):
-    """
-    Wrote this helper since os.path.join
-    doesn't work for "ftp://ftp.ensembl.org" + "/subdir",
-    """
-    assert not server.endswith("/")
-    if subdir.startswith("/"):
-        return server + subdir
-    else:
-        return server + "/" + subdir
-
 # GTF annotation file example: Homo_sapiens.GTCh38.gtf.gz
 GTF_FILENAME_TEMPLATE = "%(Species)s.%(reference)s.%(release)d.gtf.gz"
 
@@ -74,7 +64,7 @@ def gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
         filetype="gtf",
         server=server)
 
-    url_subdir = _join_url_subdir(server, subdir)
+    url_subdir = urljoin(server, subdir)
 
     filename = GTF_FILENAME_TEMPLATE % {
         'Species' : species.capitalize(),
@@ -103,7 +93,7 @@ def fasta_dna_url(
         species=species,
         filetype="fasta",
         server=server,)
-    server_subdir = _join_url_subdir(server, subdir)
+    server_subdir = urljoin(server, subdir)
 
     server_sequence_subdir = join(server_subdir, 'dna')
     filename = FASTA_DNA_CHROMOSOME_FILENAME_TEMPLATE % {
@@ -136,7 +126,7 @@ def fasta_cdna_url(
         filetype="fasta",
         server=server)
 
-    server_subdir = _join_url_subdir(server, subdir)
+    server_subdir = urljoin(server, subdir)
     server_sequence_subdir = join(server_subdir, 'cdna')
     filename = FASTA_CDNA_FILENAME_TEMPLATE % {
         "Species" : species.capitalize(),

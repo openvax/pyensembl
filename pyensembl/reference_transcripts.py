@@ -68,11 +68,12 @@ class ReferenceTranscripts(object):
             if not transcript_id.startswith("ENST"):
                 raise ValueError("Invalid transcript ID: %s" % (transcript_id,))
 
-            fasta_dictionary = self.fasta_dictionary
-            if transcript_id not in fasta_dictionary:
+            if transcript_id not in self.fasta_dictionary:
                 raise ValueError(
                     "Transcript ID not found: %s" % (transcript_id,))
-            fasta_record = fasta_dictionary[transcript_id]
+            fasta_record = self.fasta_dictionary[transcript_id]
+            # FastaRecord doesn't seem to have an accessor to get the full
+            # sequence (only subsequences), so slice out the full string
             seq = fasta_record[:len(fasta_record)]
             self._transcript_sequences[transcript_id] = seq
         return self._transcript_sequences[transcript_id]
