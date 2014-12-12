@@ -89,6 +89,25 @@ def test_contains_stop_codon():
     exon = transcript.exons[1]
     assert exon.contains_stop_codon
 
+def test_partial_start_codons():
+    """
+    test_partial_start_codons : Make sure none of the start codons returned
+    only partially overlap with an exon.
+    """
+    # Exon ENSE00003718948 has a start codon immediately before the
+    # exon's start position on the forward strand
+    exon = ensembl77.exon_by_id("ENSE00003718948")
+    for start in exon.start_codon_positions:
+        assert start >= exon.start, \
+            "Exon at locus [%d, %d], start codon at %d" % (
+                exon.start, exon.end, start)
+
+    for offset in exon.start_codon_offsets:
+        assert offset >= 0, \
+            "Invalid negative offset for start codon: %d" % offset
+        assert offset == 0, \
+            "Partially overlapping start codon should not be included"
+
 def test_start_codon_offset():
     """
     test_start_codon_offset : Ensure that start codon in exon #1 of CXCR3-002

@@ -5,7 +5,7 @@ from gtf_parsing import load_gtf_as_dataframe
 from common import CACHE_SUBDIR
 from locus import normalize_chromosome, normalize_strand
 import memory_cache
-from url_templates import ENSEMBL_FTP_SERVER, gtf_url
+from url_templates import ENSEMBL_FTP_SERVER, gtf_url_parts
 
 import datacache
 
@@ -27,7 +27,7 @@ class GTF(object):
         self.release = release
         self.server = server
 
-        gtf_url_dir, gtf_filename = gtf_url(
+        gtf_url_dir, gtf_filename = gtf_url_parts(
             ensembl_release=release,
             species=self.species,
             server=server)

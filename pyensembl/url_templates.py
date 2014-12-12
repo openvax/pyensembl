@@ -51,7 +51,7 @@ def _normalize_release_properties(ensembl_release, species):
 # GTF annotation file example: Homo_sapiens.GTCh38.gtf.gz
 GTF_FILENAME_TEMPLATE = "%(Species)s.%(reference)s.%(release)d.gtf.gz"
 
-def gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
+def gtf_url_parts(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
     """
     Returns a URL and a filename, which can be joined together.
     """
@@ -77,7 +77,7 @@ def gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
 FASTA_DNA_CHROMOSOME_FILENAME_TEMPLATE = \
     "%(Species)s.%(reference)s.%(release)d.%(sequence_type)s.chromosome.%(contig)s.fa.gz"
 
-def fasta_dna_url(
+def fasta_dna_url_parts(
         ensembl_release,
         species,
         contig,
@@ -110,7 +110,7 @@ def fasta_dna_url(
 FASTA_CDNA_FILENAME_TEMPLATE = \
     "%(Species)s.%(reference)s.%(release)d.%(sequence_type)s.all.fa.gz"
 
-def fasta_cdna_url(
+def fasta_cdna_url_parts(
         ensembl_release,
         species,
         server=ENSEMBL_FTP_SERVER):

@@ -2,7 +2,7 @@ from os.path import join
 
 from common import CACHE_SUBDIR
 from release_info import which_human_reference_name, check_release_number
-from url_templates import ENSEMBL_FTP_SERVER, fasta_cdna_url
+from url_templates import ENSEMBL_FTP_SERVER, fasta_cdna_url_parts
 
 import pyfaidx
 from datacache import Cache
@@ -28,7 +28,7 @@ class ReferenceTranscripts(object):
 
         self.server = server
 
-        reference_url_dir, reference_filename = fasta_cdna_url(
+        reference_url_dir, reference_filename = fasta_cdna_url_parts(
             ensembl_release=self.release,
             species=self.species,
             server=server)

@@ -110,7 +110,22 @@ class Exon(Locus):
                     type(position), position)
         return results
 
-    def first_offset(self, start, end):
+
+    @property
+    def start_codon_positions(self):
+        """
+        Absolute positions of overlapping start codons.
+        """
+        return self._exon_feature_positions('start_codon')
+
+    @property
+    def stop_codon_positions(self):
+        """
+        Absolute positions of overlapping stop codons.
+        """
+        return self._exon_feature_positions('stop_codon')
+
+    def _first_offset(self, start, end):
         relative_start, relative_end = self.range_offset(start, end)
         return min(relative_start, relative_end)
 
@@ -123,7 +138,7 @@ class Exon(Locus):
         absolute_positions = self._exon_feature_positions(feature)
         results = []
         for start, end in absolute_positions:
-            local_position = self.first_offset(start, end)
+            local_position = self._first_offset(start, end)
             results.append(local_position)
         return results
 

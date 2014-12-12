@@ -17,8 +17,7 @@ from locus import normalize_chromosome, normalize_strand
 from reference_transcripts import ReferenceTranscripts
 from release_info import check_release_number
 from transcript import Transcript
-from url_templates import gtf_url, fasta_cdna_url, ENSEMBL_FTP_SERVER
-
+from url_templates import ENSEMBL_FTP_SERVER
 
 import datacache
 import numpy as np
