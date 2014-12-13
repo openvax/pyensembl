@@ -19,27 +19,13 @@ class Exon(Locus):
             'gene_name',
             'gene_id',
         ]
-        columns_str = ", ".join(columns)
 
-        query = """
-            SELECT DISTINCT %s
-            FROM ensembl
-            WHERE exon_id = ?
-            AND feature='exon'
-        """ % columns_str
-
-        cursor = db.execute(query, [exon_id])
-
-        # exon IDs are unique, so should be either 0 or 1 results
-        results = cursor.fetchall()
-
-        if len(results) == 0:
-            raise ValueError("Exon ID not found: %s" % exon_id)
-
-        assert len(results) == 1, \
-            "Found multiple entries with exon_id=%s (%s)" % (exon_id, results)
-
-        result = results[0]
+        result = self.db.query_one(
+            select_column_names=columns,
+            filter_column='exon_id',
+            filter_value=exon_id,
+            feature='exon',
+            distinct=True)
 
         result_dict = {}
         for i, column_name in enumerate(columns):
@@ -95,7 +81,7 @@ class Exon(Locus):
             self.start,
             self.end,
         ]
-        cursor = self.db.execute(query, query_params)
+        cursor = self.db.connection.execute(query, query_params)
         results = cursor.fetchall()
 
         # check to make sure we only got back integer values

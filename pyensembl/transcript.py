@@ -11,22 +11,24 @@ class Transcript(Locus):
 
         self.id = transcript_id
         self.db = db
-        query = """
-            SELECT
-                transcript_name,
-                seqname, start, end, strand,
-                gene_name, gene_id
-            FROM ensembl
-            WHERE transcript_id = ?
-            AND feature='transcript'
-        """
-        cursor = db.execute(query, [transcript_id])
 
-        result = cursor.fetchone()
-        if result is None:
-            raise ValueError("Transcript ID not found: %s" % transcript_id)
+        columns = [
+            'transcript_name',
+            'seqname',
+            'start',
+            'end',
+            'strand',
+            'gene_name',
+            'gene_id'
+        ]
 
-        transcript_name, contig, start, end, strand, gene_name, gene_id = result
+        transcript_name, contig, start, end, strand, gene_name, gene_id = \
+            self.db.query_one(
+                select_column_names=columns,
+                filter_column='transcript_id',
+                filter_value=transcript_id,
+                feature='transcript',
+                distinct=True)
 
         Locus.__init__(self, contig, start, end, strand)
 
@@ -45,8 +47,6 @@ class Transcript(Locus):
                 "Missing gene ID for transcript with ID = %s" % transcript_id)
         self.gene_id = gene_id
 
-
-
     def __str__(self):
         return "Transcript(id=%s, name=%s, gene_name=%s)" % (
                     self.id, self.name, self.gene_name)
@@ -57,14 +57,12 @@ class Transcript(Locus):
     @property
     def exons(self):
         if not hasattr(self, "_exons"):
-            exon_ids_query = """
-                SELECT exon_number, exon_id
-                FROM ensembl
-                WHERE transcript_id = ?
-                AND feature='exon'
-            """
-            cursor = self.db.execute(exon_ids_query, [self.id])
-            results = cursor.fetchall()
+            columns = ['exon_number', 'exon_id']
+            results = self.db.query(
+                columns,
+                filter_column='transcript_id',
+                filter_value=self.id,
+                feature='exon')
 
              # fill this list in its correct order (by exon_number) by using
              # the exon_number as a 1-based list offset
@@ -104,18 +102,12 @@ class Transcript(Locus):
         if feature not in self._TRANSCRIPT_FEATURES:
             raise ValueError("Invalid transcript feature: %s" % feature)
 
-        query = """
-            SELECT DISTINCT start, end
-            FROM ensembl
-            WHERE feature = ?
-            AND transcript_id = ?
-        """
-        query_params = [
-            feature,
-            self.id
-        ]
-        cursor = self.db.execute(query, query_params)
-        results = cursor.fetchall()
+        results = self.db.query(
+            select_column_names=['start', 'end'],
+            filter_column='transcript_id',
+            filter_value=self.id,
+            feature=feature)
+
         if required and len(results) == 0:
             raise ValueError(
                 "Transcript %s does not contain feature %s" % (
@@ -200,5 +192,3 @@ class Transcript(Locus):
             self.contains_stop_codon and
             self.coding_sequence_length % 3 == 0
         )
-
-
