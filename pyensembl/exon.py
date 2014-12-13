@@ -19,20 +19,13 @@ class Exon(Locus):
             'gene_name',
             'gene_id',
         ]
-        results = self.db.query(
+
+        result = self.db.query_one(
             select_column_names=columns,
             filter_column='exon_id',
             filter_value=exon_id,
             feature='exon',
             distinct=True)
-
-        if len(results) == 0:
-            raise ValueError("Exon ID not found: %s" % exon_id)
-
-        assert len(results) == 1, \
-            "Found multiple entries with exon_id=%s (%s)" % (exon_id, results)
-
-        result = results[0]
 
         result_dict = {}
         for i, column_name in enumerate(columns):

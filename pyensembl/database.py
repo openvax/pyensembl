@@ -261,6 +261,30 @@ class Database(object):
         return self.run_sql_query(
             sql, required=required, query_params=query_params)
 
+    def query_one(
+            self,
+            select_column_names,
+            filter_column,
+            filter_value,
+            feature,
+            distinct=False,
+            required=False):
+        results = self.query(
+            select_column_names,
+            filter_column,
+            filter_value,
+            feature,
+            distinct=distinct,
+            required=required)
+
+        if len(results) == 0:
+            raise ValueError("%s not found: %s" % (filter_column, filter_value))
+        elif len(results) > 1:
+            raise ValueError(
+                "Found multiple entries with %s=%s (%s)" % (
+                    filter_column, filter_value, results))
+        return results[0]
+
     def _query_feature_values(
             self,
             column,

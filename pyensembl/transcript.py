@@ -21,21 +21,14 @@ class Transcript(Locus):
             'gene_name',
             'gene_id'
         ]
-        results = self.db.query(
-            select_column_names=columns,
-            filter_column='transcript_id',
-            filter_value=transcript_id,
-            feature='transcript',
-            distinct=True)
 
-        if len(results) == 0:
-            raise ValueError("Transcript ID not found: %s" % transcript_id)
-        elif len(results) > 1:
-            raise ValueError(
-                "Multiple transcripts found with ID: %s" % transcript_id)
-
-        result = results[0]
-        transcript_name, contig, start, end, strand, gene_name, gene_id = result
+        transcript_name, contig, start, end, strand, gene_name, gene_id = \
+            self.db.query_one(
+                select_column_names=columns,
+                filter_column='transcript_id',
+                filter_value=transcript_id,
+                feature='transcript',
+                distinct=True)
 
         Locus.__init__(self, contig, start, end, strand)
 
@@ -199,5 +192,3 @@ class Transcript(Locus):
             self.contains_stop_codon and
             self.coding_sequence_length % 3 == 0
         )
-
-

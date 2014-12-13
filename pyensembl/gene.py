@@ -20,19 +20,11 @@ class Gene(Locus):
             'strand',
             'gene_biotype'
         ]
-        results = self.db.query(
+        gene_name, contig, start, end, strand, biotype = self.db.query_one(
             columns,
             filter_column='gene_id',
             filter_value=gene_id,
             feature='gene')
-
-        if len(results) == 0:
-            raise ValueError("Gene ID not found: %s" % gene_id)
-        elif len(results) > 1:
-            raise ValueError("Too many genes found for ID: %s" % gene_id)
-
-        result = results[0]
-        gene_name, contig, start, end, strand, biotype = result
         if not gene_name:
             raise ValueError("Missing name for gene with ID = %s" % gene_id)
         self.name = gene_name
