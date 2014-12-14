@@ -106,9 +106,15 @@ def fasta_dna_url_parts(
     return server_sequence_subdir, filename
 
 
-# DNA fasta file example: Homo_sapiens.NCBI36.54.cdna.all.fa.gz
-FASTA_CDNA_FILENAME_TEMPLATE = \
+# DNA fasta file for releases before Ensembl 75 (contains release)
+# example: Homo_sapiens.NCBI36.54.cdna.all.fa.gz
+OLD_FASTA_CDNA_FILENAME_TEMPLATE = \
     "%(Species)s.%(reference)s.%(release)d.%(sequence_type)s.all.fa.gz"
+
+# DNA fasta file for releases after Ensembl 75 ()
+# example: Homo_sapiens.NCBI36.54.cdna.all.fa.gz
+NEW_FASTA_CDNA_FILENAME_TEMPLATE = \
+    "%(Species)s.%(reference)s.%(sequence_type)s.all.fa.gz"
 
 def fasta_cdna_url_parts(
         ensembl_release,
@@ -128,10 +134,17 @@ def fasta_cdna_url_parts(
 
     server_subdir = urljoin(server, subdir)
     server_sequence_subdir = join(server_subdir, 'cdna')
-    filename = FASTA_CDNA_FILENAME_TEMPLATE % {
-        "Species" : species.capitalize(),
-        "reference" : reference_name,
-        "release" : ensembl_release,
-        "sequence_type" : "cdna",
-    }
+    if ensembl_release <= 75:
+        filename = OLD_FASTA_CDNA_FILENAME_TEMPLATE % {
+            "Species" : species.capitalize(),
+            "reference" : reference_name,
+            "release" : ensembl_release,
+            "sequence_type" : "cdna",
+        }
+    else:
+        filename = NEW_FASTA_CDNA_FILENAME_TEMPLATE % {
+            "Species" : species.capitalize(),
+            "reference" : reference_name,
+            "sequence_type" : "cdna",
+        }
     return server_sequence_subdir, filename

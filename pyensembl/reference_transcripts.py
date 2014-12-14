@@ -62,7 +62,6 @@ class ReferenceTranscripts(object):
             self._fasta_dictionary = pyfaidx.Fasta(self.local_fasta_path)
         return self._fasta_dictionary
 
-
     def transcript_sequence(self, transcript_id):
         if transcript_id not in self._transcript_sequences:
             if not transcript_id.startswith("ENST"):
@@ -72,10 +71,27 @@ class ReferenceTranscripts(object):
                 raise ValueError(
                     "Transcript ID not found: %s" % (transcript_id,))
             fasta_record = self.fasta_dictionary[transcript_id]
+
             # FastaRecord doesn't seem to have an accessor to get the full
             # sequence (only subsequences), so slice out the full string
             seq = fasta_record[:len(fasta_record)]
             self._transcript_sequences[transcript_id] = seq
         return self._transcript_sequences[transcript_id]
 
+    def __str__(self):
+        return "ReferenceTranscripts(release=%s, species=%s, filename=%s)"  % (
+            self.release, self.species, self.remote_filename)
+
+    def __repr__(self):
+        return str(self)
+
+    def __contains__(self, transcript_id):
+        return transcript_id in self.fasta_dictionary
+
+    def keys(self):
+        return self.fasta_dictionary.keys()
+
+    def values(self):
+        d = self.fasta_dictionary
+        return [d[transcript_id] for transcript_id in self.keys()]
 

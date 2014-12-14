@@ -231,13 +231,25 @@ class EnsemblRelease(object):
     ###################################################
 
     def gene_by_id(self, gene_id):
+        """
+        Construct a Gene object for the given gene ID.
+        """
         return Gene(gene_id, self.db)
 
     def genes_by_name(self, gene_name):
+        """
+        Get all the unqiue genes with the given name (there might be multiple
+        due to copies in the genome), return a list containing a Gene object
+        for each distinct ID.
+        """
         gene_ids = self.gene_ids_of_gene_name(gene_name)
         return [self.gene_by_id(gene_id) for gene_id in gene_ids]
 
     def gene_by_protein_id(self, protein_id):
+        """
+        Get the gene ID associated with the given protein ID,
+        return its Gene object
+        """
         gene_id = self.gene_id_of_protein_id(protein_id)
         return self.gene_by_id(gene_id)
 
@@ -338,13 +350,19 @@ class EnsemblRelease(object):
         """
         # DataFrame with single column 'transcript_id'
         transcript_ids_df = self.transcript_ids(contig=contig)
+
+        # since we might be fetching a potentially very large set
+        # of transcripts, move the slightly inefficient property access
+        # outside of the list comprehension
+        db = self.db
+        reference = self.reference
         return [
-            Transcript(transcript_id, self.db)
+            Transcript(transcript_id, db, reference)
             for transcript_id in transcript_ids_df['transcript_id']
         ]
 
     def transcript_by_id(self, transcript_id):
-        return Transcript(transcript_id, self.db)
+        return Transcript(transcript_id, self.db, self.reference)
 
     def transcripts_by_name(self, transcript_name):
         transcript_ids = self.transcript_ids_of_transcript_name(transcript_name)

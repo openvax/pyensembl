@@ -101,6 +101,9 @@ class Locus(object):
     def __repr__(self):
         return str(self)
 
+    def __len__(self):
+        return self.end - self.start + 1
+
     @property
     def length(self):
         return self.end - self.start + 1
@@ -115,7 +118,7 @@ class Locus(object):
         else:
             return self.end - position
 
-    def range_offset(self, start, end):
+    def offset_range(self, start, end):
         """
         Database start/end entries are always ordered such that
         start < end. This makes computing a relative position (e.g. of a stop

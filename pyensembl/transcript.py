@@ -1,9 +1,10 @@
 from locus import Locus
 from exon import Exon
 
-class Transcript(Locus):
-    def __init__(self, transcript_id, db):
+from pyfaidx import Sequence
 
+class Transcript(Locus):
+    def __init__(self, transcript_id, db, reference):
         if not isinstance(transcript_id, (unicode, str)):
             raise TypeError(
                 "Expected transcript ID to be string, got %s : %s" % (
@@ -11,6 +12,7 @@ class Transcript(Locus):
 
         self.id = transcript_id
         self.db = db
+        self.reference = reference
 
         columns = [
             'transcript_name',
@@ -21,7 +23,6 @@ class Transcript(Locus):
             'gene_name',
             'gene_id'
         ]
-
         transcript_name, contig, start, end, strand, gene_name, gene_id = \
             self.db.query_one(
                 select_column_names=columns,
@@ -47,12 +48,28 @@ class Transcript(Locus):
                 "Missing gene ID for transcript with ID = %s" % transcript_id)
         self.gene_id = gene_id
 
+        # Lazily fetch sequence for this Transcript.
+        # Doing this in case we're constructing many Transcripts
+        # and not using the sequence, avoid the memory/performance overhead
+        # of fetching and storing sequences from a FASTA file.
+        self._sequence = None
+        self._coding_sequence = None
+
     def __str__(self):
         return "Transcript(id=%s, name=%s, gene_name=%s)" % (
                     self.id, self.name, self.gene_name)
 
     def __repr__(self):
         return str(self)
+
+    def __len__(self):
+        """
+        Length of a transcript is the sum of its exon lengths
+        """
+        # cache the length once you compute it
+        if not hasattr(self, "_length"):
+            self._length = sum(len(exon) for exon in self.exons)
+        return self._length
 
     @property
     def exons(self):
@@ -93,10 +110,10 @@ class Transcript(Locus):
     # possible annotations associated with transcripts
     _TRANSCRIPT_FEATURES = {'start_codon', 'stop_codon', 'UTR', 'CDS'}
 
-    def _transcript_feature_ranges(self, feature, required=True):
+    def _transcript_feature_position_ranges(self, feature, required=True):
         """
-        Find start/end range of features (such as start codon)
-        for this transcript.
+        Find start/end chromosomal position range of features
+        (such as start codon) for this transcript.
         """
 
         if feature not in self._TRANSCRIPT_FEATURES:
@@ -114,13 +131,14 @@ class Transcript(Locus):
                     self.id, feature))
         return results
 
-    def _transcript_feature_range(self, feature):
+    def _transcript_feature_position_range(self, feature):
         """
         Get unique start and end positions for feature,
         raise an error if feature is absent or has multiple entries
         for this transcript.
         """
-        ranges = self._transcript_feature_ranges(feature, required=True)
+        ranges = self._transcript_feature_position_ranges(
+            feature, required=True)
         if len(ranges) > 1:
             raise ValueError(
                 "Expected %s to be unique for %s but got %d entries" % (
@@ -129,52 +147,58 @@ class Transcript(Locus):
 
     @property
     def contains_start_codon(self):
-        start_codons = _transcript_feature_ranges('start_codon')
+        start_codons = _transcript_feature_position_ranges('start_codon')
         return len(start_codons) > 0
 
     @property
     def contains_stop_codon(self):
-        stop_codons = _transcript_feature_ranges('stop_codon')
+        stop_codons = _transcript_feature_position_ranges('stop_codon')
         return len(stop_codons) > 0
 
     @property
-    def start_codon_range(self):
-        return self._transcript_feature_range('start_codon')
+    def start_codon_position_range(self):
+        """
+        Smallest and largest chromosomal positions of nucleotides in start codon
+        """
+        return self._transcript_feature_position_range('start_codon')
 
     @property
-    def stop_codon_range(self):
-        return self._transcript_feature_range('stop_codon')
+    def stop_codon_position_range(self):
+        """
+        Smallest and largest chromosomal positions of nucleotides in stop codon
+        """
+        return self._transcript_feature_position_range('stop_codon')
 
     @property
-    def start_codon_range_offset(self):
-        start, end = self.start_codon_range
-        return self.range_offset(start, end)
+    def start_codon_offset_range(self):
+        start, end = self.start_codon_position_range
+        return self.offset_range(start, end)
 
     @property
-    def stop_codon_range_offset(self):
-        start, end = self.stop_codon_range
-        return self.range_offset(start, end)
+    def stop_codon_offset_range(self):
+        start, end = self.stop_codon_position_range
+        return self.offset_range(start, end)
 
     @property
-    def coding_sequence_ranges(self):
+    def coding_sequence_position_ranges(self):
         """
         Return absolute chromosome position ranges for CDS fragments
         of this transcript
         """
-        return self._transcript_feature_ranges("CDS")
+        return self._transcript_feature_position_ranges("CDS")
 
     @property
-    def coding_sequence_range_offsets(self):
+    def coding_sequence_offset_ranges(self):
         """
         Return offsets from start of this transcript for CDS fragments
         """
-        ranges = self._transcript_feature_ranges("CDS")
+        ranges = self._transcript_feature_position_ranges("CDS")
         return [self.range_offset(r) for r in ranges]
 
     @property
     def coding_sequence_length(self):
         total = 0
-        for (start, stop) in self.coding_sequence_range_offsets:
+        for (start, stop) in self.coding_sequence_offset_ranges:
             assert start <= stop, \
                 "Invalid offset range [%d..%d] for transcript %s" % (
                     start, stop, self.id)
@@ -192,3 +216,46 @@ class Transcript(Locus):
             self.contains_stop_codon and
             self.coding_sequence_length % 3 == 0
         )
+
+    @property
+    def sequence(self):
+        if self._sequence is None:
+            if self.id not in self.reference:
+                raise ValueError(
+                    "No sequence for transcript %s in reference %s" % (
+                        self.id, self.reference))
+            self._sequence = self.reference.transcript_sequence(self.id)
+        return self._sequence
+
+    @property
+    def coding_sequence(self):
+        if self._coding_sequence is None:
+
+            # Get the raw string contained by a Sequence object
+            full_string = self.sequence.seq
+
+            exon_strings = []
+            for exon in self.exons:
+                start_offset, end_offset = self.offset_range(exon.start, exon.end)
+                # subtract 1 from start because Ensembl indices are base-1
+                exon_string = full_string[start_offset-1:end_offset]
+                exon_strings.append(exon_string)
+            cds_string = "".join(exon_strings)
+            cds_name = "%s CDS" % self.id
+            self._coding_sequence = Sequence(
+                name=cds_name,
+                seq=cds_string,
+                start=1,
+                end=len(cds_string))
+        return self._coding_sequence
+
+    @property
+    def five_prime_utr_sequence(self):
+        start_offset, _ = self.start_codon_offset_range
+        return self.sequence[:start_offset]
+
+    @property
+    def three_prime_utr_sequence(self):
+        _, end_offset = self.stop_codon_offset_range
+        return self.sequence[end_offset:]
+
