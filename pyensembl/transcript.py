@@ -53,7 +53,6 @@ class Transcript(Locus):
         # and not using the sequence, avoid the memory/performance overhead
         # of fetching and storing sequences from a FASTA file.
         self._sequence = None
-        self._coding_sequence = None
 
     def __str__(self):
         return "Transcript(id=%s, name=%s, gene_name=%s)" % (
@@ -185,14 +184,14 @@ class Transcript(Locus):
         Return absolute chromosome position ranges for CDS fragments
         of this transcript
         """
-        return self._transcript_feature_position_ranges("CDS")
+        return self._transcript_feature_position_ranges('CDS')
 
     @property
     def coding_sequence_offset_ranges(self):
         """
         Return offsets from start of this transcript for CDS fragments
         """
-        ranges = self._transcript_feature_position_ranges("CDS")
+        ranges = self._transcript_feature_position_ranges('CDS')
         return [self.range_offset(r) for r in ranges]
 
     @property
@@ -224,30 +223,16 @@ class Transcript(Locus):
                 raise ValueError(
                     "No sequence for transcript %s in reference %s" % (
                         self.id, self.reference))
+            # fetch this transcript's Sequence from the attached
+            # ReferenceTranscripts object
             self._sequence = self.reference.transcript_sequence(self.id)
         return self._sequence
 
     @property
     def coding_sequence(self):
-        if self._coding_sequence is None:
-
-            # Get the raw string contained by a Sequence object
-            full_string = self.sequence.seq
-
-            exon_strings = []
-            for exon in self.exons:
-                start_offset, end_offset = self.offset_range(exon.start, exon.end)
-                # subtract 1 from start because Ensembl indices are base-1
-                exon_string = full_string[start_offset-1:end_offset]
-                exon_strings.append(exon_string)
-            cds_string = "".join(exon_strings)
-            cds_name = "%s CDS" % self.id
-            self._coding_sequence = Sequence(
-                name=cds_name,
-                seq=cds_string,
-                start=1,
-                end=len(cds_string))
-        return self._coding_sequence
+        start_offset, _ = self.start_codon_offset_range
+        _, stop_offset = self.stop_codon_offset_range
+        return self.sequence[start_offset:stop_offset]
 
     @property
     def five_prime_utr_sequence(self):

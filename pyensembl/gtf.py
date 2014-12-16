@@ -65,7 +65,13 @@ class GTF(object):
     def local_dir(self):
         return split(self.local_gtf_path())[0]
 
-    def local_csv_path(self, contig=None, feature=None, column=None):
+    def local_csv_path(
+            self,
+            contig=None,
+            feature=None,
+            column=None,
+            strand=None,
+            distinct=False):
         """
         Path to CSV which the annotation data with expanded columns
         for optional attributes.
@@ -80,6 +86,12 @@ class GTF(object):
 
         column : str, optional
             Restrict to single column
+
+        strand : str, optional
+            Positive ("+") or negative ("-") DNA strand. Default = either.
+
+        distinct : bool, optional
+            Only keep unique values (default=False)
         """
         base = self.base_filename()
         dirpath = self.local_dir()
@@ -91,6 +103,11 @@ class GTF(object):
             csv_filename += ".feature.%s" % (feature,)
         if column:
             csv_filename += ".column.%s" % (column,)
+        if strand:
+            strand_string = "positive" if strand == "+" else "negative"
+            csv_filename += ".strand.%s" % strand_string
+        if distinct:
+            csv_filename += ".distinct"
         csv_filename += ".csv"
         return join(dirpath, csv_filename)
 
@@ -129,7 +146,11 @@ class GTF(object):
         key = (contig, feature, strand)
 
         if key not in self._dataframes:
-            csv_path = self.local_csv_path(contig=contig, feature=feature)
+            csv_path = self.local_csv_path(
+                contig=contig,
+                feature=feature,
+                strand=strand,
+                distinct=False)
 
             def local_loader_fn():
                 full_df = self._load_full_dataframe()
@@ -191,7 +212,13 @@ class GTF(object):
             start,
             end)
 
-    def dataframe_at_locus(self, contig, position, end=None, offset=None):
+    def dataframe_at_locus(
+            self,
+            contig,
+            position,
+            end=None,
+            offset=None,
+            strand=None):
         """
         Subset of entries which overlap an inclusive range of
         chromosomal positions
@@ -201,10 +228,11 @@ class GTF(object):
         elif offset is None:
             end = position + offset - 1
 
-        df_contig = self.dataframe(contig=contig)
+        df_contig = self.dataframe(contig=contig, strand=strand)
 
         # find genes whose start/end boundaries overlap with the position
         overlap_start = df_contig.start <= end
         overlap_end = df_contig.end >= position
         overlap = overlap_start & overlap_end
         return df_contig[overlap]
+

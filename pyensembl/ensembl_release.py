@@ -14,6 +14,7 @@ from exon import Exon
 from gene import Gene
 from gtf import GTF
 from locus import normalize_chromosome, normalize_strand
+import memory_cache
 from reference_transcripts import ReferenceTranscripts
 from release_info import check_release_number
 from transcript import Transcript
@@ -63,6 +64,61 @@ class EnsemblRelease(object):
         self.gtf.clear_cache()
         self.reference.clear_cache()
         self._delete_cached_files()
+
+
+    def all_feature_values(
+            self,
+            column,
+            feature,
+            distinct=True,
+            contig=None,
+            strand=None):
+        """
+        Cached lookup of all values for a particular feature property from
+        the database, caches repeated queries in memory and
+        stores them as a CSV.
+
+        Parameters
+        ----------
+
+        column : str
+            Name of property (e.g. exon_id)
+
+        feature : str
+            Type of entry (e.g. exon)
+
+        distinct : bool, optional
+            Keep only unique values
+
+        contig : str, optional
+            Restrict query to particular contig
+
+        strand : str, optional
+            Restrict results to '+' or '-' strands
+
+        Returns a list constructed from query results.
+        """
+        # GTF already uses CSV paths to store
+        csv_path = self.gtf.local_csv_path(
+            feature=feature,
+            column=column,
+            contig=contig,
+            strand=strand,
+            distinct=distinct)
+        def run_query():
+            values = self.db.query_feature_values(
+                column=column,
+                feature=feature,
+                distinct=distinct,
+                contig=contig,
+                strand=strand)
+            df = pd.DataFrame({column : values})
+            return df
+        df = memory_cache.load_csv(csv_path, expensive_action=run_query)
+        # Couldn't figure out how to serialize a series to a CSV without
+        # losing the column name, so reading/writing a one column DataFrame
+        # and pulling the series out of it.
+        return list(df[column])
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
         gene_ids = self.gene_ids_at_locus(
@@ -139,40 +195,6 @@ class EnsemblRelease(object):
             position=position,
             end=end,
             strand=strand)
-
-    def _all_feature_values(self, column, feature, distinct=True, contig=None):
-        """
-        Cached lookup of all values for a particular feature property
-
-        Parameters
-        ----------
-
-        column : str
-            Name of property (e.g. exon_id)
-
-        feature : str
-            Type of entry (e.g. exon)
-
-        distinct : bool, optional
-            Keep only unique values
-
-        contig : str, optional
-            Restrict query to particular contig
-
-        Returns a single column Pandas DataFrame constructed from query results.
-        """
-        csv_path = self.local_csv_path(
-            feature=feature,
-            column=column,
-            contig=contig)
-        def run_query():
-            values = self.db.query_feature_values(
-                column=column,
-                feature=feature,
-                distinct=distinct,
-                contig=contig)
-            return pd.DataFrame({column : values})
-        return memory_cache.load_csv(csv_path, expensive_action=run_query)
 
     ###################################################
     #
@@ -269,17 +291,16 @@ class EnsemblRelease(object):
             required=True)
         return str(results[0][0])
 
-    def gene_names(self):
-        return self._all_feature_values('gene_name', 'gene')
-
-    def gene_names_on_contig(self, contig):
+    def gene_names(self, contig=None, strand=None):
         """
-        Return all genes on given chromosome/contig
+        Return all genes in the database,
+        optionally restrict to a chromosome and/or strand.
         """
-        return self.db.query_distinct_on_contig(
-            column_name='gene_name',
+        return self.all_feature_values(
+            column='gene_name',
             feature='gene',
-            contig=contig)
+            contig=contig,
+            strand=strand)
 
     def gene_name_of_gene_id(self, gene_id):
         return self._query_gene_name("gene_id", gene_id, 'gene')
@@ -301,17 +322,16 @@ class EnsemblRelease(object):
     #
     ###################################################
 
-    def gene_ids(self):
-        return self._all_feature_values('gene_id', 'gene')
-
-    def gene_ids_on_contig(self, contig):
+    def gene_ids(self, contig=None, strand=None):
         """
-        What are all the gene IDs on a given chromosome/contig?
+        What are all the gene IDs
+        (optionally restrict to a given chromosome/contig and/or strand)
         """
-        return self.db.query_distinct_on_contig(
-            column_name='gene_id',
+        return self.all_feature_values(
+            column='gene_id',
             feature='gene',
-            contig=contig)
+            contig=contig,
+            strand=strand)
 
     def gene_ids_of_gene_name(self, gene_name):
         """
@@ -342,14 +362,14 @@ class EnsemblRelease(object):
     #
     ###################################################
 
-    def transcripts(self, contig=None):
+    def transcripts(self, contig=None, strand=None):
         """
         Construct Transcript object for every transcript entry in
         the Ensembl database. Optionally restrict to a particular
         chromosome using the `contig` argument.
         """
         # DataFrame with single column 'transcript_id'
-        transcript_ids_df = self.transcript_ids(contig=contig)
+        transcript_ids = self.transcript_ids(contig=contig, strand=strand)
 
         # since we might be fetching a potentially very large set
         # of transcripts, move the slightly inefficient property access
@@ -358,7 +378,7 @@ class EnsemblRelease(object):
         reference = self.reference
         return [
             Transcript(transcript_id, db, reference)
-            for transcript_id in transcript_ids_df['transcript_id']
+            for transcript_id in transcript_ids_df
         ]
 
     def transcript_by_id(self, transcript_id):
@@ -408,20 +428,16 @@ class EnsemblRelease(object):
             required=True)
         return [result[0] for result in results]
 
-    def transcript_names(self, contig=None):
-        return self._all_feature_values(
+    def transcript_names(self, contig=None, strand=None):
+        """
+        What are all the transcript names in the database
+        (optionally, restrict to a given chromosome and/or strand)
+        """
+        return self.all_feature_values(
             column='transcript_name',
             feature='transcript',
-            contig=contig)
-
-    def transcript_names_on_contig(self, contig):
-        """
-        What are all the transcript names on a given chromosome/contig?
-        """
-        return self.db.query_distinct_on_contig(
-            column_name='transcript_name',
-            feature='transcript',
-            contig=contig)
+            contig=contig,
+            strand=strand)
 
     def transcript_names_of_gene_name(self, gene_name):
         return self._query_transcript_names('gene_name', gene_name)
@@ -452,11 +468,12 @@ class EnsemblRelease(object):
             required=True)
         return [result[0] for result in results]
 
-    def transcript_ids(self, contig=None):
-        return self._all_feature_values(
+    def transcript_ids(self, contig=None, strand=None):
+        return self.all_feature_values(
             column='transcript_id',
             feature='transcript',
-            contig=contig)
+            contig=contig,
+            strand=strand)
 
     def transcript_ids_of_gene_id(self, gene_id):
         return self._query_transcript_ids('gene_id', gene_id)
@@ -476,14 +493,14 @@ class EnsemblRelease(object):
     #
     ###################################################
 
-    def exons(self, contig=None):
+    def exons(self, contig=None, strand=None):
         """
         Create exon object for all exons in the database, optionally
         restrict to a particular chromosome using the `contig` argument.
         """
         # DataFrame with single column called 'exon_id'
-        exon_ids_df = self.exon_ids(contig=contig)
-        return [Exon(exon_id, self.db) for exon_id in exon_ids_df['exon_id']]
+        exon_ids = self.exon_ids(contig=contig, strand=strand)
+        return [Exon(exon_id, self.db) for exon_id in exon_ids]
 
     def exon_by_id(self, exon_id):
         return Exon(exon_id, self.db)
@@ -514,11 +531,12 @@ class EnsemblRelease(object):
             required=True)
         return [result[0] for result in results]
 
-    def exon_ids(self, contig=None):
-        return self._all_feature_values(
+    def exon_ids(self, contig=None, strand=None):
+        return self.all_feature_values(
             column='exon_id',
             feature='exon',
-            contig=contig)
+            contig=contig,
+            strand=strand)
 
     def exon_ids_of_gene_id(self, gene_id):
         return self._query_exon_ids('gene_id', gene_id)
