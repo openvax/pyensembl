@@ -31,12 +31,9 @@ these genomic elements (contig, start position, end position, strand).
 `gene_names_on_contig(contig)`
 : all gene names on a particular chromosome/contig
 
-`gene_names_at_locus(contig, position)`
+`gene_names_at_locus(contig, position, end=None, strand=None)`
 : names of genes overlapping with the given locus
 (returns a list to account for overlapping genes)
-
-`gene_names_at_loci(contig, start, end)`
-: names of genes overlapping with the given range of loci
 
 `gene_name_of_gene_id(gene_id)`
 : name of gene with given ID
@@ -53,11 +50,8 @@ these genomic elements (contig, start position, end position, strand).
 
 ## Gene IDs
 
-`gene_ids()`
+`gene_ids(contig=None, strand=None)`
 : all gene IDs in the annotation database
-
-`gene_ids_on_contig(contig)`
-: all gene IDs on a particular chromosome/contig
 
 `gene_id_of_gene_name(gene_name)`
 : translate Ensembl gene ID to its corresponding name
@@ -65,16 +59,12 @@ these genomic elements (contig, start position, end position, strand).
 
 ## Transcript Names
 
-`transcript_names()`
+`transcript_names(contig=None, strand=None)`
 : all transcript names in the annotation database
-
-`transcript_names_on_contig(contig)`
-: all transcript names on a particular chromosome/contig
-
 
 ## Transcript IDs
 
-`transcript_ids()`
+`transcript_ids(contig=None, strand=None)`
 : returns all transcript IDs in the annotation database
 
 `transcript_ids_of_gene_id(gene_id)`
@@ -92,16 +82,16 @@ these genomic elements (contig, start position, end position, strand).
 
 ## Exon IDs
 
-`exon_ids()`
+`exon_ids(contig=None, strand=None)`
 : returns all transcript IDs in the annotation database
 
-`exon_ids_of_gene_id`
+`exon_ids_of_gene_id(gene_id)`
 
-`exon_ids_of_gene_name`
+`exon_ids_of_gene_name(gene_name)`
 
-`exon_ids_of_transcript_name`
+`exon_ids_of_transcript_name(transcript_name)`
 
-`exon_ids_of_transcript_id`
+`exon_ids_of_transcript_id(transcript_id)`
 
 
 ## Locations
