@@ -9,12 +9,12 @@ from os.path import join
 from os import remove
 
 from common import CACHE_SUBDIR
+from compute_cache import cached_object
 from database import Database
 from exon import Exon
 from gene import Gene
 from gtf import GTF
 from locus import normalize_chromosome, normalize_strand
-import memory_cache
 from reference_transcripts import ReferenceTranscripts
 from release_info import check_release_number
 from transcript import Transcript
@@ -106,19 +106,13 @@ class EnsemblRelease(object):
             strand=strand,
             distinct=distinct)
         def run_query():
-            values = self.db.query_feature_values(
+            return self.db.query_feature_values(
                 column=column,
                 feature=feature,
                 distinct=distinct,
                 contig=contig,
                 strand=strand)
-            df = pd.DataFrame({column : values})
-            return df
-        df = memory_cache.load_csv(csv_path, expensive_action=run_query)
-        # Couldn't figure out how to serialize a series to a CSV without
-        # losing the column name, so reading/writing a one column DataFrame
-        # and pulling the series out of it.
-        return list(df[column])
+        return cached_object(csv_path, compute_fn=run_query)
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
         gene_ids = self.gene_ids_at_locus(

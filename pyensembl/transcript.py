@@ -192,7 +192,7 @@ class Transcript(Locus):
         Return offsets from start of this transcript for CDS fragments
         """
         ranges = self._transcript_feature_position_ranges('CDS')
-        return [self.range_offset(r) for r in ranges]
+        return [self.offset_range(r) for r in ranges]
 
     @property
     def coding_sequence_length(self):

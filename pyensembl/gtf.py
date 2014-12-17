@@ -4,7 +4,7 @@ from types import NoneType
 from gtf_parsing import load_gtf_as_dataframe
 from common import CACHE_SUBDIR
 from locus import normalize_chromosome, normalize_strand
-import memory_cache
+from compute_cache import cached_dataframe, clear_cached_objects
 from url_templates import ENSEMBL_FTP_SERVER, gtf_url_parts
 
 import datacache
@@ -43,7 +43,7 @@ class GTF(object):
         self._dataframes.clear()
 
         # clear cached dataframes loaded from CSV
-        memory_cache.clear_cached_objects()
+        clear_cached_objects()
 
     def base_filename(self):
         """
@@ -116,8 +116,7 @@ class GTF(object):
         Loads full dataframe from cached CSV or constructs it from GTF
         """
         csv_path = self.local_csv_path()
-        return memory_cache.load_csv(
-            csv_path, self._load_full_dataframe_from_gtf)
+        return cached_dataframe(csv_path, self._load_full_dataframe_from_gtf)
 
 
     def _load_full_dataframe_from_gtf(self):
@@ -179,8 +178,7 @@ class GTF(object):
 
                 return df
 
-            self._dataframes[key] = memory_cache.load_csv(
-                csv_path, local_loader_fn)
+            self._dataframes[key] = cached_dataframe(csv_path, local_loader_fn)
 
         return self._dataframes[key]
 
