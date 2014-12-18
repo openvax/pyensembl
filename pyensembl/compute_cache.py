@@ -4,7 +4,7 @@ primarily to cache the heavy-weight parsing of GTF files and various
 filtering operations on Ensembl entries.
 
 A piece of data is returned from one of three sources:
-1) Cache cold. Rnn the user-supplied compute_fn.
+1) Cache cold. Run the user-supplied compute_fn.
 2) Cache warm on disk. Parse or unpickle the serialized result into memory.
 3) Cache warm in memory. Return cached object.
 """
@@ -35,7 +35,6 @@ def clear_cached_objects():
         delete_file(key)
     _memory_cache.clear()
 
-
 def _read_csv(csv_path):
     print "Reading Dataframe from %s" % csv_path
     df = pd.read_csv(csv_path)
@@ -61,9 +60,11 @@ def cached_dataframe(csv_path, compute_fn):
     """
     if not csv_path.endswith(".csv"):
         raise ValueError("Invalid path '%s', must be a CSV file" % csv_path)
-    elif csv_path in _memory_cache:
+
+    if csv_path in _memory_cache:
         return _memory_cache[csv_path]
-    elif exists(csv_path) and not isempty(csv_path):
+
+    if exists(csv_path) and not isempty(csv_path):
         df = _read_csv(csv_path)
     else:
         df = compute_fn()
@@ -89,7 +90,8 @@ def cached_object(path, compute_fn):
     """
     if path in _memory_cache:
         return _memory_cache[path]
-    elif exists(path) and not isempty(path):
+
+    if exists(path) and not isempty(path):
         with open(path, 'r') as f:
             obj = cPickle.load(f)
     else:
