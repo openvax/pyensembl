@@ -106,7 +106,12 @@ class GTF(object):
         if column:
             csv_filename += ".column.%s" % (column,)
         if strand:
-            strand_string = "positive" if strand == "+" else "negative"
+            if strand == "+":
+                strand_string = "positive"
+            elif strand == "-":
+                strand_string = "negative"
+            else:
+                raise ValueError("Invalid strand value: %s" % strand)
             csv_filename += ".strand.%s" % strand_string
         if distinct:
             csv_filename += ".distinct"

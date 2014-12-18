@@ -369,17 +369,10 @@ class EnsemblRelease(object):
         the Ensembl database. Optionally restrict to a particular
         chromosome using the `contig` argument.
         """
-        # DataFrame with single column 'transcript_id'
         transcript_ids = self.transcript_ids(contig=contig, strand=strand)
-
-        # since we might be fetching a potentially very large set
-        # of transcripts, move the slightly inefficient property access
-        # outside of the list comprehension
-        db = self.db
-        reference = self.reference
         return [
-            Transcript(transcript_id, db, reference)
-            for transcript_id in transcript_ids_df
+            Transcript(transcript_id, self.db, self.reference)
+            for transcript_id in transcript_ids
         ]
 
     def transcript_by_id(self, transcript_id):

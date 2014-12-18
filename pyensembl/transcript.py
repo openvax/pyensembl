@@ -4,6 +4,14 @@ from exon import Exon
 from pyfaidx import Sequence
 
 class Transcript(Locus):
+    """
+    Transcript encompasses the locus, exons, and sequence of an Ensembl
+    transcript.
+
+    Lazily fetches sequence in case we're constructing many Transcripts
+    and not using the sequence, avoid the memory/performance overhead
+    of fetching and storing sequences from a FASTA file.
+    """
     def __init__(self, transcript_id, db, reference):
         if not isinstance(transcript_id, (unicode, str)):
             raise TypeError(
@@ -48,10 +56,6 @@ class Transcript(Locus):
                 "Missing gene ID for transcript with ID = %s" % transcript_id)
         self.gene_id = gene_id
 
-        # Lazily fetch sequence for this Transcript.
-        # Doing this in case we're constructing many Transcripts
-        # and not using the sequence, avoid the memory/performance overhead
-        # of fetching and storing sequences from a FASTA file.
         self._sequence = None
 
     def __str__(self):
