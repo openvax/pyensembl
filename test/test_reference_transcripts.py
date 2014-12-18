@@ -6,7 +6,6 @@ the correct transcripts get returned for known transcript IDs.
 
 from pyensembl import EnsemblRelease
 
-
 def test_reference_name():
     reference54 = EnsemblRelease(release=54).reference
     assert reference54.reference_name == "NCBI36"

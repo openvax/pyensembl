@@ -65,16 +65,18 @@ class GTF(object):
     def local_dir(self):
         return split(self.local_gtf_path())[0]
 
-    def local_csv_path(
+    def local_data_file_path(
             self,
             contig=None,
             feature=None,
             column=None,
             strand=None,
-            distinct=False):
+            distinct=False,
+            extension=".csv"):
         """
-        Path to CSV which the annotation data with expanded columns
-        for optional attributes.
+        Path to local file for storing materialized views of the Ensembl data.
+        Typically this is a CSV file, the filename reflects which filters have
+        been applied to the entries of the database.
 
         Parameters:
 
@@ -108,14 +110,14 @@ class GTF(object):
             csv_filename += ".strand.%s" % strand_string
         if distinct:
             csv_filename += ".distinct"
-        csv_filename += ".csv"
+        csv_filename += extension
         return join(dirpath, csv_filename)
 
     def _load_full_dataframe(self):
         """
         Loads full dataframe from cached CSV or constructs it from GTF
         """
-        csv_path = self.local_csv_path()
+        csv_path = self.local_data_file_path()
         return cached_dataframe(csv_path, self._load_full_dataframe_from_gtf)
 
 
@@ -145,7 +147,7 @@ class GTF(object):
         key = (contig, feature, strand)
 
         if key not in self._dataframes:
-            csv_path = self.local_csv_path(
+            csv_path = self.local_data_file_path(
                 contig=contig,
                 feature=feature,
                 strand=strand,

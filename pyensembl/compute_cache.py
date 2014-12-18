@@ -63,7 +63,7 @@ def cached_dataframe(csv_path, compute_fn):
         raise ValueError("Invalid path '%s', must be a CSV file" % csv_path)
     elif csv_path in _memory_cache:
         return _memory_cache[csv_path]
-    elif exists(csv_path):
+    elif exists(csv_path) and not isempty(csv_path):
         df = _read_csv(csv_path)
     else:
         df = compute_fn()
@@ -91,7 +91,7 @@ def cached_object(path, compute_fn):
         return _memory_cache[path]
     elif exists(path) and not isempty(path):
         with open(path, 'r') as f:
-            obj = cPickle.load(path)
+            obj = cPickle.load(f)
     else:
         obj = compute_fn()
         with open(path, 'w') as f:

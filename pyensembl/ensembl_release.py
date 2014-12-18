@@ -98,21 +98,28 @@ class EnsemblRelease(object):
 
         Returns a list constructed from query results.
         """
-        # GTF already uses CSV paths to store
-        csv_path = self.gtf.local_csv_path(
+        # since we're constructing a list, rather than a DataFrame,
+        # we're going to store it using pickling rather than the Pandas
+        # CSV serializer. Change the default extension from ".csv" to ".pickle"
+        pickle_path = self.gtf.local_data_file_path(
             feature=feature,
             column=column,
             contig=contig,
             strand=strand,
-            distinct=distinct)
+            distinct=distinct,
+            extension=".pickle")
         def run_query():
-            return self.db.query_feature_values(
+            results = self.db.query_feature_values(
                 column=column,
                 feature=feature,
                 distinct=distinct,
                 contig=contig,
                 strand=strand)
-        return cached_object(csv_path, compute_fn=run_query)
+            assert isinstance(results, list), \
+                "Expected list from Database.query_feature_values, got %s" % (
+                    type(results))
+            return results
+        return cached_object(pickle_path, compute_fn=run_query)
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
         gene_ids = self.gene_ids_at_locus(

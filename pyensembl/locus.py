@@ -57,12 +57,7 @@ class Locus(object):
             contig,
             start,
             end,
-            strand,
-            gene_id=None,
-            gene_name=None,
-            transcript_id=None,
-            transcript_name=None,
-            exon_id=None):
+            strand):
         """
         contig : str
             Chromosome or other sequence name in the reference assembly
@@ -76,6 +71,7 @@ class Locus(object):
         strand : str
             Should we read the locus forwards ('+') or backwards ('-')?
         """
+
         self.contig = normalize_chromosome(contig)
         self.strand = normalize_strand(strand)
 
@@ -103,6 +99,14 @@ class Locus(object):
 
     def __len__(self):
         return self.end - self.start + 1
+
+    def __eq__(self, other):
+        return (
+            self.contig == other.contig and
+            self.start == other.start and
+            self.end == other.end and
+            self.strand == other.strand
+        )
 
     @property
     def length(self):

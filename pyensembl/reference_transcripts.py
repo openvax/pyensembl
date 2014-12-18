@@ -8,6 +8,15 @@ import pyfaidx
 from datacache import Cache
 
 class ReferenceTranscripts(object):
+    """
+    Container for reference genome sequenes. Downloads and caches reference
+    FASTA files.
+    Currently only supports (unspliced) transcript sequences.
+
+    TODO: Access introns and intergenic regions by also downloading
+    the *.dna.fa.gz FASTA files. Should rename class to Reference when
+    this gets implemented.
+    """
     def __init__(
             self,
             ensembl_release,
@@ -87,11 +96,3 @@ class ReferenceTranscripts(object):
 
     def __contains__(self, transcript_id):
         return transcript_id in self.fasta_dictionary
-
-    def keys(self):
-        return self.fasta_dictionary.keys()
-
-    def values(self):
-        d = self.fasta_dictionary
-        return [d[transcript_id] for transcript_id in self.keys()]
-

@@ -130,53 +130,148 @@ class Transcript(Locus):
                     self.id, feature))
         return results
 
-    def _transcript_feature_position_range(self, feature):
+    def _transcript_feature_positions(self, feature, require_full_codon=False):
         """
-        Get unique start and end positions for feature,
-        raise an error if feature is absent or has multiple entries
-        for this transcript.
+        Get unique positions for feature, raise an error if feature is absent.
         """
         ranges = self._transcript_feature_position_ranges(
             feature, required=True)
-        if len(ranges) > 1:
-            raise ValueError(
-                "Expected %s to be unique for %s but got %d entries" % (
-                    feature, self.id, len(ranges)))
-        return ranges[0]
+        results = []
+        # a feature (such as a stop codon), maybe be split over multiple
+        # contiguous ranges. Collect all the nucleotide positions into a
+        # single list.
+        for (start, end) in ranges:
+            # since Ensembl ranges are [inclusive, inclusive] and
+            # Python ranges are [inclusive, excsluve) we have to increment
+            # the end position
+            range_positions = range(start, end+1)
+            results.extend(range_positions)
+        if require_full_codon:
+            if len(results) != 3:
+                raise ValueError(
+                    "Expected 3 positions for %s of %s but got %d" % (
+                        feature,
+                        self.id,
+                        len(results)))
+        return results
 
     @property
     def contains_start_codon(self):
-        start_codons = _transcript_feature_position_ranges('start_codon')
+        """
+        Does this transcript have an annotated start_codon entry in Ensembl?
+        """
+        start_codons = _transcript_feature_position_ranges(
+            'start_codon', required=False)
         return len(start_codons) > 0
 
     @property
     def contains_stop_codon(self):
-        stop_codons = _transcript_feature_position_ranges('stop_codon')
+        """
+        Does this transcript have an annotated stop_codon entry in Ensembl?
+        """
+        stop_codons = _transcript_feature_position_ranges(
+            'stop_codon', required=False)
         return len(stop_codons) > 0
 
     @property
-    def start_codon_position_range(self):
+    def start_codon_positions(self):
         """
-        Smallest and largest chromosomal positions of nucleotides in start codon
+        Chromosomal positions of nucleotides in start codon.
         """
-        return self._transcript_feature_position_range('start_codon')
+        return self._transcript_feature_positions(
+            'start_codon', require_full_codon=True)
 
     @property
-    def stop_codon_position_range(self):
+    def stop_codon_positions(self):
         """
-        Smallest and largest chromosomal positions of nucleotides in stop codon
+        Chromosomal positions of nucleotides in stop codon.
         """
-        return self._transcript_feature_position_range('stop_codon')
+        return self._transcript_feature_positions(
+            'stop_codon', require_full_codon=True)
 
     @property
-    def start_codon_offset_range(self):
-        start, end = self.start_codon_position_range
-        return self.offset_range(start, end)
+    def start_codon_unspliced_offsets(self):
+        """
+        Offsets from start of unspliced pre-mRNA transcript
+        of nucleotides in start codon.
+        """
+        return [
+            self.position_offset(position)
+            for position
+            in self.start_codon_positions
+        ]
+
+    def spliced_offset(self, position):
+        """
+        Convert from an absolute chromosomal position to the offset into
+        this transcript's spliced mRNA.
+
+        Position must be inside some exon (otherwise raise exception).
+        """
+        if not isinstance(position, (int, long)):
+            raise TypeError(
+                "Expected position to be int, got %s : %s" % (
+                    position, type(position)))
+        elif position < self.start or position > self.end:
+            raise ValueError(
+                "Invalid position: %d (must be between %d and %d)" % (
+                    position,
+                    self.start,
+                    self.end))
+
+        # offset from beginning of unspliced transcript (including introns)
+        unspliced_offset = self.position_offset(position)
+        total_spliced_offset = 0
+        # traverse exons in order of their appearance on the strand
+        # Since bsolute positions may decrease if on the negative strand,
+        # we instead use unspliced offsets.
+        for exon in self.exons:
+            exon_start_unspliced_offset, exon_end_unspliced_offset = \
+                self.offset_range(exon.start, exon.end)
+            if unspliced_offset <= exon_end_unspliced_offset:
+                exon_offset = unspliced_offset - exon_start_unspliced_offset
+                return total_spliced_offset + exon_offset
+            else:
+                total_spliced_offset += len(exon)
+        raise ValueError(
+            "Couldn't find position %d on any exon of %s" % (
+                position, self.id))
 
     @property
-    def stop_codon_offset_range(self):
-        start, end = self.stop_codon_position_range
-        return self.offset_range(start, end)
+    def start_codon_spliced_offsets(self):
+        """
+        Offsets from start of spliced mRNA transcript
+        of nucleotides in start codon.
+        """
+        return [
+            self.spliced_offset(position)
+            for position
+            in self.start_codon_positions
+        ]
+
+    @property
+    def stop_codon_unspliced_offsets(self):
+        """
+        Offsets from start of unspliced pre-mRNA transcript
+        of nucleotides in stop codon.
+        """
+        return [
+            self.position_offset(position)
+            for position
+            in self.stop_codon_positions
+        ]
+
+    @property
+    def stop_codon_spliced_offsets(self):
+        """
+        Offsets from start of spliced mRNA transcript
+        of nucleotides in stop codon.
+        """
+        return [
+            self.spliced_offset(position)
+            for position
+            in self.stop_codon_positions
+        ]
 
     @property
     def coding_sequence_position_ranges(self):
@@ -187,17 +282,9 @@ class Transcript(Locus):
         return self._transcript_feature_position_ranges('CDS')
 
     @property
-    def coding_sequence_offset_ranges(self):
-        """
-        Return offsets from start of this transcript for CDS fragments
-        """
-        ranges = self._transcript_feature_position_ranges('CDS')
-        return [self.offset_range(r) for r in ranges]
-
-    @property
     def coding_sequence_length(self):
         total = 0
-        for (start, stop) in self.coding_sequence_offset_ranges:
+        for (start, stop) in self.coding_sequence_position_ranges:
             assert start <= stop, \
                 "Invalid offset range [%d..%d] for transcript %s" % (
                     start, stop, self.id)
@@ -218,6 +305,10 @@ class Transcript(Locus):
 
     @property
     def sequence(self):
+        """
+        Spliced cDNA sequence of transcript
+        (includes 5' UTR, coding sequence, and 3' UTR)
+        """
         if self._sequence is None:
             if self.id not in self.reference:
                 raise ValueError(
@@ -229,18 +320,53 @@ class Transcript(Locus):
         return self._sequence
 
     @property
+    def first_start_codon_spliced_offset(self):
+        """
+        Offset of first nucleotide in start codon into the spliced mRNA
+        (excluding introns)
+        """
+        start_offsets = self.start_codon_spliced_offsets
+        return min(start_offsets)
+
+
+    @property
+    def last_stop_codon_spliced_offset(self):
+        """
+        Offset of last nucleotide in stop codon into the spliced mRNA
+        (excluding introns)
+        """
+        stop_offsets = self.stop_codon_spliced_offsets
+        return max(stop_offsets)
+
+
+    @property
     def coding_sequence(self):
-        start_offset, _ = self.start_codon_offset_range
-        _, stop_offset = self.stop_codon_offset_range
-        return self.sequence[start_offset:stop_offset]
+        """
+        cDNA coding sequence (from start codon to stop codon, without
+        any introns)
+        """
+        start = self.first_start_codon_spliced_offset
+        end = self.last_stop_codon_spliced_offset
+        # If start codon is the at nucleotide offsets [3,4,5] and
+        # stop codon is at nucleotide offsets  [20,21,22]
+        # then start = 3 and end = 22.
+        #
+        # Adding 1 to end since Python uses non-inclusive ends in slices/ranges.
+        return self.sequence[start:end+1]
 
     @property
     def five_prime_utr_sequence(self):
-        start_offset, _ = self.start_codon_offset_range
-        return self.sequence[:start_offset]
+        """
+        cDNA sequence of 5' UTR
+        (untranslated region at the beginning of the transcript)
+        """
+        return self.sequence[:self.first_start_codon_spliced_offset]
 
     @property
     def three_prime_utr_sequence(self):
-        _, end_offset = self.stop_codon_offset_range
-        return self.sequence[end_offset:]
+        """
+        cDNA sequence of 3' UTR
+        (untranslated region at the end of the transcript)
+        """
+        return self.sequence[self.last_stop_codon_spliced_offset+1:]
 
