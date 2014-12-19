@@ -68,8 +68,7 @@ def test_sequence_parts(ensembl):
     combined to make the full transcript.
     """
     transcript = ensembl.transcript_by_id(FOXP3_001_transcript_id)
-    print transcript
-    print transcript.exons
+
     # The combined lengths of the upstream untranslated region,
     # coding sequence, and downstream untranslated region
     full_sequence = transcript.sequence
