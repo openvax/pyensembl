@@ -97,6 +97,6 @@ def cached_object(path, compute_fn):
     else:
         obj = compute_fn()
         with open(path, 'w') as f:
-            cPickle.dump(obj, f)
+            cPickle.dump(obj, f, cPickle.HIGHEST_PROTOCOL)
     _memory_cache[path] = obj
     return obj
