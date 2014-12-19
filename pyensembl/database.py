@@ -1,7 +1,7 @@
 from os.path import join, exists
 import sqlite3
 
-from locus import normalize_chromosome
+from locus import normalize_chromosome, normalize_strand
 
 import datacache
 
@@ -285,12 +285,13 @@ class Database(object):
                     filter_column, filter_value, results))
         return results[0]
 
-    def _query_feature_values(
+    def query_feature_values(
             self,
             column,
             feature,
             distinct=True,
-            contig=None):
+            contig=None,
+            strand=None):
         """
         Run a SQL query against the ensembl sqlite3 database, filtered
         only on the feature type.
@@ -307,16 +308,17 @@ class Database(object):
             query += " AND seqname = ?"
             query_params.append(contig)
 
+        if strand:
+            strand = normalize_strand(strand)
+            query += " AND strand = ?"
+            query_params.append(strand)
+
         rows = self.run_sql_query(query, query_params = query_params)
         return [row[0] for row in rows if row is not None]
 
-
     def query_distinct_on_contig(self, column_name, feature, contig):
-        contig = normalize_chromosome(contig)
-        results = self.query(
-            select_column_names=[column_name],
-            filter_column="seqname",
-            filter_value=contig,
+        return self.query_feature_values(
+            column_name=column_name,
             feature=feature,
+            contig=contig,
             distinct=True)
-        return [result[0] for result in results if result is not None]

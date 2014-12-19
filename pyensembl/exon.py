@@ -110,7 +110,7 @@ class Exon(Locus):
         return self._exon_feature_positions('stop_codon')
 
     def _first_offset(self, start, end):
-        relative_start, relative_end = self.range_offset(start, end)
+        relative_start, relative_end = self.offset_range(start, end)
         return min(relative_start, relative_end)
 
     def _exon_feature_offsets(self, feature):

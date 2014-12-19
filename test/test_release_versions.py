@@ -21,14 +21,10 @@ def test_version_is_not_numeric():
 def test_version_is_none():
     EnsemblRelease(None)
 
-def test_version_75():
-    ensembl = EnsemblRelease(75)
-    path = ensembl.gtf.local_gtf_path()
-    assert exists(path)
-    assert path.endswith(".gtf.gz")
+def test_int_version():
+    for version in xrange(54, 77):
+        ensembl = EnsemblRelease(version)
 
-def test_version_75_string():
-    ensembl = EnsemblRelease("75")
-    path = ensembl.gtf.local_gtf_path()
-    assert exists(path)
-    assert path.endswith(".gtf.gz")
+def test_str_version():
+    for version in xrange(54, 77):
+        ensembl = EnsemblRelease(str(version))
