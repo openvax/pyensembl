@@ -17,11 +17,11 @@ import pandas as pd
 
 _memory_cache = {}
 
-def isempty(filename):
+def is_empty(filename):
     return stat(filename).st_size == 0
 
-def delete_file(key):
-    if exists(key):
+def delete_file(path):
+    if exists(path):
         logging.info("Deleting cached file %s" % key)
         remove(key)
 
@@ -64,7 +64,7 @@ def cached_dataframe(csv_path, compute_fn):
     if csv_path in _memory_cache:
         return _memory_cache[csv_path]
 
-    if exists(csv_path) and not isempty(csv_path):
+    if exists(csv_path) and not is_empty(csv_path):
         df = _read_csv(csv_path)
     else:
         df = compute_fn()
@@ -91,7 +91,7 @@ def cached_object(path, compute_fn):
     if path in _memory_cache:
         return _memory_cache[path]
 
-    if exists(path) and not isempty(path):
+    if exists(path) and not is_empty(path):
         with open(path, 'r') as f:
             obj = cPickle.load(f)
     else:
