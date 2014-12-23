@@ -1,6 +1,4 @@
-
 def normalize_chromosome(c):
-
     if isinstance(c, (int, long)):
         if c == 0:
             raise ValueError("Contig cannot be 0")
