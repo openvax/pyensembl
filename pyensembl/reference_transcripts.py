@@ -23,7 +23,6 @@ class ReferenceTranscripts(object):
             species="homo_sapiens",
             server=ENSEMBL_FTP_SERVER):
 
-        print "MADE A NEW ReferenceTranscripts!"
         # download cache for fetching reference FASTA files
         self.cache = Cache(CACHE_SUBDIR)
 

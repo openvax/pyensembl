@@ -338,7 +338,6 @@ class Transcript(Locus):
         Spliced cDNA sequence of transcript
         (includes 5' UTR, coding sequence, and 3' UTR)
         """
-        print "sequence?"
         try:
             # fetch this transcript's Sequence from the attached
             # ReferenceTranscripts object
