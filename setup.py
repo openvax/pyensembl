@@ -31,7 +31,7 @@ from setuptools import setup
 if __name__ == '__main__':
     setup(
         name='pyensembl',
-        version="0.5.1",
+        version="0.5.2",
         description="Python interface to ensembl reference genome metadata",
       	author="Alex Rubinsteyn",
         author_email="alex {dot} rubinsteyn {at} mssm {dot} edu",
@@ -51,6 +51,7 @@ if __name__ == '__main__':
             'pandas>=0.13.1',
             'datacache>=0.4.2',
 	    'pyfaidx',
+	    'memoized-property',
         ],
         long_description=readme,
         packages=['pyensembl'],

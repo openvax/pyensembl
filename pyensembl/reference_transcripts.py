@@ -47,7 +47,15 @@ class ReferenceTranscripts(object):
         # dictionary mapping transcript IDs to cDNA sequences
         self._transcript_sequences = {}
 
+        # pyfaidx Fasta dictionary gets lazily constructed
+        # since we only want to download the Fasta file if/when
+        # we use it
         self._fasta_dictionary = None
+
+        # key set for fasta dictionary, for faster membership tests,
+        # pyfaidx does something upsettingly slow in its __contains__
+        # method, see comment on `transcript_sequence`.
+        self._fasta_keys = None
 
     @property
     def local_fasta_path(self):
@@ -76,10 +84,20 @@ class ReferenceTranscripts(object):
             if not transcript_id.startswith("ENST"):
                 raise ValueError("Invalid transcript ID: %s" % (transcript_id,))
 
-            if transcript_id not in self.fasta_dictionary:
+
+            # the __getitem__ on pyfaidx.Fasta does a list copy and
+            # traversal to check whether the transcript ID is valid,
+            # much faster if by-pass this logic with our own key membershop
+            # check and then construct the FastaRecord ourselves.
+            #
+            # Example speedup: previously 24s, now 3s annotating 311 transcripts
+            #
+            if transcript_id not in self:
                 raise ValueError(
                     "Transcript ID not found: %s" % (transcript_id,))
-            fasta_record = self.fasta_dictionary[transcript_id]
+
+            fasta_record = pyfaidx.FastaRecord(
+                transcript_id, self.fasta_dictionary)
 
             # FastaRecord doesn't seem to have an accessor to get the full
             # sequence (only subsequences), so slice out the full string
@@ -95,4 +113,9 @@ class ReferenceTranscripts(object):
         return str(self)
 
     def __contains__(self, transcript_id):
-        return transcript_id in self.fasta_dictionary
+        # the pyfaidx __contains__ method requires an expensive list traversal
+        # so cache the keys as a set for faster membership checks
+        if self._fasta_keys is None:
+            keys = self.fasta_dictionary.keys()
+            self._fasta_keys = set(keys)
+        return transcript_id in self._fasta_keys
