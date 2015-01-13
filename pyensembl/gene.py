@@ -68,11 +68,10 @@ class Gene(Locus):
         # We're doing a SQL query for each transcript ID to fetch
         # its particular information, might be more efficient if we
         # just get all the columns here, but how do we keep that modular?
-        transcripts = [
+        return [
             Transcript(result[0], self.db)
             for result in results
         ]
-        self._transcripts = transcripts
 
     @memoized_property
     def exons(self):

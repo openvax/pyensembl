@@ -84,9 +84,7 @@ class Transcript(Locus):
          # the exon_number as a 1-based list offset
         exons = [None] * len(results)
 
-        for entry in results:
-            exon_number, exon_id = entry
-
+        for exon_number, exon_id in results:
             exon = Exon(exon_id, self.db)
             exon_number = int(exon_number)
             assert exon_number >= 1, "Invalid exon number: %s" % exon_number
