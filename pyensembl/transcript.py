@@ -1,3 +1,4 @@
+from biotypes import is_valid_biotype
 from exon import Exon
 from locus import Locus, normalize_chromosome
 
@@ -25,6 +26,7 @@ class Transcript(Locus):
 
         columns = [
             'transcript_name',
+            'transcript_biotype',
             'seqname',
             'start',
             'end',
@@ -32,7 +34,7 @@ class Transcript(Locus):
             'gene_name',
             'gene_id',
         ]
-        transcript_name, contig, start, end, strand, gene_name, gene_id = \
+        name, biotype, contig, start, end, strand, gene_name, gene_id = \
             self.db.query_one(
                 select_column_names=columns,
                 filter_column='transcript_id',
@@ -42,20 +44,34 @@ class Transcript(Locus):
 
         Locus.__init__(self, contig, start, end, strand)
 
-        if not transcript_name:
+        if not name:
             raise ValueError(
-                "Missing name for transcript with ID = %s" % transcript_name)
-        self.name = transcript_name
+                "Missing name for transcript with ID=%s" % transcript_id)
+        else:
+            self.name = name
+
+        if not biotype:
+            raise ValueError(
+                "Missing biotype for transcript with ID=%s, name=%s" % (
+                    transcript_id, name))
+        elif not is_valid_biotype(biotype):
+            raise ValueError(
+                "Invalid biotype '%s' for transcript with ID=%s, name=%s" % (
+                    transcript_id, name))
+        else:
+            self.biotype = biotype
 
         if gene_name is None:
             raise ValueError(
-                "Missing gene name for transcript with ID = %s" % transcript_id)
-        self.gene_name = gene_name
+                "Missing gene name for transcript with ID=%s" % transcript_id)
+        else:
+            self.gene_name = gene_name
 
         if gene_id is None:
             raise ValueError(
-                "Missing gene ID for transcript with ID = %s" % transcript_id)
-        self.gene_id = gene_id
+                "Missing gene ID for transcript with ID=%s" % transcript_id)
+        else:
+            self.gene_id = gene_id
 
 
     def __str__(self):
