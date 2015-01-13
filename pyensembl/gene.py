@@ -1,4 +1,4 @@
-from biotypes import all_valid_biotypes
+from biotypes import is_valid_biotype
 from locus import Locus
 from transcript import Transcript
 
@@ -37,8 +37,7 @@ class Gene(Locus):
         if not biotype:
             raise ValueError(
                 "Missing gene_biotype for gene with ID = %s" % gene_id)
-
-        if biotype not in all_valid_biotypes:
+        elif not is_valid_biotype(biotype):
             raise ValueError(
                 "Invalid gene_biotype %s for gene with ID = %s" % (
                     biotype, gene_id))
