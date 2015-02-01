@@ -1,6 +1,7 @@
 from os.path import join, exists
 import sqlite3
 
+from common import CACHE_SUBDIR
 from locus import normalize_chromosome, normalize_strand
 
 import datacache
