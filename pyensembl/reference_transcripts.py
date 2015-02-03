@@ -84,7 +84,6 @@ class ReferenceTranscripts(object):
             if not transcript_id.startswith("ENST"):
                 raise ValueError("Invalid transcript ID: %s" % (transcript_id,))
 
-
             # the __getitem__ on pyfaidx.Fasta does a list copy and
             # traversal to check whether the transcript ID is valid,
             # much faster if by-pass this logic with our own key membershop

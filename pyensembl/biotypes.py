@@ -51,7 +51,7 @@ TEC
 ----------------
 To be Experimentally Confirmed. This is used for non-spliced EST clusters that
 have polyA features. This category has been specifically created for the ENCODE
- project to highlight regions that could indicate the presence of protein coding
+project to highlight regions that could indicate the presence of protein coding
 genes that require experimental validation, either by 5' RACE or RT-PCR to
 extend the transcripts, or by confirming expression of the putatively-encoded
 peptide with specific antibodies.
@@ -234,6 +234,8 @@ coding_pseudogenes = {
     'TR_V_pseudogene',
     'unitary_pseudogene',
     'unprocessed_pseudogene',
+    # to be experimentally confirmed
+    'TEC'
 }
 
 long_noncoding = {
