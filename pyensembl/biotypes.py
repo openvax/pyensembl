@@ -140,6 +140,7 @@ but the presence of locus-specific transcripts indicates expression.
 translated_unprocessed_pseudogene
 ----------------
 Pseudogene that has mass spec data suggesting that it is also translated.
+
 unitary_pseudogene
 ----------------
 A species specific unprocessed pseudogene without a parent gene, as it has an
@@ -235,7 +236,9 @@ coding_pseudogenes = {
     'unitary_pseudogene',
     'unprocessed_pseudogene',
     # to be experimentally confirmed
-    'TEC'
+    'TEC',
+    # TODO: should this be here or considered protein_coding?
+    'translated_unprocessed_pseudogene'
 }
 
 long_noncoding = {
