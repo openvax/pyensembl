@@ -256,7 +256,7 @@ class EnsemblRelease(object):
         """
         Construct a Gene object for the given gene ID.
         """
-        return Gene(gene_id, self.db)
+        return Gene(gene_id, self.db, self.reference)
 
     def genes_by_name(self, gene_name):
         """
