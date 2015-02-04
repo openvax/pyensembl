@@ -254,7 +254,8 @@ long_noncoding = {
     'processed_transcript',
     'retained_intron',
     'sense_intronic',
-    'sense_overlapping'
+    'sense_overlapping',
+    'known_ncrna'
 }
 
 mitochondrial = {
