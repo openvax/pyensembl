@@ -1,4 +1,4 @@
-pyensembl
+PyEnsembl
 =======
 
 Python interface to Ensembl reference genome metadata (exons, transcripts, &c)
