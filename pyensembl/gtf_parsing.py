@@ -32,6 +32,7 @@ Columns of a GTF file:
 (from ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/README)
 """
 
+import logging
 from os.path import exists
 
 import numpy as np
@@ -121,20 +122,30 @@ def _extend_with_attributes(df):
     extra_columns = {}
     column_order = []
     for i, attr_string in enumerate(df.attribute):
+        # TODO: tokenize attribute strings properly
+        # for now, catch mistaken semicolons by replacing "xyz;" with "xyz"
+        # Required to do this since the GTF for Ensembl 78 has
+        # gene_name = "PRAMEF6;"
+        # transcript_name = "PRAMEF6;-201"
+        attr_string = attr_string.replace(';\"', '\"').replace(";-", "-")
+
         pairs = (
             kv.strip().split(" ", 2)
             for kv in attr_string.split(";")
-            if len(kv) > 0
+            # simplest entry must be at least three characters:
+            # (key name, space, value)
+            if len(kv) > 2
         )
         for k,v in pairs:
             if k not in extra_columns:
                 extra_columns[k] = [""] * n
                 column_order.append(k)
             extra_columns[k][i] = v
+
     # make a copy of the DataFrame without attribute strings.
     df = df.drop("attribute", axis=1)
 
-    print "Adding attribute columns: %s" % (column_order,)
+    logging.info("Adding attribute columns: %s", column_order)
     for k in column_order:
         assert k not in df, "Column '%s' appears in GTF twice" % k
         df[k] = extra_columns[k]
@@ -249,9 +260,10 @@ def reconstruct_exon_id_column(df, inplace=True):
     return df
 
 def load_gtf_as_dataframe(filename):
-    print "Reading GTF %s into DataFrame" % filename
+    logging.info("Reading GTF %s into DataFrame", filename)
     df = _read_gtf(filename)
-    print "Extracting attributes for %d entries in GTF DataFrame" % len(df)
+    logging.info(
+        "Extracting attributes for %d entries in GTF DataFrame", len(df))
     df = _extend_with_attributes(df)
 
     # due to the annoying ambiguity of the second GTF column,
@@ -279,8 +291,7 @@ def load_gtf_as_dataframe(filename):
         assert column_name in df.columns, \
             "Missing required column '%s', available: %s" % (
                 column_name,
-                list(sorted(available_columns))
-            )
+                list(sorted(df.columns)))
 
     # older Ensembl releases only had features:
     #   - exon
@@ -294,15 +305,15 @@ def load_gtf_as_dataframe(filename):
     distinct_features = df.feature.unique()
 
     if 'gene' not in distinct_features:
-        print "Creating entries for feature='gene'"
+        logging.info("Creating entries for feature='gene'")
         df = reconstruct_gene_rows(df)
 
     if 'transcript' not in distinct_features:
-        print "Creating entries for feature='transcript'"
+        logging.info("Creating entries for feature='transcript'")
         df = reconstruct_transcript_rows(df)
 
     if 'exon_id' not in df:
-        print "Creating 'exon_id' column"
+        logging.info("Creating 'exon_id' column")
         df = reconstruct_exon_id_column(df)
 
     return df

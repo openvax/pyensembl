@@ -6,7 +6,7 @@ from memoized_property import memoized_property
 
 class Gene(Locus):
 
-    def __init__(self, gene_id, db):
+    def __init__(self, gene_id, db, reference):
         if not isinstance(gene_id, (unicode, str)):
             raise TypeError(
                 "Expected gene ID to be string, got %s : %s" % (
@@ -15,6 +15,7 @@ class Gene(Locus):
 
         self.id = gene_id
         self.db = db
+        self.reference = reference
         columns = [
             'gene_name',
             'seqname',
@@ -55,21 +56,20 @@ class Gene(Locus):
         Property which dynamically construct transcript objects for all
         transcript IDs associated with this gene.
         """
-        transcript_ids_query = """
-            SELECT transcript_id
-            FROM ensembl
-            WHERE gene_id = ?
-            AND feature = 'transcript'
-        """
-        cursor = self.db.execute(transcript_ids_query, [self.id])
-        results = cursor.fetchall()
+        transcript_id_results = self.db.query(
+            select_column_names=['transcript_id'],
+            filter_column='gene_id',
+            filter_value=self.id,
+            feature='transcript',
+            distinct=False,
+            required=False)
 
         # We're doing a SQL query for each transcript ID to fetch
         # its particular information, might be more efficient if we
         # just get all the columns here, but how do we keep that modular?
         return [
-            Transcript(result[0], self.db)
-            for result in results
+            Transcript(result[0], self.db, self.reference)
+            for result in transcript_id_results
         ]
 
     @memoized_property

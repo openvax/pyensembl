@@ -6,7 +6,7 @@ from nose.tools import nottest
 _release_versions = [
     54, # last release for GRCh36/hg18
     75, # last release for GRCh37/hg19
-    77, # most recent release for GRCh38
+    78, # most recent release for GRCh38
 ]
 
 _cached_releases = {}

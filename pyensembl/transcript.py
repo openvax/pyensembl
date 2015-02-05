@@ -15,6 +15,16 @@ class Transcript(Locus):
     of fetching and storing sequences from a FASTA file.
     """
     def __init__(self, transcript_id, db, reference):
+        """
+        Parameters
+        ----------
+        transcript_id : str
+
+        db : pyensembl.Database
+            Database of annotations
+
+        reference : ReferenceTranscripts
+        """
         if not isinstance(transcript_id, (unicode, str)):
             raise TypeError(
                 "Expected transcript ID to be string, got %s : %s" % (

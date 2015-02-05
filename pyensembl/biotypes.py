@@ -51,7 +51,7 @@ TEC
 ----------------
 To be Experimentally Confirmed. This is used for non-spliced EST clusters that
 have polyA features. This category has been specifically created for the ENCODE
- project to highlight regions that could indicate the presence of protein coding
+project to highlight regions that could indicate the presence of protein coding
 genes that require experimental validation, either by 5' RACE or RT-PCR to
 extend the transcripts, or by confirming expression of the putatively-encoded
 peptide with specific antibodies.
@@ -140,6 +140,7 @@ but the presence of locus-specific transcripts indicates expression.
 translated_unprocessed_pseudogene
 ----------------
 Pseudogene that has mass spec data suggesting that it is also translated.
+
 unitary_pseudogene
 ----------------
 A species specific unprocessed pseudogene without a parent gene, as it has an
@@ -234,6 +235,10 @@ coding_pseudogenes = {
     'TR_V_pseudogene',
     'unitary_pseudogene',
     'unprocessed_pseudogene',
+    # to be experimentally confirmed
+    'TEC',
+    # TODO: should this be here or considered protein_coding?
+    'translated_unprocessed_pseudogene'
 }
 
 long_noncoding = {
@@ -249,7 +254,8 @@ long_noncoding = {
     'processed_transcript',
     'retained_intron',
     'sense_intronic',
-    'sense_overlapping'
+    'sense_overlapping',
+    'known_ncrna'
 }
 
 mitochondrial = {

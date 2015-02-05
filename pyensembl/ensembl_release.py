@@ -16,7 +16,7 @@ from gene import Gene
 from gtf import GTF
 from locus import normalize_chromosome, normalize_strand
 from reference_transcripts import ReferenceTranscripts
-from release_info import check_release_number
+from release_info import check_release_number, MAX_ENSEMBL_RELEASE
 from transcript import Transcript
 from url_templates import ENSEMBL_FTP_SERVER
 
@@ -27,7 +27,7 @@ import pandas as pd
 
 class EnsemblRelease(object):
 
-    def __init__(self, release, server=ENSEMBL_FTP_SERVER):
+    def __init__(self, release=MAX_ENSEMBL_RELEASE, server=ENSEMBL_FTP_SERVER):
         self.cache = datacache.Cache(CACHE_SUBDIR)
         self.release = check_release_number(release)
         self.species = "homo_sapiens"
@@ -39,7 +39,6 @@ class EnsemblRelease(object):
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
-
 
     def __str__(self):
         return "EnsemblRelease(release=%d, gtf_url='%s', fasta_url='%s')" % (
@@ -257,7 +256,7 @@ class EnsemblRelease(object):
         """
         Construct a Gene object for the given gene ID.
         """
-        return Gene(gene_id, self.db)
+        return Gene(gene_id, self.db, self.reference)
 
     def genes_by_name(self, gene_name):
         """

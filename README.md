@@ -1,7 +1,9 @@
-pyensembl
+PyEnsembl
 =======
 
 Python interface to Ensembl reference genome metadata (exons, transcripts, &c)
+
+# Example Usage
 
 ```python
 from pyensembl import EnsemblRelease
@@ -15,6 +17,20 @@ gene_names = data.gene_names_at_locus(contig=6, position=29945884)
 # get all exons associated with HLA-A
 exon_ids  = data.exon_ids_of_gene_name('HLA-A')
 ```
+
+# Installation
+
+You can install PyEnsembl using [pip](https://pip.pypa.io/en/latest/quickstart.html):
+
+```sh
+pip install pyensembl
+```
+
+This should also install any required packages, such as [datacache](https://github.com/hammerlab/datacache) and
+[pyfaidx](https://pypi.python.org/pypi/pyfaidx).
+
+The first time you use PyEnsembl, there will be a delay of several minutes while the library downloads and parses Ensembl data files.
+
 
 # API
 
@@ -112,13 +128,13 @@ polymorphic regions (e.g. HLA genes).
 
 ## Start Codons
 
-`start_codon_of_transcript_id`
+`start_codon_of_transcript_id(transcript_id)`
 
-`start_codon_of_transcript_name`
+`start_codon_of_transcript_name(transcript_id)`
 
 
 ## Stop Codons
 
-`stop_codon_of_transcript_id`
+`stop_codon_of_transcript_id(transcript_id)`
 
-`stop_codon_of_transcript_name`
+`stop_codon_of_transcript_name(transcript_name)`
