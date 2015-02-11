@@ -6,9 +6,7 @@ the expected gene ID and location.
 
 from pyensembl import EnsemblRelease
 
-from test_common import releases
-
-ensembl77 = EnsemblRelease(77)
+ensembl77 = EnsemblRelease(77, auto_download=True)
 
 def test_exon_object_by_id():
     """

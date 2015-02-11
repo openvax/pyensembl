@@ -14,7 +14,7 @@ _cached_releases = {}
 def cached_release(version):
     if version in _cached_releases:
         return _cached_releases[version]
-    ensembl = EnsemblRelease(version)
+    ensembl = EnsemblRelease(version, auto_download=True)
     _cached_releases[version] = ensembl
     return ensembl
 

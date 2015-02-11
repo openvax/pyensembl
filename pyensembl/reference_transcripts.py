@@ -1,6 +1,6 @@
 from __future__ import print_function, division, absolute_import
 
-from os.path import join
+from os.path import join, exists
 
 from .common import CACHE_SUBDIR
 from .release_info import which_human_reference_name, check_release_number
@@ -23,10 +23,12 @@ class ReferenceTranscripts(object):
             self,
             ensembl_release,
             species="homo_sapiens",
-            server=ENSEMBL_FTP_SERVER):
+            server=ENSEMBL_FTP_SERVER,
+            auto_download=False):
 
         # download cache for fetching reference FASTA files
         self.cache = Cache(CACHE_SUBDIR)
+        self.auto_download = auto_download
 
         self.release = check_release_number(ensembl_release)
 
@@ -39,6 +41,7 @@ class ReferenceTranscripts(object):
 
         self.server = server
 
+        self.fasta_decompress = True
         reference_url_dir, reference_filename = fasta_cdna_url_parts(
             ensembl_release=self.release,
             species=self.species,
@@ -84,10 +87,26 @@ class ReferenceTranscripts(object):
     @property
     def local_fasta_path(self):
         """
-        Returns local path to FASTA file,
-        download from the Ensembl FTP server if not already cached.
+        Returns local path to FASTA file. If it's not already
+        cached, download it from the Ensembl FTP server if auto
+        download is enabled.
         """
-        return self.cache.fetch(self.url, self.remote_filename, decompress=True)
+        # If the fasta is already cached, fetching it won't initiate a
+        # download. But it's always okay to initiate a download if
+        # auto download is enabled.
+        if (self.cache.exists(self.url,
+                              self.remote_filename,
+                              self.fasta_decompress) or
+            self.auto_download):
+            # Does a download if the cache is empty.
+            return self.cache.fetch(self.url,
+                                    self.remote_filename,
+                                    self.fasta_decompress)
+        raise ValueError("Ensembl transcript data is not currently "
+                         "installed for release %s. Run "
+                         "\"pyensembl install %s\" or call into "
+                         "EnsemblRelease(%s).install()" %
+                         ((self.release,) * 3))
 
     @property
     def local_dir(self):
@@ -128,3 +147,35 @@ class ReferenceTranscripts(object):
             self._transcript_sequences[transcript_id] = seq
         return self._transcript_sequences[transcript_id]
 
+    def download_transcript_sequences(self, force=False):
+        """
+        Download the FASTA file if one does not exist. If `force` is
+        True, overwrites any existing file.
+
+        Returns True if a download happened.
+        """
+        if not force and self.cache.exists(self.url,
+                                           self.remote_filename,
+                                           self.fasta_decompress):
+            return False
+        self.cache.fetch(self.url, self.remote_filename,
+                         self.fasta_decompress, force=force)
+        return True
+
+    def index(self, force=False):
+        """
+        Perform pyfaidx indexing if it's not already done. If `force`
+        is True, always re-index.
+
+        Returns True if the index was re-created.
+
+        Raises an error if the necessary data is not yet downloaded.
+        """
+        # This local_fasta_path property access will raise an error
+        # if the necessary data is not yet downloaded
+        if exists(self.local_fasta_path + '.fai') and not force:
+            return False
+        fasta = pyfaidx.Fasta(self.local_fasta_path)
+        fasta.faidx.write_fai()
+        self._fasta_dictionary = fasta
+        return True
