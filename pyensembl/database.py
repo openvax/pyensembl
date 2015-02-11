@@ -70,7 +70,7 @@ class Database(object):
         indices.append(['feature'])
         return indices
 
-    def _create_database(self):
+    def create_database(self):
         print("Creating database: %s" % self.local_db_path())
         filename = self.local_db_filename()
         df = self.gtf.dataframe()
@@ -87,18 +87,32 @@ class Database(object):
             indices=indices)
         return db
 
+    def connection_if_exists(self):
+        """
+        Return the connection if the DB exists, and otherwise return 
+        None.
+        """
+        db_path = self.local_db_path()
+        if exists(db_path):
+            connection = sqlite3.connect(db_path)
+            # maybe file got created but not filled
+            if datacache.db.db_table_exists(connection, 'ensembl'):
+                return connection
+        return None
+
     def _connect_or_create_database(self):
         """
         If database already exists, open a connection.
         Otherwise, create it.
         """
-        db_path = self.local_db_path()
-        if exists(db_path):
-            db = sqlite3.connect(db_path)
-            # maybe file got created but not filled
-            if datacache.db.db_table_exists(db, 'ensembl'):
-                return db
-        return self._create_database()
+        connection = self.connection_if_exists()
+        if connection:
+            return connection
+        raise ValueError(("Ensembl data is not currently downloaded "
+                          "for release %s. Run \"pyensembl download %s\" "
+                          "or call into EnsemblRelease(%s)."
+                          "download_annotations()") %
+                         tuple([self.gtf.release] * 3))
 
     @property
     def connection(self):

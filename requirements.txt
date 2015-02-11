@@ -1,0 +1,6 @@
+numpy==1.7
+pandas==0.13.1
+datacache==0.4.2
+pyfaidx==0.3.4
+memoized-property==1.0.2
+nose2==0.5.0

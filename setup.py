@@ -31,12 +31,17 @@ from setuptools import setup
 if __name__ == '__main__':
     setup(
         name='pyensembl',
-        version="0.5.3",
+        version="0.5.4",
         description="Python interface to ensembl reference genome metadata",
       	author="Alex Rubinsteyn",
         author_email="alex {dot} rubinsteyn {at} mssm {dot} edu",
       	url="https://github.com/hammerlab/pyensembl",
         license="http://www.apache.org/licenses/LICENSE-2.0.html",
+        entry_points={
+          'console_scripts': [
+              'pyensembl = pyensembl.shell:run'
+          ],
+        },
         classifiers=[
             'Development Status :: 3 - Alpha',
             'Environment :: Console',
@@ -49,9 +54,9 @@ if __name__ == '__main__':
         install_requires=[
             'numpy>=1.7',
             'pandas>=0.13.1',
-            'datacache>=0.4.2',
-	    'pyfaidx',
-	    'memoized-property',
+            'datacache>=0.4.5',
+            'pyfaidx>=0.3.4',
+            'memoized-property>=1.0.2',
         ],
         long_description=readme,
         packages=['pyensembl'],
