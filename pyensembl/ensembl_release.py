@@ -30,13 +30,14 @@ class EnsemblRelease(object):
     variety of helper methods for accessing this data.
     """
 
-    def __init__(self, release=MAX_ENSEMBL_RELEASE, server=ENSEMBL_FTP_SERVER):
+    def __init__(self, release=MAX_ENSEMBL_RELEASE, server=ENSEMBL_FTP_SERVER,
+                 auto_download=False):
         self.cache = datacache.Cache(CACHE_SUBDIR)
         self.release = check_release_number(release)
         self.species = "homo_sapiens"
         self.server = server
         self.gtf = GTF(self.release, self.species, server)
-        self.db = Database(gtf = self.gtf)
+        self.db = Database(gtf=self.gtf, auto_download=auto_download)
         self.reference = ReferenceTranscripts(
             self.release, self.species, server)
 
@@ -124,11 +125,12 @@ class EnsemblRelease(object):
 
     def download_annotations(self):
         if self.db.connection_if_exists():
-            print "Data for release %s is already downloaded" % self.release
+            print ("Data for release %s is already downloaded and "
+                   "installed" % self.release)
             return
         self.db.create_database()
-        print "Data has for release %s has been downloaded" % self.release
-        return
+        print ("Data for release %s has been downloaded and installed"
+               % self.release)
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
         gene_ids = self.gene_ids_at_locus(

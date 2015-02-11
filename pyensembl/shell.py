@@ -17,13 +17,13 @@ def run():
     parser = argparse.ArgumentParser(usage=__doc__)
     subparsers = parser.add_subparsers(dest='program')
     download_parser = subparsers.add_parser(
-        'download', help ='retrieve and install Ensembl data')
+        'update', help ='retrieve and install Ensembl data')
     download_parser.add_argument(
         'release',
         help=('Specify the Ensembl release that you would like to'
               'download and install (defaults to latest release)'))
     args = parser.parse_args()
-    if args.program == 'download':
+    if args.program == 'update':
         download_annotations(args.release)
 
 

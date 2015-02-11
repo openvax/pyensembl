@@ -16,8 +16,9 @@ class Database(object):
     writing SQL queries directly.
     """
 
-    def __init__(self, gtf):
+    def __init__(self, gtf, auto_download):
         self.gtf = gtf
+        self.auto_download = auto_download
         self._connection = None
 
     def __eq__(self, other):
@@ -108,18 +109,22 @@ class Database(object):
         connection = self.connection_if_exists()
         if connection:
             return connection
-        raise ValueError(("Ensembl data is not currently downloaded "
-                          "for release %s. Run \"pyensembl download %s\" "
-                          "or call into EnsemblRelease(%s)."
-                          "download_annotations()") %
+        if self.auto_download:
+            return self.create_database()
+        raise ValueError("Ensembl data is not currently downloaded "
+                         "and/or installed for release %s. Run "
+                         "\"pyensembl update %s\" "
+                         "or call into EnsemblRelease(%s)."
+                         "download_annotations()" %
                          tuple([self.gtf.release] * 3))
 
     @property
     def connection(self):
         """
         Return the sqlite3 database for this Ensembl release
-        (download and/or construct it necessary).
-        As a side effect, stores the database connection in self._db
+        (download and/or construct it if necessary, if auto_download
+        is on). As a side effect, stores the database connection in 
+        self._db
         """
         if self._connection is None:
             self._connection = self._connect_or_create_database()
