@@ -16,7 +16,7 @@ class Database(object):
     writing SQL queries directly.
     """
 
-    def __init__(self, gtf, auto_download):
+    def __init__(self, gtf, auto_download=False):
         self.gtf = gtf
         self.auto_download = auto_download
         self._connection = None
@@ -104,18 +104,17 @@ class Database(object):
     def _connect_or_create_database(self):
         """
         If database already exists, open a connection.
-        Otherwise, create it.
+        Otherwise, create it if auto download is enabled.
         """
         connection = self.connection_if_exists()
         if connection:
             return connection
         if self.auto_download:
             return self.create_database()
-        raise ValueError("Ensembl data is not currently downloaded "
-                         "and/or installed for release %s. Run "
-                         "\"pyensembl update %s\" "
-                         "or call into EnsemblRelease(%s)."
-                         "download_annotations()" %
+        raise ValueError("Ensembl annotations data is not currently "
+                         "downloaded for release %s. Run "
+                         "\"pyensembl update %s\" or call into "
+                         "EnsemblRelease(%s).download_annotations()" %
                          tuple([self.gtf.release] * 3))
 
     @property

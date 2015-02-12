@@ -23,10 +23,12 @@ class ReferenceTranscripts(object):
             self,
             ensembl_release,
             species="homo_sapiens",
-            server=ENSEMBL_FTP_SERVER):
+            server=ENSEMBL_FTP_SERVER,
+            auto_download=False):
 
         # download cache for fetching reference FASTA files
         self.cache = Cache(CACHE_SUBDIR)
+        self.auto_download = auto_download
 
         self.release = check_release_number(ensembl_release)
 
@@ -39,6 +41,7 @@ class ReferenceTranscripts(object):
 
         self.server = server
 
+        self.fasta_decompress = True
         reference_url_dir, reference_filename = fasta_cdna_url_parts(
             ensembl_release=self.release,
             species=self.species,
@@ -84,10 +87,26 @@ class ReferenceTranscripts(object):
     @property
     def local_fasta_path(self):
         """
-        Returns local path to FASTA file,
-        download from the Ensembl FTP server if not already cached.
+        Returns local path to FASTA file. If it's not already
+        cached, download it from the Ensembl FTP server if auto
+        download is enabled.
         """
-        return self.cache.fetch(self.url, self.remote_filename, decompress=True)
+        # If the fasta is already cached, fetching it won't initiate a
+        # download. But it's always okay to initiate a download if
+        # auto download is enabled.
+        if (self.cache.exists(self.url,
+                              self.remote_filename,
+                              self.fasta_decompress) or
+            self.auto_download):
+            # Does a download if the cache is empty.
+            return self.cache.fetch(self.url,
+                                    self.remote_filename,
+                                    self.fasta_decompress)
+        raise ValueError("Ensembl transcript data is not currently "
+                         "downloaded for release %s. Run "
+                         "\"pyensembl update %s\" or call into "
+                         "EnsemblRelease(%s).download_transcripts()" %
+                         tuple([self.release] * 3))
 
     @property
     def local_dir(self):

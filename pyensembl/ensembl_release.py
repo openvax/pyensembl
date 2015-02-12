@@ -30,16 +30,22 @@ class EnsemblRelease(object):
     variety of helper methods for accessing this data.
     """
 
-    def __init__(self, release=MAX_ENSEMBL_RELEASE, server=ENSEMBL_FTP_SERVER,
+    def __init__(self,
+                 release=MAX_ENSEMBL_RELEASE,
+                 server=ENSEMBL_FTP_SERVER,
                  auto_download=False):
         self.cache = datacache.Cache(CACHE_SUBDIR)
         self.release = check_release_number(release)
         self.species = "homo_sapiens"
         self.server = server
         self.gtf = GTF(self.release, self.species, server)
+        self.auto_download = auto_download
         self.db = Database(gtf=self.gtf, auto_download=auto_download)
         self.reference = ReferenceTranscripts(
-            self.release, self.species, server)
+            ensembl_release=self.release,
+            species=self.species,
+            server=server,
+            auto_download=auto_download)
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
@@ -123,13 +129,31 @@ class EnsemblRelease(object):
             return results
         return cached_object(pickle_path, compute_fn=run_query)
 
+    def download_all(self):
+        self.download_annotations()
+        self.download_transcripts()
+
     def download_annotations(self):
         if self.db.connection_if_exists():
-            print ("Data for release %s is already downloaded and "
-                   "installed" % self.release)
+            print ("Annotation data for release %s is already "
+                   "downloaded and installed" % self.release)
             return
         self.db.create_database()
-        print ("Data for release %s has been downloaded and installed"
+        print ("Annotation data for release %s has been downloaded "
+               "and installed" % self.release)
+
+    def download_transcripts(self):
+        cache = self.reference.cache
+        if cache.exists(self.reference.url,
+                        self.reference.remote_filename,
+                        self.reference.fasta_decompress):
+            print ("Transcript data for release %s is already "
+                   "downloaded" % self.release)
+            return
+        cache.fetch(self.reference.url,
+                    self.reference.remote_filename,
+                    self.reference.fasta_decompress)
+        print ("Transcript data for release %s has been downloaded "
                % self.release)
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
