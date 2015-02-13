@@ -1,8 +1,8 @@
 from os.path import join, exists
 import sqlite3
 
-from common import CACHE_SUBDIR
-from locus import normalize_chromosome, normalize_strand
+from .common import CACHE_SUBDIR
+from .locus import normalize_chromosome, normalize_strand
 
 import datacache
 
@@ -65,7 +65,7 @@ class Database(object):
         return indices
 
     def _create_database(self):
-        print "Creating database: %s" % self.local_db_path()
+        print("Creating database: %s" % self.local_db_path())
         filename = self.local_db_filename()
         df = self.gtf.dataframe()
 
@@ -131,14 +131,14 @@ class Database(object):
         # TODO: combine with the query method, since they overlap
         # significantly
 
-        if not isinstance(column_name, (str, unicode)):
+        if not isinstance(column_name, str):
             raise TypeError(
                 "Expected column_name to be str, got %s : %s" % (
                     column_name, type(column_name)))
 
         contig = normalize_chromosome(contig)
 
-        if not isinstance(position, (int, long)):
+        if not isinstance(position, int):
             raise TypeError(
                 "Expected position to be integer, got %s : %s" % (
                     position, type(position)))
@@ -146,7 +146,7 @@ class Database(object):
         if end is None:
             end = position
 
-        if not isinstance(end, (int, long)):
+        if not isinstance(end, int):
             raise TypeError(
                 "Expected end to be integer, got %s : %s" % (end, type(end)))
 
@@ -175,8 +175,18 @@ class Database(object):
             query_params.append(strand)
 
         tuples = self.connection.execute(query, query_params).fetchall()
+
+        # Convert Python 2 unicode values to strings.
+        def unicode_to_str(obj):
+            # unicode isn't defined in Python 3, so we can't use isinstance.
+            if obj.__class__.__name__ == 'unicode':
+                return obj.encode()
+            return obj
+        tuples = [tuple(unicode_to_str(obj) for obj in row) for row in tuples]
+        
         # each result is a tuple, so pull out its first element
         results = [t[0] for t in tuples if t[0] is not None]
+
         if sorted:
             results.sort()
         return results
@@ -233,10 +243,17 @@ class Database(object):
         """
         cursor = self.connection.execute(sql, query_params)
         results = cursor.fetchall()
-        if required and len(results) == 0:
+        if required and not results:
             raise ValueError(
                 "No results found in Ensembl for query:\n%s" % (sql,))
-        return results
+        
+        # Convert Python 2 unicode values to strings.
+        def unicode_to_str(obj):
+            # unicode isn't defined in Python 3, so we can't use isinstance.
+            if obj.__class__.__name__ == 'unicode':
+                return obj.encode()
+            return obj
+        return [tuple(unicode_to_str(obj) for obj in row) for row in results]
 
     def query(
             self,

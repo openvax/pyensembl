@@ -50,7 +50,7 @@ def test_cached_dataframe_with_tempfile():
     counter = Counter()
     with tempfile.NamedTemporaryFile(suffix='.csv') as f:
         # call repeatedly to test hot and cold cache logic
-        for _ in xrange(2):
+        for _ in range(2):
             df = compute_cache.cached_dataframe(
                 f.name, compute_fn=counter.increment_dataframe)
             # get counter value from inside of dataframe
@@ -66,7 +66,7 @@ def test_cached_dataframe_returns_correct_type():
         return pd.DataFrame({'x' : [0,1,2]})
     with tempfile.NamedTemporaryFile(suffix='.csv') as f:
         # call repeatedly to test the cold and hot cache logic
-        for _ in xrange(2):
+        for _ in range(2):
             df = compute_cache.cached_dataframe(
                 f.name, compute_fn=make_a_dataframe)
             assert isinstance(df, pd.DataFrame), \
@@ -77,7 +77,7 @@ def test_cached_object_with_list_returns_correct_type():
         return [1,2,3]
     with tempfile.NamedTemporaryFile() as f:
         # call repeatedly to test the cold and hot cache logic
-        for _ in xrange(2):
+        for _ in range(2):
             df = compute_cache.cached_object(
                 f.name, compute_fn=make_a_list)
             assert isinstance(df, list), \

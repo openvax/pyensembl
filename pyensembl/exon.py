@@ -1,9 +1,9 @@
-from locus import Locus
+from .locus import Locus
 
 class Exon(Locus):
     def __init__(self, exon_id, db):
 
-        if not isinstance(exon_id, (unicode, str)):
+        if not isinstance(exon_id, str):
             raise TypeError(
                 "Expected exon ID to be string, got %s : %s" % (
                     exon_id, type(exon_id)))
@@ -86,10 +86,10 @@ class Exon(Locus):
 
         # check to make sure we only got back integer values
         for (start, end) in results:
-            assert isinstance(start, (int,long)), \
+            assert isinstance(start, int), \
                 "Invalid type %s for start position %s" % (
                     type(position), position)
-            assert isinstance(end, (int,long)), \
+            assert isinstance(end, int), \
                 "Invalid type %s for end position %s" % (
                     type(position), position)
         return results

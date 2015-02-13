@@ -22,7 +22,7 @@ releases = [
     cached_release(version) for version in _release_versions
 ]
 
-contigs = range(1,23) + ["X", "Y", "M"]
+contigs = list(range(1,23)) + ["X", "Y", "M"]
 
 @nottest
 def test_ensembl_releases(*versions):

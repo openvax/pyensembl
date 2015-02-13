@@ -23,7 +23,7 @@ def test_transcript_start_codon():
         "Wrong length for start codon: %d (%s)" % (
             len(start_offsets), start_offsets)
 
-    assert all(isinstance(i, (int,long)) for i in start_offsets), \
+    assert all(isinstance(i, int) for i in start_offsets), \
         "Wrong type %s for beginning start codon offset" % (
             [type(i) for i in start_offsets],)
 

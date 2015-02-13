@@ -97,7 +97,7 @@ def test_partial_start_codons():
     # Exon ENSE00003718948 has a start codon immediately before the
     # exon's start position on the forward strand
     exon = ensembl77.exon_by_id("ENSE00003718948")
-    for start in exon.start_codon_positions:
+    for (start, end) in exon.start_codon_positions:
         assert start >= exon.start, \
             "Exon at locus [%d, %d], start codon at %d" % (
                 exon.start, exon.end, start)

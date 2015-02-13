@@ -1,13 +1,13 @@
-from biotypes import is_valid_biotype
-from locus import Locus
-from transcript import Transcript
+from .biotypes import is_valid_biotype
+from .locus import Locus
+from .transcript import Transcript
 
 from memoized_property import memoized_property
 
 class Gene(Locus):
 
     def __init__(self, gene_id, db, reference):
-        if not isinstance(gene_id, (unicode, str)):
+        if not isinstance(gene_id, str):
             raise TypeError(
                 "Expected gene ID to be string, got %s : %s" % (
                     gene_id, type(gene_id))

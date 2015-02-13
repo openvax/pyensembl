@@ -1,11 +1,10 @@
 from os.path import split, join
-from types import NoneType
 
-from gtf_parsing import load_gtf_as_dataframe
-from common import CACHE_SUBDIR
-from locus import normalize_chromosome, normalize_strand
-from compute_cache import cached_dataframe, clear_cached_objects
-from url_templates import ENSEMBL_FTP_SERVER, gtf_url_parts
+from .gtf_parsing import load_gtf_as_dataframe
+from .common import CACHE_SUBDIR
+from .locus import normalize_chromosome, normalize_strand
+from .compute_cache import cached_dataframe, clear_cached_objects
+from .url_templates import ENSEMBL_FTP_SERVER, gtf_url_parts
 
 import datacache
 
@@ -144,7 +143,7 @@ class GTF(object):
         if strand:
             strand = normalize_strand(strand)
 
-        if not isinstance(feature, (NoneType, str, unicode)):
+        if feature is not None and not isinstance(feature, str):
             raise TypeError(
                     "Expected feature to be string, got %s : %s" % (
                         feature, type(feature)))

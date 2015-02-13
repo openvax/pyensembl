@@ -1,10 +1,10 @@
 def normalize_chromosome(c):
-    if isinstance(c, (int, long)):
+    if isinstance(c, int):
         if c == 0:
             raise ValueError("Contig cannot be 0")
         c = str(c)
 
-    if not isinstance(c, (str, unicode)):
+    if not isinstance(c, str):
         raise TypeError(
             "Expected contig name to be str, got %s : %s" % (c, type(c))
         )
@@ -34,7 +34,7 @@ def normalize_strand(strand):
     elif strand == -1:
         return "-"
 
-    if not isinstance(strand, (str, unicode)):
+    if not isinstance(strand, str):
         raise TypeError("Expected strand to be string, got %s : %s" % (
             strand, type(strand)))
     elif len(strand) == 0:

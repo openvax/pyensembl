@@ -1,6 +1,6 @@
-from biotypes import is_valid_biotype
-from exon import Exon
-from locus import Locus, normalize_chromosome
+from .biotypes import is_valid_biotype
+from .exon import Exon
+from .locus import Locus, normalize_chromosome
 
 from pyfaidx import Sequence
 from memoized_property import memoized_property
@@ -25,7 +25,7 @@ class Transcript(Locus):
 
         reference : ReferenceTranscripts
         """
-        if not isinstance(transcript_id, (unicode, str)):
+        if not isinstance(transcript_id, str):
             raise TypeError(
                 "Expected transcript ID to be string, got %s : %s" % (
                 transcript_id, type(transcript_id)))
@@ -229,7 +229,7 @@ class Transcript(Locus):
 
         Position must be inside some exon (otherwise raise exception).
         """
-        if not isinstance(position, (int, long)):
+        if not isinstance(position, int):
             raise TypeError(
                 "Expected position to be int, got %s : %s" % (
                     position, type(position)))
@@ -305,7 +305,7 @@ class Transcript(Locus):
         ensures that values are contiguous.
         """
         offsets.sort()
-        for i in xrange(len(offsets)-1):
+        for i in range(len(offsets)-1):
             assert offsets[i] + 1 == offsets[i+1], \
                 "Offsets not contiguous: %s" % (offsets,)
         return offsets
