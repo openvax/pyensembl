@@ -43,7 +43,7 @@ def assert_string(obj, name=None, nonempty=False):
         raise TypeError(
             (("%s: " % name) if name else "") +
             "expected string, got: '%s' of type '%s'"
-                % (name, str(obj), type(obj)))
+                % (str(obj), type(obj)))
     if nonempty and not obj:
         raise ValueError(
             (("%s: " % name) if name else "") +
@@ -59,6 +59,6 @@ def assert_integer(obj, name=None):
         raise TypeError(
             (("%s: " % name) if name else "") +
             "expected int, got: '%s' of type '%s'"
-                % (name, str(obj), type(obj)))
+                % (str(obj), type(obj)))
 
 
