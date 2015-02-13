@@ -1,12 +1,12 @@
 from __future__ import print_function, division, absolute_import
 
-from .type_checks import assert_integer, assert_string
+from .type_checks import require_integer, require_string
 
 from .locus import Locus
 
 class Exon(Locus):
     def __init__(self, exon_id, db):
-        assert_string(exon_id, "exon ID")
+        require_string(exon_id, "exon ID")
 
         self.id = exon_id
         self.db = db
@@ -86,8 +86,8 @@ class Exon(Locus):
 
         # check to make sure we only got back integer values
         for (start, end) in results:
-            assert_integer(start, "start position")
-            assert_integer(end, "end position")
+            require_integer(start, "start position")
+            require_integer(end, "end position")
         return results
 
 

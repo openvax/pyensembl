@@ -3,14 +3,14 @@ from __future__ import print_function, division, absolute_import
 from .biotypes import is_valid_biotype
 from .locus import Locus
 from .transcript import Transcript
-from .type_checks import assert_integer, assert_string
+from .type_checks import require_integer, require_string
 
 from memoized_property import memoized_property
 
 class Gene(Locus):
 
     def __init__(self, gene_id, db, reference):
-        assert_string(gene_id, "gene ID")
+        require_string(gene_id, "gene ID")
     
         self.id = gene_id
         self.db = db

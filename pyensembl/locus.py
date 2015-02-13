@@ -1,13 +1,13 @@
 from __future__ import print_function, division, absolute_import
 
-from .type_checks import is_integer, is_string, assert_integer, assert_string
+from .type_checks import is_integer, is_string, require_integer, require_string
 
 def normalize_chromosome(c):
     if is_integer(c):
         if c == 0:
             raise ValueError("Contig cannot be 0")
         c = str(c)
-    assert_string(c, "contig name", nonempty=True)
+    require_string(c, "contig name", nonempty=True)
      
     # only strip off lowercase chr since some of the non-chromosomal contigs
     # start with "CHR"
@@ -31,7 +31,7 @@ def normalize_strand(strand):
     elif strand == -1:
         return "-"
 
-    assert_string(strand, "strand", nonempty=True)
+    require_string(strand, "strand", nonempty=True)
     if len(strand) > 1:
         raise ValueError("Invalid strand: %s" % (strand,))
     return strand

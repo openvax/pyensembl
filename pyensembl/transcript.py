@@ -6,7 +6,7 @@ from .locus import Locus, normalize_chromosome
 
 from pyfaidx import Sequence
 from memoized_property import memoized_property
-from .type_checks import assert_integer, assert_string
+from .type_checks import require_integer, require_string
 
 class Transcript(Locus):
     """
@@ -28,7 +28,7 @@ class Transcript(Locus):
 
         reference : ReferenceTranscripts
         """
-        assert_string(transcript_id, "transcript ID")
+        require_string(transcript_id, "transcript ID")
 
         self.id = transcript_id
         self.db = db
@@ -229,7 +229,7 @@ class Transcript(Locus):
 
         Position must be inside some exon (otherwise raise exception).
         """
-        assert_integer(position, "position")
+        require_integer(position, "position")
         if position < self.start or position > self.end:
             raise ValueError(
                 "Invalid position: %d (must be between %d and %d)" % (

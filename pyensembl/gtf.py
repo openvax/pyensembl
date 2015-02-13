@@ -7,7 +7,7 @@ from .common import CACHE_SUBDIR
 from .locus import normalize_chromosome, normalize_strand
 from .compute_cache import cached_dataframe, clear_cached_objects
 from .url_templates import ENSEMBL_FTP_SERVER, gtf_url_parts
-from .type_checks import assert_integer, assert_string
+from .type_checks import require_integer, require_string
 
 import datacache
 
@@ -147,7 +147,7 @@ class GTF(object):
             strand = normalize_strand(strand)
 
         if feature is not None:
-            assert_string(feature, "feature")
+            require_string(feature, "feature")
 
         key = (contig, feature, strand)
 

@@ -5,7 +5,7 @@ import sqlite3
 
 from .common import CACHE_SUBDIR
 from .locus import normalize_chromosome, normalize_strand
-from .type_checks import assert_integer, assert_string
+from .type_checks import require_integer, require_string
 
 import datacache
 
@@ -133,16 +133,16 @@ class Database(object):
 
         # TODO: combine with the query method, since they overlap
         # significantly
-        assert_string(column_name, "column_name", nonempty=True)
+        require_string(column_name, "column_name", nonempty=True)
         
         contig = normalize_chromosome(contig)
 
-        assert_integer(position, "position")
+        require_integer(position, "position")
 
         if end is None:
             end = position
 
-        assert_integer(end, "end")
+        require_integer(end, "end")
 
         if not self.column_exists(column_name):
             raise ValueError("Unknown Ensembl property: %s" % (column_name,))
