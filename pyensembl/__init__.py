@@ -1,3 +1,5 @@
+from __future__ import print_function, division, absolute_import
+
 from .ensembl_release import EnsemblRelease
 from .gtf import GTF
 from .locus import Locus

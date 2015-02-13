@@ -1,9 +1,12 @@
+from __future__ import print_function, division, absolute_import
+
 from .biotypes import is_valid_biotype
 from .exon import Exon
 from .locus import Locus, normalize_chromosome
 
 from pyfaidx import Sequence
 from memoized_property import memoized_property
+from .type_checks import assert_integer, assert_string
 
 class Transcript(Locus):
     """
@@ -25,10 +28,7 @@ class Transcript(Locus):
 
         reference : ReferenceTranscripts
         """
-        if not isinstance(transcript_id, str):
-            raise TypeError(
-                "Expected transcript ID to be string, got %s : %s" % (
-                transcript_id, type(transcript_id)))
+        assert_string(transcript_id, "transcript ID")
 
         self.id = transcript_id
         self.db = db
@@ -229,11 +229,8 @@ class Transcript(Locus):
 
         Position must be inside some exon (otherwise raise exception).
         """
-        if not isinstance(position, int):
-            raise TypeError(
-                "Expected position to be int, got %s : %s" % (
-                    position, type(position)))
-        elif position < self.start or position > self.end:
+        assert_integer(position, "position")
+        if position < self.start or position > self.end:
             raise ValueError(
                 "Invalid position: %d (must be between %d and %d)" % (
                     position,

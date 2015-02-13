@@ -2,6 +2,7 @@
 Contains the EnsemblRelease class, with its millions of accessors and wrappers
 around the Ensembl annotation database.
 """
+from __future__ import print_function, division, absolute_import
 
 from glob import glob
 import logging

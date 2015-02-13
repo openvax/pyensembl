@@ -8,7 +8,15 @@ A piece of data is returned from one of three sources:
 2) Cache warm on disk. Parse or unpickle the serialized result into memory.
 3) Cache warm in memory. Return cached object.
 """
-import pickle
+from __future__ import print_function, division, absolute_import
+
+try:
+    # Python 2. cPickle faster than pickle.
+    import cPickle as pickle
+except ImportError:
+    # Python 3.
+    import pickle
+
 import logging
 from os import remove, stat
 from os.path import exists

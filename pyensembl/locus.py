@@ -1,17 +1,14 @@
+from __future__ import print_function, division, absolute_import
+
+from .type_checks import is_integer, is_string, assert_integer, assert_string
+
 def normalize_chromosome(c):
-    if isinstance(c, int):
+    if is_integer(c):
         if c == 0:
             raise ValueError("Contig cannot be 0")
         c = str(c)
-
-    if not isinstance(c, str):
-        raise TypeError(
-            "Expected contig name to be str, got %s : %s" % (c, type(c))
-        )
-
-    if len(c) == 0:
-        raise ValueError("Contig name cannot be empty string")
-
+    assert_string(c, "contig name", nonempty=True)
+     
     # only strip off lowercase chr since some of the non-chromosomal contigs
     # start with "CHR"
     if c.startswith("chr"):
@@ -34,14 +31,9 @@ def normalize_strand(strand):
     elif strand == -1:
         return "-"
 
-    if not isinstance(strand, str):
-        raise TypeError("Expected strand to be string, got %s : %s" % (
-            strand, type(strand)))
-    elif len(strand) == 0:
-        raise ValueError("Strand cannot be empty string")
-    elif len(strand) > 1:
+    assert_string(strand, "strand", nonempty=True)
+    if len(strand) > 1:
         raise ValueError("Invalid strand: %s" % (strand,))
-
     return strand
 
 class Locus(object):

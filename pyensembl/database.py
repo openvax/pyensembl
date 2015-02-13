@@ -1,8 +1,11 @@
+from __future__ import print_function, division, absolute_import
+
 from os.path import join, exists
 import sqlite3
 
 from .common import CACHE_SUBDIR
 from .locus import normalize_chromosome, normalize_strand
+from .type_checks import assert_integer, assert_string
 
 import datacache
 
@@ -130,25 +133,16 @@ class Database(object):
 
         # TODO: combine with the query method, since they overlap
         # significantly
-
-        if not isinstance(column_name, str):
-            raise TypeError(
-                "Expected column_name to be str, got %s : %s" % (
-                    column_name, type(column_name)))
-
+        assert_string(column_name, "column_name", nonempty=True)
+        
         contig = normalize_chromosome(contig)
 
-        if not isinstance(position, int):
-            raise TypeError(
-                "Expected position to be integer, got %s : %s" % (
-                    position, type(position)))
+        assert_integer(position, "position")
 
         if end is None:
             end = position
 
-        if not isinstance(end, int):
-            raise TypeError(
-                "Expected end to be integer, got %s : %s" % (end, type(end)))
+        assert_integer(end, "end")
 
         if not self.column_exists(column_name):
             raise ValueError("Unknown Ensembl property: %s" % (column_name,))
@@ -176,14 +170,6 @@ class Database(object):
 
         tuples = self.connection.execute(query, query_params).fetchall()
 
-        # Convert Python 2 unicode values to strings.
-        def unicode_to_str(obj):
-            # unicode isn't defined in Python 3, so we can't use isinstance.
-            if obj.__class__.__name__ == 'unicode':
-                return obj.encode()
-            return obj
-        tuples = [tuple(unicode_to_str(obj) for obj in row) for row in tuples]
-        
         # each result is a tuple, so pull out its first element
         results = [t[0] for t in tuples if t[0] is not None]
 
@@ -247,13 +233,7 @@ class Database(object):
             raise ValueError(
                 "No results found in Ensembl for query:\n%s" % (sql,))
         
-        # Convert Python 2 unicode values to strings.
-        def unicode_to_str(obj):
-            # unicode isn't defined in Python 3, so we can't use isinstance.
-            if obj.__class__.__name__ == 'unicode':
-                return obj.encode()
-            return obj
-        return [tuple(unicode_to_str(obj) for obj in row) for row in results]
+        return results
 
     def query(
             self,

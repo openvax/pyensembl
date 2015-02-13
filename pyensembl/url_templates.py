@@ -7,6 +7,8 @@ For example, the human chromosomal DNA sequences for release 77 are in:
     ftp://ftp.ensembl.org/pub/release-78/fasta/homo_sapiens/dna/
 
 """
+from __future__ import print_function, division, absolute_import
+
 from os.path import join
 
 try:

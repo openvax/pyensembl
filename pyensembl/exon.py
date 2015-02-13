@@ -1,12 +1,12 @@
+from __future__ import print_function, division, absolute_import
+
+from .type_checks import assert_integer, assert_string
+
 from .locus import Locus
 
 class Exon(Locus):
     def __init__(self, exon_id, db):
-
-        if not isinstance(exon_id, str):
-            raise TypeError(
-                "Expected exon ID to be string, got %s : %s" % (
-                    exon_id, type(exon_id)))
+        assert_string(exon_id, "exon ID")
 
         self.id = exon_id
         self.db = db
@@ -86,12 +86,8 @@ class Exon(Locus):
 
         # check to make sure we only got back integer values
         for (start, end) in results:
-            assert isinstance(start, int), \
-                "Invalid type %s for start position %s" % (
-                    type(position), position)
-            assert isinstance(end, int), \
-                "Invalid type %s for end position %s" % (
-                    type(position), position)
+            assert_integer(start, "start position")
+            assert_integer(end, "end position")
         return results
 
 
