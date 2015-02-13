@@ -92,7 +92,7 @@ _latin_to_common_names = {
 }
 
 _common_to_latin_name = {}
-for (latin_name, common_names) in _latin_to_common_names.iteritems():
+for (latin_name, common_names) in _latin_to_common_names.items():
     for common_name in common_names:
         assert common_name not in _common_to_latin_name, \
             "Common name %s (for %s) appears twice" % (common_name, latin_name)

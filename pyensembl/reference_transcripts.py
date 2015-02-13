@@ -1,8 +1,10 @@
+from __future__ import print_function, division, absolute_import
+
 from os.path import join
 
-from common import CACHE_SUBDIR
-from release_info import which_human_reference_name, check_release_number
-from url_templates import ENSEMBL_FTP_SERVER, fasta_cdna_url_parts
+from .common import CACHE_SUBDIR
+from .release_info import which_human_reference_name, check_release_number
+from .url_templates import ENSEMBL_FTP_SERVER, fasta_cdna_url_parts
 
 import pyfaidx
 from datacache import Cache
@@ -115,6 +117,6 @@ class ReferenceTranscripts(object):
         # the pyfaidx __contains__ method requires an expensive list traversal
         # so cache the keys as a set for faster membership checks
         if self._fasta_keys is None:
-            keys = self.fasta_dictionary.keys()
+            keys = list(self.fasta_dictionary.keys())
             self._fasta_keys = set(keys)
         return transcript_id in self._fasta_keys

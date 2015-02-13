@@ -20,9 +20,9 @@ def test_all_gene_names(ensembl):
     SMAD4, HSP90AA1, TP53, ERBB2
     """
     gene_names = ensembl.gene_names()
-    print type(gene_names)
+    print(type(gene_names))
     for gene_name in KNOWN_GENE_NAMES:
-        print str(gene_name) in set(gene_names)
+        print(str(gene_name) in set(gene_names))
         assert gene_name in gene_names, \
             "Missing gene name %s from %s" % (gene_name, ensembl)
 

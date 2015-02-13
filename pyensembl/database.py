@@ -1,8 +1,11 @@
+from __future__ import print_function, division, absolute_import
+
 from os.path import join, exists
 import sqlite3
 
-from common import CACHE_SUBDIR
-from locus import normalize_chromosome, normalize_strand
+from .common import CACHE_SUBDIR
+from .locus import normalize_chromosome, normalize_strand
+from .type_checks import require_integer, require_string
 
 import datacache
 
@@ -65,7 +68,7 @@ class Database(object):
         return indices
 
     def _create_database(self):
-        print "Creating database: %s" % self.local_db_path()
+        print("Creating database: %s" % self.local_db_path())
         filename = self.local_db_filename()
         df = self.gtf.dataframe()
 
@@ -130,25 +133,16 @@ class Database(object):
 
         # TODO: combine with the query method, since they overlap
         # significantly
-
-        if not isinstance(column_name, (str, unicode)):
-            raise TypeError(
-                "Expected column_name to be str, got %s : %s" % (
-                    column_name, type(column_name)))
-
+        require_string(column_name, "column_name", nonempty=True)
+        
         contig = normalize_chromosome(contig)
 
-        if not isinstance(position, (int, long)):
-            raise TypeError(
-                "Expected position to be integer, got %s : %s" % (
-                    position, type(position)))
+        require_integer(position, "position")
 
         if end is None:
             end = position
 
-        if not isinstance(end, (int, long)):
-            raise TypeError(
-                "Expected end to be integer, got %s : %s" % (end, type(end)))
+        require_integer(end, "end")
 
         if not self.column_exists(column_name):
             raise ValueError("Unknown Ensembl property: %s" % (column_name,))
@@ -175,8 +169,10 @@ class Database(object):
             query_params.append(strand)
 
         tuples = self.connection.execute(query, query_params).fetchall()
+
         # each result is a tuple, so pull out its first element
         results = [t[0] for t in tuples if t[0] is not None]
+
         if sorted:
             results.sort()
         return results
@@ -233,9 +229,10 @@ class Database(object):
         """
         cursor = self.connection.execute(sql, query_params)
         results = cursor.fetchall()
-        if required and len(results) == 0:
+        if required and not results:
             raise ValueError(
                 "No results found in Ensembl for query:\n%s" % (sql,))
+        
         return results
 
     def query(

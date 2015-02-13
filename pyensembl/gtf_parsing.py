@@ -31,6 +31,7 @@ Columns of a GTF file:
 
 (from ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/README)
 """
+from __future__ import print_function, division, absolute_import
 
 import logging
 from os.path import exists

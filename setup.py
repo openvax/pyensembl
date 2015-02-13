@@ -22,7 +22,7 @@ try:
   import pypandoc
   readme = pypandoc.convert(readme, to='rst', format='md')
 except:
-  print "Conversion of long_description from MD to reStructuredText failed..."
+  print("Conversion of long_description from MD to reStructuredText failed...")
   pass
 
 

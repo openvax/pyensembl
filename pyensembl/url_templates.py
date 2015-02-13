@@ -7,11 +7,19 @@ For example, the human chromosomal DNA sequences for release 77 are in:
     ftp://ftp.ensembl.org/pub/release-78/fasta/homo_sapiens/dna/
 
 """
-from os.path import join
-from urlparse import urljoin
+from __future__ import print_function, division, absolute_import
 
-from species import normalize_species_name
-from release_info import which_human_reference_name, check_release_number
+from os.path import join
+
+try:
+    # Python 3
+    from urllib.parse import urljoin
+except ImportError:
+    # Python 2
+    from urlparse import urljoin
+
+from .species import normalize_species_name
+from .release_info import which_human_reference_name, check_release_number
 
 ENSEMBL_FTP_SERVER = "ftp://ftp.ensembl.org"
 

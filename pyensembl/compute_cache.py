@@ -8,7 +8,15 @@ A piece of data is returned from one of three sources:
 2) Cache warm on disk. Parse or unpickle the serialized result into memory.
 3) Cache warm in memory. Return cached object.
 """
-import cPickle
+from __future__ import print_function, division, absolute_import
+
+try:
+    # Python 2. cPickle faster than pickle.
+    import cPickle as pickle
+except ImportError:
+    # Python 3.
+    import pickle
+
 import logging
 from os import remove, stat
 from os.path import exists
@@ -36,7 +44,7 @@ def clear_cached_objects():
     _memory_cache.clear()
 
 def _read_csv(csv_path):
-    print "Reading Dataframe from %s" % csv_path
+    print("Reading Dataframe from %s" % csv_path)
     df = pd.read_csv(csv_path)
     if 'seqname' in df:
         # by default, Pandas will infer the type as int,
@@ -46,7 +54,7 @@ def _read_csv(csv_path):
     return df
 
 def _write_csv(df, csv_path):
-    print "Saving DataFrame to %s" % csv_path
+    print("Saving DataFrame to %s" % csv_path)
     df.to_csv(csv_path, index=False)
 
 def cached_dataframe(csv_path, compute_fn):
@@ -92,11 +100,11 @@ def cached_object(path, compute_fn):
         return _memory_cache[path]
 
     if exists(path) and not is_empty(path):
-        with open(path, 'r') as f:
-            obj = cPickle.load(f)
+        with open(path, 'rb') as f:
+            obj = pickle.load(f)
     else:
         obj = compute_fn()
-        with open(path, 'w') as f:
-            cPickle.dump(obj, f, cPickle.HIGHEST_PROTOCOL)
+        with open(path, 'wb') as f:
+            pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
     _memory_cache[path] = obj
     return obj

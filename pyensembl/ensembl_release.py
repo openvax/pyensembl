@@ -2,23 +2,24 @@
 Contains the EnsemblRelease class, with its millions of accessors and wrappers
 around the Ensembl annotation database.
 """
+from __future__ import print_function, division, absolute_import
 
 from glob import glob
 import logging
 from os.path import join
 from os import remove
 
-from common import CACHE_SUBDIR
-from compute_cache import cached_object
-from database import Database
-from exon import Exon
-from gene import Gene
-from gtf import GTF
-from locus import normalize_chromosome, normalize_strand
-from reference_transcripts import ReferenceTranscripts
-from release_info import check_release_number, MAX_ENSEMBL_RELEASE
-from transcript import Transcript
-from url_templates import ENSEMBL_FTP_SERVER
+from .common import CACHE_SUBDIR
+from .compute_cache import cached_object
+from .database import Database
+from .exon import Exon
+from .gene import Gene
+from .gtf import GTF
+from .locus import normalize_chromosome, normalize_strand
+from .reference_transcripts import ReferenceTranscripts
+from .release_info import check_release_number, MAX_ENSEMBL_RELEASE
+from .transcript import Transcript
+from .url_templates import ENSEMBL_FTP_SERVER
 
 import datacache
 import numpy as np

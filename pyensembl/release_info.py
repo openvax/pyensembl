@@ -1,3 +1,4 @@
+from __future__ import print_function, division, absolute_import
 
 MIN_ENSEMBL_RELEASE = 48
 MAX_ENSEMBL_RELEASE = 78
@@ -23,15 +24,15 @@ def check_release_number(release):
 _human_references = {}
 
 # Ensembl release 48-54 use NCBI36 as a reference
-for i in xrange(48,54+1):
+for i in range(48,54+1):
     _human_references[i] = 'NCBI36'
 
 # Ensembl releases 55-75 use GRCh37 as a reference
-for i in xrange(55,75+1):
+for i in range(55,75+1):
     _human_references[i] = 'GRCh37'
 
 # Most recent Ensembl releases use GRCh38
-for i in xrange(76,MAX_ENSEMBL_RELEASE+1):
+for i in range(76,MAX_ENSEMBL_RELEASE+1):
     _human_references[i] = 'GRCh38'
 
 def which_human_reference_name(release):
