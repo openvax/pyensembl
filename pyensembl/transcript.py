@@ -97,6 +97,16 @@ class Transcript(Locus):
         """
         return sum(len(exon) for exon in self.exons)
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, Transcript) and
+            self.id == other.id and
+            self.db == other.db and
+            self.reference == other.reference)
+
+    def __hash__(self):
+        return hash(self.id)
+
     @memoized_property
     def exons(self):
         columns = ['exon_number', 'exon_id']

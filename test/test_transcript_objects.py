@@ -13,12 +13,18 @@ from data import (
 )
 
 def test_transcript_start_codon():
+    """
+    test_transcript_start_codon : Check that fields Transcript
+    (for transcript named CTNNBIP1-004) matches known values.
+    """
     ensembl = cached_release(77)
-    transcript = ensembl.transcript_by_id(CTNNBIP1_004_transcript_id)
-    assert CTNNBIP1_004_locus == transcript, \
+    CTNNBIP1_004_transcript = ensembl.transcript_by_id(
+        CTNNBIP1_004_transcript_id)
+    assert Locus.__eq__(CTNNBIP1_004_locus, CTNNBIP1_004_transcript), \
         "Expected locus %s but got %s" % (
-            CTNNBIP1_004_locus, Locus.__str__(transcript))
-    start_offsets = transcript.start_codon_spliced_offsets
+            CTNNBIP1_004_locus, Locus.__str__(CTNNBIP1_004_transcript))
+
+    start_offsets = CTNNBIP1_004_transcript.start_codon_spliced_offsets
     assert len(start_offsets) == 3, \
         "Wrong length for start codon: %d (%s)" % (
             len(start_offsets), start_offsets)
@@ -34,6 +40,10 @@ def test_transcript_start_codon():
             expected_start_codon_offset, start_codon_offset)
 
 def test_transcript_exons():
+    """
+    test_transcript_exons : Ensure that properties of CTTNBIP1-004's
+    Exon objects match known values.
+    """
     ensembl = cached_release(77)
     transcript = ensembl.transcript_by_id(CTNNBIP1_004_transcript_id)
     exons = transcript.exons

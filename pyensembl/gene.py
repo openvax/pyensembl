@@ -11,7 +11,7 @@ class Gene(Locus):
 
     def __init__(self, gene_id, db, reference):
         require_string(gene_id, "gene ID")
-    
+
         self.id = gene_id
         self.db = db
         self.reference = reference
@@ -48,6 +48,16 @@ class Gene(Locus):
 
     def __repr__(self):
         return str(self)
+
+    def __eq__(self, other):
+        return (
+            isintance(other, Gene) and
+            self.id == other.id and
+            self.db == other.db and
+            self.reference == other.reference)
+
+    def __hash__(self):
+        return hash(self.id)
 
     @memoized_property
     def transcripts(self):
