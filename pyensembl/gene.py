@@ -51,7 +51,7 @@ class Gene(Locus):
 
     def __eq__(self, other):
         return (
-            isintance(other, Gene) and
+            isinstance(other, Gene) and
             self.id == other.id and
             self.db == other.db and
             self.reference == other.reference)

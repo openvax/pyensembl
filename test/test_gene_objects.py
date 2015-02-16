@@ -1,3 +1,5 @@
+from pyensembl import Gene
+
 from test_common import test_ensembl_releases
 from data import TP53_gene_id
 
@@ -22,3 +24,19 @@ def test_TP53_gene_object_by_name(release):
     # make sure it has the correct gene ID
     assert genes[0].id == TP53_gene_id, \
         "Expected gene to have ID %s, got %s" % (TP53_gene_id, genes[0].id)
+
+@test_ensembl_releases
+def test_equal_genes():
+    gene1 = release.genes_by_name("TP53")[0]
+    # make an identical gene
+    gene2 = Gene(gene1.id, gene1.db, gene1.reference)
+
+    assert hash(gene1) == hash(gene2)
+    assert gene1 == gene2
+
+@test_ensembl_releases
+def test_not_equal_genes():
+    gene1 = release.genes_by_name("MUC1")[0]
+    gene2 = release.genes_by_name("BRCA1")[0]
+    assert hash(gene1) != hash(gene2)
+    assert gene1 != gene2

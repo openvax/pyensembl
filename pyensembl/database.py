@@ -21,7 +21,7 @@ class Database(object):
         self._connection = None
 
     def __eq__(self, other):
-        return self.gtf == other.gtf
+        return isinstance(other, Database) and self.gtf == other.gtf
 
     def local_db_filename(self):
         base = self.gtf.base_filename()

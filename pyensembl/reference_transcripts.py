@@ -76,6 +76,7 @@ class ReferenceTranscripts(object):
 
     def __eq__(self, other):
         return (
+            isinstance(other, ReferenceTranscripts) and
             self.ensembl_release == other.ensembl_release and
             self.species == other.species and
             self.server == other.server)

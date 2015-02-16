@@ -1,4 +1,4 @@
-from pyensembl import Locus
+from pyensembl import Locus, Transcript
 
 from test_common import cached_release, test_ensembl_releases
 from data import (
@@ -135,3 +135,20 @@ def test_transcript_sequences_CTNNIP1_004():
     assert len(cds) == expected_cds_length, \
         "Expected CDS length %d, got %d" % (expected_cds_length, len(cds))
     assert cds.seq == CTNNBIP1_004_CDS, "Coding sequence is incorrect"
+
+
+@test_ensembl_releases
+def test_equal_transcripts():
+    t1 = release.transcripts_by_name("TP53-001")[0]
+    # make an identical gene
+    t2 = Transcript(t1.id, t1.db, t1.reference)
+
+    assert hash(t1) == hash(t2)
+    assert t1 == t2
+
+@test_ensembl_releases
+def test_not_equal_transcripts():
+    t1 = release.genes_by_name("MUC1-001")[0]
+    t2 = release.genes_by_name("BRCA1-001")[0]
+    assert hash(t1) != hash(t2)
+    assert t1 != t2
