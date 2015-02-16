@@ -1,4 +1,4 @@
-from pyensembl import Locus
+from pyensembl import Locus, Transcript
 
 from test_common import cached_release, test_ensembl_releases
 from data import (
@@ -13,12 +13,18 @@ from data import (
 )
 
 def test_transcript_start_codon():
+    """
+    test_transcript_start_codon : Check that fields Transcript
+    (for transcript named CTNNBIP1-004) matches known values.
+    """
     ensembl = cached_release(77)
-    transcript = ensembl.transcript_by_id(CTNNBIP1_004_transcript_id)
-    assert CTNNBIP1_004_locus == transcript, \
+    CTNNBIP1_004_transcript = ensembl.transcript_by_id(
+        CTNNBIP1_004_transcript_id)
+    assert Locus.__eq__(CTNNBIP1_004_locus, CTNNBIP1_004_transcript), \
         "Expected locus %s but got %s" % (
-            CTNNBIP1_004_locus, Locus.__str__(transcript))
-    start_offsets = transcript.start_codon_spliced_offsets
+            CTNNBIP1_004_locus, Locus.__str__(CTNNBIP1_004_transcript))
+
+    start_offsets = CTNNBIP1_004_transcript.start_codon_spliced_offsets
     assert len(start_offsets) == 3, \
         "Wrong length for start codon: %d (%s)" % (
             len(start_offsets), start_offsets)
@@ -34,6 +40,10 @@ def test_transcript_start_codon():
             expected_start_codon_offset, start_codon_offset)
 
 def test_transcript_exons():
+    """
+    test_transcript_exons : Ensure that properties of CTTNBIP1-004's
+    Exon objects match known values.
+    """
     ensembl = cached_release(77)
     transcript = ensembl.transcript_by_id(CTNNBIP1_004_transcript_id)
     exons = transcript.exons
@@ -125,3 +135,20 @@ def test_transcript_sequences_CTNNIP1_004():
     assert len(cds) == expected_cds_length, \
         "Expected CDS length %d, got %d" % (expected_cds_length, len(cds))
     assert cds.seq == CTNNBIP1_004_CDS, "Coding sequence is incorrect"
+
+
+@test_ensembl_releases
+def test_equal_transcripts():
+    t1 = release.transcripts_by_name("TP53-001")[0]
+    # make an identical gene
+    t2 = Transcript(t1.id, t1.db, t1.reference)
+
+    assert hash(t1) == hash(t2)
+    assert t1 == t2
+
+@test_ensembl_releases
+def test_not_equal_transcripts():
+    t1 = release.genes_by_name("MUC1-001")[0]
+    t2 = release.genes_by_name("BRCA1-001")[0]
+    assert hash(t1) != hash(t2)
+    assert t1 != t2

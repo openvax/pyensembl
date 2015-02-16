@@ -59,6 +59,28 @@ class ReferenceTranscripts(object):
         # method, see comment on `transcript_sequence`.
         self._fasta_keys = None
 
+    def __str__(self):
+        return "ReferenceTranscripts(release=%s, species=%s, filename=%s)"  % (
+            self.release, self.species, self.remote_filename)
+
+    def __repr__(self):
+        return str(self)
+
+    def __contains__(self, transcript_id):
+        # the pyfaidx __contains__ method requires an expensive list traversal
+        # so cache the keys as a set for faster membership checks
+        if self._fasta_keys is None:
+            keys = list(self.fasta_dictionary.keys())
+            self._fasta_keys = set(keys)
+        return transcript_id in self._fasta_keys
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, ReferenceTranscripts) and
+            self.ensembl_release == other.ensembl_release and
+            self.species == other.species and
+            self.server == other.server)
+
     @property
     def local_fasta_path(self):
         """
@@ -106,17 +128,3 @@ class ReferenceTranscripts(object):
             self._transcript_sequences[transcript_id] = seq
         return self._transcript_sequences[transcript_id]
 
-    def __str__(self):
-        return "ReferenceTranscripts(release=%s, species=%s, filename=%s)"  % (
-            self.release, self.species, self.remote_filename)
-
-    def __repr__(self):
-        return str(self)
-
-    def __contains__(self, transcript_id):
-        # the pyfaidx __contains__ method requires an expensive list traversal
-        # so cache the keys as a set for faster membership checks
-        if self._fasta_keys is None:
-            keys = list(self.fasta_dictionary.keys())
-            self._fasta_keys = set(keys)
-        return transcript_id in self._fasta_keys

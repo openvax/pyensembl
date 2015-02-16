@@ -1,7 +1,9 @@
 from __future__ import print_function, division, absolute_import
 
+from .compute_cache import clear_cached_objects
 from .ensembl_release import EnsemblRelease
+from .gene import Gene
 from .gtf import GTF
 from .locus import Locus
-from .compute_cache import clear_cached_objects
 from .reference_transcripts import ReferenceTranscripts
+from .transcript import Transcript

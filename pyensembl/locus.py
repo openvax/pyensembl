@@ -92,11 +92,15 @@ class Locus(object):
 
     def __eq__(self, other):
         return (
+            isinstance(other, Locus) and
             self.contig == other.contig and
             self.start == other.start and
             self.end == other.end and
             self.strand == other.strand
         )
+
+    def __hash__(self):
+        return hash(str(self))
 
     @property
     def length(self):

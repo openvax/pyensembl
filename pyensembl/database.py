@@ -20,6 +20,9 @@ class Database(object):
         self.gtf = gtf
         self._connection = None
 
+    def __eq__(self, other):
+        return isinstance(other, Database) and self.gtf == other.gtf
+
     def local_db_filename(self):
         base = self.gtf.base_filename()
         return base + ".db"
@@ -134,7 +137,7 @@ class Database(object):
         # TODO: combine with the query method, since they overlap
         # significantly
         require_string(column_name, "column_name", nonempty=True)
-        
+
         contig = normalize_chromosome(contig)
 
         require_integer(position, "position")
@@ -232,7 +235,7 @@ class Database(object):
         if required and not results:
             raise ValueError(
                 "No results found in Ensembl for query:\n%s" % (sql,))
-        
+
         return results
 
     def query(
