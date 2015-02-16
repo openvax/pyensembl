@@ -95,7 +95,7 @@ class Transcript(Locus):
         """
         Length of a transcript is the sum of its exon lengths
         """
-        return len(self.sequence)
+        return sum(len(exon) for exon in self.exons)
 
     @memoized_property
     def exons(self):
