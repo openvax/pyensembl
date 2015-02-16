@@ -8,7 +8,7 @@ def normalize_chromosome(c):
             raise ValueError("Contig cannot be 0")
         c = str(c)
     require_string(c, "contig name", nonempty=True)
-     
+
     # only strip off lowercase chr since some of the non-chromosomal contigs
     # start with "CHR"
     if c.startswith("chr"):
