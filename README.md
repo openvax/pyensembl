@@ -39,13 +39,31 @@ combinations of the annotation features *gene\_name*, *gene\_id*,
 *transcript\_name*, *transcript\_id*, *exon\_id* as well as the location of
 these genomic elements (contig, start position, end position, strand).
 
-## Gene Names
+## Genes
 
-`gene_names()`
-: returns all gene names in the annotation database
+`genes(contig=None, strand=None)`
+: returns list of Gene objects, optionally restricted to a particular contig
+or strand.
 
-`gene_names_on_contig(contig)`
-: all gene names on a particular chromosome/contig
+`genes_at_locus(contig, position, end=None, strand=None)`
+: returns list of Gene objects overlapping a particular position on a contig,
+optionally extend into a range with the `end` parameter and restrict to
+forward or backward strand by passing `strand='+'` or `strand='-'`.
+
+`gene_by_id(gene_id)`
+: return Gene object for given Ensembl gene ID (e.g. "ENSG00000068793")
+
+`gene_names(contig=None, strand=None)`
+: returns all gene names in the annotation database, optionally restricted
+to a particular contig or strand.
+
+`genes_by_name(gene_name)`
+ : get all the unqiue genes with the given name (there might be multiple
+due to copies in the genome), return a list containing a Gene object for each
+distinct ID.
+
+`gene_by_protein_id(protein_id)`
+: find Gene associated with the given Ensembl protein ID (e.g. "ENSP00000350283")
 
 `gene_names_at_locus(contig, position, end=None, strand=None)`
 : names of genes overlapping with the given locus
@@ -63,22 +81,27 @@ these genomic elements (contig, start position, end position, strand).
 `gene_name_of_exon_id(exon_id)`
 : name of gene associated with given exon ID
 
-
-## Gene IDs
-
 `gene_ids(contig=None, strand=None)`
 : all gene IDs in the annotation database
 
-`gene_id_of_gene_name(gene_name)`
-: translate Ensembl gene ID to its corresponding name
+`gene_ids_of_gene_name(gene_name)`
+: all Ensembl gene IDs with the given name
 
 
-## Transcript Names
+## Transcripts
+
+`transcripts(contig=None, strand=None)`
+: returns list of Transcript objects for all transcript entries in the
+Ensembl database, optionally restricted to a particular contig or strand.
+
+`transcript_by_id(transcript_id)`
+: construct Transcript object for given Ensembl transcript ID (e.g. "ENST00000369985")
+
+`transcripts_by_name(transcript_name)`
+: returns list of Transcript objects for every transcript matching the given name.
 
 `transcript_names(contig=None, strand=None)`
 : all transcript names in the annotation database
-
-## Transcript IDs
 
 `transcript_ids(contig=None, strand=None)`
 : returns all transcript IDs in the annotation database
@@ -89,14 +112,14 @@ these genomic elements (contig, start position, end position, strand).
 `transcript_ids_of_gene_name(gene_name)`
 : return IDs of all transcripts associated with given gene name
 
-`transcript_id_of_transcript_name(transcript_name)`
-: translate transcript name to its ID
+`transcript_ids_of_transcript_name(transcript_name)`
+: find all Ensembl transcript IDs with the given name
 
 `transcript_ids_of_exon_id(exon_id)`
 : return IDs of all transcripts associatd with given exon ID
 
 
-## Exon IDs
+## Exons
 
 `exon_ids(contig=None, strand=None)`
 : returns all transcript IDs in the annotation database
@@ -109,32 +132,3 @@ these genomic elements (contig, start position, end position, strand).
 
 `exon_ids_of_transcript_id(transcript_id)`
 
-
-## Locations
-
-These functions currently assume that each gene maps to a single unique
-location, which is invalid both with heavily copied genes
-(e.g. [U1](http://en.wikipedia.org/wiki/U1_spliceosomal_RNA)) and with
-polymorphic regions (e.g. HLA genes).
-
-`location_of_gene_name(gene_name)`
-
-`location_of_gene_id(gene_id)`
-
-`location_of_transcript_id(transcript_id)`
-
-`location_of_exon_id(exon_id)`
-
-
-## Start Codons
-
-`start_codon_of_transcript_id(transcript_id)`
-
-`start_codon_of_transcript_name(transcript_id)`
-
-
-## Stop Codons
-
-`stop_codon_of_transcript_id(transcript_id)`
-
-`stop_codon_of_transcript_name(transcript_name)`

@@ -15,7 +15,6 @@ from .database import Database
 from .exon import Exon
 from .gene import Gene
 from .gtf import GTF
-from .locus import normalize_chromosome, normalize_strand
 from .reference_transcripts import ReferenceTranscripts
 from .release_info import check_release_number, MAX_ENSEMBL_RELEASE
 from .transcript import Transcript
@@ -27,6 +26,11 @@ import pandas as pd
 
 
 class EnsemblRelease(object):
+    """
+    Bundles together the genomic annotation and sequence data associated with
+    a particular release of the Ensembl database and provides a wide
+    variety of helper methods for accessing this data.
+    """
 
     def __init__(self, release=MAX_ENSEMBL_RELEASE, server=ENSEMBL_FTP_SERVER):
         self.cache = datacache.Cache(CACHE_SUBDIR)
@@ -199,59 +203,63 @@ class EnsemblRelease(object):
 
     ###################################################
     #
-    #         Locations: (contig, start, stop)
+    #         Methods which return Locus objects
+    #         containing (contig, start, stop, strand)
+    #         of various genomic entities
     #
     ###################################################
 
-    def _get_locations(self, property_name, property_value, feature):
-        return self.db.query(
-            select_column_names=["seqname", "start", "end", "strand"],
-            filter_column=property_name,
-            filter_value=property_value,
-            feature=feature,
-            distinct=True,
-            required=True)
-
-    def locations_of_gene_name(self, gene_name):
+    def locus_of_gene_id(self, gene_id):
         """
-        Given a gene name returns list of tuples with fields:
-            (chromosome, start, stop, strand)
+        Given a gene ID returns Locus with: chromosome, start, stop, strand
+        """
+        return self.db.query_locus(
+            filter_column='gene_id',
+            filter_value=gene_id,
+            feature='gene')
+
+    def loci_of_gene_names(self, gene_name):
+        """
+        Given a gene name returns list of Locus objects with fields:
+            chromosome, start, stop, strand
         You can get multiple results since a gene might have multiple copies
         in the genome.
         """
-        return self._get_locations('gene_name', gene_name, 'gene')
+        return self.db.query_loci('gene_name', gene_name, 'gene')
 
-    def _get_unique_location(self, property_name, property_value, feature):
-        locations = self._get_locations(property_name, property_value, feature)
-        if len(locations) == 0:
-            raise ValueError("%s not found: %s" % (feature, gene_id,))
-        elif len(locations) > 1:
-            raise ValueError("%s has multiple loci: %s" % (feature, gene_id))
-        return locations[0]
-
-    def location_of_gene_id(self, gene_id):
-        """
-        Given a gene ID returns (chromosome, start, stop, strand)
-        """
-        return self._get_unique_location('gene_id', gene_id, 'gene')
-
-    def location_of_transcript_id(self, transcript_id):
-        return self._get_unique_location(
-            'transcript_id',
-            transcript_id,
+    def locus_of_transcript_id(self, transcript_id):
+        return self.db.query_locus(
+            filter_column='transcript_id',
+            filter_value=transcript_id,
             feature='transcript')
 
-    def location_of_exon_id(self, exon_id):
+    def locus_of_exon_id(self, exon_id):
         """
-        Given an exon ID returns (chromosome, start, stop)
+        Given an exon ID returns Locus
         """
-        return self._get_unique_location('exon_id', exon_id, feature='exon')
+        return self.db.query_locus('exon_id', exon_id, feature='exon')
 
     ###################################################
     #
     #             Gene Info Objects
     #
     ###################################################
+
+    def genes(self, contig=None, strand=None):
+        """
+        Returns all Gene objects in Ensembl. Can be restricted to a
+        particular contig/chromosome and strand by the following arguments:
+
+        Parameters
+        ----------
+        contig : str
+            Only return genes on the given contig.
+
+        strand : str
+            Only return genes on this strand.
+        """
+        gene_ids = self.gene_ids(contig=contig, strand=strand)
+        return [self.gene_by_id(gene_id) for gene_id in gene_ids]
 
     def gene_by_id(self, gene_id):
         """
@@ -384,23 +392,6 @@ class EnsemblRelease(object):
             self.transcript_by_id(transcript_id)
             for transcript_id in transcript_ids
         ]
-
-    def transcript_by_name(self, transcript_name):
-        """
-        Get the single transcript associated with a particular name,
-        raise an exception if there are zero or multiple transcripts.
-        """
-        transcripts = self.transcripts_by_name(transcript_name)
-
-        if len(transcripts) == 0:
-            raise ValueError(
-                "No transcripts found with name = %s" % transcript_name)
-        elif len(transcripts) > 1:
-            raise ValueError(
-                "Multiple transcripts found with name = %s (IDs = %s)" %(
-                    transcript_name,
-                    [transcript.id for transcript in transcripts]))
-        return transcripts[0]
 
     def transcript_by_protein_id(self, protein_id):
         transcript_id = self.transcript_id_of_protein_id(protein_id)
@@ -543,49 +534,4 @@ class EnsemblRelease(object):
 
     def exon_ids_of_transcript_id(self, transcript_id):
         return self._query_exon_ids('transcript_id', transcript_id)
-
-
-    ###################################################
-    #
-    #                Start Codons
-    #
-    ###################################################
-
-    def _query_start_codon_location(self, property_name, value):
-        return self.db.query(
-            select_column_names=['seqname', 'start', 'end', 'strand'],
-            filter_column=property_name,
-            filter_value=value,
-            feature='start_codon',
-            distinct=True,
-            required=True)
-
-    def start_codon_of_transcript_id(self, transcript_id):
-        return self._query_start_codon_location('transcript_id', transcript_id)
-
-    def start_codon_of_transcript_name(self, transcript_name):
-        return self._query_start_codon_location(
-            'transcript_name', transcript_name)
-
-    ###################################################
-    #
-    #                Stop Codons
-    #
-    ###################################################
-
-    def _query_stop_codon_location(self, property_name, value):
-        return self.db.query(
-            select_column_names=['seqname', 'start', 'end', 'strand'],
-            filter_column=property_name,
-            filter_value=value,
-            feature='start_codon',
-            distinct=True,
-            required=True)
-
-    def stop_codon_of_transcript_id(self, transcript_id):
-        return self._query_stop_codon_location('transcript_id', transcript_id)
-
-    def stop_codon_of_transcript_name(self, transcript_name):
-        return self._query_stop_codon_location(
-            'transcript_name', transcript_name)
 
