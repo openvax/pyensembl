@@ -4,7 +4,7 @@ from os.path import join, exists
 import sqlite3
 
 from .common import CACHE_SUBDIR
-from .locus import normalize_chromosome, normalize_strand
+from .locus import normalize_chromosome, normalize_strand, Locus
 from .type_checks import require_integer, require_string
 
 import datacache
@@ -159,7 +159,7 @@ class Database(object):
             SELECT %s%s
             FROM ensembl
             WHERE feature = ?
-            AND seqname=?
+            AND seqname= ?
             AND start <= ?
             AND end >= ?
 
@@ -323,3 +323,66 @@ class Database(object):
             feature=feature,
             contig=contig,
             distinct=True)
+
+    def query_loci(self, filter_column, filter_value, feature):
+        """
+        Query for loci satisfying a given filter and feature type.
+
+
+        Parameters
+        ----------
+        filter_column : str
+            Name of column to filter results by.
+
+        filter_value : str
+            Only return loci which have this value in the their filter_column.
+
+        feature : str
+            Feature names such as 'transcript', 'gene', and 'exon'
+
+        Returns list of Locus objects
+        """
+        # list of values containing (contig, start, stop, strand)
+        result_tuples = self.query(
+            select_column_names=["seqname", "start", "end", "strand"],
+            filter_column=property_name,
+            filter_value=property_value,
+            feature=feature,
+            distinct=True,
+            required=True)
+        return [
+            Locus(contig, start, end, strand)
+            for (contig, start, end, strand)
+            in result_tuples
+        ]
+
+    def query_locus(self, filter_column, filter_value, feature):
+        """
+        Query for unique locus, raises error if missing or more than
+        one locus in the database.
+
+        Parameters
+        ----------
+        filter_column : str
+            Name of column to filter results by.
+
+        filter_value : str
+            Only return loci which have this value in the their filter_column.
+
+        feature : str
+            Feature names such as 'transcript', 'gene', and 'exon'
+
+        Returns single Locus object.
+        """
+        loci = self.query_loci(
+            filter_column=filter_column,
+            filter_value=filter_value,
+            feature=feature)
+
+        if len(loci) == 0:
+            raise ValueError("Couldn't find locus for %s with %s = %s" % (
+                feature, filter_column, filter_value))
+        elif len(loci) > 1:
+            raise ValueError("Too many loci for %s with %s = %s: %s" % (
+                feature, filter_column, filter_value, loci))
+        return loci[0]
