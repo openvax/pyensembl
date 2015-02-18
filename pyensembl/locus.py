@@ -171,6 +171,27 @@ class Locus(object):
             and
             (strand is None or self.on_strand(strand)))
 
+    def distance_to_interval(self, start, end):
+        """
+        Find the distance between intervals [start1, end1] and [start2, end2].
+        If the intervals overlap then the distance is 0.
+        """
+        if self.start > end:
+            # interval is before this exon
+            return self.start - end
+        elif self.end < start:
+            # exon is before the interval
+            return start - self.end
+        else:
+            return 0
+
+    def distance_to_locus(self, other):
+        if not self.can_overlap(other.contig, other.strand):
+            # if two loci are on different contigs or strands,
+            # can't compute a distance between them
+            return float("inf")
+        return self.distance_to_interval(other.start, other.end)
+
     def overlaps(self, contig, start, end, strand=None):
         """
         Does this locus overlap with a given range of positions?
@@ -181,9 +202,7 @@ class Locus(object):
         return (
             self.can_overlap(contig, strand)
             and
-            end >= self.start
-            and
-            start <= self.end)
+            self.distance_to_interval(start, end) == 0)
 
     def overlaps_locus(self, other_locus):
         return self.overlaps(

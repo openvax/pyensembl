@@ -2,7 +2,6 @@ from pyensembl.locus import normalize_chromosome, Locus
 
 from nose.tools import assert_raises
 
-
 def test_normalize_chromosome():
     assert normalize_chromosome("X") == "X"
     assert normalize_chromosome("chrX") == "X"
@@ -162,4 +161,14 @@ def test_range_offset():
     with assert_raises(ValueError):
         negative_locus.offset_range(9, 10)
 
+def test_locus_distance():
+    locus_chr1_10_20_pos = Locus("1", 10, 20, "+")
+    locus_chr1_21_25_pos = Locus("1", 21, 25, "+")
+    locus_chr2_21_25_pos = Locus("2", 21, 25, "+")
+    locus_chr1_21_25_neg = Locus("1", 21, 25, "-")
+    assert locus_chr1_10_20_pos.distance_to_locus(locus_chr1_21_25_pos) == 1
+    assert locus_chr1_21_25_pos.distance_to_locus(locus_chr1_10_20_pos) == 1
+    inf = float("inf")
+    assert locus_chr1_10_20_pos.distance_to_locus(locus_chr2_21_25_pos) == inf
+    assert locus_chr1_10_20_pos.distance_to_locus(locus_chr1_21_25_neg) == inf
 
