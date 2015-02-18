@@ -88,34 +88,20 @@ class Database(object):
             indices=indices)
         return db
 
-    def connection_if_exists(self):
+    def connect_if_exists(self):
         """
         Return the connection if the DB exists, and otherwise return 
-        None.
+        None. As a side effect, stores the database connection in 
+        self._connection.
         """
-        db_path = self.local_db_path()
-        if exists(db_path):
-            connection = sqlite3.connect(db_path)
-            # maybe file got created but not filled
-            if datacache.db.db_table_exists(connection, 'ensembl'):
-                return connection
-        return None
-
-    def _connect_or_create_database(self):
-        """
-        If database already exists, open a connection.
-        Otherwise, create it if auto download is enabled.
-        """
-        connection = self.connection_if_exists()
-        if connection:
-            return connection
-        if self.auto_download:
-            return self.create_database()
-        raise ValueError("Ensembl annotations data is not currently "
-                         "downloaded for release %s. Run "
-                         "\"pyensembl update %s\" or call into "
-                         "EnsemblRelease(%s).download_annotations()" %
-                         tuple([self.gtf.release] * 3))
+        if self._connection is None:
+            db_path = self.local_db_path()
+            if exists(db_path):
+                connection = sqlite3.connect(db_path)
+                # maybe file got created but not filled
+                if datacache.db.db_table_exists(connection, 'ensembl'):
+                    self._connection = connection
+        return self._connection
 
     @property
     def connection(self):
@@ -123,11 +109,17 @@ class Database(object):
         Return the sqlite3 database for this Ensembl release
         (download and/or construct it if necessary, if auto_download
         is on). As a side effect, stores the database connection in 
-        self._db
+        self._connection.
         """
-        if self._connection is None:
-            self._connection = self._connect_or_create_database()
-        return self._connection
+        if self.connect_if_exists():
+            return self._connection
+        if self.auto_download:
+            return self.create_database()
+        raise ValueError("Ensembl annotations data is not currently "
+                         "downloaded for release %s. Run "
+                         "\"pyensembl update %s\" or call into "
+                         "EnsemblRelease(%s).download_annotations()" %
+                         tuple([self.gtf.release] * 3))
 
     def columns(self):
         sql = "PRAGMA table_info(ensembl);"

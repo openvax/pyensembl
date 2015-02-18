@@ -131,10 +131,10 @@ class EnsemblRelease(object):
 
     def download_all(self):
         self.download_annotations()
-        self.download_transcripts()
+        self.download_transcript_sequences()
 
     def download_annotations(self):
-        if self.db.connection_if_exists():
+        if self.db.connect_if_exists():
             print("Annotation data for release %s is already "
                   "downloaded and installed" % self.release)
             return
@@ -142,7 +142,7 @@ class EnsemblRelease(object):
         print("Annotation data for release %s has been downloaded "
               "and installed" % self.release)
 
-    def download_transcripts(self):
+    def download_transcript_sequences(self):
         cache = self.reference.cache
         if cache.exists(self.reference.url,
                         self.reference.remote_filename,

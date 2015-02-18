@@ -39,7 +39,7 @@ def run():
         if args.annotations_only:
             data.download_annotations()
         elif args.transcripts_only:
-            data.download_transcripts()
+            data.download_transcript_sequences()
         else:
             data.download_all()
 
