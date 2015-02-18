@@ -135,26 +135,26 @@ class EnsemblRelease(object):
 
     def download_annotations(self):
         if self.db.connection_if_exists():
-            print ("Annotation data for release %s is already "
-                   "downloaded and installed" % self.release)
+            print("Annotation data for release %s is already "
+                  "downloaded and installed" % self.release)
             return
         self.db.create_database()
-        print ("Annotation data for release %s has been downloaded "
-               "and installed" % self.release)
+        print("Annotation data for release %s has been downloaded "
+              "and installed" % self.release)
 
     def download_transcripts(self):
         cache = self.reference.cache
         if cache.exists(self.reference.url,
                         self.reference.remote_filename,
                         self.reference.fasta_decompress):
-            print ("Transcript data for release %s is already "
-                   "downloaded" % self.release)
+            print("Transcript data for release %s is already "
+                  "downloaded" % self.release)
             return
         cache.fetch(self.reference.url,
                     self.reference.remote_filename,
                     self.reference.fasta_decompress)
-        print ("Transcript data for release %s has been downloaded "
-               % self.release)
+        print("Transcript data for release %s has been downloaded "
+              % self.release)
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
         gene_ids = self.gene_ids_at_locus(
