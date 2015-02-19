@@ -6,4 +6,5 @@ from .gene import Gene
 from .gtf import GTF
 from .locus import Locus
 from .reference_transcripts import ReferenceTranscripts
+from .search import find_nearest_locus
 from .transcript import Transcript
