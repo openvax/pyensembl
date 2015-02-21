@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 """
 A shell wrapper around various PyEnsembl commands.
+
+Example:
+
+pyensembl 75 77 install
 """
 import argparse
 
@@ -10,38 +14,38 @@ from release_info import MAX_ENSEMBL_RELEASE
 
 def run():
     parser = argparse.ArgumentParser(usage=__doc__)
-    subparsers = parser.add_subparsers(dest='program')
-    download_parser = subparsers.add_parser(
-        'update',
-        usage=('retrieve all Ensembl data for a release, some of '
-               'which is installed into a local SQLite database'))
-    download_parser.add_argument(
+    parser.add_argument(
         'release',
-        nargs='?',
+        nargs='*',
         default=MAX_ENSEMBL_RELEASE,
-        help=('specify the Ensembl release that you would like to '
+        help=('specify the Ensembl release(s) that you would like to '
               'download and install (defaults to latest release)'))
-    download_parser.add_argument(
-        '-a', '--annotations-only',
-        action='store_true',
-        dest='annotations_only',
-        help=('retrieve only Ensembl annotation data, and install it '
-              'into a local SQLite database'))
-    download_parser.add_argument(
-        '-t', '--transcripts-only',
-        action='store_true',
-        dest='transcripts_only',
-        help='retrieve only Ensembl transcript data')
+    subparsers = parser.add_subparsers(dest='program')
+    subparsers.add_parser(
+        'install',
+        help=('download and index any data for this release that '
+               'is not yet downloaded and/or indexed'))
+    subparsers.add_parser(
+        'download',
+        help=('download all data for this release, regardless of '
+              'whether it is already downloaded'))
+    subparsers.add_parser(
+        'index',
+        help=('index all data for this release, regardless of '
+              'whether it is already indexed'))
 
     args = parser.parse_args()
-    if args.program == 'update':
-        data = ensembl_release.EnsemblRelease(args.release)
-        if args.annotations_only:
-            data.download_annotations()
-        elif args.transcripts_only:
-            data.download_transcript_sequences()
-        else:
-            data.download_all()
+    releases = args.release
+    if type(releases) == int:
+        releases = [releases]
+    for release in releases:
+        data = ensembl_release.EnsemblRelease(release)
+        if args.program == 'install':
+            data.install()
+        elif args.program == 'download':
+            data.download()
+        elif args.program == 'index':
+            data.index()
 
 
 if __name__ == '__main__':

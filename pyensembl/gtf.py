@@ -29,6 +29,7 @@ class GTF(object):
         self.release = release
         self.server = server
 
+        self.decompress = True
         gtf_url_dir, gtf_filename = gtf_url_parts(
             ensembl_release=release,
             species=self.species,
@@ -62,7 +63,7 @@ class GTF(object):
         Returns local path to GTF file for given release of Ensembl,
         download from the Ensembl FTP server if not already cached.
         """
-        return self.cache.fetch(self.url, self.filename, decompress=False)
+        return self.cache.fetch(self.url, self.filename, self.decompress)
 
     def local_dir(self):
         return split(self.local_gtf_path())[0]
@@ -241,3 +242,17 @@ class GTF(object):
         overlap = overlap_start & overlap_end
         return df_contig[overlap]
 
+    def download(self, force=False):
+        """
+        Download the GTF file if one does not exist. If `force` is
+        True, overwrites any existing file.
+
+        Returns True if a download happened.
+        """
+        if not force and self.cache.exists(self.url,
+                                           self.filename,
+                                           self.decompress):
+            return False
+        self.cache.fetch(self.url, self.filename, self.decompress,
+                         force=force)
+        return True

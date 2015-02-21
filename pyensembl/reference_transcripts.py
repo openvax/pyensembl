@@ -1,6 +1,6 @@
 from __future__ import print_function, division, absolute_import
 
-from os.path import join
+from os.path import join, exists
 
 from .common import CACHE_SUBDIR
 from .release_info import which_human_reference_name, check_release_number
@@ -104,8 +104,8 @@ class ReferenceTranscripts(object):
                                     self.fasta_decompress)
         raise ValueError("Ensembl transcript data is not currently "
                          "downloaded for release %s. Run "
-                         "\"pyensembl update %s\" or call into "
-                         "EnsemblRelease(%s).download_transcripts()" %
+                         "\"pyensembl install %s\" or call into "
+                         "EnsemblRelease(%s).install()" %
                          tuple([self.release] * 3))
 
     @property
@@ -147,3 +147,31 @@ class ReferenceTranscripts(object):
             self._transcript_sequences[transcript_id] = seq
         return self._transcript_sequences[transcript_id]
 
+    def download_transcript_sequences(self, force=False):
+        """
+        Download the FASTA file if one does not exist. If `force` is
+        True, overwrites any existing file.
+
+        Returns True if a download happened.
+        """
+        if not force and self.cache.exists(self.url,
+                                           self.remote_filename,
+                                           self.fasta_decompress):
+            return False
+        self.cache.fetch(self.url, self.remote_filename,
+                         self.fasta_decompress, force=force)
+        return True
+
+    def index(self, force=False):
+        """
+        Perform pyfaidx indexing if it's not already done. If `force`
+        is True, always re-index.
+
+        Returns True if the index was re-created.
+        """
+        if not force and exists(self.local_fasta_path + '.fai'):
+            return False
+        fasta = pyfaidx.Fasta(self.local_fasta_path)
+        fasta.faidx.write_fai()
+        self._fasta_dictionary = fasta
+        return True

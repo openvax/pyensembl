@@ -71,7 +71,7 @@ class Database(object):
         indices.append(['feature'])
         return indices
 
-    def create_database(self):
+    def _create_database(self, force=False):
         print("Creating database: %s" % self.local_db_path())
         filename = self.local_db_filename()
         df = self.gtf.dataframe()
@@ -84,11 +84,11 @@ class Database(object):
             table_name="ensembl",
             df=df,
             subdir=CACHE_SUBDIR,
-            overwrite=False,
+            overwrite=force,
             indices=indices)
         return db
 
-    def connect_if_exists(self):
+    def _connect_if_exists(self):
         """
         Return the connection if the DB exists, and otherwise return 
         None. As a side effect, stores the database connection in 
@@ -111,15 +111,15 @@ class Database(object):
         is on). As a side effect, stores the database connection in 
         self._connection.
         """
-        if self.connect_if_exists():
+        if self._connect_if_exists():
             return self._connection
         if self.auto_download:
-            return self.create_database()
+            return self._create_database()
         raise ValueError("Ensembl annotations data is not currently "
                          "downloaded for release %s. Run "
-                         "\"pyensembl update %s\" or call into "
-                         "EnsemblRelease(%s).download_annotations()" %
-                         tuple([self.gtf.release] * 3))
+                         "\"pyensembl install %s\" or call into "
+                         "EnsemblRelease(%s).install()" %
+                         (self.gtf.release,) * 3)
 
     def columns(self):
         sql = "PRAGMA table_info(ensembl);"
@@ -396,3 +396,16 @@ class Database(object):
             raise ValueError("Too many loci for %s with %s = %s: %s" % (
                 feature, filter_column, filter_value, loci))
         return loci[0]
+
+    def create(self, force=False):
+        """
+        Create the local database (including indexing) if it's not
+        already set up. If `force` is True, always re-create
+        the database from scratch.
+
+        Returns True if the database was re-created.
+        """
+        if not force and self._connect_if_exists():
+            return False
+        self._create_database(force=force)
+        return True

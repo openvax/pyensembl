@@ -9,7 +9,6 @@ import logging
 from os.path import join
 from os import remove
 
-from .common import CACHE_SUBDIR
 from .compute_cache import cached_object
 from .database import Database
 from .exon import Exon
@@ -19,8 +18,6 @@ from .reference_transcripts import ReferenceTranscripts
 from .release_info import check_release_number, MAX_ENSEMBL_RELEASE
 from .transcript import Transcript
 from .url_templates import ENSEMBL_FTP_SERVER
-
-import datacache
 
 
 class EnsemblRelease(object):
@@ -34,7 +31,6 @@ class EnsemblRelease(object):
                  release=MAX_ENSEMBL_RELEASE,
                  server=ENSEMBL_FTP_SERVER,
                  auto_download=False):
-        self.cache = datacache.Cache(CACHE_SUBDIR)
         self.release = check_release_number(release)
         self.species = "homo_sapiens"
         self.server = server
@@ -129,32 +125,55 @@ class EnsemblRelease(object):
             return results
         return cached_object(pickle_path, compute_fn=run_query)
 
-    def download_all(self):
-        self.download_annotations()
-        self.download_transcript_sequences()
+    def install(self):
+        """
+        Explicitely download and index any data for this release that 
+        is not yet downloaded and/or indexed.
+        """
+        self._download(force=False)
+        self._index(force=False)
 
-    def download_annotations(self):
-        if self.db.connect_if_exists():
-            print("Annotation data for release %s is already "
-                  "downloaded and installed" % self.release)
-            return
-        self.db.create_database()
-        print("Annotation data for release %s has been downloaded "
-              "and installed" % self.release)
+    def index(self):
+        """
+        Explicitely index all data for this release, regardless of
+        whether it is already indexed.
+        """
+        self._index(force=True)
 
-    def download_transcript_sequences(self):
-        cache = self.reference.cache
-        if cache.exists(self.reference.url,
-                        self.reference.remote_filename,
-                        self.reference.fasta_decompress):
-            print("Transcript data for release %s is already "
+    def _index(self, force):
+        if self.db.create(force=force):
+            print("Annotation data for release %s has just been indexed" %
+                  self.release)
+        else:
+            print("Annotation data for release %s is already indexed" %
+                  self.release)
+        if self.reference.index(force=force):
+            print("Transcript sequence data for release %s has just been "
+                  "indexed" % self.release)
+        else:
+            print("Transcript sequence data for release %s is already "
+                  "indexed" % self.release)
+
+    def download(self):
+        """
+        Explicitely download all data for this release, regardless of
+        whether it is already downloaded.
+        """
+        self._download(force=True)
+
+    def _download(self, force):
+        if self.gtf.download(force=force):
+            print("Annotation data for release %s has just been downloaded" %
+                  self.release)
+        else:
+            print("Annotation data for release %s is already downloaded" %
+                  self.release)
+        if self.reference.download_transcript_sequences(force=force):
+            print("Transcript sequence data for release %s has just been "
                   "downloaded" % self.release)
-            return
-        cache.fetch(self.reference.url,
-                    self.reference.remote_filename,
-                    self.reference.fasta_decompress)
-        print("Transcript data for release %s has been downloaded "
-              % self.release)
+        else:
+            print("Transcript sequence data for release %s is already "
+                  "downloaded" % self.release)
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
         gene_ids = self.gene_ids_at_locus(

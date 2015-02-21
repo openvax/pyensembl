@@ -2,9 +2,8 @@ from __future__ import print_function, division, absolute_import
 
 from .biotypes import is_valid_biotype
 from .exon import Exon
-from .locus import Locus, normalize_chromosome
+from .locus import Locus
 
-from pyfaidx import Sequence
 from memoized_property import memoized_property
 from .type_checks import require_integer, require_string
 
