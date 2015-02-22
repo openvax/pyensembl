@@ -32,7 +32,8 @@ def run():
     subparsers.add_parser(
         'index',
         help=('index all data for this release, regardless of '
-              'whether it is already indexed'))
+              'whether it is already indexed, and raises an error if '
+              'data is not yet downloaded'))
 
     args = parser.parse_args()
     releases = args.release

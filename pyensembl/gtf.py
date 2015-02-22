@@ -21,7 +21,8 @@ class GTF(object):
             self,
             release,
             species="homo_sapiens",
-            server=ENSEMBL_FTP_SERVER):
+            server=ENSEMBL_FTP_SERVER,
+            auto_download=False):
 
         self.cache = datacache.Cache(CACHE_SUBDIR)
 
@@ -36,6 +37,7 @@ class GTF(object):
             server=server)
         self.filename = gtf_filename
         self.url = join(gtf_url_dir, gtf_filename)
+        self.auto_download = auto_download
 
         # lazily load DataFrame of all GTF entries if necessary
         # for database construction
@@ -61,9 +63,21 @@ class GTF(object):
     def local_gtf_path(self):
         """
         Returns local path to GTF file for given release of Ensembl,
-        download from the Ensembl FTP server if not already cached.
+        download from the Ensembl FTP server if not already cached and
+        auto download is enabled.
         """
-        return self.cache.fetch(self.url, self.filename, self.decompress)
+        if (self.cache.exists(self.url,
+                              self.filename,
+                              self.decompress) or
+            self.auto_download):
+            # Does a download if the cache is empty
+            return self.cache.fetch(self.url, self.filename,
+                                    self.decompress)
+        raise ValueError("Ensembl annotation data is not currently "
+                         "installed for release %s. Run "
+                         "\"pyensembl install %s\" or call into "
+                         "EnsemblRelease(%s).install()" %
+                         ((self.gtf.release,) * 3))
 
     def local_dir(self):
         return split(self.local_gtf_path())[0]

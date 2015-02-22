@@ -32,7 +32,8 @@ def test_gene_names_at_locus_ensembl77_hla_a():
     # based on:
     # http://useast.ensembl.org/Homo_sapiens/Gene/
     # Summary?db=core;g=ENSG00000206503;r=6:29941260-29945884
-    names = EnsemblRelease(77).gene_names_at_locus(6, 29945884)
+    names = (EnsemblRelease(77, auto_download=True).
+             gene_names_at_locus(6, 29945884))
     assert names == ["HLA-A"], "Expected gene name HLA-A, got: %s" % (names,)
 
 @test_ensembl_releases()

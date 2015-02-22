@@ -29,8 +29,20 @@ pip install pyensembl
 This should also install any required packages, such as [datacache](https://github.com/hammerlab/datacache) and
 [pyfaidx](https://pypi.python.org/pypi/pyfaidx).
 
-The first time you use PyEnsembl, there will be a delay of several minutes while the library downloads and parses Ensembl data files.
+Before using PyEnsembl, run the following command to download and install
+Ensembl data:
 
+```
+pyensembl <list of Ensembl release numbers> install
+```
+
+For example, `pyensembl 75 76 install` will download and install all
+data for Ensembl releases 75 and 76.
+
+Alternatively, you can create the `EnsemblRelease` object (part of the
+API described below) with `auto_download=True`. PyEnsembl will then
+download your data as you need it, and there will be a delay of several
+minutes after your first command.
 
 # API
 

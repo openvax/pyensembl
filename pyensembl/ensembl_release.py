@@ -34,9 +34,10 @@ class EnsemblRelease(object):
         self.release = check_release_number(release)
         self.species = "homo_sapiens"
         self.server = server
-        self.gtf = GTF(self.release, self.species, server)
         self.auto_download = auto_download
-        self.db = Database(gtf=self.gtf, auto_download=auto_download)
+        self.gtf = GTF(self.release, self.species, server,
+                       auto_download=auto_download)
+        self.db = Database(gtf=self.gtf)
         self.reference = ReferenceTranscripts(
             ensembl_release=self.release,
             species=self.species,
@@ -136,7 +137,8 @@ class EnsemblRelease(object):
     def index(self):
         """
         Explicitely index all data for this release, regardless of
-        whether it is already indexed.
+        whether it is already indexed. Raises an error if data is
+        not downloaded.
         """
         self._index(force=True)
 

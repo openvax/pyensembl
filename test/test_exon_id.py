@@ -5,7 +5,7 @@ from the Ensembl website, make sure same IDs are found by pyensembl.
 
 from pyensembl import EnsemblRelease
 
-ensembl = EnsemblRelease(77)
+ensembl = EnsemblRelease(77, auto_download=True)
 
 # all exons associated with TP53 gene in Ensembl release 77
 TP53_EXON_IDS_RELEASE_77 = [

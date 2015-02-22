@@ -103,10 +103,10 @@ class ReferenceTranscripts(object):
                                     self.remote_filename,
                                     self.fasta_decompress)
         raise ValueError("Ensembl transcript data is not currently "
-                         "downloaded for release %s. Run "
+                         "installed for release %s. Run "
                          "\"pyensembl install %s\" or call into "
                          "EnsemblRelease(%s).install()" %
-                         tuple([self.release] * 3))
+                         ((self.release,) * 3))
 
     @property
     def local_dir(self):
@@ -168,8 +168,12 @@ class ReferenceTranscripts(object):
         is True, always re-index.
 
         Returns True if the index was re-created.
+
+        Raises an error if the necessary data is not yet downloaded.
         """
-        if not force and exists(self.local_fasta_path + '.fai'):
+        # This local_fasta_path property access will raise an error
+        # if the necessary data is not yet downloaded
+        if exists(self.local_fasta_path + '.fai') and not force:
             return False
         fasta = pyfaidx.Fasta(self.local_fasta_path)
         fasta.faidx.write_fai()

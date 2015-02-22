@@ -16,9 +16,8 @@ class Database(object):
     writing SQL queries directly.
     """
 
-    def __init__(self, gtf, auto_download=False):
+    def __init__(self, gtf):
         self.gtf = gtf
-        self.auto_download = auto_download
         self._connection = None
 
     def __eq__(self, other):
@@ -113,13 +112,13 @@ class Database(object):
         """
         if self._connect_if_exists():
             return self._connection
-        if self.auto_download:
+        if self.gtf.auto_download:
             return self._create_database()
         raise ValueError("Ensembl annotations data is not currently "
-                         "downloaded for release %s. Run "
+                         "installed for release %s. Run "
                          "\"pyensembl install %s\" or call into "
                          "EnsemblRelease(%s).install()" %
-                         (self.gtf.release,) * 3)
+                         ((self.gtf.release,) * 3))
 
     def columns(self):
         sql = "PRAGMA table_info(ensembl);"
@@ -404,6 +403,8 @@ class Database(object):
         the database from scratch.
 
         Returns True if the database was re-created.
+
+        Raises an error if the necessary data is not yet downloaded.
         """
         if not force and self._connect_if_exists():
             return False

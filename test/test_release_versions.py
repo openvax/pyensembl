@@ -1,5 +1,3 @@
-from os.path import exists
-
 from pyensembl import EnsemblRelease
 
 from nose.tools import raises
@@ -23,8 +21,8 @@ def test_version_is_none():
 
 def test_int_version():
     for version in range(54, 77):
-        ensembl = EnsemblRelease(version)
+        EnsemblRelease(version)
 
 def test_str_version():
     for version in range(54, 77):
-        ensembl = EnsemblRelease(str(version))
+        EnsemblRelease(str(version))
