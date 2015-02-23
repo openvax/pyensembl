@@ -98,5 +98,5 @@ def require_iterable_of(objs, types, name=None, type_name=None, truncate_at=80):
     for (i, obj) in enumerate(objs):
         element_name = prefix + ("element at index %d" % i)
         require_instance(obj, types, element_name, type_name, truncate_at)
-    assert(False, "Shouldn't reach here.")
+    assert False, "Shouldn't reach here."
 
