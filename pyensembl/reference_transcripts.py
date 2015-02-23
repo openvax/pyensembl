@@ -84,6 +84,9 @@ class ReferenceTranscripts(object):
             self.species == other.species and
             self.server == other.server)
 
+    def clear_cache(self):
+        self.cache.delete_all()
+
     @property
     def local_fasta_path(self):
         """

@@ -1,0 +1,17 @@
+language: python
+python:
+- '2.7'
+- '3.4'
+virtualenv:
+  system_site_packages: true
+install:
+- pip install -r requirements.txt
+- python setup.py develop
+script: nosetests test && ./lint.sh
+deploy:
+  provider: pypi
+  user: hammerlab
+  password:
+    secure: gJSWl4PLXKtVc2ERwbzfd4qKk9Yy4T8dpfR7Q89VLVXTd7Tv1SsEknShJZUFaCPN85aYFcAWsoOI6vSlBSdXeTONU/pmPgcWOLfiErsgCqUs6qq7edOhrtOS307SREX4oF6AF2iyJduWAF4NPq+9IoJUROIiB4u5qeUtWfVu2Eo=
+  on:
+    tags: true
