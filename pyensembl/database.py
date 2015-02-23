@@ -16,8 +16,9 @@ class Database(object):
     writing SQL queries directly.
     """
 
-    def __init__(self, gtf):
+    def __init__(self, gtf, auto_download=False):
         self.gtf = gtf
+        self.auto_download = auto_download
         self._connection = None
 
     def __eq__(self, other):
@@ -70,7 +71,7 @@ class Database(object):
         indices.append(['feature'])
         return indices
 
-    def _create_database(self):
+    def _create_database(self, force=False):
         print("Creating database: %s" % self.local_db_path())
         filename = self.local_db_filename()
         df = self.gtf.dataframe()
@@ -83,33 +84,42 @@ class Database(object):
             table_name="ensembl",
             df=df,
             subdir=CACHE_SUBDIR,
-            overwrite=False,
+            overwrite=force,
             indices=indices)
         return db
 
-    def _connect_or_create_database(self):
+    def _connect_if_exists(self):
         """
-        If database already exists, open a connection.
-        Otherwise, create it.
+        Return the connection if the DB exists, and otherwise return 
+        None. As a side effect, stores the database connection in 
+        self._connection.
         """
-        db_path = self.local_db_path()
-        if exists(db_path):
-            db = sqlite3.connect(db_path)
-            # maybe file got created but not filled
-            if datacache.db.db_table_exists(db, 'ensembl'):
-                return db
-        return self._create_database()
+        if self._connection is None:
+            db_path = self.local_db_path()
+            if exists(db_path):
+                connection = sqlite3.connect(db_path)
+                # maybe file got created but not filled
+                if datacache.db.db_table_exists(connection, 'ensembl'):
+                    self._connection = connection
+        return self._connection
 
     @property
     def connection(self):
         """
         Return the sqlite3 database for this Ensembl release
-        (download and/or construct it necessary).
-        As a side effect, stores the database connection in self._db
+        (download and/or construct it if necessary, if auto_download
+        is on). As a side effect, stores the database connection in 
+        self._connection.
         """
-        if self._connection is None:
-            self._connection = self._connect_or_create_database()
-        return self._connection
+        if self._connect_if_exists():
+            return self._connection
+        if self.auto_download:
+            return self._create_database()
+        raise ValueError("Ensembl annotations data is not currently "
+                         "installed for release %s. Run "
+                         "\"pyensembl install %s\" or call into "
+                         "EnsemblRelease(%s).install()" %
+                         ((self.gtf.release,) * 3))
 
     def columns(self):
         sql = "PRAGMA table_info(ensembl);"
@@ -386,3 +396,18 @@ class Database(object):
             raise ValueError("Too many loci for %s with %s = %s: %s" % (
                 feature, filter_column, filter_value, loci))
         return loci[0]
+
+    def create(self, force=False):
+        """
+        Create the local database (including indexing) if it's not
+        already set up. If `force` is True, always re-create
+        the database from scratch.
+
+        Returns True if the database was re-created.
+
+        Raises an error if the necessary data is not yet downloaded.
+        """
+        if not force and self._connect_if_exists():
+            return False
+        self._create_database(force=force)
+        return True

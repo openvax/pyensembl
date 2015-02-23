@@ -13,7 +13,8 @@ def test_gene_ids_ensembl77_hla_a():
     # based on:
     # http://useast.ensembl.org/Homo_sapiens/Gene/
     # Summary?db=core;g=ENSG00000206503;r=6:29941260-29945884
-    ids = EnsemblRelease(77).gene_ids_at_locus(6, 29945884)
+    ids = (EnsemblRelease(77, auto_download=True).
+           gene_ids_at_locus(6, 29945884))
     expected = "ENSG00000206503"
     assert ids == ["ENSG00000206503"], \
         "Expected HLA-A, gene ID = %s, got: %s" % (expected, ids)

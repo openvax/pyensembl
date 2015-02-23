@@ -17,7 +17,8 @@ def test_reference_name():
     assert reference77.reference_name == "GRCh38"
 
 def test_transcript_sequence_ensembl54():
-    reference54 = EnsemblRelease(release=54).reference
+    reference54 = EnsemblRelease(release=54,
+                                 auto_download=True).reference
     seq = reference54.transcript_sequence("ENST00000321606")
     assert len(seq) == 414, \
         "Expected transcript ENST00000321606 to have 414nt, got %s : %d" % (

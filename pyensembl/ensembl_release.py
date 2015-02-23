@@ -9,7 +9,6 @@ import logging
 from os.path import join
 from os import remove
 
-from .common import CACHE_SUBDIR
 from .compute_cache import cached_object
 from .database import Database
 from .exon import Exon
@@ -20,10 +19,6 @@ from .release_info import check_release_number, MAX_ENSEMBL_RELEASE
 from .transcript import Transcript
 from .url_templates import ENSEMBL_FTP_SERVER
 
-import datacache
-import numpy as np
-import pandas as pd
-
 
 class EnsemblRelease(object):
     """
@@ -32,15 +27,22 @@ class EnsemblRelease(object):
     variety of helper methods for accessing this data.
     """
 
-    def __init__(self, release=MAX_ENSEMBL_RELEASE, server=ENSEMBL_FTP_SERVER):
-        self.cache = datacache.Cache(CACHE_SUBDIR)
+    def __init__(self,
+                 release=MAX_ENSEMBL_RELEASE,
+                 server=ENSEMBL_FTP_SERVER,
+                 auto_download=False):
         self.release = check_release_number(release)
         self.species = "homo_sapiens"
         self.server = server
-        self.gtf = GTF(self.release, self.species, server)
-        self.db = Database(gtf = self.gtf)
+        self.auto_download = auto_download
+        self.gtf = GTF(self.release, self.species, server,
+                       auto_download=auto_download)
+        self.db = Database(gtf=self.gtf, auto_download=auto_download)
         self.reference = ReferenceTranscripts(
-            self.release, self.species, server)
+            ensembl_release=self.release,
+            species=self.species,
+            server=server,
+            auto_download=auto_download)
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
@@ -68,7 +70,6 @@ class EnsemblRelease(object):
         self.gtf.clear_cache()
         self.reference.clear_cache()
         self._delete_cached_files()
-
 
     def all_feature_values(
             self,
@@ -124,6 +125,57 @@ class EnsemblRelease(object):
                     type(results))
             return results
         return cached_object(pickle_path, compute_fn=run_query)
+
+    def install(self):
+        """
+        Explicitely download and index any data for this release that 
+        is not yet downloaded and/or indexed.
+        """
+        self._download(force=False)
+        self._index(force=False)
+
+    def index(self):
+        """
+        Explicitely index all data for this release, regardless of
+        whether it is already indexed. Raises an error if data is
+        not downloaded.
+        """
+        self._index(force=True)
+
+    def _index(self, force):
+        if self.db.create(force=force):
+            logging.info("Annotation data for release %s has just "
+                         "been indexed" % self.release)
+        else:
+            logging.info("Annotation data for release %s is already "
+                         "indexed" % self.release)
+        if self.reference.index(force=force):
+            logging.info("Transcript sequence data for release %s "
+                         "has just been indexed" % self.release)
+        else:
+            logging.info("Transcript sequence data for release %s is "
+                         "already indexed" % self.release)
+
+    def download(self):
+        """
+        Explicitely download all data for this release, regardless of
+        whether it is already downloaded.
+        """
+        self._download(force=True)
+
+    def _download(self, force):
+        if self.gtf.download(force=force):
+            logging.info("Annotation data for release %s has just "
+                         "been downloaded" % self.release)
+        else:
+            logging.info("Annotation data for release %s is already "
+                         "downloaded" % self.release)
+        if self.reference.download_transcript_sequences(force=force):
+            logging.info("Transcript sequence data for release %s "
+                         "has just been downloaded" % self.release)
+        else:
+            logging.info("Transcript sequence data for release %s is "
+                         "already downloaded" % self.release)
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
         gene_ids = self.gene_ids_at_locus(

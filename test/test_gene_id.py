@@ -2,7 +2,7 @@ from pyensembl import EnsemblRelease
 
 from nose.tools import assert_raises
 
-ensembl = EnsemblRelease(77)
+ensembl = EnsemblRelease(77, auto_download=True)
 
 def test_gene_ids_of_gene_name_hla_release77():
     hla_a_gene_ids = ensembl.gene_ids_of_gene_name("HLA-A")

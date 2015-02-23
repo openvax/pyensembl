@@ -1,6 +1,6 @@
 from pyensembl import EnsemblRelease
 
-ensembl = EnsemblRelease(77)
+ensembl = EnsemblRelease(77, auto_download=True)
 # chr6:29,945,884  is a position for HLA-A
 # based on:
 # http://useast.ensembl.org/Homo_sapiens/Gene/Summary?db=core;g=ENSG00000206503;r=6:29941260-29945884

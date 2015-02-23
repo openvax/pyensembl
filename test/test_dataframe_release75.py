@@ -1,6 +1,6 @@
 from pyensembl import EnsemblRelease
 
-ensembl = EnsemblRelease(75)
+ensembl = EnsemblRelease(75, auto_download=True)
 
 def test_release_75_length():
     df = ensembl.gtf.dataframe()
