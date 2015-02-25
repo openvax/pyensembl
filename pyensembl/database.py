@@ -25,7 +25,7 @@ class Database(object):
         return isinstance(other, Database) and self.gtf == other.gtf
 
     def local_db_filename(self):
-        base = self.gtf.base_filename()
+        base = self.gtf.local_filename()
         return base + ".db"
 
     def local_db_path(self):
@@ -90,8 +90,8 @@ class Database(object):
 
     def _connect_if_exists(self):
         """
-        Return the connection if the DB exists, and otherwise return 
-        None. As a side effect, stores the database connection in 
+        Return the connection if the DB exists, and otherwise return
+        None. As a side effect, stores the database connection in
         self._connection.
         """
         if self._connection is None:
@@ -108,7 +108,7 @@ class Database(object):
         """
         Return the sqlite3 database for this Ensembl release
         (download and/or construct it if necessary, if auto_download
-        is on). As a side effect, stores the database connection in 
+        is on). As a side effect, stores the database connection in
         self._connection.
         """
         if self._connect_if_exists():

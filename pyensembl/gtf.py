@@ -22,7 +22,8 @@ class GTF(object):
             release,
             species="homo_sapiens",
             server=ENSEMBL_FTP_SERVER,
-            auto_download=False):
+            auto_download=False,
+            decompress=True):
 
         self.cache = datacache.Cache(CACHE_SUBDIR)
 
@@ -30,12 +31,12 @@ class GTF(object):
         self.release = release
         self.server = server
 
-        self.decompress = True
+        self.decompress = decompress
         gtf_url_dir, gtf_filename = gtf_url_parts(
             ensembl_release=release,
             species=self.species,
             server=server)
-        self.filename = gtf_filename
+        self.remote_filename = gtf_filename
         self.url = join(gtf_url_dir, gtf_filename)
         self.auto_download = auto_download
 
@@ -56,9 +57,27 @@ class GTF(object):
         leaving only the base filename which should be used
         to construct other derived filenames for cached data.
         """
-        assert ".gtf" in self.filename, \
-            "GTF filename must contain .gtf extension: %s" % self.filename
-        return self.filename.split(".gtf")[0]
+        assert ".gtf" in self.remote_filename, \
+            "GTF filename must contain .gtf extension: %s" % (
+                self.remote_filename,)
+
+        return self.remote_filename.split(".gtf")[0]
+
+    def local_filename(self):
+        """Filename used for local copy of GTF"""
+        if self.decompress:
+            return self.base_filename()
+        else:
+            return self.remote_filename
+
+    def local_copy_exists(self):
+        """
+        Has a local copy of the GTF file been downloaded?
+        """
+        return self.cache.exists(
+            self.url,
+            self.local_filename(),
+            decompress=self.decompress)
 
     def local_gtf_path(self):
         """
@@ -66,18 +85,17 @@ class GTF(object):
         download from the Ensembl FTP server if not already cached and
         auto download is enabled.
         """
-        if (self.cache.exists(self.url,
-                              self.filename,
-                              self.decompress) or
-            self.auto_download):
+        if self.local_copy_exists() or self.auto_download:
             # Does a download if the cache is empty
-            return self.cache.fetch(self.url, self.filename,
-                                    self.decompress)
+            return self.cache.fetch(
+                self.url,
+                self.local_filename(),
+                decompress=self.decompress)
         raise ValueError("Ensembl annotation data is not currently "
                          "installed for release %s. Run "
-                         "\"pyensembl install %s\" or call into "
+                         "\"pyensembl install %s\" or call "
                          "EnsemblRelease(%s).install()" %
-                         ((self.gtf.release,) * 3))
+                         ((self.release,) * 3))
 
     def local_dir(self):
         return split(self.local_gtf_path())[0]
@@ -112,7 +130,7 @@ class GTF(object):
         distinct : bool, optional
             Only keep unique values (default=False)
         """
-        base = self.base_filename()
+        base = self.local_filename()
         dirpath = self.local_dir()
         csv_filename = base + ".expanded"
         if contig:
@@ -263,10 +281,12 @@ class GTF(object):
 
         Returns True if a download happened.
         """
-        if not force and self.cache.exists(self.url,
-                                           self.filename,
-                                           self.decompress):
+        if not force and self.local_copy_exists():
             return False
-        self.cache.fetch(self.url, self.filename, self.decompress,
-                         force=force)
+
+        self.cache.fetch(
+            self.url,
+            self.local_filename(),
+            decompress=self.decompress,
+            force=force)
         return True
