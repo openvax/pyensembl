@@ -11,10 +11,10 @@ A piece of data is returned from one of three sources:
 from __future__ import print_function, division, absolute_import
 
 try:
-    # Python 2. cPickle faster than pickle.
+    # Python 2: cPickle faster than pickle.
     import cPickle as pickle
 except ImportError:
-    # Python 3.
+    # Python 3
     import pickle
 
 import logging
@@ -30,8 +30,8 @@ def is_empty(filename):
 
 def delete_file(path):
     if exists(path):
-        logging.info("Deleting cached file %s" % key)
-        remove(key)
+        logging.info("Deleting cached file %s" % path)
+        remove(path)
 
 def remove_from_cache(key):
     if key in _memory_cache:
