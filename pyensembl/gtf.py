@@ -7,9 +7,10 @@ from .common import CACHE_SUBDIR
 from .locus import normalize_chromosome, normalize_strand
 from .compute_cache import cached_dataframe, clear_cached_objects
 from .url_templates import ENSEMBL_FTP_SERVER, gtf_url_parts
-from .type_checks import require_integer, require_string
+from .type_checks import require_string
 
 import datacache
+
 
 class GTF(object):
     """
@@ -48,7 +49,7 @@ class GTF(object):
         # for database construction
         self._dataframes = {}
 
-    def clear_cache():
+    def clear_cache(self):
         # clear any dataframes we constructed
         self._dataframes.clear()
 
@@ -162,7 +163,6 @@ class GTF(object):
         csv_path = self.local_data_file_path()
         return cached_dataframe(csv_path, self._load_full_dataframe_from_gtf)
 
-
     def _load_full_dataframe_from_gtf(self):
         """
         Parse this release's GTF file and load it as a Pandas DataFrame
@@ -236,9 +236,9 @@ class GTF(object):
         Subset of entries which overlap an inclusive range of loci
         """
         if end is None and offset is None:
-            end = position
+            end = start
         elif offset is None:
-            end = position + offset - 1
+            end = start + offset - 1
 
         df_contig = self.dataframe(contig=contig, strand=strand)
 

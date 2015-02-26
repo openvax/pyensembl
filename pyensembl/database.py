@@ -1,5 +1,6 @@
 from __future__ import print_function, division, absolute_import
 
+import logging
 from os.path import join, exists
 import sqlite3
 
@@ -20,6 +21,9 @@ class Database(object):
         self.gtf = gtf
         self.auto_download = auto_download
         self._connection = None
+
+        self.logger = logging.getLogger()
+        self.logger.setLevel(logging.INFO)
 
     def __eq__(self, other):
         return isinstance(other, Database) and self.gtf == other.gtf
@@ -329,7 +333,7 @@ class Database(object):
 
     def query_distinct_on_contig(self, column_name, feature, contig):
         return self.query_feature_values(
-            column_name=column_name,
+            column=column_name,
             feature=feature,
             contig=contig,
             distinct=True)
@@ -355,8 +359,8 @@ class Database(object):
         # list of values containing (contig, start, stop, strand)
         result_tuples = self.query(
             select_column_names=["seqname", "start", "end", "strand"],
-            filter_column=property_name,
-            filter_value=property_value,
+            filter_column=filter_column,
+            filter_value=filter_value,
             feature=feature,
             distinct=True,
             required=True)
