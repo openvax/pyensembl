@@ -37,6 +37,10 @@ class GTF(object):
             species=self.species,
             server=server)
         self.remote_filename = gtf_filename
+        assert self.remote_filename.endswith(".gtf.gz"), \
+            "Expected remote GTF file %s to end with '.gtf.gz'" % (
+                self.remote_filename,)
+
         self.url = join(gtf_url_dir, gtf_filename)
         self.auto_download = auto_download
 
@@ -66,14 +70,12 @@ class GTF(object):
     def local_filename(self):
         """Filename used for local copy of GTF"""
         if self.decompress:
-            return self.base_filename()
+            return self.base_filename() + ".gtf"
         else:
             return self.remote_filename
 
     def local_copy_exists(self):
-        """
-        Has a local copy of the GTF file been downloaded?
-        """
+        """Has a local copy of the GTF file been downloaded?"""
         return self.cache.exists(
             self.url,
             self.local_filename(),
