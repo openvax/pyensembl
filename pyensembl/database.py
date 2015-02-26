@@ -67,8 +67,6 @@ class Database(object):
             if skip:
                 continue
             indices.append(column_group)
-            indices.append(column_group + ['feature'])
-        indices.append(['feature'])
         return indices
 
     def _create_database(self, force=False):

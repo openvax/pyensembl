@@ -29,7 +29,11 @@ class Timer(object):
 
     @property
     def elapsed(self):
-        return self._end - self._start
+        if self._end is None:
+            end_time = time.time()
+        else:
+            end_time = self_end
+        return end_time - self._start
 
     def __str__(self):
         return "Timer(elapsed=%s)" % self.elapsed
