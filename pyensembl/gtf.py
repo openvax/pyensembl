@@ -195,6 +195,10 @@ class GTF(object):
                 distinct=False)
 
             def local_loader_fn():
+                # pylint: disable=no-member
+                # pylint has trouble with df.seqname and similar
+                # statements in this function.
+
                 full_df = self._load_full_dataframe()
                 assert len(full_df) > 0, \
                     "Dataframe representation of Ensembl database empty!"
