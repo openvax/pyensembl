@@ -292,7 +292,7 @@ class GTF(object):
         mask_right = df[df_start_col_name] > end
         df = df[~mask_left & ~mask_right]
         return df
-        
+
     def dataframe_at_locus(
             self,
             contig,
