@@ -1,6 +1,6 @@
 from pyensembl import EnsemblRelease
 
-from nose.tools import assert_raises
+from nose.tools import assert_raises, ok_
 
 ensembl = EnsemblRelease(77, auto_download=True)
 
@@ -14,6 +14,9 @@ def test_gene_ids_of_gene_name_hla_release77():
     hla_c_gene_ids = ensembl.gene_ids_of_gene_name("HLA-C")
     assert 'ENSG00000204525' in hla_c_gene_ids, hla_c_gene_ids
 
+def test_gene_id_of_protein_id_release77():
+    gene_id = ensembl.gene_id_of_protein_id("ENSP00000485677")
+    ok_('ENSG00000279634', gene_id)
 
 def test_gene_id_of_invalid_name():
     with assert_raises(Exception):

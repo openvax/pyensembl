@@ -60,8 +60,8 @@ class EnsemblRelease(object):
         is assumed to be some view of the this release's data and thus
         safe to delete.
         """
-        base = self.gtf.base_filename()
-        dirpath = self.local_gtf_dir()
+        base = self.gtf.local_filename()
+        dirpath = self.gtf.local_gtf_path()
         for path in glob(join(dirpath, base + "*")):
             logging.info("Deleting cached file %s", path)
             remove(path)
@@ -374,7 +374,7 @@ class EnsemblRelease(object):
         return self._query_gene_name(
             "transcript_name", transcript_name, 'transcript')
 
-    def gene_name_of_exon_id(self, transcript_id):
+    def gene_name_of_exon_id(self, exon_id):
         return self._query_gene_name("exon_id", exon_id, 'exon')
 
     ###################################################
@@ -382,6 +382,16 @@ class EnsemblRelease(object):
     #             Gene IDs
     #
     ###################################################
+
+    def _query_gene_ids(self, property_name, value, feature='gene'):
+        results = self.db.query(
+            select_column_names=['gene_id'],
+            filter_column=property_name,
+            filter_value=value,
+            feature=feature,
+            distinct=True,
+            required=True)
+        return [str(result[0]) for result in results if result[0]]
 
     def gene_ids(self, contig=None, strand=None):
         """
@@ -399,23 +409,23 @@ class EnsemblRelease(object):
         What are the Ensembl gene IDs associated with a given gene name?
         (due to copy events, there might be multiple genes per name)
         """
-        results = self.db.query(
-            select_column_names=["gene_id"],
-            filter_column="gene_name",
-            filter_value=gene_name,
-            feature="gene",
-            required=True)
-        results = [
-            str(result_tuple[0])
-            for result_tuple in results
-            if result_tuple[0]
-        ]
-
+        results = self._query_gene_ids('gene_name', gene_name)
         if len(results) == 0:
             raise ValueError("Gene name not found: %s" % gene_name)
-
         return results
 
+    def gene_id_of_protein_id(self, protein_id):
+        """
+        What is the Ensembl gene ID associated with a given protein ID?
+        """
+        results = self._query_gene_ids('protein_id', protein_id,
+                                       feature='CDS')
+        if len(results) == 0:
+            raise ValueError("Protein ID not found: %s" % protein_id)
+        assert len(results) == 1, \
+            ("Should have only one gene ID for a given protein ID, "
+             "but found %d: %s" % (len(results), results))
+        return results[0]
 
     ###################################################
     #
@@ -495,12 +505,13 @@ class EnsemblRelease(object):
     #
     ###################################################
 
-    def _query_transcript_ids(self, property_name, value):
+    def _query_transcript_ids(self, property_name, value,
+                              feature='transcript'):
         results = self.db.query(
             select_column_names=['transcript_id'],
             filter_column=property_name,
             filter_value=value,
-            feature='transcript',
+            feature=feature,
             distinct=True,
             required=True)
         return [result[0] for result in results]
@@ -523,6 +534,20 @@ class EnsemblRelease(object):
 
     def transcript_ids_of_exon_id(self, exon_id):
         return self._query_transcript_ids('exon_id', exon_id)
+
+    def transcript_id_of_protein_id(self, protein_id):
+        """
+        What is the Ensembl transcript ID associated with a given
+        protein ID?
+        """
+        results = self._query_transcript_ids('protein_id', protein_id,
+                                             feature='CDS')
+        if len(results) == 0:
+            raise ValueError("Protein ID not found: %s" % protein_id)
+        assert len(results) == 1, \
+            ("Should have only one transcript ID for a given protein ID, "
+             "but found %d: %s" % (len(results), results))
+        return results[0]
 
     ###################################################
     #
