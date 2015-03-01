@@ -14,7 +14,6 @@
 
 import os
 
-
 readme_filename = os.path.join(os.path.dirname(__file__), 'README.md')
 with open(readme_filename, 'r') as f:
     readme = f.read()
@@ -44,9 +43,9 @@ if __name__ == '__main__':
         name='pyensembl',
         version="0.5.6",
         description="Python interface to ensembl reference genome metadata",
-      	author="Alex Rubinsteyn",
+        author="Alex Rubinsteyn",
         author_email="alex {dot} rubinsteyn {at} mssm {dot} edu",
-      	url="https://github.com/hammerlab/pyensembl",
+        url="https://github.com/hammerlab/pyensembl",
         license="http://www.apache.org/licenses/LICENSE-2.0.html",
         entry_points={
           'console_scripts': [
