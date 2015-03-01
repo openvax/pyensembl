@@ -25,7 +25,7 @@ class Database(object):
         return isinstance(other, Database) and self.gtf == other.gtf
 
     def local_db_filename(self):
-        base = self.gtf.local_filename()
+        base = self.gtf.base_filename()
         return base + ".db"
 
     def local_db_path(self):
@@ -41,12 +41,12 @@ class Database(object):
         candidate_column_groups = [
             ['seqname', 'start', 'end'],
             ['seqname', 'start', 'end', 'strand'],
-            ['seqname'],
             ['gene_name'],
             ['gene_id'],
             ['transcript_id'],
             ['transcript_name'],
             ['exon_id'],
+            ['protein_id'],
         ]
         indices = []
 
@@ -67,8 +67,6 @@ class Database(object):
             if skip:
                 continue
             indices.append(column_group)
-            indices.append(column_group + ['feature'])
-        indices.append(['feature'])
         return indices
 
     def _create_database(self, force=False):
@@ -79,13 +77,29 @@ class Database(object):
         available_columns = set(df.columns)
         indices = self._database_indices(available_columns)
 
-        db = datacache.db_from_dataframe(
+        # split single DataFrame into dictionary mapping each unique
+        # feature name onto that subset of the data
+        feature_names = df['feature'].unique()
+        dataframes = {}
+        # every table gets the same set of indices
+        indices_dict = {}
+        # if a feature has an ID then make it that table's primary key
+        primary_keys = {}
+        for feature in feature_names:
+            df_subset = df[df.feature == feature]
+            dataframes[feature] = df_subset
+            indices_dict[feature] = indices
+            primary_key = "%s_id" % feature
+            if primary_key in available_columns:
+                primary_keys[feature] = primary_key
+
+        db = datacache.db_from_dataframes(
             db_filename=filename,
-            table_name="ensembl",
-            df=df,
+            dataframes=dataframes,
+            indices=indices_dict,
+            primary_keys=primary_keys,
             subdir=CACHE_SUBDIR,
-            overwrite=force,
-            indices=indices)
+            overwrite=force)
         return db
 
     def _connect_if_exists(self):
