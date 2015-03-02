@@ -1,3 +1,17 @@
+# Copyright (c) 2015. Mount Sinai School of Medicine
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """
 Templates for URLs and paths to specific relase, species, and file type
 on the Ensembl ftp server.
@@ -114,13 +128,13 @@ def fasta_dna_url_parts(
     return server_sequence_subdir, filename
 
 
-# DNA fasta file for releases before Ensembl 75 (contains release)
+# DNA fasta file for releases before (and including) Ensembl 75
 # example: Homo_sapiens.NCBI36.54.cdna.all.fa.gz
 OLD_FASTA_CDNA_FILENAME_TEMPLATE = \
     "%(Species)s.%(reference)s.%(release)d.%(sequence_type)s.all.fa.gz"
 
-# DNA fasta file for releases after Ensembl 75 ()
-# example: Homo_sapiens.NCBI36.54.cdna.all.fa.gz
+# DNA fasta file for releases after Ensembl 75
+# example: Homo_sapiens.GRCh37.cdna.all.fa.gz
 NEW_FASTA_CDNA_FILENAME_TEMPLATE = \
     "%(Species)s.%(reference)s.%(sequence_type)s.all.fa.gz"
 

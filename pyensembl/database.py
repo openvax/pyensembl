@@ -1,13 +1,31 @@
+# Copyright (c) 2015. Mount Sinai School of Medicine
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from __future__ import print_function, division, absolute_import
 
+import logging
 from os.path import join, exists
 import sqlite3
+
+import datacache
 
 from .common import CACHE_SUBDIR
 from .locus import normalize_chromosome, normalize_strand, Locus
 from .type_checks import require_integer, require_string
 
-import datacache
+# any time we update the database schema, increment this version number
+DATABASE_SCHEMA_VERSION = 2
 
 class Database(object):
     """
@@ -47,6 +65,7 @@ class Database(object):
             ['transcript_name'],
             ['exon_id'],
             ['protein_id'],
+            ['ccds_id']
         ]
         indices = []
 
@@ -59,9 +78,9 @@ class Database(object):
                 # some columns, such as 'exon_id',
                 # are not available in all releases of Ensembl
                 if column_name not in available_columns:
-                    self.logger.info(
-                        "Skipping database index for %s",
-                        "+".join(column_group)
+                    logging.info(
+                        "Skipping database index for {%s}",
+                        ", ".join(column_group)
                     )
                     skip = True
             if skip:
@@ -85,22 +104,37 @@ class Database(object):
         indices_dict = {}
         # if a feature has an ID then make it that table's primary key
         primary_keys = {}
+
         for feature in feature_names:
             df_subset = df[df.feature == feature]
             dataframes[feature] = df_subset
             indices_dict[feature] = indices
+            # look for primary keys such as 'transcript_id' and 'gene_id'
             primary_key = "%s_id" % feature
+            # only use primary key if it's always present and unique
             if primary_key in available_columns:
-                primary_keys[feature] = primary_key
-
-        db = datacache.db_from_dataframes(
+                primary_key_values = df_subset[primary_key]
+                if primary_key_values.isnull().any():
+                    logging.info(
+                        "Column '%s' can't be primary key of table '%s'"
+                        " because it contains nulls values" % (
+                            primary_key, feature))
+                elif len(primary_key_values.unique()) < len(primary_key_values):
+                    logging.info(
+                        "Column '%s' can't be primary key of table '%s'"
+                        " because it contains repeated values" % (
+                            primary_key, feature))
+                else:
+                    primary_keys[feature] = primary_key
+        self._connection = datacache.db_from_dataframes(
             db_filename=filename,
             dataframes=dataframes,
             indices=indices_dict,
             primary_keys=primary_keys,
             subdir=CACHE_SUBDIR,
-            overwrite=force)
-        return db
+            overwrite=force,
+            version=DATABASE_SCHEMA_VERSION)
+        return self._connection
 
     def _connect_if_exists(self):
         """
@@ -111,10 +145,14 @@ class Database(object):
         if self._connection is None:
             db_path = self.local_db_path()
             if exists(db_path):
-                connection = sqlite3.connect(db_path)
-                # maybe file got created but not filled
-                if datacache.db.db_table_exists(connection, 'ensembl'):
-                    self._connection = connection
+                # since version metadata is filled in last in datacache,
+                # checking for a version also implicitly checks for
+                # having finishing fill in all the tables/rows.
+                #
+                # TODO: expose this more explicitly in datacache
+                #
+                self._connection = datacache.connect_if_correct_version(
+                    db_path, DATABASE_SCHEMA_VERSION)
         return self._connection
 
     @property
@@ -125,23 +163,24 @@ class Database(object):
         is on). As a side effect, stores the database connection in
         self._connection.
         """
-        if self._connect_if_exists():
-            return self._connection
+        connection = self._connect_if_exists()
+        if connection:
+            return connection
         if self.auto_download:
             return self._create_database()
-        raise ValueError("Ensembl annotations data is not currently "
+        raise ValueError("Genome annotation data is not currently "
                          "installed for release %s. Run "
-                         "\"pyensembl install %s\" or call into "
+                         "\"pyensembl install %s\" or call "
                          "EnsemblRelease(%s).install()" %
                          ((self.gtf.release,) * 3))
 
-    def columns(self):
-        sql = "PRAGMA table_info(ensembl);"
+    def columns(self, table_name):
+        sql = "PRAGMA table_info(%s)" % table_name
         table_info = self.connection.execute(sql).fetchall()
         return [info[1] for info in table_info]
 
-    def column_exists(self, column_name):
-        return column_name in self.columns()
+    def column_exists(self, table_name, column_name):
+        return column_name in self.columns(table_name)
 
     def column_values_at_locus(
             self,
@@ -171,8 +210,9 @@ class Database(object):
 
         require_integer(end, "end")
 
-        if not self.column_exists(column_name):
-            raise ValueError("Unknown Ensembl property: %s" % (column_name,))
+        if not self.column_exists(feature, column_name):
+            raise ValueError("Table %s doesn't have column %s" % (
+                feature, column_name,))
 
         if distinct:
             distinct_string = "DISTINCT "
@@ -181,13 +221,13 @@ class Database(object):
 
         query = """
             SELECT %s%s
-            FROM ensembl
+            FROM %s
             WHERE feature = ?
             AND seqname= ?
             AND start <= ?
             AND end >= ?
 
-        """  % (distinct_string, column_name,)
+        """  % (distinct_string, column_name, feature)
 
         query_params = [feature, contig, end, position]
 
@@ -276,11 +316,12 @@ class Database(object):
         """
         sql = """
             SELECT %s%s
-            FROM ensembl
+            FROM %s
             WHERE %s = ?
             AND feature= ?
         """ % ("distinct " if distinct else "",
                ", ".join(select_column_names),
+               feature,
                filter_column)
         query_params = [filter_value, feature]
         return self.run_sql_query(
@@ -318,14 +359,14 @@ class Database(object):
             contig=None,
             strand=None):
         """
-        Run a SQL query against the ensembl sqlite3 database, filtered
+        Run a SQL query against the Ensembl sqlite3 database, filtered
         only on the feature type.
         """
         query = """
             SELECT %s%s
-            FROM ensembl
+            FROM %s
             WHERE feature=?
-        """ % ("DISTINCT " if distinct else "", column)
+        """ % ("DISTINCT " if distinct else "", column, feature)
         query_params = [feature]
 
         if contig:

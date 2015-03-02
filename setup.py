@@ -14,24 +14,33 @@
 
 import os
 
-readme_filename = os.path.join(os.path.dirname(__file__), 'README.md')
-with open(readme_filename, 'r') as f:
+from setuptools import setup
+
+current_directory = os.path.dirname(__file__)
+readme_filename = 'README.md'
+readme_path = os.path.join(current_directory, readme_filename)
+with open(readme_path, 'r') as f:
   readme = f.read()
 
 try:
   import pypandoc
   readme = pypandoc.convert(readme, to='rst', format='md')
 except:
-  print("Conversion of long_description from MD to reStructuredText failed...")
+  print("Failed to convert %s to reStructuredText", readme_filename)
   pass
 
-
-from setuptools import setup
+requirements_path = os.path.join(current_directory, "requirements.txt")
+with open(requirements_path, "r") as f:
+    requirements = [
+        line.strip()
+        for line in f.read().splitlines()
+        if line.strip()
+    ]
 
 if __name__ == '__main__':
     setup(
         name='pyensembl',
-        version="0.5.5",
+        version="0.5.6",
         description="Python interface to ensembl reference genome metadata",
       	author="Alex Rubinsteyn",
         author_email="alex {dot} rubinsteyn {at} mssm {dot} edu",
@@ -51,13 +60,7 @@ if __name__ == '__main__':
             'Programming Language :: Python',
             'Topic :: Scientific/Engineering :: Bio-Informatics',
              ],
-        install_requires=[
-            'numpy>=1.7',
-            'pandas>=0.13.1',
-            'datacache>=0.4.7',
-            'pyfaidx>=0.3.4',
-            'memoized-property>=1.0.2',
-        ],
+        install_requires=requirements,
         long_description=readme,
         packages=['pyensembl'],
     )
