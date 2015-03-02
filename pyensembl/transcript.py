@@ -66,7 +66,7 @@ class Transcript(Locus):
         elif not is_valid_biotype(biotype):
             raise ValueError(
                 "Invalid biotype '%s' for transcript with ID=%s, name=%s" % (
-                    transcript_id, name))
+                    biotype, transcript_id, name))
         else:
             self.biotype = biotype
 
@@ -133,7 +133,7 @@ class Transcript(Locus):
         assert all(exon is not None for exon in exons), \
             "Missing exons %s for transcript %s" % (
                 [i for i, exon in enumerate(exons) if exon is None],
-                self.transcript_name
+                self.id
             )
         return exons
 
@@ -408,6 +408,9 @@ class Transcript(Locus):
         # then start = 3 and end = 22.
         #
         # Adding 1 to end since Python uses non-inclusive ends in slices/ranges.
+
+        # pylint: disable=invalid-slice-index
+        # TODO(tavi) Figure out pylint is not happy with this slice
         return self.sequence[start:end+1]
 
     @memoized_property
@@ -416,6 +419,8 @@ class Transcript(Locus):
         cDNA sequence of 5' UTR
         (untranslated region at the beginning of the transcript)
         """
+        # pylint: disable=invalid-slice-index
+        # TODO(tavi) Figure out pylint is not happy with this slice
         return self.sequence[:self.first_start_codon_spliced_offset]
 
     @memoized_property
