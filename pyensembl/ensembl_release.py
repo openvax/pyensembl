@@ -60,7 +60,7 @@ class EnsemblRelease(object):
         is assumed to be some view of the this release's data and thus
         safe to delete.
         """
-        base = self.gtf.local_filename()
+        base = self.gtf.base_filename()
         dirpath = self.gtf.local_gtf_path()
         for path in glob(join(dirpath, base + "*")):
             logging.info("Deleting cached file %s", path)
