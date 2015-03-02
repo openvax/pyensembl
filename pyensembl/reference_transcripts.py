@@ -1,13 +1,28 @@
-from __future__ import print_function, division, absolute_import
+# Copyright (c) 2015. Mount Sinai School of Medicine
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
+
+from __future__ import print_function, division, absolute_import
 from os.path import join, exists, split
+
+import pyfaidx
+from datacache import Cache
 
 from .common import CACHE_SUBDIR
 from .release_info import which_human_reference_name, check_release_number
 from .url_templates import ENSEMBL_FTP_SERVER, fasta_cdna_url_parts
 
-import pyfaidx
-from datacache import Cache
 
 class ReferenceTranscripts(object):
     """
@@ -63,7 +78,7 @@ class ReferenceTranscripts(object):
         self._fasta_keys = None
 
     def __str__(self):
-        return "ReferenceTranscripts(release=%s, species=%s, filename=%s)"  % (
+        return "ReferenceTranscripts(release=%s, species=%s, filename=%s)" % (
             self.release, self.species, self.remote_filename)
 
     def __repr__(self):
