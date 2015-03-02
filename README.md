@@ -1,8 +1,8 @@
 PyEnsembl
 =======
 
-+### Status
-+[![Build Status](https://travis-ci.org/hammerlab/pyensembl.png)](https://travis-ci.org/hammerlab/pyensembl)
+### Status
+[![Build Status](https://travis-ci.org/hammerlab/pyensembl.png)](https://travis-ci.org/hammerlab/pyensembl)
 
 Python interface to Ensembl reference genome metadata (exons, transcripts, &c)
 
