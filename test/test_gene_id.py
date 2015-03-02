@@ -21,7 +21,3 @@ def test_gene_id_of_protein_id_release77():
 def test_gene_id_of_invalid_name():
     with assert_raises(Exception, None):
         ensembl.gene_ids_of_gene_name("A wonderous pony sees through your soul")
-
-
-
-
