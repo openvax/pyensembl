@@ -32,7 +32,7 @@ class Timer(object):
         if self._end is None:
             end_time = time.time()
         else:
-            end_time = self_end
+            end_time = self._end
         return end_time - self._start
 
     def __str__(self):
