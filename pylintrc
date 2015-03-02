@@ -1,0 +1,4 @@
+[TYPECHECK]
+# Without ignoring this, we get errors like:
+# E:249,20: Module 'numpy' has no 'nan' member (no-member)
+ignored-modules = numpy
