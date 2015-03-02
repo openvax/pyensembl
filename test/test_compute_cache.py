@@ -3,7 +3,7 @@ import tempfile
 from pyensembl import compute_cache
 
 import pandas as pd
-from nose.tools import assert_raises
+from nose.tools import raises
 
 class Counter(object):
     """
@@ -81,10 +81,10 @@ def test_cached_object_with_list_returns_correct_type():
             assert isinstance(df, list), \
                 "Expected list, got %s : %s" % (df, type(df))
 
+@raises(Exception)
 def test_dataframe_path_must_be_csv():
-    with assert_raises(Exception):
-        # compute_cache should raise an exception when filename doesn't
-        # end with .csv extension
-        compute_cache.cached_dataframe(
-            csv_path="tempfile_not_csv",
-            compute_fn=lambda _:  pd.DataFrame({'x':[]}))
+    # compute_cache should raise an exception when filename doesn't
+    # end with .csv extension
+    compute_cache.cached_dataframe(
+        csv_path="tempfile_not_csv",
+        compute_fn=lambda _:  pd.DataFrame({'x':[]}))
