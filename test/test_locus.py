@@ -42,9 +42,9 @@ def test_locus_overlaps():
     assert locus.overlaps("1", 10, 10)
     assert locus.overlaps("1", 20, 20)
     # before start
-    assert not locus.overlaps(1,9)
+    assert not locus.overlaps(1, 9, 9)
     # after end
-    assert not locus.overlaps(21, 30)
+    assert not locus.overlaps(21, 30, 30)
     # wrong contig
     assert not locus.overlaps("2", 10, 20)
     # wrong strand

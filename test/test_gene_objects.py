@@ -10,10 +10,10 @@ def test_TP53_gene_object_by_id(release):
     gene = release.gene_by_id(TP53_gene_id)
     assert gene.name == "TP53", \
         "Incorrect gene name %s for gene ID %s in %s" % (
-            gene.name, gene_id, release)
+            gene.name, gene.id, release.release)
     assert gene.contig == "17", \
         "Incorrect gene contig %s for gene ID %s in %s" % (
-            gene.contig, gene_id, release)
+            gene.contig, gene.id, release.release)
 
 @test_ensembl_releases()
 def test_TP53_gene_object_by_name(release):
@@ -26,7 +26,7 @@ def test_TP53_gene_object_by_name(release):
         "Expected gene to have ID %s, got %s" % (TP53_gene_id, genes[0].id)
 
 @test_ensembl_releases
-def test_equal_genes():
+def test_equal_genes(release):
     gene1 = release.genes_by_name("TP53")[0]
     # make an identical gene
     gene2 = Gene(gene1.id, gene1.db, gene1.reference)
@@ -35,7 +35,7 @@ def test_equal_genes():
     assert gene1 == gene2
 
 @test_ensembl_releases
-def test_not_equal_genes():
+def test_not_equal_genes(release):
     gene1 = release.genes_by_name("MUC1")[0]
     gene2 = release.genes_by_name("BRCA1")[0]
     assert hash(gene1) != hash(gene2)

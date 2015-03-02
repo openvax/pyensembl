@@ -1,6 +1,6 @@
 from __future__ import print_function, division, absolute_import
 
-from .type_checks import is_integer, is_string, require_integer, require_string
+from .type_checks import is_integer, require_string
 
 def normalize_chromosome(c):
     if is_integer(c):
