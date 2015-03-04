@@ -269,14 +269,13 @@ class Database(object):
         query = """
             SELECT %s%s
             FROM %s
-            WHERE feature = ?
-            AND seqname= ?
+            WHERE seqname= ?
             AND start <= ?
             AND end >= ?
 
         """ % (distinct_string, column_name, feature)
 
-        query_params = [feature, contig, end, position]
+        query_params = [contig, end, position]
 
         if strand:
             query += " AND strand = ?"
@@ -365,12 +364,11 @@ class Database(object):
             SELECT %s%s
             FROM %s
             WHERE %s = ?
-            AND feature= ?
         """ % ("distinct " if distinct else "",
                ", ".join(select_column_names),
                feature,
                filter_column)
-        query_params = [filter_value, feature]
+        query_params = [filter_value]
         return self.run_sql_query(
             sql, required=required, query_params=query_params)
 
@@ -412,9 +410,9 @@ class Database(object):
         query = """
             SELECT %s%s
             FROM %s
-            WHERE feature=?
+            WHERE 1=1
         """ % ("DISTINCT " if distinct else "", column, feature)
-        query_params = [feature]
+        query_params = []
 
         if contig:
             contig = normalize_chromosome(contig)
