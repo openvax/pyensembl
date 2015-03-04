@@ -19,7 +19,7 @@ from memoized_property import memoized_property
 from .biotypes import is_valid_biotype
 from .locus import Locus
 from .transcript import Transcript
-from .type_checks import require_integer, require_string
+from .type_checks import require_string
 
 class Gene(Locus):
 

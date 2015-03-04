@@ -16,7 +16,6 @@ from __future__ import print_function, division, absolute_import
 
 import logging
 from os.path import join, exists
-import sqlite3
 
 import datacache
 
@@ -54,10 +53,16 @@ class Database(object):
         filename = self.local_db_filename()
         return join(dirpath, filename)
 
-    def _database_indices(self, available_columns):
+    def _all_possible_indices(self, column_names):
         """
+        Create list of tuples containing all possible index groups
+        we might want to create over tables in this database.
+
         If a release is missing some column we want to index on,
         we have to drop any indices which use that column.
+
+        A specific table may later drop some of these indices if they're
+        missing  values for that feature or are the same as the table's primary key.
         """
         candidate_column_groups = [
             ['seqname', 'start', 'end'],
@@ -68,10 +73,10 @@ class Database(object):
             ['transcript_name'],
             ['exon_id'],
             ['protein_id'],
-            ['ccds_id']
+            ['ccds_id'],
         ]
         indices = []
-
+        column_set = set(column_names)
         # Since queries are often restricted by feature type
         # we should include that column in combination with all
         # other indices we anticipate might improve performance
@@ -80,24 +85,74 @@ class Database(object):
             for column_name in column_group:
                 # some columns, such as 'exon_id',
                 # are not available in all releases of Ensembl
-                if column_name not in available_columns:
+                if column_name not in column_set:
                     logging.info(
                         "Skipping database index for {%s}",
-                        ", ".join(column_group)
-                    )
+                        ", ".join(column_group))
                     skip = True
             if skip:
                 continue
             indices.append(column_group)
         return indices
 
+    # mapping from database tables to their primary keys
+    # sadly exon IDs *are* not unique, so can't be in this dict
+    PRIMAY_KEY_COLUMNS = {
+        'CDS': 'protein_id',
+        'gene': 'gene_id',
+        'transcript': 'transcript_id'
+    }
+
+    def _get_primary_key(self, feature_name, feature_df):
+        """Name of primary key for a feature table (e.g. "gene" -> "gene_id")
+
+        Since we're potentially going to run this code over unseen data,
+        make sure that the primary is unique and never null.
+
+        If a feature doesn't have a primary key, return None.
+        """
+        if feature_name not in self.PRIMAY_KEY_COLUMNS:
+            return None
+        primary_key = self.PRIMAY_KEY_COLUMNS[feature_name]
+        primary_key_values = feature_df[primary_key]
+        if primary_key_values.isnull().any():
+            raise ValueError(
+                "Column '%s' can't be primary key of table '%s'"
+                " because it contains nulls values" % (
+                    primary_key, feature_name))
+        elif len(primary_key_values.unique()) < len(primary_key_values):
+            raise ValueError(
+                "Column '%s' can't be primary key of table '%s'"
+                " because it contains repeated values" % (
+                    primary_key, feature_name))
+        else:
+            return primary_key
+
+    def _feature_indices(self, all_index_groups, primary_key, feature_df):
+        """Choose subset ofindex group tuples from `all_index_groups` which are
+        applicable to a particular feature (not same as its primary key, have
+        non-null values).
+        """
+        # each feature only gets indices if they're *not* the
+        # primary key and have non-null values in the feature's
+        # subset of data
+        result = []
+        for index_group in all_index_groups:
+            # is the index group just a primary key?
+            if len(index_group) == 1 and index_group[0] == primary_key:
+                continue
+            index_column_values = feature_df[index_group]
+            if len(index_column_values.dropna()) == 0:
+                continue
+            result.append(index_group)
+        return result
+
     def _create_database(self, force=False):
         print("Creating database: %s" % self.local_db_path())
         filename = self.local_db_filename()
         df = self.gtf.dataframe()
 
-        available_columns = set(df.columns)
-        indices = self._database_indices(available_columns)
+        all_index_groups = self._all_possible_indices(df.columns)
 
         # split single DataFrame into dictionary mapping each unique
         # feature name onto that subset of the data
@@ -111,24 +166,16 @@ class Database(object):
         for feature in feature_names:
             df_subset = df[df.feature == feature]
             dataframes[feature] = df_subset
-            indices_dict[feature] = indices
-            # look for primary keys such as 'transcript_id' and 'gene_id'
-            primary_key = "%s_id" % feature
-            # only use primary key if it's always present and unique
-            if primary_key in available_columns:
-                primary_key_values = df_subset[primary_key]
-                if primary_key_values.isnull().any():
-                    logging.info(
-                        "Column '%s' can't be primary key of table '%s'"
-                        " because it contains nulls values" % (
-                            primary_key, feature))
-                elif len(primary_key_values.unique()) < len(primary_key_values):
-                    logging.info(
-                        "Column '%s' can't be primary key of table '%s'"
-                        " because it contains repeated values" % (
-                            primary_key, feature))
-                else:
-                    primary_keys[feature] = primary_key
+
+            primary_key = self._get_primary_key(feature, df_subset)
+            if primary_key:
+                primary_keys[feature] = primary_key
+
+            indices_dict[feature] = self._feature_indices(
+                all_index_groups,
+                primary_key,
+                df_subset)
+
         self._connection = datacache.db_from_dataframes(
             db_filename=filename,
             dataframes=dataframes,
@@ -230,7 +277,7 @@ class Database(object):
             AND start <= ?
             AND end >= ?
 
-        """  % (distinct_string, column_name, feature)
+        """ % (distinct_string, column_name, feature)
 
         query_params = [feature, contig, end, position]
 
@@ -382,7 +429,7 @@ class Database(object):
             query += " AND strand = ?"
             query_params.append(strand)
 
-        rows = self.run_sql_query(query, query_params = query_params)
+        rows = self.run_sql_query(query, query_params=query_params)
         return [row[0] for row in rows if row is not None]
 
     def query_distinct_on_contig(self, column_name, feature, contig):
