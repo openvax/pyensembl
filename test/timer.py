@@ -32,7 +32,7 @@ class Timer(object):
         if self._end is None:
             end_time = time.time()
         else:
-            end_time = self_end
+            end_time = self._end
         return end_time - self._start
 
     def __str__(self):
@@ -47,7 +47,7 @@ def benchmark(f, n_repeats=3, warmup=True, name=""):
 
     total_time = 0
     for i in range(n_repeats):
-        iter_name = "%s (iter #%d)" % (name, i+1,)
+        iter_name = "%s (iter #%d)" % (name, i + 1,)
         with Timer(iter_name) as t:
             f()
         total_time += t.elapsed
