@@ -25,14 +25,15 @@ readme = ""
 try:
     with open(readme_path, 'r') as f:
         readme = f.read()
-except Exception as e:
+except IOError as e:
     print(e)
     print("Failed to open %s" % readme_path)
 
 try:
     import pypandoc
     readme = pypandoc.convert(readme, to='rst', format='md')
-except:
+except ImportError as e:
+    print(e)
     print("Failed to convert %s to reStructuredText", readme_filename)
     pass
 
