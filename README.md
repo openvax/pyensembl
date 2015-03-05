@@ -1,6 +1,8 @@
 PyEnsembl
 =======
 
+[![Build Status](https://travis-ci.org/hammerlab/pyensembl.png)](https://travis-ci.org/hammerlab/pyensembl)
+
 Python interface to Ensembl reference genome metadata (exons, transcripts, &c)
 
 # Example Usage

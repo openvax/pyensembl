@@ -1,6 +1,6 @@
 from __future__ import print_function, division, absolute_import
 
-from os.path import join, exists
+from os.path import join, exists, split
 
 from .common import CACHE_SUBDIR
 from .release_info import which_human_reference_name, check_release_number
@@ -80,9 +80,12 @@ class ReferenceTranscripts(object):
     def __eq__(self, other):
         return (
             isinstance(other, ReferenceTranscripts) and
-            self.ensembl_release == other.ensembl_release and
+            self.release == other.release and
             self.species == other.species and
             self.server == other.server)
+
+    def clear_cache(self):
+        self.cache.delete_all()
 
     @property
     def local_fasta_path(self):

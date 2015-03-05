@@ -1,15 +1,17 @@
 from __future__ import print_function, division, absolute_import
 
 from os.path import split, join
+import pandas as pd
 
 from .gtf_parsing import load_gtf_as_dataframe
 from .common import CACHE_SUBDIR
 from .locus import normalize_chromosome, normalize_strand
 from .compute_cache import cached_dataframe, clear_cached_objects
 from .url_templates import ENSEMBL_FTP_SERVER, gtf_url_parts
-from .type_checks import require_integer, require_string
+from .type_checks import require_string
 
 import datacache
+
 
 class GTF(object):
     """
@@ -48,7 +50,7 @@ class GTF(object):
         # for database construction
         self._dataframes = {}
 
-    def clear_cache():
+    def clear_cache(self):
         # clear any dataframes we constructed
         self._dataframes.clear()
 
@@ -162,7 +164,6 @@ class GTF(object):
         csv_path = self.local_data_file_path()
         return cached_dataframe(csv_path, self._load_full_dataframe_from_gtf)
 
-
     def _load_full_dataframe_from_gtf(self):
         """
         Parse this release's GTF file and load it as a Pandas DataFrame
@@ -194,6 +195,10 @@ class GTF(object):
                 distinct=False)
 
             def local_loader_fn():
+                # pylint: disable=no-member
+                # pylint has trouble with df.seqname and similar
+                # statements in this function.
+
                 full_df = self._load_full_dataframe()
                 assert len(full_df) > 0, \
                     "Dataframe representation of Ensembl database empty!"
@@ -236,9 +241,9 @@ class GTF(object):
         Subset of entries which overlap an inclusive range of loci
         """
         if end is None and offset is None:
-            end = position
+            end = start
         elif offset is None:
-            end = position + offset - 1
+            end = start + offset - 1
 
         df_contig = self.dataframe(contig=contig, strand=strand)
 
@@ -252,10 +257,50 @@ class GTF(object):
             start,
             end)
 
+    @staticmethod
+    def _slice_column(column_name_series, start_series, end_series,
+                      start, end):
+        """
+        Given a Series of data, and two Series' representing start
+        and end positions for the end, keep all data for which
+        the start and end positions overlap the start and end 
+        parameters (inclusively).
+
+        For example:
+        column_name_series: ENSG00000223972, ENSG00000000003, etc.
+        start_series: 11869, 100635558, etc.
+        end_series: 14409, 100635252, etc.
+        start = 100000000
+        end = 110000000
+
+        Returns only ENSG00000000003, since it overlaps
+        [100000000, 110000000].
+        """
+        df = pd.DataFrame({'name': column_name_series,
+                           'start': start_series,
+                           'end': end_series})
+        df = GTF._slice(df, 'start', 'end', start, end)
+        return df.name
+
+    @staticmethod
+    def _slice(df, df_start_col_name, df_end_col_name, start, end):
+        """
+        Given a DataFrame, along with the names of columns in the
+        DataFrame representing start and end positions, keep all 
+        data for which the start and end positions overlap the start 
+        and end parameters (inclusively).
+        """
+        # No overlap because the whole thing is before start
+        mask_left = df[df_end_col_name] < start
+        # No overlap because the whole thing is after end
+        mask_right = df[df_start_col_name] > end
+        df = df[~mask_left & ~mask_right]
+        return df
+
     def dataframe_at_locus(
             self,
             contig,
-            position,
+            start,
             end=None,
             offset=None,
             strand=None):
@@ -264,17 +309,15 @@ class GTF(object):
         chromosomal positions
         """
         if end is None and offset is None:
-            end = position
+            end = start
         elif offset is None:
-            end = position + offset - 1
+            end = start + offset - 1
 
         df_contig = self.dataframe(contig=contig, strand=strand)
 
         # find genes whose start/end boundaries overlap with the position
-        overlap_start = df_contig.start <= end
-        overlap_end = df_contig.end >= position
-        overlap = overlap_start & overlap_end
-        return df_contig[overlap]
+        return GTF._slice(df_contig, df_contig.start.name,
+                          df_contig.end.name, start, end)
 
     def download(self, force=False):
         """

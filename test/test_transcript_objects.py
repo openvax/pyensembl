@@ -138,7 +138,7 @@ def test_transcript_sequences_CTNNIP1_004():
 
 
 @test_ensembl_releases
-def test_equal_transcripts():
+def test_equal_transcripts(release):
     t1 = release.transcripts_by_name("TP53-001")[0]
     # make an identical gene
     t2 = Transcript(t1.id, t1.db, t1.reference)
@@ -147,7 +147,7 @@ def test_equal_transcripts():
     assert t1 == t2
 
 @test_ensembl_releases
-def test_not_equal_transcripts():
+def test_not_equal_transcripts(release):
     t1 = release.genes_by_name("MUC1-001")[0]
     t2 = release.genes_by_name("BRCA1-001")[0]
     assert hash(t1) != hash(t2)

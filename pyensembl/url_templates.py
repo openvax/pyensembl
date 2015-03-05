@@ -13,6 +13,9 @@ from os.path import join
 
 try:
     # Python 3
+    # pylint: disable=no-name-in-module
+    # When pylinting for Python 2, pylint gets angry:
+    # No name 'parse' in module 'urllib' (no-name-in-module)
     from urllib.parse import urljoin
 except ImportError:
     # Python 2

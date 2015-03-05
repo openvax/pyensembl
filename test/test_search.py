@@ -1,12 +1,13 @@
 from test_common import test_ensembl_releases
-from pyensembl import EnsemblRelease, find_nearest_locus
+from pyensembl import find_nearest_locus
 from nose.tools import eq_
 
 @test_ensembl_releases
 def test_find_nearest_BRAF_exon(ensembl):
     braf = ensembl.genes_by_name("BRAF")[0]
     braf_transcripts = braf.transcripts
-    for exon in braf_transcripts[0].exons:
+    exons = braf_transcripts[0].exons
+    for exon in exons:
         # immediately before exon
         result = find_nearest_locus(
             start=exon.start-2,
@@ -44,12 +45,12 @@ def test_find_nearest_BRAF_transcript(ensembl):
         result = find_nearest_locus(
             start=transcript.start-2,
             end=transcript.start+1,
-            exons=braf_transcripts)
+            loci=braf_transcripts)
         eq_(result, (0, transcript))
 
         # immediately after transcript
         result = find_nearest_locus(
             start=transcript.end+1,
             end=transcript.end+2,
-            exons=braf_transcripts)
+            loci=braf_transcripts)
         eq_(result, (1, transcript))

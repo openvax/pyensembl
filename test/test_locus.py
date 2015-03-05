@@ -16,19 +16,19 @@ def test_normalize_chromosome():
     assert normalize_chromosome("M") == "MT"
     assert normalize_chromosome("MT") == "MT"
 
-    with assert_raises(TypeError):
+    with assert_raises(TypeError, None):
         normalize_chromosome({"a":"b"})
 
-    with assert_raises(TypeError):
+    with assert_raises(TypeError, None):
         normalize_chromosome([])
 
-    with assert_raises(TypeError):
+    with assert_raises(TypeError, None):
         normalize_chromosome(None)
 
-    with assert_raises(ValueError):
+    with assert_raises(ValueError, None):
         normalize_chromosome("")
 
-    with assert_raises(ValueError):
+    with assert_raises(ValueError, None):
         normalize_chromosome(0)
 
 def test_locus_overlaps():
@@ -42,37 +42,13 @@ def test_locus_overlaps():
     assert locus.overlaps("1", 10, 10)
     assert locus.overlaps("1", 20, 20)
     # before start
-    assert not locus.overlaps(1,9)
+    assert not locus.overlaps(1, 9, 9)
     # after end
-    assert not locus.overlaps(21, 30)
+    assert not locus.overlaps(21, 30, 30)
     # wrong contig
     assert not locus.overlaps("2", 10, 20)
     # wrong strand
     assert not locus.overlaps("1", 10, 20, "-")
-
-def test_locus_overlaps():
-    locus = Locus("1", 10, 20, "+")
-    assert locus.overlaps("1", 10, 20, "+")
-    assert locus.overlaps("1", 10, 20)
-    assert locus.overlaps("1", 15, 16)
-    assert locus.overlaps("1", 10, 10)
-    assert locus.overlaps("1", 20, 20)
-    assert locus.overlaps("1", 5, 30)
-    assert locus.overlaps("1", 15, 30)
-    assert locus.overlaps("1", 5, 15)
-
-    # before start
-    assert not locus.overlaps("1", 1,9)
-
-    # after end
-    assert not locus.overlaps("1", 21, 30)
-
-    # wrong contig
-    assert not locus.overlaps("2", 10, 20)
-
-    # wrong strand
-    assert not locus.overlaps("1", 10, 20, "-")
-
 
 def test_locus_contains():
     locus = Locus("1", 10, 20, "+")
@@ -81,7 +57,6 @@ def test_locus_contains():
     assert locus.contains("1", 15, 16)
     assert locus.contains("1", 10, 10)
     assert locus.contains("1", 20, 20)
-
 
     # before start and after end
     assert not locus.contains("1", 5, 30)
@@ -114,19 +89,19 @@ def test_position_offset():
     assert negative_locus.position_offset(20) == 0
 
     # don't allow negative offsets
-    with assert_raises(ValueError):
+    with assert_raises(ValueError, None):
         forward_locus.position_offset(9)
 
     # don't allow negative offsets
-    with assert_raises(ValueError):
+    with assert_raises(ValueError, None):
         negative_locus.position_offset(9)
 
     # don't allow offset past the end of the locus
-    with assert_raises(ValueError):
+    with assert_raises(ValueError, None):
         forward_locus.position_offset(21)
 
     # don't allow offset past the end of the locus
-    with assert_raises(ValueError):
+    with assert_raises(ValueError, None):
         negative_locus.position_offset(21)
 
 
@@ -142,23 +117,23 @@ def test_range_offset():
     assert negative_locus.offset_range(20, 20) == (0, 0)
 
     # start shouldn't be larger than end
-    with assert_raises(AssertionError):
+    with assert_raises(AssertionError, None):
         forward_locus.offset_range(21, 20)
 
     # start shouldn't be larger than end
-    with assert_raises(AssertionError):
+    with assert_raises(AssertionError, None):
         negative_locus.offset_range(21, 20)
 
     # don't allow negative offsets
-    with assert_raises(ValueError):
+    with assert_raises(ValueError, None):
         forward_locus.offset_range(9, 10)
 
     # don't allow negative offsets
-    with assert_raises(ValueError):
+    with assert_raises(ValueError, None):
         forward_locus.offset_range(9, 10)
 
     # don't allow negative offsets
-    with assert_raises(ValueError):
+    with assert_raises(ValueError, None):
         negative_locus.offset_range(9, 10)
 
 def test_locus_distance():

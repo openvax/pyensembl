@@ -3,6 +3,10 @@ from nose.tools import assert_raises
 
 from pyensembl import EnsemblRelease
 
+# pylint: disable=no-value-for-parameter
+# pylint and mocking don't go very well together. pylint complains,
+# for example, about _test_fai_index not being called with the
+# mock_pyfaidx parameter.
 
 @patch('pyensembl.reference_transcripts.ReferenceTranscripts.local_fasta_path')
 @patch('pyensembl.reference_transcripts.exists')
