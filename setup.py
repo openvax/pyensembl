@@ -40,7 +40,7 @@ with open(requirements_path, "r") as f:
 if __name__ == '__main__':
     setup(
         name='pyensembl',
-        version="0.5.6",
+        version="0.5.7",
         description="Python interface to ensembl reference genome metadata",
         author="Alex Rubinsteyn",
         author_email="alex {dot} rubinsteyn {at} mssm {dot} edu",
