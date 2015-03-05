@@ -56,9 +56,9 @@ def _species_subdir(
     but species might be either a common name or latin name.
     """
     return SPECIES_SUBDIR_TEMPLATE % {
-        'release' : ensembl_release,
-        'filetype' : filetype,
-        'species' : species,
+        'release': ensembl_release,
+        'filetype': filetype,
+        'species': species,
     }
 
 def _normalize_release_properties(ensembl_release, species):
@@ -92,9 +92,9 @@ def gtf_url_parts(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
     url_subdir = urljoin(server, subdir)
 
     filename = GTF_FILENAME_TEMPLATE % {
-        'Species' : species.capitalize(),
-        'reference' : reference_name,
-        'release' : ensembl_release,
+        'Species': species.capitalize(),
+        'reference': reference_name,
+        'release': ensembl_release,
     }
     return url_subdir, filename
 
@@ -122,11 +122,11 @@ def fasta_dna_url_parts(
 
     server_sequence_subdir = join(server_subdir, 'dna')
     filename = FASTA_DNA_CHROMOSOME_FILENAME_TEMPLATE % {
-        "Species" : species.capitalize(),
-        "reference" : reference_name,
-        "release" : ensembl_release,
-        "sequence_type" : "dna",
-        "contig" : contig
+        "Species": species.capitalize(),
+        "reference": reference_name,
+        "release": ensembl_release,
+        "sequence_type": "dna",
+        "contig": contig
     }
     return server_sequence_subdir, filename
 
@@ -161,15 +161,15 @@ def fasta_cdna_url_parts(
     server_sequence_subdir = join(server_subdir, 'cdna')
     if ensembl_release <= 75:
         filename = OLD_FASTA_CDNA_FILENAME_TEMPLATE % {
-            "Species" : species.capitalize(),
-            "reference" : reference_name,
-            "release" : ensembl_release,
-            "sequence_type" : "cdna",
+            "Species": species.capitalize(),
+            "reference": reference_name,
+            "release": ensembl_release,
+            "sequence_type": "cdna",
         }
     else:
         filename = NEW_FASTA_CDNA_FILENAME_TEMPLATE % {
-            "Species" : species.capitalize(),
-            "reference" : reference_name,
-            "sequence_type" : "cdna",
+            "Species": species.capitalize(),
+            "reference": reference_name,
+            "sequence_type": "cdna",
         }
     return server_sequence_subdir, filename

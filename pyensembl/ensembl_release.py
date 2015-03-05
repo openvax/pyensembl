@@ -128,6 +128,7 @@ class EnsemblRelease(object):
             strand=strand,
             distinct=distinct,
             extension=".pickle")
+
         def run_query():
             results = self.db.query_feature_values(
                 column=column,
@@ -139,6 +140,7 @@ class EnsemblRelease(object):
                 "Expected list from Database.query_feature_values, got %s" % (
                     type(results))
             return results
+
         return cached_object(pickle_path, compute_fn=run_query)
 
     def install(self):
