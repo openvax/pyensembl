@@ -60,6 +60,7 @@ if __name__ == '__main__':
             'Topic :: Scientific/Engineering :: Bio-Informatics',
         ],
         install_requires=[
+            "typechecks>=0.0.2",
             "numpy>=1.7",
             "pandas>=0.13.1",
             "datacache>=0.4.11",
