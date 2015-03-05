@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import print_function
 import os
 
 from setuptools import setup
@@ -19,8 +20,14 @@ from setuptools import setup
 current_directory = os.path.dirname(__file__)
 readme_filename = 'README.md'
 readme_path = os.path.join(current_directory, readme_filename)
-with open(readme_path, 'r') as f:
-    readme = f.read()
+
+readme = ""
+try:
+    with open(readme_path, 'r') as f:
+        readme = f.read()
+except Exception as e:
+    print(e)
+    print("Failed to open %s" % readme_path)
 
 try:
     import pypandoc
@@ -29,18 +36,10 @@ except:
     print("Failed to convert %s to reStructuredText", readme_filename)
     pass
 
-requirements_path = os.path.join(current_directory, "requirements.txt")
-with open(requirements_path, "r") as f:
-    requirements = [
-        line.strip()
-        for line in f.read().splitlines()
-        if line.strip()
-    ]
-
 if __name__ == '__main__':
     setup(
         name='pyensembl',
-        version="0.5.8",
+        version="0.5.10",
         description="Python interface to ensembl reference genome metadata",
         author="Alex Rubinsteyn",
         author_email="alex {dot} rubinsteyn {at} mssm {dot} edu",
@@ -60,11 +59,13 @@ if __name__ == '__main__':
             'Programming Language :: Python',
             'Topic :: Scientific/Engineering :: Bio-Informatics',
         ],
-        install_requires=requirements,
+        install_requires=[
+            "numpy>=1.7",
+            "pandas>=0.13.1",
+            "datacache>=0.4.10",
+            "pyfaidx>=0.3.4",
+            "memoized-property>=1.0.2",
+        ],
         long_description=readme,
         packages=['pyensembl'],
-        # necessary for Travis if we're parsing setuptools requirements
-        # from requirements.txt
-        package_data={"pyensembl": [requirements_path]},
-        include_package_data=True,
     )
