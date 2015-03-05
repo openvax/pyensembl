@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from __future__ import print_function, division, absolute_import
+
 from typechecks import require_integer, require_string
 
 from .locus import Locus
@@ -54,15 +55,12 @@ class Exon(Locus):
         self.gene_name = result_dict['gene_name']
         self.gene_id = result_dict['gene_id']
 
-
     def __str__(self):
         return "Exon(exon_id=%s, gene_name=%s, contig=%s, start=%d, end=%s)" % (
             self.id, self.gene_name, self.contig, self.start, self.end)
 
     def __repr__(self):
         return str(self)
-
-
 
     # possible annotations associated with exons
     _EXON_FEATURES = {'start_codon', 'stop_codon', 'UTR', 'CDS'}
@@ -101,7 +99,6 @@ class Exon(Locus):
             require_integer(start, "start position")
             require_integer(end, "end position")
         return results
-
 
     @property
     def start_codon_positions(self):
@@ -142,7 +139,6 @@ class Exon(Locus):
         """
         return self._exon_feature_offsets('start_codon')
 
-
     @property
     def stop_codon_offsets(self):
         """
@@ -150,7 +146,6 @@ class Exon(Locus):
         is the first base of the stop codon?
         """
         return self._exon_feature_offsets('stop_codon')
-
 
     @property
     def contains_start_codon(self):

@@ -15,11 +15,11 @@
 from __future__ import print_function, division, absolute_import
 
 from memoized_property import memoized_property
+from typechecks import require_string
 
 from .biotypes import is_valid_biotype
 from .locus import Locus
 from .transcript import Transcript
-from .type_checks import require_string
 
 class Gene(Locus):
 

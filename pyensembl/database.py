@@ -18,10 +18,10 @@ import logging
 from os.path import join, exists
 
 import datacache
+from typechecks import require_integer, require_string
 
 from .common import CACHE_SUBDIR
 from .locus import normalize_chromosome, normalize_strand, Locus
-from .type_checks import require_integer, require_string
 
 # any time we update the database schema, increment this version number
 DATABASE_SCHEMA_VERSION = 2

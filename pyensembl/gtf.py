@@ -17,14 +17,13 @@ from os.path import split, join
 import pandas as pd
 
 import datacache
+from typechecks import require_string
 
 from .gtf_parsing import load_gtf_as_dataframe
 from .common import CACHE_SUBDIR
 from .locus import normalize_chromosome, normalize_strand
 from .compute_cache import cached_dataframe, clear_cached_objects
 from .url_templates import ENSEMBL_FTP_SERVER, gtf_url_parts
-from .type_checks import require_string
-
 
 
 class GTF(object):
@@ -277,7 +276,7 @@ class GTF(object):
         """
         Given a Series of data, and two Series' representing start
         and end positions for the end, keep all data for which
-        the start and end positions overlap the start and end 
+        the start and end positions overlap the start and end
         parameters (inclusively).
 
         For example:
@@ -300,8 +299,8 @@ class GTF(object):
     def _slice(df, df_start_col_name, df_end_col_name, start, end):
         """
         Given a DataFrame, along with the names of columns in the
-        DataFrame representing start and end positions, keep all 
-        data for which the start and end positions overlap the start 
+        DataFrame representing start and end positions, keep all
+        data for which the start and end positions overlap the start
         and end parameters (inclusively).
         """
         # No overlap because the whole thing is before start

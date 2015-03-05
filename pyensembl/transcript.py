@@ -14,12 +14,13 @@
 
 from __future__ import print_function, division, absolute_import
 
+from memoized_property import memoized_property
+from typechecks import require_integer, require_string
+
 from .biotypes import is_valid_biotype
 from .exon import Exon
 from .locus import Locus
 
-from memoized_property import memoized_property
-from .type_checks import require_integer, require_string
 
 class Transcript(Locus):
     """
@@ -96,7 +97,6 @@ class Transcript(Locus):
         else:
             self.gene_id = gene_id
 
-
     def __str__(self):
         return "Transcript(id=%s, name=%s, gene_name=%s)" % (
                     self.id, self.name, self.gene_name)
@@ -129,8 +129,8 @@ class Transcript(Locus):
             filter_value=self.id,
             feature='exon')
 
-         # fill this list in its correct order (by exon_number) by using
-         # the exon_number as a 1-based list offset
+        # fill this list in its correct order (by exon_number) by using
+        # the exon_number as a 1-based list offset
         exons = [None] * len(results)
 
         for exon_number, exon_id in results:
@@ -146,9 +146,12 @@ class Transcript(Locus):
 
         assert all(exon is not None for exon in exons), \
             "Missing exons %s for transcript %s" % (
-                [i for i, exon in enumerate(exons) if exon is None],
-                self.id
-            )
+                [
+                    i
+                    for i, maybe_exon
+                    in enumerate(exons) if maybe_exon is None
+                ],
+                self.id)
         return exons
 
     # possible annotations associated with transcripts
@@ -189,7 +192,7 @@ class Transcript(Locus):
             # since Ensembl ranges are [inclusive, inclusive] and
             # Python ranges are [inclusive, exclusive) we have to increment
             # the end position
-            for position in range(start, end+1):
+            for position in range(start, end + 1):
                 assert position not in results, \
                     "Repeated position %d for %s" % (position, feature)
                 results.append(position)
@@ -325,8 +328,8 @@ class Transcript(Locus):
         ensures that values are contiguous.
         """
         offsets.sort()
-        for i in range(len(offsets)-1):
-            assert offsets[i] + 1 == offsets[i+1], \
+        for i in range(len(offsets) - 1):
+            assert offsets[i] + 1 == offsets[i + 1], \
                 "Offsets not contiguous: %s" % (offsets,)
         return offsets
 
@@ -425,7 +428,7 @@ class Transcript(Locus):
 
         # pylint: disable=invalid-slice-index
         # TODO(tavi) Figure out pylint is not happy with this slice
-        return self.sequence[start:end+1]
+        return self.sequence[start:end + 1]
 
     @memoized_property
     def five_prime_utr_sequence(self):
@@ -443,5 +446,4 @@ class Transcript(Locus):
         cDNA sequence of 3' UTR
         (untranslated region at the end of the transcript)
         """
-        return self.sequence[self.last_stop_codon_spliced_offset+1:]
-
+        return self.sequence[self.last_stop_codon_spliced_offset + 1:]

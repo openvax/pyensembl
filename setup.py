@@ -25,21 +25,22 @@ readme = ""
 try:
     with open(readme_path, 'r') as f:
         readme = f.read()
-except Exception as e:
+except IOError as e:
     print(e)
     print("Failed to open %s" % readme_path)
 
 try:
     import pypandoc
     readme = pypandoc.convert(readme, to='rst', format='md')
-except:
+except ImportError as e:
+    print(e)
     print("Failed to convert %s to reStructuredText", readme_filename)
     pass
 
 if __name__ == '__main__':
     setup(
         name='pyensembl',
-        version="0.5.11",
+        version="0.5.12",
         description="Python interface to ensembl reference genome metadata",
         author="Alex Rubinsteyn",
         author_email="alex {dot} rubinsteyn {at} mssm {dot} edu",
