@@ -47,7 +47,7 @@ def benchmark(f, n_repeats=3, warmup=True, name=""):
 
     total_time = 0
     for i in range(n_repeats):
-        iter_name = "%s (iter #%d)" % (name, i+1,)
+        iter_name = "%s (iter #%d)" % (name, i + 1,)
         with Timer(iter_name) as t:
             f()
         total_time += t.elapsed

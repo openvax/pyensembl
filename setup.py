@@ -14,39 +14,37 @@
 
 import os
 
+from setuptools import setup
 
-readme_filename = os.path.join(os.path.dirname(__file__), 'README.md')
-with open(readme_filename, 'r') as f:
+current_directory = os.path.dirname(__file__)
+readme_filename = 'README.md'
+readme_path = os.path.join(current_directory, readme_filename)
+with open(readme_path, 'r') as f:
     readme = f.read()
-
 
 try:
     import pypandoc
     readme = pypandoc.convert(readme, to='rst', format='md')
 except:
-    print("Conversion of long_description from MD to reStructuredText failed...")
+    print("Failed to convert %s to reStructuredText", readme_filename)
     pass
 
-
-requires_list = []
-try:
-    from pip.req import parse_requirements
-    parsed_reqs = parse_requirements('requirements.txt')
-    requires_list = [str(req.req) for req in parsed_reqs]
-except ImportError:
-    print("Please install pip before proceeding")
-
-
-from setuptools import setup
+requirements_path = os.path.join(current_directory, "requirements.txt")
+with open(requirements_path, "r") as f:
+    requirements = [
+        line.strip()
+        for line in f.read().splitlines()
+        if line.strip()
+    ]
 
 if __name__ == '__main__':
     setup(
         name='pyensembl',
-        version="0.5.6",
+        version="0.5.7",
         description="Python interface to ensembl reference genome metadata",
-      	author="Alex Rubinsteyn",
+        author="Alex Rubinsteyn",
         author_email="alex {dot} rubinsteyn {at} mssm {dot} edu",
-      	url="https://github.com/hammerlab/pyensembl",
+        url="https://github.com/hammerlab/pyensembl",
         license="http://www.apache.org/licenses/LICENSE-2.0.html",
         entry_points={
           'console_scripts': [
@@ -62,7 +60,7 @@ if __name__ == '__main__':
             'Programming Language :: Python',
             'Topic :: Scientific/Engineering :: Bio-Informatics',
         ],
-        install_requires=requires_list,
+        install_requires=requirements,
         long_description=readme,
         packages=['pyensembl'],
     )
