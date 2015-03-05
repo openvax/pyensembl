@@ -62,7 +62,7 @@ if __name__ == '__main__':
         install_requires=[
             "numpy>=1.7",
             "pandas>=0.13.1",
-            "datacache>=0.4.10",
+            "datacache>=0.4.11",
             "pyfaidx>=0.3.4",
             "memoized-property>=1.0.2",
         ],
