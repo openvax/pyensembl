@@ -40,7 +40,7 @@ with open(requirements_path, "r") as f:
 if __name__ == '__main__':
     setup(
         name='pyensembl',
-        version="0.5.7",
+        version="0.5.8",
         description="Python interface to ensembl reference genome metadata",
         author="Alex Rubinsteyn",
         author_email="alex {dot} rubinsteyn {at} mssm {dot} edu",
@@ -63,4 +63,8 @@ if __name__ == '__main__':
         install_requires=requirements,
         long_description=readme,
         packages=['pyensembl'],
+        # necessary for Travis if we're parsing setuptools requirements
+        # from requirements.txt
+        package_data={"pyensembl": [requirements_path]},
+        include_package_data=True,
     )
