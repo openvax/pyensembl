@@ -98,7 +98,6 @@ class Database(object):
     # mapping from database tables to their primary keys
     # sadly exon IDs *are* not unique, so can't be in this dict
     PRIMAY_KEY_COLUMNS = {
-        'CDS': 'protein_id',
         'gene': 'gene_id',
         'transcript': 'transcript_id'
     }
