@@ -97,7 +97,7 @@ class Database(object):
 
     # mapping from database tables to their primary keys
     # sadly exon IDs *are* not unique, so can't be in this dict
-    PRIMAY_KEY_COLUMNS = {
+    PRIMARY_KEY_COLUMNS = {
         'gene': 'gene_id',
         'transcript': 'transcript_id'
     }
@@ -110,9 +110,9 @@ class Database(object):
 
         If a feature doesn't have a primary key, return None.
         """
-        if feature_name not in self.PRIMAY_KEY_COLUMNS:
+        if feature_name not in self.PRIMARY_KEY_COLUMNS:
             return None
-        primary_key = self.PRIMAY_KEY_COLUMNS[feature_name]
+        primary_key = self.PRIMARY_KEY_COLUMNS[feature_name]
         primary_key_values = feature_df[primary_key]
         if primary_key_values.isnull().any():
             raise ValueError(
