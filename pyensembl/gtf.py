@@ -108,10 +108,10 @@ class GTF(object):
                 self.url,
                 self.local_filename(),
                 decompress=self.decompress)
-        raise ValueError("Ensembl annotation data is not currently "
-                         "installed for release %s. Run "
-                         "\"pyensembl install %s\" or call "
-                         "EnsemblRelease(%s).install()" %
+        raise ValueError('Ensembl annotation data is not currently '
+                         'installed for release %s. Run '
+                         '"pyensembl install --release %s" or call '
+                         '"EnsemblRelease(%s).install()"' %
                          ((self.release,) * 3))
 
     def local_dir(self):

@@ -15,54 +15,48 @@
 # limitations under the License.
 
 """
-A shell wrapper around various PyEnsembl commands.
+Manipulate pyensembl's local cache.
 
-Example:
+    %(prog)s {install,download,index} [--release XXX ...]
 
-    pyensembl 75 77 install
+To install the latest ensembl release:
+    %(prog)s install
+
+To install particular release(s):
+    %(prog)s install --release 75 77
+
 """
+from __future__ import absolute_import
 import argparse
-
-import ensembl_release
-from release_info import MAX_ENSEMBL_RELEASE
-
+from . import ensembl_release
+from .release_info import MAX_ENSEMBL_RELEASE
 
 def run():
     parser = argparse.ArgumentParser(usage=__doc__)
-    parser.add_argument(
-        'release',
-        nargs='*',
-        default=MAX_ENSEMBL_RELEASE,
-        help=('specify the Ensembl release(s) that you would like to '
-              'download and install (defaults to latest release)'))
-    subparsers = parser.add_subparsers(dest='program')
-    subparsers.add_parser(
-        'install',
-        help=('download and index any data for this release that '
-               'is not yet downloaded and/or indexed'))
-    subparsers.add_parser(
-        'download',
-        help=('download all data for this release, regardless of '
-              'whether it is already downloaded'))
-    subparsers.add_parser(
-        'index',
-        help=('index all data for this release, regardless of '
-              'whether it is already indexed, and raises an error if '
-              'data is not yet downloaded'))
+    parser.add_argument('--release',
+        type=int,
+        nargs="+",
+        default=[MAX_ENSEMBL_RELEASE],
+        help='Ensembl release. Defaults to latest release %(default)s. '
+             'Multiple releases may be specified.')
+    parser.add_argument('action', choices=('install', 'download', 'index'),
+        help="'install' will download and index any data that is  not "
+        "currently downloaded or indexed. 'download' will download data, "
+        "regardless of whether it is already downloaded. 'index' will index "
+        "data, regardless of whether it is already indexed, and will raise "
+        "an error if the data is not already downloaded.")
 
     args = parser.parse_args()
-    releases = args.release
-    if type(releases) == int:
-        releases = [releases]
-    for release in releases:
-        data = ensembl_release.EnsemblRelease(release)
-        if args.program == 'install':
-            data.install()
-        elif args.program == 'download':
-            data.download()
-        elif args.program == 'index':
-            data.index()
-
+    for release in args.release:
+        ensembl = ensembl_release.EnsemblRelease(release)
+        if args.action == 'install':
+            ensembl.install()
+        elif args.action == 'download':
+            ensembl.download()
+        elif args.action == 'index':
+            ensembl.index()
+        else:
+            assert False, "shouldn't get here"
 
 if __name__ == '__main__':
     run()

@@ -217,10 +217,10 @@ class Database(object):
             return connection
         if self.auto_download:
             return self._create_database()
-        raise ValueError("Genome annotation data is not currently "
-                         "installed for release %s. Run "
-                         "\"pyensembl install %s\" or call "
-                         "EnsemblRelease(%s).install()" %
+        raise ValueError('Genome annotation data is not currently '
+                         'installed for release %s. Run '
+                         '"pyensembl install --release %s" or call '
+                         '"EnsemblRelease(%s).install()"' %
                          ((self.gtf.release,) * 3))
 
     def columns(self, table_name):
