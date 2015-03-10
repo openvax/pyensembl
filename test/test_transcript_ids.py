@@ -2,8 +2,9 @@
 Tests for methods which return collections of transcript IDs that aren't
 converting from some type of name or ID.
 """
+from __future__ import absolute_import
 
-from test_common import test_ensembl_releases
+from .test_common import test_ensembl_releases
 from pyensembl import EnsemblRelease
 
 # subset of transcript IDs for HLA-A

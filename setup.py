@@ -67,6 +67,7 @@ if __name__ == '__main__':
             "datacache>=0.4.11",
             "pyfaidx>=0.3.4",
             "memoized-property>=1.0.2",
+            "mock>=1.0.1",
         ],
         long_description=readme,
         packages=['pyensembl'],

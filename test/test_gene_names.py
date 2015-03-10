@@ -2,8 +2,9 @@
 Test all methods which return collections of gene names that aren't converting
 from some other type of name or ID.
 """
+from __future__ import absolute_import
 from pyensembl import EnsemblRelease
-from test_common import test_ensembl_releases
+from .test_common import test_ensembl_releases
 
 # make sure that familia
 KNOWN_GENE_NAMES = [

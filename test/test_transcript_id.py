@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from pyensembl import EnsemblRelease
 
 from nose.tools import ok_

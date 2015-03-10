@@ -1,4 +1,6 @@
-from test_common import test_ensembl_releases
+from __future__ import absolute_import
+
+from .test_common import test_ensembl_releases
 from pyensembl import find_nearest_locus
 from nose.tools import eq_
 

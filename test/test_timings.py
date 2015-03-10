@@ -1,7 +1,7 @@
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 
 from pyensembl import EnsemblRelease
-from timer import benchmark
+from .timer import benchmark
 
 ensembl = EnsemblRelease(78)
 contigs = [str(i+1) for i in range(22)] + ["X", "Y"]

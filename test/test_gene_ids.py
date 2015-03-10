@@ -4,7 +4,8 @@ from some other tyoe of name or ID.
 
 TODO: Implement tests for EnsemblRelease.gene_ids
 """
-from test_common import test_ensembl_releases
+from __future__ import absolute_import
+from .test_common import test_ensembl_releases
 from pyensembl import EnsemblRelease
 
 def test_gene_ids_ensembl77_hla_a():
