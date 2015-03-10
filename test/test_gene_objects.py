@@ -1,7 +1,9 @@
+from __future__ import absolute_import
+
 from pyensembl import Gene
 
-from test_common import test_ensembl_releases
-from data import TP53_gene_id
+from .test_common import test_ensembl_releases
+from .data import TP53_gene_id
 
 @test_ensembl_releases()
 def test_TP53_gene_object_by_id(release):

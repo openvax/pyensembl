@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import functools
 
 from pyensembl import EnsemblRelease
@@ -28,7 +30,7 @@ contigs = list(range(1,23)) + ["X", "Y", "M"]
 def test_ensembl_releases(*versions):
     """
     Run a unit test which takes an EnsemblRelease as an argument
-    for multiple rleleases (most recent for each reference genome)
+    for multiple releases (most recent for each reference genome)
     """
     if len(versions) == 0:
         versions = _release_versions

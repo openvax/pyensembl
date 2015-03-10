@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from pyensembl.locus import normalize_chromosome, Locus
 
 from nose.tools import assert_raises

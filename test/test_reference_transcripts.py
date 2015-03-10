@@ -3,6 +3,7 @@ Test the ReferenceTranscripts object to make sure we're getting
 the correct reference for different Ensembl releases and that the
 the correct transcripts get returned for known transcript IDs.
 """
+from __future__ import absolute_import
 
 from pyensembl import EnsemblRelease
 

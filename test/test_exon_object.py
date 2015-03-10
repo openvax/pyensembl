@@ -3,6 +3,7 @@ Check that pyensembl returns correct exon objects for exon IDs
 and loci. Make sure the information on the exon object matches
 the expected gene ID and location.
 """
+from __future__ import absolute_import
 
 from pyensembl import EnsemblRelease
 

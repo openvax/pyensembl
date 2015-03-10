@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from pyensembl import EnsemblRelease
 
 ensembl = EnsemblRelease(75, auto_download=True)

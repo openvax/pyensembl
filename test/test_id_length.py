@@ -1,4 +1,6 @@
-from test_common import releases
+from __future__ import absolute_import
+
+from .test_common import releases
 
 from nose.tools import nottest
 from pyensembl import EnsemblRelease
