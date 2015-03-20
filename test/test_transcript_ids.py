@@ -47,7 +47,7 @@ def test_all_transcript_ids(ensembl):
         assert transcript_id in transcript_ids, \
             "Missing transcript ID %s from %s" % (transcript_id, ensembl)
 
-@test_ensembl_releases(75, 77, 78)
+@test_ensembl_releases(77)
 def test_transcript_id_of_protein_id(ensembl):
     transcript_id = ensembl.transcript_id_of_protein_id(
         "ENSP00000485678")

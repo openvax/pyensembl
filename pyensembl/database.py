@@ -346,7 +346,8 @@ class Database(object):
         results = cursor.fetchall()
         if required and not results:
             raise ValueError(
-                "No results found in Ensembl for query:\n%s" % (sql,))
+                "No results found for query:\n%s\nwith parameters: %s" % (
+                    sql, query_params))
 
         return results
 
