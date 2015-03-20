@@ -36,7 +36,7 @@ Ensembl data:
 pyensembl <list of Ensembl release numbers> install
 ```
 
-For example, `pyensembl 75 76 install` will download and install all
+For example, `pyensembl install --release 75 76` will download and install all
 data for Ensembl releases 75 and 76.
 
 Alternatively, you can create the `EnsemblRelease` object with
