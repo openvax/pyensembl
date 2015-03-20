@@ -7,52 +7,8 @@ from pyensembl import EnsemblRelease
 
 # pylint: disable=no-value-for-parameter
 # pylint and mocking don't go very well together. pylint complains,
-# for example, about _test_fai_index not being called with the
-# mock_pyfaidx parameter.
-
-@patch('pyensembl.reference_transcripts.ReferenceTranscripts.local_fasta_path')
-@patch('pyensembl.reference_transcripts.exists')
-@patch('pyensembl.reference_transcripts.pyfaidx')
-def _test_fai_index(mock_pyfaidx, mock_exists, mock_local_fasta_path,
-                    fai_exists, force_index):
-    """
-    Depending on whether we already have a .fai file created by
-    pyfaidx, and whether we're using the force flag for
-    EnsemblRelease(...)._index, we may or may not expect write_fai
-    to be called.
-
-    Return True if it was called.
-    """
-    data = EnsemblRelease(54)
-
-    # Skip the GTF stuff, since we're testing pyfaidx
-    data.db._connect_if_exists = Mock(return_value=False)
-    data.db._create_database = Mock()
-
-    mock_exists.return_value = fai_exists
-    data._index(force=force_index)
-
-    return mock_pyfaidx.Fasta().faidx.write_fai.called
-
-
-def test_fai_exists_index():
-    called = _test_fai_index(fai_exists=True, force_index=False)
-    assert not called, 'Expected no new .fai file'
-
-
-def test_fai_not_exists_index():
-    called = _test_fai_index(fai_exists=False, force_index=False)
-    assert called, 'Expected a new .fai file'
-
-
-def test_fai_exists_force_index():
-    called = _test_fai_index(fai_exists=True, force_index=True)
-    assert called, 'Expected a new .fai file'
-
-
-def test_fai_not_exists_force_index():
-    called = _test_fai_index(fai_exists=False, force_index=True)
-    assert called, 'Expected a new .fai file'
+# for example, about _test_db_index not being called with the
+# mock_index parameter.
 
 
 @patch('pyensembl.reference_transcripts.ReferenceTranscripts.index')

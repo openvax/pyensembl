@@ -122,20 +122,20 @@ def test_transcript_sequences_CTNNIP1_004():
     assert len(utr5) == expected_utr5_length, \
         "Expected 5' UTR length %d, got %d" % (
             expected_utr5_length, len(utr5))
-    assert utr5.seq == CTNNBIP1_004_UTR5, "5' UTR sequence is incorrect"
+    assert utr5 == CTNNBIP1_004_UTR5, "5' UTR sequence is incorrect: %s" % utr5
 
     utr3 = transcript.three_prime_utr_sequence
     expected_utr3_length = len(CTNNBIP1_004_UTR3)
     assert len(utr3) == expected_utr3_length, \
         "Expected 3' UTR length %d, got %d" % (
             expected_utr3_length, len(utr3))
-    assert utr3.seq == CTNNBIP1_004_UTR3, "3' UTR sequence is incorrect"
+    assert utr3 == CTNNBIP1_004_UTR3, "3' UTR sequence is incorrect: %s" % utr3
 
     cds = transcript.coding_sequence
     expected_cds_length = len(CTNNBIP1_004_CDS)
     assert len(cds) == expected_cds_length, \
         "Expected CDS length %d, got %d" % (expected_cds_length, len(cds))
-    assert cds.seq == CTNNBIP1_004_CDS, "Coding sequence is incorrect"
+    assert cds == CTNNBIP1_004_CDS, "Coding sequence is incorrect: %s" % cds
 
 
 @test_ensembl_releases

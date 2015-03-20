@@ -168,11 +168,8 @@ class ReferenceTranscripts(object):
         """
         # This local_fasta_path property access will raise an error
         # if the necessary data is not yet downloaded
-        if exists(self.local_database_path):
-            if force:
+        if exists(self.local_database_path) and force:
                 remove(self.local_database_path)
-            else:
-                return None
         self._fasta_dictionary = SeqIO.index_db(
             self.local_database_path,
             self.local_fasta_path,
