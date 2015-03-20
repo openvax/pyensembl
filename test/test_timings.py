@@ -1,7 +1,8 @@
 from __future__ import print_function, absolute_import
 
 from pyensembl import EnsemblRelease
-from .timer import benchmark
+
+from tinytimer import benchmark
 
 ensembl = EnsemblRelease(78)
 contigs = [str(i + 1) for i in range(22)] + ["X", "Y"]
@@ -42,6 +43,22 @@ def test_timing_transcripts_at_locus():
 def test_timing_exons_at_locus():
     run_benchmark(ensembl.exons_at_locus)
 
+def test_timing_transcript_sequences_at_locus():
+    def transcript_sequences_at_locus(contig, position):
+        sequences = []
+        for transcript in ensembl.transcripts_at_locus(contig, position):
+            sequences.append(transcript.sequence)
+        return sequences
+    run_benchmark(transcript_sequences_at_locus)
+
+def test_timing_transcript_coding_sequences_at_locus():
+    def transcript_coding_sequences_at_locus(contig, position):
+        sequences = []
+        for transcript in ensembl.transcripts_at_locus(contig, position):
+            if transcript.sequence and transcript.complete:
+                sequences.append(transcript.coding_sequence)
+        return sequences
+    run_benchmark(transcript_coding_sequences_at_locus)
 
 def run_all_benchmarks():
     import types

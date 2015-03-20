@@ -126,13 +126,15 @@ class ReferenceTranscripts(object):
     def local_filename(self):
         return split(self.local_fasta_path)[1]
 
-    def transcript_sequence(self, transcript_id):
+    def transcript_sequence(self, transcript_id, return_none_if_missing=True):
         if transcript_id not in self._transcript_sequences:
             if not transcript_id.startswith("ENST"):
                 raise ValueError("Invalid transcript ID: %s" % (transcript_id,))
 
             seq_record = self.fasta_dictionary.get(transcript_id)
             if seq_record is None:
+                if return_none_if_missing:
+                    return None
                 raise ValueError(
                     "Transcript ID not found: %s" % (transcript_id,))
             self._transcript_sequences[transcript_id] = seq_record.seq
@@ -157,6 +159,13 @@ class ReferenceTranscripts(object):
     def local_database_path(self):
         return self.local_fasta_path + ".db"
 
+    def _create_or_open_fasta_db(self):
+        """Create an index database from a transcript sequence FASTA file"""
+        return SeqIO.index_db(
+            self.local_database_path,
+            self.local_fasta_path,
+            "fasta")
+
     def index(self, force=False):
         """
         Perform pyfaidx indexing if it's not already done. If `force`
@@ -168,16 +177,30 @@ class ReferenceTranscripts(object):
         """
         # This local_fasta_path property access will raise an error
         # if the necessary data is not yet downloaded
-        if exists(self.local_database_path) and force:
+        if exists(self.local_database_path):
+            if force:
                 remove(self.local_database_path)
-        self._fasta_dictionary = SeqIO.index_db(
-            self.local_database_path,
-            self.local_fasta_path,
-            "fasta")
+            else:
+                # try opening the existing FASTA database, if it fails then
+                # delete the local file and we'll create a new one further
+                # below
+                try:
+                    self._fasta_dictionary = self._create_or_open_fasta_db()
+                except ValueError as e:
+                    # if there was an error opening the database
+                    # delete the version we have and try again
+                    if "database" in e.message:
+                        remove(self.local_database_path)
+                    else:
+                        raise
+        else:
+            self._fasta_dictionary = self._create_or_open_fasta_db()
         return self._fasta_dictionary
 
     @property
     def fasta_dictionary(self):
-        if not self._fasta_dictionary:
+        if self._fasta_dictionary is None:
+            # should populate self._fasta_dictionary with a database
+            # backed dictionary of reference transcript sequences
             self.index()
         return self._fasta_dictionary

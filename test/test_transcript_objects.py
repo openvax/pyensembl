@@ -97,7 +97,7 @@ def test_sequence_parts(ensembl):
 
     # need to use `seq` property of Sequence objects to get underlying
     # strings which can be concatenated and compared
-    combined_string = utr5.seq + cds.seq + utr3.seq
+    combined_string = utr5 + cds + utr3
 
     combined_sequence_length = len(combined_string)
     # make sure length property of transcript matches the sequence length
@@ -108,7 +108,7 @@ def test_sequence_parts(ensembl):
             len(utr3),
             combined_sequence_length,
             len(transcript))
-    assert combined_string == full_sequence.seq, \
+    assert combined_string == full_sequence, \
         "Expected FOXP3-001 sequence:\n%s\n\n5' UTR + CDS + 3' UTR:\n%s" % (
             full_sequence,
             combined_string
