@@ -17,7 +17,7 @@ from __future__ import print_function, division, absolute_import
 from os.path import join, exists, split
 
 import pyfaidx
-from datacache import Cache
+import datacache
 
 from .common import CACHE_SUBDIR
 from .release_info import which_human_reference_name, check_release_number
@@ -42,7 +42,7 @@ class ReferenceTranscripts(object):
             auto_download=False):
 
         # download cache for fetching reference FASTA files
-        self.cache = Cache(CACHE_SUBDIR)
+        self.cache = datacache.Cache(CACHE_SUBDIR)
         self.auto_download = auto_download
 
         self.release = check_release_number(ensembl_release)
@@ -112,17 +112,17 @@ class ReferenceTranscripts(object):
         # If the fasta is already cached, fetching it won't initiate a
         # download. But it's always okay to initiate a download if
         # auto download is enabled.
-        if (self.cache.exists(self.url,
-                              self.remote_filename,
-                              self.fasta_decompress) or
-            self.auto_download):
+        if (self.cache.exists(
+                self.url,
+                self.remote_filename,
+                self.fasta_decompress) or self.auto_download):
             # Does a download if the cache is empty.
             return self.cache.fetch(self.url,
                                     self.remote_filename,
                                     self.fasta_decompress)
         raise ValueError("Ensembl transcript data is not currently "
                          "installed for release %s. Run "
-                         "\"pyensembl install %s\" or call into "
+                         "\"pyensembl install %s\" or call "
                          "EnsemblRelease(%s).install()" %
                          ((self.release,) * 3))
 
@@ -151,7 +151,6 @@ class ReferenceTranscripts(object):
             # check and then construct the FastaRecord ourselves.
             #
             # Example speedup: previously 24s, now 3s annotating 311 transcripts
-            #
             if transcript_id not in self:
                 raise ValueError(
                     "Transcript ID not found: %s" % (transcript_id,))

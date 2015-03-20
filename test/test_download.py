@@ -72,7 +72,6 @@ def _test_db_index(mock_index, db_exists):
 
     return data.db._create_database.called
 
-
 def test_db_not_exists_index():
     called = _test_db_index(db_exists=False)
     assert called, "Expected a new database"

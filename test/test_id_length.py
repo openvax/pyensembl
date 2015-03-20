@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from .test_common import releases
 
 from nose.tools import nottest
-from pyensembl import EnsemblRelease
 
 @nottest
 def check_id_length(feature_name):
@@ -12,7 +11,6 @@ def check_id_length(feature_name):
         df = release.gtf.dataframe(contig="Y")
         assert feature_name in df, \
             "%s not a column in DataFrame for %s" % (feature_name, release)
-
 
         # Ensembl IDs are formatted like ENSG00000223972
         # which is always length 15

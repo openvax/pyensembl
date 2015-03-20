@@ -4,7 +4,7 @@ from pyensembl import EnsemblRelease
 from .timer import benchmark
 
 ensembl = EnsemblRelease(78)
-contigs = [str(i+1) for i in range(22)] + ["X", "Y"]
+contigs = [str(i + 1) for i in range(22)] + ["X", "Y"]
 
 def make_repeat_lookup_fn(lookup_fn, n_positions):
     """
@@ -13,7 +13,7 @@ def make_repeat_lookup_fn(lookup_fn, n_positions):
     """
     def repeat_lookup_fn():
         for contig in contigs:
-            for position in [10**6 + i*10**6 for i in range(n_positions)]:
+            for position in [10 ** 6 + i * 10 ** 6 for i in range(n_positions)]:
                 lookup_fn(contig, position)
     return repeat_lookup_fn
 

@@ -4,8 +4,10 @@ converting from some type of name or ID.
 """
 from __future__ import absolute_import
 
-from .test_common import test_ensembl_releases
 from pyensembl import EnsemblRelease
+from nose.tools import eq_
+
+from .test_common import test_ensembl_releases
 
 # subset of transcript IDs for HLA-A
 HLA_A_TRANSCRIPT_IDS = [
@@ -19,7 +21,6 @@ HLA_A_TRANSCRIPT_IDS = [
         'ENST00000479320',
 ]
 
-
 def test_transcript_ids_ensembl77_hla_a():
     # chr6:29,945,884  is a position for HLA-A
     # based on:
@@ -32,9 +33,9 @@ def test_transcript_ids_ensembl77_hla_a():
             "Transcript %s of HLA-A not found overlapping locus" % transcript_id
 
 KNOWN_TRANSCRIPT_IDS = HLA_A_TRANSCRIPT_IDS + [
-    'ENST00000398417', # transcript ID of SMAD4-001
-    'ENST00000334701', # transcript ID of HSP90AA1-001
-    'ENST00000599837', # transcript ID of CTAG1A-002
+    'ENST00000398417',  # transcript ID of SMAD4-001
+    'ENST00000334701',  # transcript ID of HSP90AA1-001
+    'ENST00000599837',  # transcript ID of CTAG1A-002
 ]
 
 # TODO: add release 54 after transcript IDs for older GTFs are filled in
@@ -46,3 +47,8 @@ def test_all_transcript_ids(ensembl):
         assert transcript_id in transcript_ids, \
             "Missing transcript ID %s from %s" % (transcript_id, ensembl)
 
+@test_ensembl_releases(75, 77, 78)
+def test_transcript_id_of_protein_id(ensembl):
+    transcript_id = ensembl.transcript_id_of_protein_id(
+        "ENSP00000485678")
+    eq_("ENST00000623976", transcript_id)

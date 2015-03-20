@@ -6,9 +6,9 @@ from pyensembl import EnsemblRelease
 from nose.tools import nottest
 
 _release_versions = [
-    54, # last release for GRCh36/hg18
-    75, # last release for GRCh37/hg19
-    78, # most recent release for GRCh38
+    54,  # last release for GRCh36/hg18
+    75,  # last release for GRCh37/hg19
+    78,  # most recent release for GRCh38
 ]
 
 _cached_releases = {}
@@ -24,7 +24,7 @@ releases = [
     cached_release(version) for version in _release_versions
 ]
 
-contigs = list(range(1,23)) + ["X", "Y", "M"]
+contigs = list(range(1, 23)) + ["X", "Y", "M"]
 
 @nottest
 def test_ensembl_releases(*versions):
@@ -34,6 +34,7 @@ def test_ensembl_releases(*versions):
     """
     if len(versions) == 0:
         versions = _release_versions
+
     def decorator(test_fn):
         @functools.wraps(test_fn)
         def new_test_fn():
