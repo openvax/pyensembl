@@ -61,12 +61,12 @@ def test_transcript_exons():
         expected_id = CTTNNIP1_004_exon_ids[i]
         assert exon.id == expected_id, \
             "Expected exon #%d of %s to have ID %s but got %s" % (
-                i+1, transcript, expected_id, exon.id)
+                i + 1, transcript, expected_id, exon.id)
 
         expected_length = CTTNNIP1_004_exon_lengths[i]
         assert len(exon) == expected_length, \
             "Expected exon #%d of %s (%s) to have length %d but got %d" % (
-                i+1, transcript, exon, expected_length, len(exon))
+                i + 1, transcript, exon, expected_length, len(exon))
 
 
 # not testing NCBI/Release 54 since I just discovered that ensembl54
@@ -107,8 +107,7 @@ def test_sequence_parts(ensembl):
             len(cds),
             len(utr3),
             combined_sequence_length,
-            len(transcript)
-        )
+            len(transcript))
     assert combined_string == full_sequence.seq, \
         "Expected FOXP3-001 sequence:\n%s\n\n5' UTR + CDS + 3' UTR:\n%s" % (
             full_sequence,

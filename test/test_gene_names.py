@@ -27,7 +27,6 @@ def test_all_gene_names(ensembl):
         assert gene_name in gene_names, \
             "Missing gene name %s from %s" % (gene_name, ensembl)
 
-#
 def test_gene_names_at_locus_ensembl77_hla_a():
     # chr6:29,945,884  is a position for HLA-A
     # based on:
@@ -43,7 +42,6 @@ def test_gene_names_on_contig(ensembl):
     assert "TP53" in gene_names_chr17, \
         "No TP53 in gene names on chr17 of %s, gene names: %s ... (%d)" % (
             ensembl, list(gene_names_chr17[:4]), len(gene_names_chr17))
-
 
     gene_names_chr18 = ensembl.gene_names(18)
     assert "SMAD4" in gene_names_chr18, \

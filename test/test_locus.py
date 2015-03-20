@@ -19,7 +19,7 @@ def test_normalize_chromosome():
     assert normalize_chromosome("MT") == "MT"
 
     with assert_raises(TypeError, None):
-        normalize_chromosome({"a":"b"})
+        normalize_chromosome({"a": "b"})
 
     with assert_raises(TypeError, None):
         normalize_chromosome([])
@@ -64,7 +64,7 @@ def test_locus_contains():
     assert not locus.contains("1", 5, 30)
 
     # before start
-    assert not locus.contains("1", 1,9)
+    assert not locus.contains("1", 1, 9)
     assert not locus.contains("1", 5, 15)
 
     # after end

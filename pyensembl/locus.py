@@ -53,7 +53,7 @@ def normalize_strand(strand):
 class Locus(object):
     """
     Base class for any entity which can be localized at a range of positions
-    on a particular chromosome/contig.
+    on a particular strand of a chromosome/contig.
     """
 
     def __init__(

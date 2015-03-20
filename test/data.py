@@ -1,6 +1,6 @@
 from pyensembl import Locus
 
-#mapping of ensembl releases to transcript IDs for FOXP3-001
+# mapping of ensembl releases to transcript IDs for FOXP3-001
 FOXP3_001_transcript_id = "ENST00000376207"
 
 TP53_gene_id = "ENSG00000141510"

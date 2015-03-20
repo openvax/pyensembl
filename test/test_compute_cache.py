@@ -21,7 +21,7 @@ class Counter(object):
 
     def increment_dataframe(self):
         value = self.increment()
-        return pd.DataFrame({'x':[value]})
+        return pd.DataFrame({'x': [value]})
 
 def test_cached_object_with_tempfile():
     """
@@ -63,7 +63,7 @@ def test_cached_dataframe_with_tempfile():
 
 def test_cached_dataframe_returns_correct_type():
     def make_a_dataframe():
-        return pd.DataFrame({'x' : [0,1,2]})
+        return pd.DataFrame({'x': [0, 1, 2]})
     with tempfile.NamedTemporaryFile(suffix='.csv') as f:
         # call repeatedly to test the cold and hot cache logic
         for _ in range(2):
@@ -74,7 +74,7 @@ def test_cached_dataframe_returns_correct_type():
 
 def test_cached_object_with_list_returns_correct_type():
     def make_a_list():
-        return [1,2,3]
+        return [1, 2, 3]
     with tempfile.NamedTemporaryFile() as f:
         # call repeatedly to test the cold and hot cache logic
         for _ in range(2):
@@ -89,4 +89,4 @@ def test_dataframe_path_must_be_csv():
     # end with .csv extension
     compute_cache.cached_dataframe(
         csv_path="tempfile_not_csv",
-        compute_fn=lambda _:  pd.DataFrame({'x':[]}))
+        compute_fn=lambda _: pd.DataFrame({'x': []}))
