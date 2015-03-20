@@ -14,9 +14,10 @@
 
 
 from __future__ import print_function, division, absolute_import
+from os import remove
 from os.path import join, exists, split
 
-import pyfaidx
+from Bio import SeqIO
 import datacache
 
 from .common import CACHE_SUBDIR
@@ -67,14 +68,11 @@ class ReferenceTranscripts(object):
         # dictionary mapping transcript IDs to cDNA sequences
         self._transcript_sequences = {}
 
-        # pyfaidx Fasta dictionary gets lazily constructed
-        # since we only want to download the Fasta file if/when
-        # we use it
+        # SeqIO.index_db gets lazily constructed since we only want to download
+        # the Fasta file if/when we use it
         self._fasta_dictionary = None
 
         # key set for fasta dictionary, for faster membership tests,
-        # pyfaidx does something upsettingly slow in its __contains__
-        # method, see comment on `transcript_sequence`.
         self._fasta_keys = None
 
     def __str__(self):
@@ -85,11 +83,8 @@ class ReferenceTranscripts(object):
         return str(self)
 
     def __contains__(self, transcript_id):
-        # the pyfaidx __contains__ method requires an expensive list traversal
-        # so cache the keys as a set for faster membership checks
         if self._fasta_keys is None:
-            keys = list(self.fasta_dictionary.keys())
-            self._fasta_keys = set(keys)
+            self._fasta_keys = set(self.fasta_dictionary.keys())
         return transcript_id in self._fasta_keys
 
     def __eq__(self, other):
@@ -98,9 +93,6 @@ class ReferenceTranscripts(object):
             self.release == other.release and
             self.species == other.species and
             self.server == other.server)
-
-    def clear_cache(self):
-        self.cache.delete_all()
 
     @property
     def local_fasta_path(self):
@@ -134,34 +126,16 @@ class ReferenceTranscripts(object):
     def local_filename(self):
         return split(self.local_fasta_path)[1]
 
-    @property
-    def fasta_dictionary(self):
-        if not self._fasta_dictionary:
-            self._fasta_dictionary = pyfaidx.Fasta(self.local_fasta_path)
-        return self._fasta_dictionary
-
     def transcript_sequence(self, transcript_id):
         if transcript_id not in self._transcript_sequences:
             if not transcript_id.startswith("ENST"):
                 raise ValueError("Invalid transcript ID: %s" % (transcript_id,))
 
-            # the __getitem__ on pyfaidx.Fasta does a list copy and
-            # traversal to check whether the transcript ID is valid,
-            # much faster if by-pass this logic with our own key membershop
-            # check and then construct the FastaRecord ourselves.
-            #
-            # Example speedup: previously 24s, now 3s annotating 311 transcripts
-            if transcript_id not in self:
+            seq_record = self.fasta_dictionary.get(transcript_id)
+            if seq_record is None:
                 raise ValueError(
                     "Transcript ID not found: %s" % (transcript_id,))
-
-            fasta_record = pyfaidx.FastaRecord(
-                transcript_id, self.fasta_dictionary)
-
-            # FastaRecord doesn't seem to have an accessor to get the full
-            # sequence (only subsequences), so slice out the full string
-            seq = fasta_record[:len(fasta_record)]
-            self._transcript_sequences[transcript_id] = seq
+            self._transcript_sequences[transcript_id] = seq_record.seq
         return self._transcript_sequences[transcript_id]
 
     def download_transcript_sequences(self, force=False):
@@ -179,6 +153,10 @@ class ReferenceTranscripts(object):
                          self.fasta_decompress, force=force)
         return True
 
+    @property
+    def local_database_path(self):
+        return self.local_fasta_path + ".db"
+
     def index(self, force=False):
         """
         Perform pyfaidx indexing if it's not already done. If `force`
@@ -190,9 +168,19 @@ class ReferenceTranscripts(object):
         """
         # This local_fasta_path property access will raise an error
         # if the necessary data is not yet downloaded
-        if exists(self.local_fasta_path + '.fai') and not force:
-            return False
-        fasta = pyfaidx.Fasta(self.local_fasta_path)
-        fasta.faidx.write_fai()
-        self._fasta_dictionary = fasta
-        return True
+        if exists(self.local_database_path):
+            if force:
+                remove(self.local_database_path)
+            else:
+                return None
+        self._fasta_dictionary = SeqIO.index_db(
+            self.local_database_path,
+            self.local_fasta_path,
+            "fasta")
+        return self._fasta_dictionary
+
+    @property
+    def fasta_dictionary(self):
+        if not self._fasta_dictionary:
+            self.index()
+        return self._fasta_dictionary

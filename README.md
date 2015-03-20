@@ -27,7 +27,7 @@ pip install pyensembl
 ```
 
 This should also install any required packages, such as [datacache](https://github.com/hammerlab/datacache) and
-[pyfaidx](https://pypi.python.org/pypi/pyfaidx).
+[BioPython](???).
 
 Before using PyEnsembl, run the following command to download and install
 Ensembl data:

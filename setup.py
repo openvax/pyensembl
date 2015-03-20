@@ -65,7 +65,7 @@ if __name__ == '__main__':
             "numpy>=1.7",
             "pandas>=0.13.1",
             "datacache>=0.4.11",
-            "pyfaidx>=0.3.4",
+            "biopython>=1.65",
             "memoized-property>=1.0.2",
             "mock>=1.0.1",
         ],
