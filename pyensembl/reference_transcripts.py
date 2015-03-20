@@ -16,6 +16,7 @@
 from __future__ import print_function, division, absolute_import
 from os import remove
 from os.path import join, exists, split
+import logging
 
 from Bio import SeqIO
 import datacache
@@ -179,6 +180,9 @@ class ReferenceTranscripts(object):
         # if the necessary data is not yet downloaded
         if exists(self.local_database_path):
             if force:
+                logging.info(
+                    "Deleting existing transcript database: %s",
+                    self.local_database_path)
                 remove(self.local_database_path)
             else:
                 # try opening the existing FASTA database, if it fails then
@@ -190,6 +194,11 @@ class ReferenceTranscripts(object):
                     # if there was an error opening the database
                     # delete the version we have and try again
                     if "database" in e.message:
+                        logging.warn(
+                            ("Recreating transcript database %s"
+                             " due to error: %s"),
+                            self.local_database_path,
+                            e.message)
                         remove(self.local_database_path)
                     else:
                         raise
