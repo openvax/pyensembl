@@ -148,39 +148,37 @@ class EnsemblRelease(object):
         Explicitely download and index any data for this release that
         is not yet downloaded and/or indexed.
         """
-        self._download(force=False)
-        self._index(force=False)
+        self.download(force=False)
+        self.index(force=False)
 
-    def index(self):
+    def index(self, force=True):
         """
-        Explicitely index all data for this release, regardless of
-        whether it is already indexed. Raises an error if data is
-        not downloaded.
-        """
-        self._index(force=True)
+        Create databases and indices for all data for this release
 
-    def _index(self, force):
+        Parameters
+        ----------
+        force : bool
+            Recreate databases even if already indexed (default = True)
+
+        Raises an error if data is not downloaded.
+        """
         if self.db.create(force=force):
             logging.info("Annotation data for release %s has just "
                          "been indexed" % self.release)
         else:
             logging.info("Annotation data for release %s is already "
                          "indexed" % self.release)
-        if self.reference.index(force=force):
-            logging.info("Transcript sequence data for release %s "
-                         "has just been indexed" % self.release)
-        else:
-            logging.info("Transcript sequence data for release %s is "
-                         "already indexed" % self.release)
+        self.reference.index(force=force)
 
-    def download(self):
+    def download(self, force=True):
         """
-        Explicitely download all data for this release, regardless of
-        whether it is already downloaded.
-        """
-        self._download(force=True)
+        Download all data for this release.
 
-    def _download(self, force):
+        Parameters
+        ----------
+        force : bool
+            Download data even if we already have a local copy.
+        """
         if self.gtf.download(force=force):
             logging.info("Annotation data for release %s has just "
                          "been downloaded" % self.release)

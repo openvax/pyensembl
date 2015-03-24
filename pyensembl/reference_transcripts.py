@@ -167,12 +167,16 @@ class ReferenceTranscripts(object):
             self.local_fasta_path,
             "fasta")
 
-    def index(self, force=False):
+    def index(self, force=True):
         """
-        Perform pyfaidx indexing if it's not already done. If `force`
-        is True, always re-index.
+        Create a database mapping transcript IDs to sequences.
 
-        Returns True if the index was re-created.
+        Parameters
+        -----------
+        force : bool
+            Recreate database even if it already exists
+
+        Returns a dict-like object for looking up transcript sequences.
 
         Raises an error if the necessary data is not yet downloaded.
         """
