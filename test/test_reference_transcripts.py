@@ -36,7 +36,7 @@ def test_transcript_sequence_ensembl54():
     assert str(seq) == full_transcript_sequence
 
     # make sure the Sequence object's reverse and complement properties work
-    reverse_complement = seq.complement
+    reverse_complement = seq.complement()
     reverse_complement_lines = [
         "GAAAAACATTATTTTTTTATGCTGAAAAGATACACATATATTTAGAGTTAGCCAGCTGGACTCAGTTTA",
         "GGTGATCCCAATTTTGTTACAACATCGAAAGCATCATAATCAGGAGCAAGTCGAACATATGCCTTGTTC",
@@ -46,5 +46,5 @@ def test_transcript_sequence_ensembl54():
         "CTCTTCCGAGGATATCTGGGCTGCCTCCGGAGTCGCAGTGTCTTGGGCCGCCTGAAGGTGGGTGACATG"
     ]
     reverse_complement = "".join(reverse_complement_lines)
-    assert len(seq.reverse.complement) == 414
-    assert str(seq.reverse.complement) == reverse_complement
+    assert len(seq.reverse_complement()) == 414
+    assert str(seq.reverse_complement()) == reverse_complement

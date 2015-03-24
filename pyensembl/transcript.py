@@ -385,14 +385,9 @@ class Transcript(Locus):
         Spliced cDNA sequence of transcript
         (includes 5' UTR, coding sequence, and 3' UTR)
         """
-        try:
-            # fetch this transcript's Sequence from the attached
-            # ReferenceTranscripts object
-            return self.reference.transcript_sequence(self.id)
-        except KeyError:
-            raise ValueError(
-                "No sequence for transcript %s in reference %s" % (
-                    self.id, self.reference))
+        return self.reference.transcript_sequence(
+            self.id,
+            return_none_if_missing=True)
 
     @memoized_property
     def first_start_codon_spliced_offset(self):
