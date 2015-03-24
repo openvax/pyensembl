@@ -10,7 +10,6 @@ from pyensembl import EnsemblRelease
 # for example, about _test_db_index not being called with the
 # mock_index parameter.
 
-
 @patch('pyensembl.reference_transcripts.ReferenceTranscripts.index')
 def _test_db_index(mock_index, db_exists):
     """
@@ -23,8 +22,7 @@ def _test_db_index(mock_index, db_exists):
     data = EnsemblRelease(54)
     data.db._connect_if_exists = Mock(return_value=db_exists)
     data.db._create_database = Mock()
-
-    data._index(force=False)
+    data.index(force=False)
 
     return data.db._create_database.called
 
@@ -32,11 +30,9 @@ def test_db_not_exists_index():
     called = _test_db_index(db_exists=False)
     assert called, "Expected a new database"
 
-
 def test_db_exists_index():
     called = _test_db_index(db_exists=True)
     assert not called, "Expected no new database"
-
 
 def test_auto_download_off():
     data = EnsemblRelease(54)

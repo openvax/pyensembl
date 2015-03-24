@@ -176,9 +176,10 @@ class ReferenceTranscripts(object):
         force : bool
             Recreate database even if it already exists
 
-        Returns a dict-like object for looking up transcript sequences.
-
         Raises an error if the necessary data is not yet downloaded.
+
+        If no error is raised, then after call self._fasta_dictionary
+        should be populated.
         """
         # This local_fasta_path property access will raise an error
         # if the necessary data is not yet downloaded
@@ -194,6 +195,7 @@ class ReferenceTranscripts(object):
                 # below
                 try:
                     self._fasta_dictionary = self._create_or_open_fasta_db()
+                    return
                 except ValueError as e:
                     # if there was an error opening the database
                     # delete the version we have and try again
@@ -206,9 +208,8 @@ class ReferenceTranscripts(object):
                         remove(self.local_database_path)
                     else:
                         raise
-        else:
-            self._fasta_dictionary = self._create_or_open_fasta_db()
-        return self._fasta_dictionary
+        # if database didn't exist or was incomplete, create it now
+        self._fasta_dictionary = self._create_or_open_fasta_db()
 
     @property
     def fasta_dictionary(self):
