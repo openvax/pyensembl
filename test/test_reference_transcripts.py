@@ -8,7 +8,7 @@ from __future__ import absolute_import
 from pyensembl import EnsemblRelease
 
 def test_reference_name():
-    reference54 = EnsemblRelease(release=54).reference
+    reference54 = EnsemblRelease(release=54)
     assert reference54.reference_name == "NCBI36"
 
     reference75 = EnsemblRelease(release=75).reference
@@ -19,7 +19,7 @@ def test_reference_name():
 
 def test_transcript_sequence_ensembl54():
     reference54 = EnsemblRelease(release=54,
-                                 auto_download=True).reference
+                                 auto_download=True)
     seq = reference54.transcript_sequence("ENST00000321606")
     assert len(seq) == 414, \
         "Expected transcript ENST00000321606 to have 414nt, got %s : %d" % (

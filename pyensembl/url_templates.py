@@ -102,7 +102,7 @@ def gtf_url_parts(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
 FASTA_DNA_CHROMOSOME_FILENAME_TEMPLATE = \
     "%(Species)s.%(reference)s.%(release)d.%(sequence_type)s.chromosome.%(contig)s.fa.gz"
 
-def fasta_dna_url_parts(
+def fasta_dna_url(
         ensembl_release,
         species,
         contig,
@@ -128,7 +128,7 @@ def fasta_dna_url_parts(
         "sequence_type": "dna",
         "contig": contig
     }
-    return server_sequence_subdir, filename
+    return join(server_sequence_subdir, filename)
 
 
 # DNA fasta file for releases before (and including) Ensembl 75
@@ -141,14 +141,11 @@ OLD_FASTA_CDNA_FILENAME_TEMPLATE = \
 NEW_FASTA_CDNA_FILENAME_TEMPLATE = \
     "%(Species)s.%(reference)s.%(sequence_type)s.all.fa.gz"
 
-def fasta_cdna_url_parts(
+def fasta_cdna_url(
         ensembl_release,
         species,
         server=ENSEMBL_FTP_SERVER):
-    """
-    Construct URL to FASTA file with cDNA sequences of each transcript.
-    Returns server_url/subdir and filename as tuple result.
-    """
+    """Construct URL to FASTA file with cDNA sequences of each transcript"""
     ensembl_release, species, reference_name = _normalize_release_properties(
         ensembl_release, species)
     subdir = _species_subdir(
@@ -172,4 +169,4 @@ def fasta_cdna_url_parts(
             "reference": reference_name,
             "sequence_type": "cdna",
         }
-    return server_sequence_subdir, filename
+    return join(server_sequence_subdir, filename)

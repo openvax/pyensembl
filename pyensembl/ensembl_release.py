@@ -29,10 +29,10 @@ from .database import Database
 from .exon import Exon
 from .gene import Gene
 from .gtf import GTF
-from .reference_transcripts import ReferenceTranscripts
 from .release_info import check_release_number, MAX_ENSEMBL_RELEASE
+from .sequence_data import SequenceData
 from .transcript import Transcript
-from .url_templates import ENSEMBL_FTP_SERVER
+from .url_templates import ENSEMBL_FTP_SERVER, fasta_cdna_url, fasta_protein_url
 
 
 class EnsemblRelease(object):
@@ -50,21 +50,44 @@ class EnsemblRelease(object):
         self.species = "homo_sapiens"
         self.server = server
         self.auto_download = auto_download
+
         self.gtf = GTF(self.release, self.species, server,
                        auto_download=auto_download)
         self.db = Database(gtf=self.gtf, auto_download=auto_download)
-        self.reference = ReferenceTranscripts(
+
+        # get the URL for the cDNA FASTA file containing
+        # this releases's transcript sequences
+        transcript_sequences_fasta_url = fasta_cdna_url(
+                ensembl_release=self.release,
+                species=self.species,
+                server=self.server)
+        self.transcript_sequences = SequenceData(
+            ensembl_release=self.release,
+            fasta_url=transcript_sequences_fasta_url,
+            auto_download=auto_download)
+
+        protein_sequences_fasta_url = fasta_protein_url(
             ensembl_release=self.release,
             species=self.species,
-            server=server,
+            server=self.server)
+        self.protein_sequences = SequenceData(
+            ensembl_release=self.release,
+            fasta_url=protein_sequences_fasta_url,
             auto_download=auto_download)
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
 
     def __str__(self):
-        return "EnsemblRelease(release=%d, gtf_url='%s', fasta_url='%s')" % (
-            self.release, self.gtf.url, self.reference.url)
+        return (
+            "EnsemblRelease("
+            "release=%d, "
+            "gtf_url='%s', "
+            "cdna_url='%s')" % (
+                self.release,
+                self.gtf.url,
+                self.transcript_sequences.url,
+                self.protein_sequences.url))
 
     def __repr__(self):
         return str(self)
@@ -162,13 +185,25 @@ class EnsemblRelease(object):
 
         Raises an error if data is not downloaded.
         """
-        if self.db.create(force=force):
-            logging.info("Annotation data for release %s has just "
-                         "been indexed" % self.release)
-        else:
-            logging.info("Annotation data for release %s is already "
-                         "indexed" % self.release)
-        self.reference.index(force=force)
+        self.db.create(force=force)
+        self.transcript_sequences.index(force=force)
+        self.protein_sequences.index(force=force)
+
+    def transcript_sequence(self, transcript_id):
+        """Return cDNA nucleotide sequence of transcript, or None if
+        transcript doesn't cDNA sequence.
+        """
+        if not transcript_id.startswith("ENST"):
+            raise ValueError("Invalid transcript ID '%s'" % transcript_id)
+        return self.transcript_sequences.get(transcript_id)
+
+    def protein_sequence(self, protein_id):
+        """Return cDNA nucleotide sequence of transcript, or None if
+        transcript doesn't cDNA sequence.
+        """
+        if not protein_id.startswith("ENSP"):
+            raise ValueError("Invalid protein ID '%s'" % protein_id)
+        return self.transcript_sequences.get(protein_id)
 
     def download(self, force=True):
         """
@@ -179,18 +214,9 @@ class EnsemblRelease(object):
         force : bool
             Download data even if we already have a local copy.
         """
-        if self.gtf.download(force=force):
-            logging.info("Annotation data for release %s has just "
-                         "been downloaded" % self.release)
-        else:
-            logging.info("Annotation data for release %s is already "
-                         "downloaded" % self.release)
-        if self.reference.download_transcript_sequences(force=force):
-            logging.info("Transcript sequence data for release %s "
-                         "has just been downloaded" % self.release)
-        else:
-            logging.info("Transcript sequence data for release %s is "
-                         "already downloaded" % self.release)
+        self.gtf.download(force=force)
+        self.transcript_sequences.download(force=force)
+        self.protein_sequences.download(force=force)
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
         gene_ids = self.gene_ids_at_locus(
@@ -332,7 +358,11 @@ class EnsemblRelease(object):
         """
         Construct a Gene object for the given gene ID.
         """
-        return Gene(gene_id, self.db, self.reference)
+        return Gene(
+            gene_id,
+            self.db,
+            self.transcript_sequences,
+            self.protein_sequences)
 
     def genes_by_name(self, gene_name):
         """
@@ -456,12 +486,12 @@ class EnsemblRelease(object):
         """
         transcript_ids = self.transcript_ids(contig=contig, strand=strand)
         return [
-            Transcript(transcript_id, self.db, self.reference)
+            Transcript(transcript_id, self.db, self.transcript_sequences)
             for transcript_id in transcript_ids
         ]
 
     def transcript_by_id(self, transcript_id):
-        return Transcript(transcript_id, self.db, self.reference)
+        return Transcript(transcript_id, self.db, self.transcript_sequences)
 
     def transcripts_by_name(self, transcript_name):
         transcript_ids = self.transcript_ids_of_transcript_name(transcript_name)

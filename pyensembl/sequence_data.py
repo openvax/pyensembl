@@ -15,59 +15,54 @@
 
 from __future__ import print_function, division, absolute_import
 from os import remove
-from os.path import join, exists, split
+from os.path import exists, split
 import logging
 
 from Bio import SeqIO
 import datacache
 
 from .common import CACHE_SUBDIR
-from .release_info import which_human_reference_name, check_release_number
-from .url_templates import ENSEMBL_FTP_SERVER, fasta_cdna_url_parts
+from .release_info import check_release_number
 
 
-class ReferenceTranscripts(object):
-    """
-    Container for reference genome sequenes. Downloads and caches reference
-    FASTA files.
-    Currently only supports (unspliced) transcript sequences.
+class SequenceData(object):
+    """Container for reference nucleotide and amino acid sequenes.
 
-    TODO: Access introns and intergenic regions by also downloading
-    the *.dna.fa.gz FASTA files. Should rename class to Reference when
-    this gets implemented.
+    Downloads and caches FASTA file, creates database mapping
+    identifiers to sequences.
     """
     def __init__(
             self,
             ensembl_release,
-            species="homo_sapiens",
-            server=ENSEMBL_FTP_SERVER,
+            fasta_url,
             auto_download=False):
 
         # download cache for fetching reference FASTA files
         self.cache = datacache.Cache(CACHE_SUBDIR)
         self.auto_download = auto_download
-
         self.release = check_release_number(ensembl_release)
-
-        assert species == "homo_sapiens", \
-            "Species other than human not supported: %s" % (species,)
-        self.reference_name = which_human_reference_name(ensembl_release)
-        assert species == "homo_sapiens", \
-            "Species %s not currently supported" % (species,)
-        self.species = species
-
-        self.server = server
-
+        # expect the remote FASTA file to be gzipped and the local needs
+        # to be a decompressed text file
         self.fasta_decompress = True
-        reference_url_dir, reference_filename = fasta_cdna_url_parts(
-            ensembl_release=self.release,
-            species=self.species,
-            server=server)
-        self.remote_filename = reference_filename
-        self.url = join(reference_url_dir, reference_filename)
+        self.url = fasta_url
+        self.remote_filename = split(self.url)[1]
 
-        # dictionary mapping transcript IDs to cDNA sequences
-        self._transcript_sequences = {}
+        # need to add the release to the local filename since some Ensembl
+        # releases only have the genome name in the FASTA filename but still
+        # differ subtly between releases. For example, a transcript ID may be
+        # missing in Ensembl 75 but present in 76, though both have the same
+        # FASTA filename)
+        filename_parts = self.remote_filename.split(".fa.")
+        assert len(filename_parts) == 2, \
+            "Expected remote filename %s to contain '.fa.gz'" % (
+                self.remote_filename,)
+        self.local_filename = "".join([
+            filename_parts[0],
+            ".ensembl%d.fa." % ensembl_release,
+            filename_parts[1]])
+
+        # dictionary mapping IDs to sequences
+        self._sequence_cache = {}
 
         # SeqIO.index_db gets lazily constructed since we only want to download
         # the Fasta file if/when we use it
@@ -77,23 +72,24 @@ class ReferenceTranscripts(object):
         self._fasta_keys = None
 
     def __str__(self):
-        return "ReferenceTranscripts(release=%s, species=%s, filename=%s)" % (
-            self.release, self.species, self.remote_filename)
+        return "SequenceData(ensembl_release=%d, url=%s, local_path=%s)" % (
+            self.release,
+            self.url,
+            self.local_fasta_path)
 
     def __repr__(self):
         return str(self)
 
-    def __contains__(self, transcript_id):
+    def __contains__(self, sequence_id):
         if self._fasta_keys is None:
             self._fasta_keys = set(self.fasta_dictionary.keys())
-        return transcript_id in self._fasta_keys
+        return sequence_id in self._fasta_keys
 
     def __eq__(self, other):
         return (
-            isinstance(other, ReferenceTranscripts) and
-            self.release == other.release and
-            self.species == other.species and
-            self.server == other.server)
+            isinstance(other, SequenceData) and
+            self.url == other.url and
+            self.local_fasta_path == other.local_fasta_path)
 
     @property
     def local_fasta_path(self):
@@ -105,17 +101,12 @@ class ReferenceTranscripts(object):
         # If the fasta is already cached, fetching it won't initiate a
         # download. But it's always okay to initiate a download if
         # auto download is enabled.
-        if (self.cache.exists(
-                self.url,
-                self.remote_filename,
-                self.fasta_decompress) or self.auto_download):
+        if self.local_file_exists() or self.auto_download:
             # Does a download if the cache is empty.
-            return self.cache.fetch(self.url,
-                                    self.remote_filename,
-                                    self.fasta_decompress)
-        raise ValueError("Ensembl transcript data is not currently "
+            return self._fetch(force=False)
+        raise ValueError("Ensembl sequence data is not currently "
                          "installed for release %s. Run "
-                         "\"pyensembl install %s\" or call "
+                         "\"pyensembl install --relase %s\" or call "
                          "EnsemblRelease(%s).install()" %
                          ((self.release,) * 3))
 
@@ -123,37 +114,34 @@ class ReferenceTranscripts(object):
     def local_dir(self):
         return split(self.local_fasta_path)[0]
 
-    @property
-    def local_filename(self):
-        return split(self.local_fasta_path)[1]
+    def local_file_exists(self):
+        return self.cache.exists(
+                self.url,
+                filename=self.local_filename,
+                decompress=self.fasta_decompress)
 
-    def transcript_sequence(self, transcript_id, return_none_if_missing=True):
-        if transcript_id not in self._transcript_sequences:
-            if not transcript_id.startswith("ENST"):
-                raise ValueError("Invalid transcript ID: %s" % (transcript_id,))
+    def _fetch(self, force):
+        """Download file from remote URL if not present or if force=True
 
-            seq_record = self.fasta_dictionary.get(transcript_id)
-            if seq_record is None:
-                if return_none_if_missing:
-                    return None
-                raise ValueError(
-                    "Transcript ID not found: %s" % (transcript_id,))
-            self._transcript_sequences[transcript_id] = seq_record.seq
-        return self._transcript_sequences[transcript_id]
-
-    def download_transcript_sequences(self, force=False):
+        Return local path
         """
-        Download the FASTA file if one does not exist. If `force` is
-        True, overwrites any existing file.
+        return self.cache.fetch(
+            url=self.url,
+            filename=self.remote_filename,
+            decompress=self.fasta_decompress,
+            force=force)
+
+    def download(self, force=False):
+        """Download the FASTA file if one does not exist.
+
+        If `force` is True, overwrites any existing file.
 
         Returns True if a download happened.
         """
-        if not force and self.cache.exists(self.url,
-                                           self.remote_filename,
-                                           self.fasta_decompress):
-            return False
-        self.cache.fetch(self.url, self.remote_filename,
-                         self.fasta_decompress, force=force)
+        if self.local_file_exists():
+            if not force:
+                return False
+        self._fetch(force=force)
         return True
 
     @property
@@ -168,8 +156,7 @@ class ReferenceTranscripts(object):
             "fasta")
 
     def index(self, force=True):
-        """
-        Create a database mapping transcript IDs to sequences.
+        """Create a database mapping transcript IDs to sequences.
 
         Parameters
         -----------
@@ -186,7 +173,7 @@ class ReferenceTranscripts(object):
         if exists(self.local_database_path):
             if force:
                 logging.info(
-                    "Deleting existing transcript database: %s",
+                    "Deleting existing sequence database: %s",
                     self.local_database_path)
                 remove(self.local_database_path)
             else:
@@ -215,6 +202,19 @@ class ReferenceTranscripts(object):
     def fasta_dictionary(self):
         if self._fasta_dictionary is None:
             # should populate self._fasta_dictionary with a database
-            # backed dictionary of reference transcript sequences
+            # backed dictionary of reference sequences
             self.index()
         return self._fasta_dictionary
+
+    def get(self, sequence_id):
+        """Get sequence associated with given ID or return None if missing"""
+
+        if sequence_id not in self._sequence_cache:
+            # all Ensembl identifiers start with ENS e.g. ENST, ENSP, ENSE
+            if not sequence_id.startswith("ENS"):
+                raise ValueError("Invalid sequence ID: %s" % (sequence_id,))
+
+            # get sequence from database
+            seq = self.fasta_dictionary.get(sequence_id)
+            self._sequence_cache[sequence_id] = seq
+        return self._sequence_cache[sequence_id]
