@@ -15,7 +15,7 @@
 from __future__ import print_function, division, absolute_import
 
 MIN_ENSEMBL_RELEASE = 48
-MAX_ENSEMBL_RELEASE = 78
+MAX_ENSEMBL_RELEASE = 79
 
 def check_release_number(release):
     """

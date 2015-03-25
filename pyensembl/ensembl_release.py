@@ -220,7 +220,7 @@ class EnsemblRelease(object):
         transcript doesn't cDNA sequence.
         """
         require_human_protein_id(protein_id)
-        return self.transcript_sequences.get(protein_id)
+        return self.protein_sequences.get(protein_id)
 
     def download(self, force=True):
         """
