@@ -21,6 +21,7 @@ def normalize_chromosome(c):
         if c == 0:
             raise ValueError("Contig cannot be 0")
         c = str(c)
+
     require_string(c, "contig name", nonempty=True)
 
     # only strip off lowercase chr since some of the non-chromosomal contigs
@@ -40,15 +41,14 @@ def normalize_chromosome(c):
         return c
 
 def normalize_strand(strand):
-    if strand == 1:
+    if strand == "+" or strand == "-":
+        return strand
+    elif strand == 1:
         return "+"
     elif strand == -1:
         return "-"
 
-    require_string(strand, "strand", nonempty=True)
-    if len(strand) > 1:
-        raise ValueError("Invalid strand: %s" % (strand,))
-    return strand
+    raise ValueError("Invalid strand: %s" % (strand,))
 
 class Locus(object):
     """

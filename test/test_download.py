@@ -10,7 +10,7 @@ from pyensembl import EnsemblRelease
 # for example, about _test_db_index not being called with the
 # mock_index parameter.
 
-@patch('pyensembl.reference_transcripts.ReferenceTranscripts.index')
+@patch('pyensembl.sequence_data.SequenceData.index')
 def _test_db_index(mock_index, db_exists):
     """
     Return True if the GTF database gets created, which should

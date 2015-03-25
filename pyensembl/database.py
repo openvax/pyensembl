@@ -16,11 +16,12 @@ from __future__ import print_function, division, absolute_import
 
 import logging
 from os.path import join, exists
+import sqlite3
 
 import datacache
 from typechecks import require_integer, require_string
 
-from .common import CACHE_SUBDIR
+from .common import CACHE_SUBDIR, memoize
 from .locus import normalize_chromosome, normalize_strand, Locus
 
 # any time we update the database schema, increment this version number
@@ -223,11 +224,13 @@ class Database(object):
                          '"EnsemblRelease(%s).install()"' %
                          ((self.gtf.release,) * 3))
 
+    @memoize
     def columns(self, table_name):
         sql = "PRAGMA table_info(%s)" % table_name
         table_info = self.connection.execute(sql).fetchall()
         return [info[1] for info in table_info]
 
+    @memoize
     def column_exists(self, table_name, column_name):
         return column_name in self.columns(table_name)
 
@@ -341,8 +344,26 @@ class Database(object):
         """
         Given an arbitrary SQL query, run it against the Ensembl database
         and return the results.
+
+        Parameters
+        ----------
+        sql : str
+            SQL query
+
+        required : bool
+            Raise an error if no results found in the database
+
+        query_params : list
+            For each '?' in the query there must be a corresponding value in
+            this list.
         """
-        cursor = self.connection.execute(sql, query_params)
+        try:
+            cursor = self.connection.execute(sql, query_params)
+        except sqlite3.OperationalError as e:
+            logging.warn(
+                "Encountered error \"%s\" from query \"%s\" with parameters %s",
+                e.message, sql, query_params)
+            raise
         results = cursor.fetchall()
         if required and not results:
             raise ValueError(
@@ -392,7 +413,11 @@ class Database(object):
             required=required)
 
         if len(results) == 0:
-            raise ValueError("%s not found: %s" % (filter_column, filter_value))
+            if required:
+                raise ValueError("%s not found: %s" % (
+                    filter_column, filter_value))
+            else:
+                return None
         elif len(results) > 1:
             raise ValueError(
                 "Found multiple entries with %s=%s (%s)" % (

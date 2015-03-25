@@ -26,9 +26,7 @@ def find_nearest_locus(start, end, loci):
     best_locus = None
     for locus in loci:
         distance = locus.distance_to_interval(start, end)
-
         if best_distance > distance:
             best_distance = distance
             best_locus = locus
-
     return best_distance, best_locus

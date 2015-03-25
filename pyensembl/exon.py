@@ -15,7 +15,9 @@
 from __future__ import print_function, division, absolute_import
 
 from typechecks import require_integer, require_string
+from memoized_property import memoized_property
 
+from .common import memoize
 from .locus import Locus
 
 class Exon(Locus):
@@ -65,6 +67,7 @@ class Exon(Locus):
     # possible annotations associated with exons
     _EXON_FEATURES = {'start_codon', 'stop_codon', 'UTR', 'CDS'}
 
+    @memoize
     def _exon_feature_positions(self, feature):
         """
         Find start and end positions of features (such as start codons)
@@ -100,14 +103,14 @@ class Exon(Locus):
             require_integer(end, "end position")
         return results
 
-    @property
+    @memoized_property
     def start_codon_positions(self):
         """
         Absolute positions of overlapping start codons.
         """
         return self._exon_feature_positions('start_codon')
 
-    @property
+    @memoized_property
     def stop_codon_positions(self):
         """
         Absolute positions of overlapping stop codons.
@@ -118,6 +121,7 @@ class Exon(Locus):
         relative_start, relative_end = self.offset_range(start, end)
         return min(relative_start, relative_end)
 
+    @memoize
     def _exon_feature_offsets(self, feature):
         """
         Start and end offsets (relative to this exon) of features such as
@@ -131,7 +135,7 @@ class Exon(Locus):
             results.append(local_position)
         return results
 
-    @property
+    @memoized_property
     def start_codon_offsets(self):
         """
         How many bases from the beginning of the exon (starting from 0)
@@ -139,7 +143,7 @@ class Exon(Locus):
         """
         return self._exon_feature_offsets('start_codon')
 
-    @property
+    @memoized_property
     def stop_codon_offsets(self):
         """
         How many bases from the beginning of the exon (starting from 0)
@@ -147,18 +151,16 @@ class Exon(Locus):
         """
         return self._exon_feature_offsets('stop_codon')
 
-    @property
+    @memoized_property
     def contains_start_codon(self):
         """
         Does this exon contain a start codon in any transcript?
         """
-        return len(self.start_codon_offsets) > 0
+        return len(self.start_codon_positions) > 0
 
-    @property
+    @memoized_property
     def contains_stop_codon(self):
         """
         Does this exon contain a stop codon in any transcript?
         """
-        return len(self.stop_codon_offsets) > 0
-
-
+        return len(self.stop_codon_positions) > 0

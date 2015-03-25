@@ -23,7 +23,7 @@ from .gtf_parsing import load_gtf_as_dataframe
 from .common import CACHE_SUBDIR
 from .locus import normalize_chromosome, normalize_strand
 from .compute_cache import cached_dataframe, clear_cached_objects
-from .url_templates import ENSEMBL_FTP_SERVER, gtf_url_parts
+from .url_templates import ENSEMBL_FTP_SERVER, gtf_url
 
 
 class GTF(object):
@@ -39,24 +39,20 @@ class GTF(object):
             server=ENSEMBL_FTP_SERVER,
             auto_download=False,
             decompress=True):
-
         self.cache = datacache.Cache(CACHE_SUBDIR)
-
-        self.species = species
         self.release = release
-        self.server = server
-
         self.decompress = decompress
-        gtf_url_dir, gtf_filename = gtf_url_parts(
+        self.url = gtf_url(
             ensembl_release=release,
-            species=self.species,
+            species=species,
             server=server)
-        self.remote_filename = gtf_filename
+
+        self.remote_filename = split(self.url)[1]
+
         assert self.remote_filename.endswith(".gtf.gz"), \
             "Expected remote GTF file %s to end with '.gtf.gz'" % (
                 self.remote_filename,)
 
-        self.url = join(gtf_url_dir, gtf_filename)
         self.auto_download = auto_download
 
         # lazily load DataFrame of all GTF entries if necessary

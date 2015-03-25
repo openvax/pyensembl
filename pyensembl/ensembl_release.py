@@ -24,16 +24,20 @@ import logging
 from os.path import join
 from os import remove
 
+from .common import require_human_transcript_id, require_human_protein_id
 from .compute_cache import cached_object
 from .database import Database
 from .exon import Exon
 from .gene import Gene
 from .gtf import GTF
-from .reference_transcripts import ReferenceTranscripts
-from .release_info import check_release_number, MAX_ENSEMBL_RELEASE
+from .release_info import (
+    check_release_number,
+    MAX_ENSEMBL_RELEASE,
+    which_human_reference_name
+)
+from .sequence_data import SequenceData
 from .transcript import Transcript
-from .url_templates import ENSEMBL_FTP_SERVER
-
+from .url_templates import ENSEMBL_FTP_SERVER, fasta_url
 
 class EnsemblRelease(object):
     """
@@ -46,28 +50,65 @@ class EnsemblRelease(object):
                  release=MAX_ENSEMBL_RELEASE,
                  server=ENSEMBL_FTP_SERVER,
                  auto_download=False):
+
         self.release = check_release_number(release)
         self.species = "homo_sapiens"
         self.server = server
         self.auto_download = auto_download
-        self.gtf = GTF(self.release, self.species, server,
-                       auto_download=auto_download)
+        self.reference_name = which_human_reference_name(self.release)
+
+        # GTF object wraps the source GTF file from which we get
+        # genome annotations for each Ensembl release. Presents access
+        # to each feature annotations as a pandas.DataFrame.
+        self.gtf = GTF(
+            self.release,
+            self.species,
+            server,
+            auto_download=auto_download)
+
+        # Database object turns the GTF dataframes into sqlite3 tables
+        # and wraps them with methods like `query_one`
         self.db = Database(gtf=self.gtf, auto_download=auto_download)
-        self.reference = ReferenceTranscripts(
+
+        # get the URL for the cDNA FASTA file containing
+        # this releases's transcript sequences
+        transcript_sequences_fasta_url = fasta_url(
+                ensembl_release=self.release,
+                species=self.species,
+                sequence_type="cdna",
+                server=self.server)
+        self.transcript_sequences = SequenceData(
+            ensembl_release=self.release,
+            fasta_url=transcript_sequences_fasta_url,
+            auto_download=auto_download)
+
+        protein_sequences_fasta_url = fasta_url(
             ensembl_release=self.release,
             species=self.species,
-            server=server,
+            sequence_type="pep",
+            server=self.server)
+        self.protein_sequences = SequenceData(
+            ensembl_release=self.release,
+            fasta_url=protein_sequences_fasta_url,
             auto_download=auto_download)
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
 
     def __str__(self):
-        return "EnsemblRelease(release=%d, gtf_url='%s', fasta_url='%s')" % (
-            self.release, self.gtf.url, self.reference.url)
+        return "EnsemblRelease(release=%d, species=%s, genome=%s)" % (
+                    self.release,
+                    self.species,
+                    self.reference_name)
 
     def __repr__(self):
         return str(self)
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, EnsemblRelease) and
+            self.release == other.release and
+            self.species == other.species)
 
     def _delete_cached_files(self):
         """
@@ -83,7 +124,8 @@ class EnsemblRelease(object):
 
     def clear_cache(self):
         self.gtf.clear_cache()
-        self.reference.clear_cache()
+        self.transcript_sequences.clear_cache()
+        self.protein_sequences.clear_cache()
         self._delete_cached_files()
 
     def all_feature_values(
@@ -162,13 +204,23 @@ class EnsemblRelease(object):
 
         Raises an error if data is not downloaded.
         """
-        if self.db.create(force=force):
-            logging.info("Annotation data for release %s has just "
-                         "been indexed" % self.release)
-        else:
-            logging.info("Annotation data for release %s is already "
-                         "indexed" % self.release)
-        self.reference.index(force=force)
+        self.db.create(force=force)
+        self.transcript_sequences.index(force=force)
+        self.protein_sequences.index(force=force)
+
+    def transcript_sequence(self, transcript_id):
+        """Return cDNA nucleotide sequence of transcript, or None if
+        transcript doesn't cDNA sequence.
+        """
+        require_human_transcript_id(transcript_id)
+        return self.transcript_sequences.get(transcript_id)
+
+    def protein_sequence(self, protein_id):
+        """Return cDNA nucleotide sequence of transcript, or None if
+        transcript doesn't cDNA sequence.
+        """
+        require_human_protein_id(protein_id)
+        return self.transcript_sequences.get(protein_id)
 
     def download(self, force=True):
         """
@@ -179,18 +231,9 @@ class EnsemblRelease(object):
         force : bool
             Download data even if we already have a local copy.
         """
-        if self.gtf.download(force=force):
-            logging.info("Annotation data for release %s has just "
-                         "been downloaded" % self.release)
-        else:
-            logging.info("Annotation data for release %s is already "
-                         "downloaded" % self.release)
-        if self.reference.download_transcript_sequences(force=force):
-            logging.info("Transcript sequence data for release %s "
-                         "has just been downloaded" % self.release)
-        else:
-            logging.info("Transcript sequence data for release %s is "
-                         "already downloaded" % self.release)
+        self.gtf.download(force=force)
+        self.transcript_sequences.download(force=force)
+        self.protein_sequences.download(force=force)
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
         gene_ids = self.gene_ids_at_locus(
@@ -332,7 +375,7 @@ class EnsemblRelease(object):
         """
         Construct a Gene object for the given gene ID.
         """
-        return Gene(gene_id, self.db, self.reference)
+        return Gene(gene_id, ensembl=self)
 
     def genes_by_name(self, gene_name):
         """
@@ -456,12 +499,12 @@ class EnsemblRelease(object):
         """
         transcript_ids = self.transcript_ids(contig=contig, strand=strand)
         return [
-            Transcript(transcript_id, self.db, self.reference)
+            Transcript(transcript_id, ensembl=self)
             for transcript_id in transcript_ids
         ]
 
     def transcript_by_id(self, transcript_id):
-        return Transcript(transcript_id, self.db, self.reference)
+        return Transcript(transcript_id, ensembl=self)
 
     def transcripts_by_name(self, transcript_name):
         transcript_ids = self.transcript_ids_of_transcript_name(transcript_name)
@@ -626,4 +669,3 @@ class EnsemblRelease(object):
 
     def exon_ids_of_transcript_id(self, transcript_id):
         return self._query_exon_ids('transcript_id', transcript_id)
-

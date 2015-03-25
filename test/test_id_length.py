@@ -1,12 +1,12 @@
 from __future__ import absolute_import
 
-from .test_common import releases
+from .test_common import major_releases
 
 from nose.tools import nottest
 
 @nottest
 def check_id_length(feature_name):
-    for release in releases:
+    for release in major_releases:
         # only load chromosome Y to speed up tests
         df = release.gtf.dataframe(contig="Y")
         assert feature_name in df, \
@@ -34,7 +34,3 @@ def test_transcript_id_length():
 
 def test_protein_id_length():
     check_id_length('protein_id')
-
-
-
-

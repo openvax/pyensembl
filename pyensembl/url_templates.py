@@ -29,7 +29,7 @@ try:
     # Python 3
     # pylint: disable=no-name-in-module
     # When pylinting for Python 2, pylint gets angry:
-    # No name 'parse' in module 'urllib' (no-name-in-module)
+    # No name "parse" in module "urllib" (no-name-in-module)
     from urllib.parse import urljoin
 except ImportError:
     # Python 2
@@ -48,7 +48,7 @@ SPECIES_SUBDIR_TEMPLATE = "/pub/release-%(release)d/%(filetype)s/%(species)s/"
 
 def _species_subdir(
         ensembl_release,
-        species='homo_sapiens',
+        species="homo_sapiens",
         filetype="gtf",
         server=ENSEMBL_FTP_SERVER):
     """
@@ -56,9 +56,9 @@ def _species_subdir(
     but species might be either a common name or latin name.
     """
     return SPECIES_SUBDIR_TEMPLATE % {
-        'release': ensembl_release,
-        'filetype': filetype,
-        'species': species,
+        "release": ensembl_release,
+        "filetype": filetype,
+        "species": species,
     }
 
 def _normalize_release_properties(ensembl_release, species):
@@ -69,14 +69,14 @@ def _normalize_release_properties(ensembl_release, species):
     ensembl_release = check_release_number(ensembl_release)
     species = normalize_species_name(species)
     # TODO: generalize this to species other than human
-    assert species == 'homo_sapiens'
+    assert species == "homo_sapiens"
     reference_name = which_human_reference_name(ensembl_release)
     return ensembl_release, species, reference_name
 
 # GTF annotation file example: Homo_sapiens.GTCh38.gtf.gz
 GTF_FILENAME_TEMPLATE = "%(Species)s.%(reference)s.%(release)d.gtf.gz"
 
-def gtf_url_parts(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
+def gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
     """
     Returns a URL and a filename, which can be joined together.
     """
@@ -92,17 +92,17 @@ def gtf_url_parts(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
     url_subdir = urljoin(server, subdir)
 
     filename = GTF_FILENAME_TEMPLATE % {
-        'Species': species.capitalize(),
-        'reference': reference_name,
-        'release': ensembl_release,
+        "Species": species.capitalize(),
+        "reference": reference_name,
+        "release": ensembl_release,
     }
-    return url_subdir, filename
+    return join(url_subdir, filename)
 
 # DNA fasta file example: Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz
 FASTA_DNA_CHROMOSOME_FILENAME_TEMPLATE = \
     "%(Species)s.%(reference)s.%(release)d.%(sequence_type)s.chromosome.%(contig)s.fa.gz"
 
-def fasta_dna_url_parts(
+def fasta_dna_url(
         ensembl_release,
         species,
         contig,
@@ -120,7 +120,7 @@ def fasta_dna_url_parts(
         server=server,)
     server_subdir = urljoin(server, subdir)
 
-    server_sequence_subdir = join(server_subdir, 'dna')
+    server_sequence_subdir = join(server_subdir, "dna")
     filename = FASTA_DNA_CHROMOSOME_FILENAME_TEMPLATE % {
         "Species": species.capitalize(),
         "reference": reference_name,
@@ -128,26 +128,30 @@ def fasta_dna_url_parts(
         "sequence_type": "dna",
         "contig": contig
     }
-    return server_sequence_subdir, filename
+    return join(server_sequence_subdir, filename)
 
 
-# DNA fasta file for releases before (and including) Ensembl 75
+# cDNA & protein FASTA file for releases before (and including) Ensembl 75
 # example: Homo_sapiens.NCBI36.54.cdna.all.fa.gz
-OLD_FASTA_CDNA_FILENAME_TEMPLATE = \
+OLD_FASTA_FILENAME_TEMPLATE = \
     "%(Species)s.%(reference)s.%(release)d.%(sequence_type)s.all.fa.gz"
 
-# DNA fasta file for releases after Ensembl 75
+# cDNA & protein FASTA file for releases after Ensembl 75
 # example: Homo_sapiens.GRCh37.cdna.all.fa.gz
-NEW_FASTA_CDNA_FILENAME_TEMPLATE = \
+NEW_FASTA_FILENAME_TEMPLATE = \
     "%(Species)s.%(reference)s.%(sequence_type)s.all.fa.gz"
 
-def fasta_cdna_url_parts(
+def fasta_url(
         ensembl_release,
         species,
+        sequence_type,
         server=ENSEMBL_FTP_SERVER):
-    """
-    Construct URL to FASTA file with cDNA sequences of each transcript.
-    Returns server_url/subdir and filename as tuple result.
+    """Construct URL to FASTA file with cDNA transcript or protein sequences
+
+    Parameter examples:
+        ensembl_release = 75
+        species = "Homo_sapiens"
+        sequence_type = "cdna" (other option: "pep")
     """
     ensembl_release, species, reference_name = _normalize_release_properties(
         ensembl_release, species)
@@ -158,18 +162,18 @@ def fasta_cdna_url_parts(
         server=server)
 
     server_subdir = urljoin(server, subdir)
-    server_sequence_subdir = join(server_subdir, 'cdna')
+    server_sequence_subdir = join(server_subdir, sequence_type)
     if ensembl_release <= 75:
-        filename = OLD_FASTA_CDNA_FILENAME_TEMPLATE % {
+        filename = OLD_FASTA_FILENAME_TEMPLATE % {
             "Species": species.capitalize(),
             "reference": reference_name,
             "release": ensembl_release,
             "sequence_type": "cdna",
         }
     else:
-        filename = NEW_FASTA_CDNA_FILENAME_TEMPLATE % {
+        filename = NEW_FASTA_FILENAME_TEMPLATE % {
             "Species": species.capitalize(),
             "reference": reference_name,
-            "sequence_type": "cdna",
+            "sequence_type": sequence_type,
         }
-    return server_sequence_subdir, filename
+    return join(server_sequence_subdir, filename)

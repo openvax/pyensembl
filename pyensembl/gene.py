@@ -15,20 +15,24 @@
 from __future__ import print_function, division, absolute_import
 
 from memoized_property import memoized_property
-from typechecks import require_string
+from typechecks import require_string, require_instance
 
 from .biotypes import is_valid_biotype
+from .database import Database
 from .locus import Locus
 from .transcript import Transcript
 
 class Gene(Locus):
 
-    def __init__(self, gene_id, db, reference):
+    def __init__(self, gene_id, ensembl):
         require_string(gene_id, "gene ID")
-
         self.id = gene_id
-        self.db = db
-        self.reference = reference
+        # can't check the type of ensembl since it will create a circular
+        # dependency between this module and ensembl_release but note that
+        # it's expected to be an EnsemblRelease object
+        self.ensembl = ensembl
+        self.db = ensembl.db
+        require_instance(self.db, Database, "db")
         columns = [
             'gene_name',
             'seqname',
@@ -48,17 +52,23 @@ class Gene(Locus):
 
         Locus.__init__(self, contig, start, end, strand)
 
-        if not biotype:
-            raise ValueError(
-                "Missing gene_biotype for gene with ID = %s" % gene_id)
-        elif not is_valid_biotype(biotype):
+        if not is_valid_biotype(biotype):
             raise ValueError(
                 "Invalid gene_biotype %s for gene with ID = %s" % (
                     biotype, gene_id))
-        self.biotype = biotype
+        elif biotype:
+            self.biotype = biotype
+        else:
+            raise ValueError(
+                "Missing gene_biotype for gene with ID = %s" % gene_id)
 
     def __str__(self):
-        return "Gene(id=%s, name=%s)" % (self.id, self.name)
+        return "Gene(id=%s, name=%s, location=%s:%d-%d)" % (
+            self.id,
+            self.name,
+            self.contig,
+            self.start,
+            self.end)
 
     def __repr__(self):
         return str(self)
@@ -67,8 +77,7 @@ class Gene(Locus):
         return (
             isinstance(other, Gene) and
             self.id == other.id and
-            self.db == other.db and
-            self.reference == other.reference)
+            self.ensembl == other.ensembl)
 
     def __hash__(self):
         return hash(self.id)
@@ -91,7 +100,7 @@ class Gene(Locus):
         # its particular information, might be more efficient if we
         # just get all the columns here, but how do we keep that modular?
         return [
-            Transcript(result[0], self.db, self.reference)
+            Transcript(result[0], self.ensembl)
             for result in transcript_id_results
         ]
 
@@ -103,4 +112,3 @@ class Gene(Locus):
                 if exon.id not in exons_dict:
                     exons_dict[exon.id] = exon
         return list(exons_dict.values())
-
