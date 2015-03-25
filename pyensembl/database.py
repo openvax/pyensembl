@@ -344,6 +344,18 @@ class Database(object):
         """
         Given an arbitrary SQL query, run it against the Ensembl database
         and return the results.
+
+        Parameters
+        ----------
+        sql : str
+            SQL query
+
+        required : bool
+            Raise an error if no results found in the database
+
+        query_params : list
+            For each '?' in the query there must be a corresponding value in
+            this list.
         """
         try:
             cursor = self.connection.execute(sql, query_params)
