@@ -20,7 +20,7 @@ from os.path import join, exists
 import datacache
 from typechecks import require_integer, require_string
 
-from .common import CACHE_SUBDIR
+from .common import CACHE_SUBDIR, memoize
 from .locus import normalize_chromosome, normalize_strand, Locus
 
 # any time we update the database schema, increment this version number
@@ -223,11 +223,13 @@ class Database(object):
                          '"EnsemblRelease(%s).install()"' %
                          ((self.gtf.release,) * 3))
 
+    @memoize
     def columns(self, table_name):
         sql = "PRAGMA table_info(%s)" % table_name
         table_info = self.connection.execute(sql).fetchall()
         return [info[1] for info in table_info]
 
+    @memoize
     def column_exists(self, table_name, column_name):
         return column_name in self.columns(table_name)
 
@@ -392,7 +394,11 @@ class Database(object):
             required=required)
 
         if len(results) == 0:
-            raise ValueError("%s not found: %s" % (filter_column, filter_value))
+            if required:
+                raise ValueError("%s not found: %s" % (
+                    filter_column, filter_value))
+            else:
+                return None
         elif len(results) > 1:
             raise ValueError(
                 "Found multiple entries with %s=%s (%s)" % (

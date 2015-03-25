@@ -19,6 +19,6 @@ from .ensembl_release import EnsemblRelease
 from .gene import Gene
 from .gtf import GTF
 from .locus import Locus
-from .reference_transcripts import ReferenceTranscripts
 from .search import find_nearest_locus
+from .sequence_data import SequenceData
 from .transcript import Transcript

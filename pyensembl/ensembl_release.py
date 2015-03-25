@@ -29,11 +29,14 @@ from .database import Database
 from .exon import Exon
 from .gene import Gene
 from .gtf import GTF
-from .release_info import check_release_number, MAX_ENSEMBL_RELEASE
+from .release_info import (
+    check_release_number,
+    MAX_ENSEMBL_RELEASE,
+    which_human_reference_name
+)
 from .sequence_data import SequenceData
 from .transcript import Transcript
-from .url_templates import ENSEMBL_FTP_SERVER, fasta_cdna_url, fasta_protein_url
-
+from .url_templates import ENSEMBL_FTP_SERVER, fasta_url
 
 class EnsemblRelease(object):
     """
@@ -50,25 +53,37 @@ class EnsemblRelease(object):
         self.species = "homo_sapiens"
         self.server = server
         self.auto_download = auto_download
+        self.reference_name = which_human_reference_name(self.release)
 
-        self.gtf = GTF(self.release, self.species, server,
-                       auto_download=auto_download)
+        # GTF object wraps the source GTF file from which we get
+        # genome annotations for each Ensembl release. Presents access
+        # to each feature annotations as a pandas.DataFrame.
+        self.gtf = GTF(
+            self.release,
+            self.species,
+            server,
+            auto_download=auto_download)
+
+        # Database object turns the GTF dataframes into sqlite3 tables
+        # and wraps them with methods like `query_one`
         self.db = Database(gtf=self.gtf, auto_download=auto_download)
 
         # get the URL for the cDNA FASTA file containing
         # this releases's transcript sequences
-        transcript_sequences_fasta_url = fasta_cdna_url(
+        transcript_sequences_fasta_url = fasta_url(
                 ensembl_release=self.release,
                 species=self.species,
+                sequence_type="cdna",
                 server=self.server)
         self.transcript_sequences = SequenceData(
             ensembl_release=self.release,
             fasta_url=transcript_sequences_fasta_url,
             auto_download=auto_download)
 
-        protein_sequences_fasta_url = fasta_protein_url(
+        protein_sequences_fasta_url = fasta_url(
             ensembl_release=self.release,
             species=self.species,
+            sequence_type="pep",
             server=self.server)
         self.protein_sequences = SequenceData(
             ensembl_release=self.release,
@@ -106,7 +121,8 @@ class EnsemblRelease(object):
 
     def clear_cache(self):
         self.gtf.clear_cache()
-        self.reference.clear_cache()
+        self.transcript_sequences.clear_cache()
+        self.protein_sequences.clear_cache()
         self._delete_cached_files()
 
     def all_feature_values(
@@ -358,11 +374,7 @@ class EnsemblRelease(object):
         """
         Construct a Gene object for the given gene ID.
         """
-        return Gene(
-            gene_id,
-            self.db,
-            self.transcript_sequences,
-            self.protein_sequences)
+        return Gene(gene_id, ensembl=self)
 
     def genes_by_name(self, gene_name):
         """
@@ -486,12 +498,12 @@ class EnsemblRelease(object):
         """
         transcript_ids = self.transcript_ids(contig=contig, strand=strand)
         return [
-            Transcript(transcript_id, self.db, self.transcript_sequences)
+            Transcript(transcript_id, ensembl=self)
             for transcript_id in transcript_ids
         ]
 
     def transcript_by_id(self, transcript_id):
-        return Transcript(transcript_id, self.db, self.transcript_sequences)
+        return Transcript(transcript_id, ensembl=self)
 
     def transcripts_by_name(self, transcript_name):
         transcript_ids = self.transcript_ids_of_transcript_name(transcript_name)
@@ -656,4 +668,3 @@ class EnsemblRelease(object):
 
     def exon_ids_of_transcript_id(self, transcript_id):
         return self._query_exon_ids('transcript_id', transcript_id)
-

@@ -15,9 +15,10 @@
 from __future__ import print_function, division, absolute_import
 
 from memoized_property import memoized_property
-from typechecks import require_integer, require_string
+from typechecks import require_string, require_instance
 
 from .biotypes import is_valid_biotype
+from .database import Database
 from .exon import Exon
 from .locus import Locus
 
@@ -31,22 +32,27 @@ class Transcript(Locus):
     and not using the sequence, avoid the memory/performance overhead
     of fetching and storing sequences from a FASTA file.
     """
-    def __init__(self, transcript_id, db, reference):
+    def __init__(
+            self,
+            transcript_id,
+            ensembl):
         """
         Parameters
         ----------
         transcript_id : str
 
-        db : pyensembl.Database
-            Database of annotations
-
-        reference : ReferenceTranscripts
+        ensembl : pyensembl.EnsemblRelease
         """
         require_string(transcript_id, "transcript ID")
 
         self.id = transcript_id
-        self.db = db
-        self.reference = reference
+        self.ensembl = ensembl
+
+        self.db = ensembl.db
+        require_instance(self.db, Database, "db")
+
+        self.transcript_sequences = ensembl.transcript_sequences
+        self.protein_sequences = ensembl.protein_sequences
 
         columns = [
             'transcript_name',
@@ -58,6 +64,7 @@ class Transcript(Locus):
             'gene_name',
             'gene_id',
         ]
+
         name, biotype, contig, start, end, strand, gene_name, gene_id = \
             self.db.query_one(
                 select_column_names=columns,
@@ -68,38 +75,43 @@ class Transcript(Locus):
 
         Locus.__init__(self, contig, start, end, strand)
 
-        if not name:
+        if name:
+            self.name = name
+        else:
             raise ValueError(
                 "Missing name for transcript with ID=%s" % transcript_id)
-        else:
-            self.name = name
 
-        if not biotype:
-            raise ValueError(
-                "Missing biotype for transcript with ID=%s, name=%s" % (
-                    transcript_id, name))
-        elif not is_valid_biotype(biotype):
+        if not is_valid_biotype(biotype):
             raise ValueError(
                 "Invalid biotype '%s' for transcript with ID=%s, name=%s" % (
                     biotype, transcript_id, name))
-        else:
+        elif biotype:
             self.biotype = biotype
+        else:
+            raise ValueError(
+                "Missing biotype for transcript with ID=%s, name=%s" % (
+                    transcript_id, name))
 
-        if gene_name is None:
+        if gene_name:
+            self.gene_name = gene_name
+        else:
             raise ValueError(
                 "Missing gene name for transcript with ID=%s" % transcript_id)
-        else:
-            self.gene_name = gene_name
 
-        if gene_id is None:
+        if gene_id:
+            self.gene_id = gene_id
+        else:
             raise ValueError(
                 "Missing gene ID for transcript with ID=%s" % transcript_id)
-        else:
-            self.gene_id = gene_id
 
     def __str__(self):
-        return "Transcript(id=%s, name=%s, gene_name=%s)" % (
-                    self.id, self.name, self.gene_name)
+        return "Transcript(id=%s, name=%s, gene_name=%s, location=%s:%d-%d)" % (
+                    self.id,
+                    self.name,
+                    self.gene_name,
+                    self.contig,
+                    self.start,
+                    self.end)
 
     def __repr__(self):
         return str(self)
@@ -114,8 +126,7 @@ class Transcript(Locus):
         return (
             isinstance(other, Transcript) and
             self.id == other.id and
-            self.db == other.db and
-            self.reference == other.reference)
+            self.ensembl == other.ensembl)
 
     def __hash__(self):
         return hash(self.id)
@@ -162,21 +173,26 @@ class Transcript(Locus):
         Find start/end chromosomal position range of features
         (such as start codon) for this transcript.
         """
+        # cache repeated lookups on the Transcript object
+        # TODO: replace this with a @memoize decorator?
+        field_name = "_%s_position_ranges" % feature
+        if not hasattr(self, field_name):
 
-        if feature not in self._TRANSCRIPT_FEATURES:
-            raise ValueError("Invalid transcript feature: %s" % feature)
+            if feature not in self._TRANSCRIPT_FEATURES:
+                raise ValueError("Invalid transcript feature: %s" % feature)
 
-        results = self.db.query(
-            select_column_names=['start', 'end'],
-            filter_column='transcript_id',
-            filter_value=self.id,
-            feature=feature)
+            results = self.db.query(
+                select_column_names=['start', 'end'],
+                filter_column='transcript_id',
+                filter_value=self.id,
+                feature=feature)
 
-        if required and len(results) == 0:
-            raise ValueError(
-                "Transcript %s does not contain feature %s" % (
-                    self.id, feature))
-        return results
+            if required and len(results) == 0:
+                raise ValueError(
+                    "Transcript %s does not contain feature %s" % (
+                        self.id, feature))
+            setattr(self, field_name, results)
+        return getattr(self, field_name)
 
     def _transcript_feature_positions(self, feature):
         """
@@ -255,7 +271,11 @@ class Transcript(Locus):
 
         Position must be inside some exon (otherwise raise exception).
         """
-        require_integer(position, "position")
+        # this code is performance sensitive, so switching from
+        # typechecks.require_integer to a simpler assertion
+        assert type(position) == int, \
+            "Position argument must be an integer, got %s : %s" % (
+                position, type(position))
         if position < self.start or position > self.end:
             raise ValueError(
                 "Invalid position: %d (must be between %d and %d)" % (
@@ -376,6 +396,7 @@ class Transcript(Locus):
         return (
             self.contains_start_codon and
             self.contains_stop_codon and
+            self.coding_sequence is not None and
             len(self.coding_sequence) % 3 == 0
         )
 
@@ -385,9 +406,7 @@ class Transcript(Locus):
         Spliced cDNA sequence of transcript
         (includes 5' UTR, coding sequence, and 3' UTR)
         """
-        return self.reference.transcript_sequence(
-            self.id,
-            return_none_if_missing=True)
+        return self.transcript_sequences.get(self.id)
 
     @memoized_property
     def first_start_codon_spliced_offset(self):
@@ -442,3 +461,20 @@ class Transcript(Locus):
         (untranslated region at the end of the transcript)
         """
         return self.sequence[self.last_stop_codon_spliced_offset + 1:]
+
+    @memoized_property
+    def protein_id(self):
+        return self.db.query_one(
+            select_column_names=["protein_id"],
+            filter_column=["transcript_id"],
+            filter_value=self.id,
+            feature="CDS",
+            distinct=True,
+            required=False)
+
+    @memoized_property
+    def protein_sequence(self):
+        if self.protein_id:
+            return self.ensembl.protein_sequences.get(self.protein_id)
+        else:
+            return None

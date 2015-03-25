@@ -114,7 +114,7 @@ def test_sequence_parts(ensembl):
             combined_string
         )
 
-def test_transcript_sequences_CTNNIP1_004():
+def test_transcript_utr5_sequence_CTNNIP1_004():
     ensembl = cached_release(77)
     transcript = ensembl.transcript_by_id(CTNNBIP1_004_transcript_id)
     utr5 = transcript.five_prime_utr_sequence
@@ -124,6 +124,9 @@ def test_transcript_sequences_CTNNIP1_004():
             expected_utr5_length, len(utr5))
     assert utr5 == CTNNBIP1_004_UTR5, "5' UTR sequence is incorrect: %s" % utr5
 
+def test_transcript_utr3_sequence_CTNNIP1_004():
+    ensembl = cached_release(77)
+    transcript = ensembl.transcript_by_id(CTNNBIP1_004_transcript_id)
     utr3 = transcript.three_prime_utr_sequence
     expected_utr3_length = len(CTNNBIP1_004_UTR3)
     assert len(utr3) == expected_utr3_length, \
@@ -131,12 +134,14 @@ def test_transcript_sequences_CTNNIP1_004():
             expected_utr3_length, len(utr3))
     assert utr3 == CTNNBIP1_004_UTR3, "3' UTR sequence is incorrect: %s" % utr3
 
+def test_transcript_cds_CTNNIP1_004():
+    ensembl = cached_release(77)
+    transcript = ensembl.transcript_by_id(CTNNBIP1_004_transcript_id)
     cds = transcript.coding_sequence
     expected_cds_length = len(CTNNBIP1_004_CDS)
     assert len(cds) == expected_cds_length, \
         "Expected CDS length %d, got %d" % (expected_cds_length, len(cds))
     assert cds == CTNNBIP1_004_CDS, "Coding sequence is incorrect: %s" % cds
-
 
 @test_ensembl_releases
 def test_equal_transcripts(release):

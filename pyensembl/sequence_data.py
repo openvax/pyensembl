@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from __future__ import print_function, division, absolute_import
 from os import remove
 from os.path import exists, split
@@ -47,19 +46,22 @@ class SequenceData(object):
         self.url = fasta_url
         self.remote_filename = split(self.url)[1]
 
-        # need to add the release to the local filename since some Ensembl
+        # may need to add the release to the local filename since some Ensembl
         # releases only have the genome name in the FASTA filename but still
         # differ subtly between releases. For example, a transcript ID may be
         # missing in Ensembl 75 but present in 76, though both have the same
         # FASTA filename)
-        filename_parts = self.remote_filename.split(".fa.")
-        assert len(filename_parts) == 2, \
-            "Expected remote filename %s to contain '.fa.gz'" % (
-                self.remote_filename,)
-        self.local_filename = "".join([
-            filename_parts[0],
-            ".ensembl%d.fa." % ensembl_release,
-            filename_parts[1]])
+        if ".%d." % self.release in self.remote_filename:
+            self.local_filename = self.remote_filename
+        else:
+            filename_parts = self.remote_filename.split(".fa.")
+            assert len(filename_parts) == 2, \
+                "Expected remote filename %s to contain '.fa.gz'" % (
+                    self.remote_filename,)
+            self.local_filename = "".join([
+                filename_parts[0],
+                ".%d.fa." % ensembl_release,
+                filename_parts[1]])
 
         # dictionary mapping IDs to sequences
         self._sequence_cache = {}
@@ -102,13 +104,21 @@ class SequenceData(object):
         # download. But it's always okay to initiate a download if
         # auto download is enabled.
         if self.local_file_exists() or self.auto_download:
-            # Does a download if the cache is empty.
+            # Does a download if the cache is empty, otherwise just returns
+            # the local path
             return self._fetch(force=False)
-        raise ValueError("Ensembl sequence data is not currently "
+        raise ValueError("Ensembl sequence data %s is not currently "
                          "installed for release %s. Run "
                          "\"pyensembl install --relase %s\" or call "
                          "EnsemblRelease(%s).install()" %
-                         ((self.release,) * 3))
+                         ((self.local_filename,) + (self.release,) * 3))
+
+    def clear_cache(self):
+        """Delete the local FASTA file and its associated database"""
+        if self.local_file_exists():
+            remove(self.local_fasta_path)
+        if exists(self.local_database_path):
+            remove(self.local_fasta_path)
 
     @property
     def local_dir(self):
@@ -127,7 +137,7 @@ class SequenceData(object):
         """
         return self.cache.fetch(
             url=self.url,
-            filename=self.remote_filename,
+            filename=self.local_filename,
             decompress=self.fasta_decompress,
             force=force)
 
@@ -155,7 +165,7 @@ class SequenceData(object):
             self.local_fasta_path,
             "fasta")
 
-    def index(self, force=True):
+    def index(self, force=False):
         """Create a database mapping transcript IDs to sequences.
 
         Parameters
@@ -215,6 +225,10 @@ class SequenceData(object):
                 raise ValueError("Invalid sequence ID: %s" % (sequence_id,))
 
             # get sequence from database
-            seq = self.fasta_dictionary.get(sequence_id)
+            fasta_record = self.fasta_dictionary.get(sequence_id)
+            if fasta_record:
+                seq = fasta_record.seq
+            else:
+                seq = None
             self._sequence_cache[sequence_id] = seq
         return self._sequence_cache[sequence_id]

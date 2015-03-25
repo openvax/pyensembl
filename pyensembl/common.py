@@ -12,4 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from functools import wraps
+
 CACHE_SUBDIR = "ensembl"
+
+def memoize(fn):
+    """Simple memoization decorator for functions and methods,
+    assumes that all arguments to the function can be hashed and
+    compared.
+    """
+    memoized_values = {}
+
+    @wraps(fn)
+    def wrapped_fn(*args, **kwargs):
+        key = (args, tuple(sorted(kwargs.items())))
+        if key not in memoized_values:
+            memoized_values[key] = fn(*args, **kwargs)
+        return memoized_values[key]
+
+    return wrapped_fn
