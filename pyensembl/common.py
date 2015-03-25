@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from functools import wraps
+from typechecks import is_string
 
 CACHE_SUBDIR = "ensembl"
 
@@ -31,3 +32,17 @@ def memoize(fn):
         return memoized_values[key]
 
     return wrapped_fn
+
+def is_valid_human_transcript_id(transcript_id):
+    return is_string(transcript_id) and transcript_id.startswith("ENST")
+
+def require_human_transcript_id(transcript_id):
+    if not is_valid_human_transcript_id(transcript_id):
+        raise ValueError("Invalid transcript ID '%s'" % transcript_id)
+
+def is_valid_human_protein_id(protein_id):
+    return is_string(protein_id) and protein_id.startswith("ENSP")
+
+def require_human_protein_id(protein_id):
+    if not is_valid_human_protein_id(protein_id):
+        raise ValueError("Invalid protein ID '%s'" % protein_id)

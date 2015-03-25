@@ -24,6 +24,7 @@ import logging
 from os.path import join
 from os import remove
 
+from .common import require_human_transcript_id, require_human_protein_id
 from .compute_cache import cached_object
 from .database import Database
 from .exon import Exon
@@ -205,16 +206,14 @@ class EnsemblRelease(object):
         """Return cDNA nucleotide sequence of transcript, or None if
         transcript doesn't cDNA sequence.
         """
-        if not transcript_id.startswith("ENST"):
-            raise ValueError("Invalid transcript ID '%s'" % transcript_id)
+        require_human_transcript_id(transcript_id)
         return self.transcript_sequences.get(transcript_id)
 
     def protein_sequence(self, protein_id):
         """Return cDNA nucleotide sequence of transcript, or None if
         transcript doesn't cDNA sequence.
         """
-        if not protein_id.startswith("ENSP"):
-            raise ValueError("Invalid protein ID '%s'" % protein_id)
+        require_human_protein_id(protein_id)
         return self.transcript_sequences.get(protein_id)
 
     def download(self, force=True):
