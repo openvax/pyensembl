@@ -16,6 +16,7 @@ from __future__ import print_function, division, absolute_import
 
 import logging
 from os.path import join, exists
+import sqlite3
 
 import datacache
 from typechecks import require_integer, require_string
@@ -344,7 +345,13 @@ class Database(object):
         Given an arbitrary SQL query, run it against the Ensembl database
         and return the results.
         """
-        cursor = self.connection.execute(sql, query_params)
+        try:
+            cursor = self.connection.execute(sql, query_params)
+        except sqlite3.OperationalError as e:
+            logging.warn(
+                "Encountered error \"%s\" from query \"%s\" with parameters %s",
+                e.message, sql, query_params)
+            raise
         results = cursor.fetchall()
         if required and not results:
             raise ValueError(

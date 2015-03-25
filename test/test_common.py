@@ -5,11 +5,6 @@ import functools
 from pyensembl import EnsemblRelease
 from nose.tools import nottest
 
-_release_versions = [
-    54,  # last release for GRCh36/hg18
-    75,  # last release for GRCh37/hg19
-    78,  # most recent release for GRCh38
-]
 
 _cached_releases = {}
 
@@ -20,8 +15,13 @@ def cached_release(version):
     _cached_releases[version] = ensembl
     return ensembl
 
-releases = [
-    cached_release(version) for version in _release_versions
+ensembl_grch36 = cached_release(54)  # last release for GRCh36/hg18
+ensembl_grch37 = cached_release(75)  # last release for GRCh37/hg19
+ensembl_grch38 = cached_release(78)  # most recent release for GRCh38
+
+major_releases = [
+    ensembl_grch37,
+    ensembl_grch38
 ]
 
 contigs = list(range(1, 23)) + ["X", "Y", "M"]
@@ -33,13 +33,14 @@ def test_ensembl_releases(*versions):
     for multiple releases (most recent for each reference genome)
     """
     if len(versions) == 0:
-        versions = _release_versions
+        ensembl_releases = major_releases
+    else:
+        ensembl_releases = [cached_release(version) for version in versions]
 
     def decorator(test_fn):
         @functools.wraps(test_fn)
         def new_test_fn():
-            for version in versions:
-                ensembl = cached_release(version)
+            for ensembl in ensembl_releases:
                 test_fn(ensembl)
         return new_test_fn
     return decorator

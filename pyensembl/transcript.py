@@ -464,13 +464,17 @@ class Transcript(Locus):
 
     @memoized_property
     def protein_id(self):
-        return self.db.query_one(
+        result_tuple = self.db.query_one(
             select_column_names=["protein_id"],
-            filter_column=["transcript_id"],
+            filter_column="transcript_id",
             filter_value=self.id,
             feature="CDS",
             distinct=True,
             required=False)
+        if result_tuple:
+            return result_tuple[0]
+        else:
+            return None
 
     @memoized_property
     def protein_sequence(self):

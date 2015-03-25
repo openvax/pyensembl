@@ -49,6 +49,7 @@ class EnsemblRelease(object):
                  release=MAX_ENSEMBL_RELEASE,
                  server=ENSEMBL_FTP_SERVER,
                  auto_download=False):
+
         self.release = check_release_number(release)
         self.species = "homo_sapiens"
         self.server = server
@@ -94,15 +95,10 @@ class EnsemblRelease(object):
         self.logger.setLevel(logging.INFO)
 
     def __str__(self):
-        return (
-            "EnsemblRelease("
-            "release=%d, "
-            "gtf_url='%s', "
-            "cdna_url='%s')" % (
-                self.release,
-                self.gtf.url,
-                self.transcript_sequences.url,
-                self.protein_sequences.url))
+        return "EnsemblRelease(release=%d, species=%s, genome=%s)" % (
+                    self.release,
+                    self.species,
+                    self.reference_name)
 
     def __repr__(self):
         return str(self)
