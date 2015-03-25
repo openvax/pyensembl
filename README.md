@@ -33,7 +33,7 @@ Before using PyEnsembl, run the following command to download and install
 Ensembl data:
 
 ```
-pyensembl <list of Ensembl release numbers> install
+pyensembl install --release <list of Ensembl release numbers>
 ```
 
 For example, `pyensembl install --release 75 76` will download and install all
