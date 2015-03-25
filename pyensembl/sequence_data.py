@@ -150,14 +150,9 @@ class SequenceData(object):
         """Download the FASTA file if one does not exist.
 
         If `force` is True, overwrites any existing file.
-
-        Returns True if a download happened.
         """
-        if self.local_file_exists():
-            if not force:
-                return False
-        self._fetch(force=force)
-        return True
+        if not self.local_file_exists() or force:
+            self._fetch(force=force)
 
     @property
     def local_database_path(self):
