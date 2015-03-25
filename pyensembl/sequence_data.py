@@ -96,7 +96,7 @@ class SequenceData(object):
         return (
             isinstance(other, SequenceData) and
             self.url == other.url and
-            self.local_fasta_path == other.local_fasta_path)
+            self.release == other.release)
 
     @property
     def local_fasta_path(self):
