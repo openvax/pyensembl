@@ -46,22 +46,7 @@ class SequenceData(object):
         self.url = fasta_url
         self.remote_filename = split(self.url)[1]
 
-        # may need to add the release to the local filename since some Ensembl
-        # releases only have the genome name in the FASTA filename but still
-        # differ subtly between releases. For example, a transcript ID may be
-        # missing in Ensembl 75 but present in 76, though both have the same
-        # FASTA filename)
-        if ".%d." % self.release in self.remote_filename:
-            self.local_filename = self.remote_filename
-        else:
-            filename_parts = self.remote_filename.split(".fa.")
-            assert len(filename_parts) == 2, \
-                "Expected remote filename %s to contain '.fa.gz'" % (
-                    self.remote_filename,)
-            self.local_filename = "".join([
-                filename_parts[0],
-                ".%d.fa." % ensembl_release,
-                filename_parts[1]])
+        self.local_filename = self._create_local_filename(self.remote_filename)
 
         # dictionary mapping IDs to sequences
         self._sequence_cache = {}
@@ -72,6 +57,26 @@ class SequenceData(object):
 
         # key set for fasta dictionary, for faster membership tests,
         self._fasta_keys = None
+
+    def _create_local_filename(self, remote_filename):
+        """
+        We sometimes need to add the release number to a local FASTAfilename
+        since some Ensembl releases only have the genome name in the FASTA
+        filename but still differ subtly between releases.
+        For example, a transcript ID may be missing in Ensembl 75 but present
+        in 76, though both have the same FASTA filename
+        """
+        if ".%d." % self.release in remote_filename:
+            return remote_filename
+
+        filename_parts = self.remote_filename.split(".fa.")
+        assert len(filename_parts) == 2, \
+            "Expected remote filename %s to contain '.fa.gz'" % (
+                self.remote_filename,)
+        return "".join([
+            filename_parts[0],
+            ".%d.fa." % self.release,
+            filename_parts[1]])
 
     def __str__(self):
         return "SequenceData(ensembl_release=%d, url=%s, local_path=%s)" % (
