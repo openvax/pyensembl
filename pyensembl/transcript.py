@@ -18,6 +18,7 @@ from memoized_property import memoized_property
 from typechecks import require_string, require_instance
 
 from .biotypes import is_valid_biotype
+from .common import memoize
 from .database import Database
 from .exon import Exon
 from .locus import Locus
@@ -168,32 +169,28 @@ class Transcript(Locus):
     # possible annotations associated with transcripts
     _TRANSCRIPT_FEATURES = {'start_codon', 'stop_codon', 'UTR', 'CDS'}
 
+    @memoize
     def _transcript_feature_position_ranges(self, feature, required=True):
         """
         Find start/end chromosomal position range of features
         (such as start codon) for this transcript.
         """
-        # cache repeated lookups on the Transcript object
-        # TODO: replace this with a @memoize decorator?
-        field_name = "_%s_position_ranges" % feature
-        if not hasattr(self, field_name):
+        if feature not in self._TRANSCRIPT_FEATURES:
+            raise ValueError("Invalid transcript feature: %s" % feature)
 
-            if feature not in self._TRANSCRIPT_FEATURES:
-                raise ValueError("Invalid transcript feature: %s" % feature)
+        results = self.db.query(
+            select_column_names=['start', 'end'],
+            filter_column='transcript_id',
+            filter_value=self.id,
+            feature=feature)
 
-            results = self.db.query(
-                select_column_names=['start', 'end'],
-                filter_column='transcript_id',
-                filter_value=self.id,
-                feature=feature)
+        if required and len(results) == 0:
+            raise ValueError(
+                "Transcript %s does not contain feature %s" % (
+                    self.id, feature))
+        return results
 
-            if required and len(results) == 0:
-                raise ValueError(
-                    "Transcript %s does not contain feature %s" % (
-                        self.id, feature))
-            setattr(self, field_name, results)
-        return getattr(self, field_name)
-
+    @memoize
     def _transcript_feature_positions(self, feature):
         """
         Get unique positions for feature, raise an error if feature is absent.
@@ -214,6 +211,7 @@ class Transcript(Locus):
                 results.append(position)
         return results
 
+    @memoize
     def _codon_positions(self, feature):
         """
         Parameters

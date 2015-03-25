@@ -20,7 +20,7 @@ import logging
 from Bio import SeqIO
 import datacache
 
-from .common import CACHE_SUBDIR
+from .common import CACHE_SUBDIR, require_ensembl_id
 from .release_info import check_release_number
 
 
@@ -47,7 +47,10 @@ class SequenceData(object):
         self.remote_filename = split(self.url)[1]
 
         self.local_filename = self._create_local_filename(self.remote_filename)
+        self._init_lazy_fields()
 
+    def _init_lazy_fields(self):
+        """Initialize all properties which get lazily constructed on request"""
         # dictionary mapping IDs to sequences
         self._sequence_cache = {}
 
@@ -119,7 +122,12 @@ class SequenceData(object):
                          ((self.local_filename,) + (self.release,) * 3))
 
     def clear_cache(self):
-        """Delete the local FASTA file and its associated database"""
+        """Delete the local FASTA file and its associated database,
+        and clear any in-memory cached sequence data.
+        """
+        # reset in-memory cached object
+        self._init_lazy_fields()
+
         if self.local_file_exists():
             remove(self.local_fasta_path)
         if exists(self.local_database_path):
@@ -221,8 +229,7 @@ class SequenceData(object):
 
         if sequence_id not in self._sequence_cache:
             # all Ensembl identifiers start with ENS e.g. ENST, ENSP, ENSE
-            if not sequence_id.startswith("ENS"):
-                raise ValueError("Invalid sequence ID: %s" % (sequence_id,))
+            require_ensembl_id(sequence_id)
 
             # get sequence from database
             fasta_record = self.fasta_dictionary.get(sequence_id)

@@ -17,6 +17,7 @@ from __future__ import print_function, division, absolute_import
 from typechecks import require_integer, require_string
 from memoized_property import memoized_property
 
+from .common import memoize
 from .locus import Locus
 
 class Exon(Locus):
@@ -66,6 +67,7 @@ class Exon(Locus):
     # possible annotations associated with exons
     _EXON_FEATURES = {'start_codon', 'stop_codon', 'UTR', 'CDS'}
 
+    @memoize
     def _exon_feature_positions(self, feature):
         """
         Find start and end positions of features (such as start codons)
@@ -119,6 +121,7 @@ class Exon(Locus):
         relative_start, relative_end = self.offset_range(start, end)
         return min(relative_start, relative_end)
 
+    @memoize
     def _exon_feature_offsets(self, feature):
         """
         Start and end offsets (relative to this exon) of features such as
