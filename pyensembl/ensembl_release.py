@@ -104,6 +104,12 @@ class EnsemblRelease(object):
     def __repr__(self):
         return str(self)
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, EnsemblRelease) and
+            self.release == other.release and
+            self.species == other.species)
+
     def _delete_cached_files(self):
         """
         Any files which start with the same name as our GTF file
