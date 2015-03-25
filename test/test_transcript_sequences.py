@@ -1,17 +1,18 @@
+"""Make sure we're getting correct transcritp sequence from Ensembl and that
+it's a sequence type which correctly implements `complement`
+and `reverse_complement`
 """
-Test the ReferenceTranscripts object to make sure we're getting
-the correct reference for different Ensembl releases and that the
-the correct transcripts get returned for known transcript IDs.
-"""
+
 from __future__ import absolute_import
 from nose.tools import eq_
 from pyensembl import EnsemblRelease
 
+
+ensembl54 = EnsemblRelease(54, auto_download=True)
+
 def test_transcript_sequence_ensembl54():
-    reference54 = EnsemblRelease(
-        release=54,
-        auto_download=True)
-    seq = reference54.transcript_sequence("ENST00000321606")
+
+    seq = ensembl54.transcript_sequence("ENST00000321606")
     assert len(seq) == 414, \
         "Expected transcript ENST00000321606 to have 414nt, got %s : %d" % (
             seq, len(seq))
