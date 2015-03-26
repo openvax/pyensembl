@@ -168,7 +168,7 @@ def fasta_url(
             "Species": species.capitalize(),
             "reference": reference_name,
             "release": ensembl_release,
-            "sequence_type": "cdna",
+            "sequence_type": sequence_type,
         }
     else:
         filename = NEW_FASTA_FILENAME_TEMPLATE % {
