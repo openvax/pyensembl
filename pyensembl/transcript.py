@@ -52,9 +52,6 @@ class Transcript(Locus):
         self.db = ensembl.db
         require_instance(self.db, Database, "db")
 
-        self.transcript_sequences = ensembl.transcript_sequences
-        self.protein_sequences = ensembl.protein_sequences
-
         columns = [
             'transcript_name',
             'transcript_biotype',
@@ -404,7 +401,7 @@ class Transcript(Locus):
         Spliced cDNA sequence of transcript
         (includes 5' UTR, coding sequence, and 3' UTR)
         """
-        return self.transcript_sequences.get(self.id)
+        return self.ensembl.transcript_sequences.get(self.id)
 
     @memoized_property
     def first_start_codon_spliced_offset(self):

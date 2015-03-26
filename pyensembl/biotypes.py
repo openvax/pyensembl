@@ -220,6 +220,13 @@ non_immune_protein_coding = {
     # usually a non-coding pseudogene but can be translated in some individuals
     # depending on common genetic variation
     'polymorphic_pseudogene',
+    # Otherwise viable coding region omitted from this alternatively spliced
+    # transcript because the splice variation affects a region coding for a
+    # protein domain.
+    'disrupted_domain',
+    # Gene in a "Locus Reference Genomic" region known to have disease-related
+    # sequence variations.
+    'LRG_gene',
 }
 
 protein_coding = set.union(
@@ -251,7 +258,9 @@ coding_pseudogenes = {
     # to be experimentally confirmed
     'TEC',
     # TODO: should this be here or considered protein_coding?
-    'translated_unprocessed_pseudogene'
+    'translated_unprocessed_pseudogene',
+    # pseudogene owing to a reverse transcribed and re-inserted sequence.
+    "retrotransposed",
 }
 
 long_noncoding = {
@@ -268,7 +277,9 @@ long_noncoding = {
     'retained_intron',
     'sense_intronic',
     'sense_overlapping',
-    'known_ncrna'
+    'known_ncrna',
+    # unspliced lncRNAs that are several kb in size.
+    'macro_lncRNA',
 }
 
 mitochondrial = {
@@ -301,6 +312,12 @@ short_noncoding_functional = {
     'snoRNA',
     'snRNA',
     'tRNA',
+    'sRNA',
+    # Small Cajal body-specific RNA
+    'scaRNA',
+    # Vault RNA (http://en.wikipedia.org/wiki/Vault_RNA)
+    'vaultRNA',
+    'ribozyme',
 }
 
 short_noncoding = set.union(
@@ -313,6 +330,8 @@ valid_biotypes = set.union(
     coding_pseudogenes,
     long_noncoding,
     short_noncoding,
+    # used to tag mistakes in the annotation database
+    {"artifact"},
 )
 
 def is_valid_biotype(biotype):
