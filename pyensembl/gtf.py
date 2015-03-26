@@ -334,8 +334,6 @@ class GTF(object):
         """
         Download the GTF file if one does not exist. If `force` is
         True, overwrites any existing file.
-
-        Returns True if a download happened.
         """
         if not self.local_copy_exists() or force:
             self.cache.fetch(
