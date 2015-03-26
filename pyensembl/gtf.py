@@ -285,9 +285,11 @@ class GTF(object):
         Returns only ENSG00000000003, since it overlaps
         [100000000, 110000000].
         """
-        df = pd.DataFrame({'name': column_name_series,
-                           'start': start_series,
-                           'end': end_series})
+        df = pd.DataFrame({
+            'name': column_name_series,
+            'start': start_series,
+            'end': end_series
+        })
         df = GTF._slice(df, 'start', 'end', start, end)
         return df.name
 
@@ -335,12 +337,9 @@ class GTF(object):
 
         Returns True if a download happened.
         """
-        if not force and self.local_copy_exists():
-            return False
-
-        self.cache.fetch(
-            self.url,
-            self.local_filename(),
-            decompress=self.decompress,
-            force=force)
-        return True
+        if not self.local_copy_exists() or force:
+            self.cache.fetch(
+                self.url,
+                self.local_filename(),
+                decompress=self.decompress,
+                force=force)

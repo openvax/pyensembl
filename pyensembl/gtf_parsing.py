@@ -107,7 +107,7 @@ def _read_gtf(filename):
         column_name = 'biotype'
     else:
         column_name = 'source'
-    df.rename(columns={'second_column' : column_name}, inplace=True)
+    df.rename(columns={'second_column': column_name}, inplace=True)
 
     return df
 
@@ -122,8 +122,8 @@ def _attribute_dictionaries(df):
     # vaguely Pythonic code
     attr_dicts = [
         {
-            key : value.replace("\"", "").replace(";", "")
-            for (key,value) in (
+            key: value.replace("\"", "").replace(";", "")
+            for (key, value) in (
                 pair_string.split(" ", 2)
                 for pair_string in attr_string.split("; ")
             )
@@ -151,7 +151,17 @@ def _extend_with_attributes(df):
             # (key name, space, value)
             if len(kv) > 2
         )
-        for k,v in pairs:
+
+        for pair in pairs:
+            if len(pair) < 2:
+                raise ValueError(
+                    "Expected all entries to key-value pairs, got: %s" % (
+                        pair,))
+            # Ensembl release 79 added values like:
+            #   transcript_support_level "1 (assigned to previous version 5)";
+            # ...which gets mangled by splitting on spaces.
+            # TODO: implement a proper parser!
+            k, v = pair[:2]
             if k not in extra_columns:
                 extra_columns[k] = [""] * n
                 column_order.append(k)
@@ -198,11 +208,13 @@ def _dataframe_from_groups(groups, feature, extra_column_names=[]):
     seqname = groups.seqname.first()
     gene_name = groups.gene_name.first()
     gene_biotype = groups.gene_biotype.first()
+
     def pick_protein_id(candidates):
         for c in candidates:
             if c is not None and len(c) > 0:
                 return c
         return None
+
     protein_id = groups.protein_id.apply(pick_protein_id)
     columns = [seqname, gene_biotype, start, end, strand, gene_name, protein_id]
     for column_name in extra_column_names:
@@ -300,7 +312,7 @@ def load_gtf_as_dataframe(filename):
             rename_to = 'transcript_biotype'
         else:
             rename_to = 'gene_biotype'
-        df.rename(columns={'biotype' : rename_to}, inplace=True)
+        df.rename(columns={'biotype': rename_to}, inplace=True)
 
     for column_name in REQUIRED_ATTRIBUTE_COLUMNS:
         assert column_name in df.columns, \
