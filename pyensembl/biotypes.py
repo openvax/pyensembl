@@ -312,6 +312,7 @@ short_noncoding_functional = {
     'snoRNA',
     'snRNA',
     'tRNA',
+    'sRNA',
     # Small Cajal body-specific RNA
     'scaRNA',
     # Vault RNA (http://en.wikipedia.org/wiki/Vault_RNA)
