@@ -62,8 +62,6 @@ class GTF(object):
     def __eq__(self, other):
         return (
             isinstance(other, GTF) and
-            other.species == self.species and
-            other.release == self.release and
             other.url == self.url)
 
     def __hash__(self):
