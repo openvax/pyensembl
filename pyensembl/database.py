@@ -35,6 +35,18 @@ class Database(object):
     """
 
     def __init__(self, gtf, auto_download=False):
+        """
+        Parameters
+        ----------
+        gtf : pyensembl.GTF instance
+            Object which parses Ensembl GTF annotation files and presents their
+            contents as Pandas DataFrames
+
+        auto_download : bool, optional (default = False)
+            If GTF file is missing, force the `gtf` object to download
+            and parse it. If file is missing and auto_download = False then
+            raise an exception.
+        """
         self.gtf = gtf
         self.auto_download = auto_download
         self._connection = None
@@ -44,6 +56,9 @@ class Database(object):
 
     def __eq__(self, other):
         return isinstance(other, Database) and self.gtf == other.gtf
+
+    def __hash__(self):
+        return hash(self.gtf)
 
     def local_db_filename(self):
         base = self.gtf.base_filename()

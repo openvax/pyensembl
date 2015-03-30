@@ -59,6 +59,14 @@ class GTF(object):
         # for database construction
         self._dataframes = {}
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, GTF) and
+            other.url == self.url)
+
+    def __hash__(self):
+        return hash(self.url)
+
     def clear_cache(self):
         # clear any dataframes we constructed
         self._dataframes.clear()
