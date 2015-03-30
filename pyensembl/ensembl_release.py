@@ -110,6 +110,9 @@ class EnsemblRelease(object):
             self.release == other.release and
             self.species == other.species)
 
+    def __hash__(self):
+        return hash((self.release, self.species))
+
     def _delete_cached_files(self):
         """
         Any files which start with the same name as our GTF file

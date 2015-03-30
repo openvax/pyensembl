@@ -45,6 +45,9 @@ class Database(object):
     def __eq__(self, other):
         return isinstance(other, Database) and self.gtf == other.gtf
 
+    def __hash__(self):
+        return hash(self.gtf)
+
     def local_db_filename(self):
         base = self.gtf.base_filename()
         return base + ".db"
