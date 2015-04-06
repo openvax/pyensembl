@@ -13,24 +13,38 @@
 # limitations under the License.
 
 from functools import wraps
+
 from typechecks import is_string
 
 CACHE_SUBDIR = "ensembl"
 
 def memoize(fn):
-    """Simple memoization decorator for functions and methods,
+    """Simple reset-able memoization decorator for functions and methods,
     assumes that all arguments to the function can be hashed and
     compared.
     """
-    memoized_values = {}
+    cache = {}
 
     @wraps(fn)
     def wrapped_fn(*args, **kwargs):
-        key = (args, tuple(sorted(kwargs.items())))
-        if key not in memoized_values:
-            memoized_values[key] = fn(*args, **kwargs)
-        return memoized_values[key]
+        cache_key = tuple(args) + tuple(kwargs.items())
+        try:
+            return cache[cache_key]
 
+        except KeyError:
+            value = fn(*args, **kwargs)
+            cache[cache_key] = value
+            return value
+
+        except TypeError:
+            # uncachable -- for instance, passing a list as an argument.
+            # Better to not cache than to blow up entirely.
+            return fn.func(*args, **kwargs)
+
+    def clear_cache():
+        cache.clear()
+
+    wrapped_fn.clear_cache = clear_cache
     return wrapped_fn
 
 def is_valid_ensembl_id(ensembl_id):

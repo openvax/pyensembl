@@ -20,7 +20,6 @@ from typechecks import require_string, require_instance
 from .biotypes import is_valid_biotype
 from .common import memoize
 from .database import Database
-from .exon import Exon
 from .locus import Locus
 
 
@@ -143,7 +142,7 @@ class Transcript(Locus):
         exons = [None] * len(results)
 
         for exon_number, exon_id in results:
-            exon = Exon(exon_id, self.db)
+            exon = self.ensembl.exon_by_id(exon_id)
             exon_number = int(exon_number)
             assert exon_number >= 1, "Invalid exon number: %s" % exon_number
             assert exon_number <= len(exons), \

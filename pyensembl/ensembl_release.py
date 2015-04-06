@@ -24,7 +24,11 @@ import logging
 from os.path import join
 from os import remove
 
-from .common import require_human_transcript_id, require_human_protein_id
+from .common import (
+    require_human_transcript_id,
+    require_human_protein_id,
+    memoize
+)
 from .compute_cache import cached_object
 from .database import Database
 from .exon import Exon
@@ -126,9 +130,12 @@ class EnsemblRelease(object):
             remove(path)
 
     def clear_cache(self):
-        self.gtf.clear_cache()
-        self.transcript_sequences.clear_cache()
-        self.protein_sequences.clear_cache()
+        for maybe_fn in self.__dict__.values():
+            # clear cache associated with all memoization decorators,
+            # GTF and SequenceData objects
+            if hasattr(maybe_fn, 'clear_cache'):
+                maybe_fn.clear_cache()
+
         self._delete_cached_files()
 
     def all_feature_values(
@@ -374,12 +381,14 @@ class EnsemblRelease(object):
         gene_ids = self.gene_ids(contig=contig, strand=strand)
         return [self.gene_by_id(gene_id) for gene_id in gene_ids]
 
+    @memoize
     def gene_by_id(self, gene_id):
         """
         Construct a Gene object for the given gene ID.
         """
         return Gene(gene_id, ensembl=self)
 
+    @memoize
     def genes_by_name(self, gene_name):
         """
         Get all the unqiue genes with the given name (there might be multiple
@@ -389,6 +398,7 @@ class EnsemblRelease(object):
         gene_ids = self.gene_ids_of_gene_name(gene_name)
         return [self.gene_by_id(gene_id) for gene_id in gene_ids]
 
+    @memoize
     def gene_by_protein_id(self, protein_id):
         """
         Get the gene ID associated with the given protein ID,
@@ -413,6 +423,7 @@ class EnsemblRelease(object):
             required=True)
         return str(results[0][0])
 
+    @memoize
     def gene_names(self, contig=None, strand=None):
         """
         Return all genes in the database,
@@ -424,17 +435,21 @@ class EnsemblRelease(object):
             contig=contig,
             strand=strand)
 
+    @memoize
     def gene_name_of_gene_id(self, gene_id):
         return self._query_gene_name("gene_id", gene_id, 'gene')
 
+    @memoize
     def gene_name_of_transcript_id(self, transcript_id):
         return self._query_gene_name(
             "transcript_id", transcript_id, 'transcript')
 
+    @memoize
     def gene_name_of_transcript_name(self, transcript_name):
         return self._query_gene_name(
             "transcript_name", transcript_name, 'transcript')
 
+    @memoize
     def gene_name_of_exon_id(self, exon_id):
         return self._query_gene_name("exon_id", exon_id, 'exon')
 
@@ -454,6 +469,7 @@ class EnsemblRelease(object):
             required=True)
         return [str(result[0]) for result in results if result[0]]
 
+    @memoize
     def gene_ids(self, contig=None, strand=None):
         """
         What are all the gene IDs
@@ -465,6 +481,7 @@ class EnsemblRelease(object):
             contig=contig,
             strand=strand)
 
+    @memoize
     def gene_ids_of_gene_name(self, gene_name):
         """
         What are the Ensembl gene IDs associated with a given gene name?
@@ -475,6 +492,7 @@ class EnsemblRelease(object):
             raise ValueError("Gene name not found: %s" % gene_name)
         return results
 
+    @memoize
     def gene_id_of_protein_id(self, protein_id):
         """
         What is the Ensembl gene ID associated with a given protein ID?
@@ -494,6 +512,7 @@ class EnsemblRelease(object):
     #
     ###################################################
 
+    @memoize
     def transcripts(self, contig=None, strand=None):
         """
         Construct Transcript object for every transcript entry in
@@ -506,9 +525,11 @@ class EnsemblRelease(object):
             for transcript_id in transcript_ids
         ]
 
+    @memoize
     def transcript_by_id(self, transcript_id):
         return Transcript(transcript_id, ensembl=self)
 
+    @memoize
     def transcripts_by_name(self, transcript_name):
         transcript_ids = self.transcript_ids_of_transcript_name(transcript_name)
         return [
@@ -516,6 +537,7 @@ class EnsemblRelease(object):
             for transcript_id in transcript_ids
         ]
 
+    @memoize
     def transcript_by_protein_id(self, protein_id):
         transcript_id = self.transcript_id_of_protein_id(protein_id)
         return self.transcript_by_id(transcript_id)
@@ -536,6 +558,7 @@ class EnsemblRelease(object):
             required=True)
         return [result[0] for result in results]
 
+    @memoize
     def transcript_names(self, contig=None, strand=None):
         """
         What are all the transcript names in the database
@@ -547,9 +570,11 @@ class EnsemblRelease(object):
             contig=contig,
             strand=strand)
 
+    @memoize
     def transcript_names_of_gene_name(self, gene_name):
         return self._query_transcript_names('gene_name', gene_name)
 
+    @memoize
     def transcript_name_of_transcript_id(self, transcript_id):
         transcript_names = self._query_transcript_names(
             'transcript_id', transcript_id)
@@ -577,6 +602,7 @@ class EnsemblRelease(object):
             required=True)
         return [result[0] for result in results]
 
+    @memoize
     def transcript_ids(self, contig=None, strand=None):
         return self.all_feature_values(
             column='transcript_id',
@@ -584,18 +610,23 @@ class EnsemblRelease(object):
             contig=contig,
             strand=strand)
 
+    @memoize
     def transcript_ids_of_gene_id(self, gene_id):
         return self._query_transcript_ids('gene_id', gene_id)
 
+    @memoize
     def transcript_ids_of_gene_name(self, gene_name):
         return self._query_transcript_ids('gene_name', gene_name)
 
+    @memoize
     def transcript_ids_of_transcript_name(self, transcript_name):
         return self._query_transcript_ids('transcript_name', transcript_name)
 
+    @memoize
     def transcript_ids_of_exon_id(self, exon_id):
         return self._query_transcript_ids('exon_id', exon_id)
 
+    @memoize
     def transcript_id_of_protein_id(self, protein_id):
         """
         What is the Ensembl transcript ID associated with a given
@@ -616,6 +647,7 @@ class EnsemblRelease(object):
     #
     ###################################################
 
+    @memoize
     def exons(self, contig=None, strand=None):
         """
         Create exon object for all exons in the database, optionally
@@ -625,9 +657,11 @@ class EnsemblRelease(object):
         exon_ids = self.exon_ids(contig=contig, strand=strand)
         return [Exon(exon_id, self.db) for exon_id in exon_ids]
 
+    @memoize
     def exon_by_id(self, exon_id):
         return Exon(exon_id, self.db)
 
+    @memoize
     def exon_by_transcript_id_and_number(self, transcript_id, exon_number):
         transcript = self.transcript_by_id(transcript_id)
         if len(transcript.exons) > exon_number:
@@ -654,6 +688,7 @@ class EnsemblRelease(object):
             required=True)
         return [result[0] for result in results]
 
+    @memoize
     def exon_ids(self, contig=None, strand=None):
         return self.all_feature_values(
             column='exon_id',
@@ -661,14 +696,18 @@ class EnsemblRelease(object):
             contig=contig,
             strand=strand)
 
+    @memoize
     def exon_ids_of_gene_id(self, gene_id):
         return self._query_exon_ids('gene_id', gene_id)
 
+    @memoize
     def exon_ids_of_gene_name(self, gene_name):
         return self._query_exon_ids('gene_name', gene_name)
 
+    @memoize
     def exon_ids_of_transcript_name(self, transcript_name):
         return self._query_exon_ids('transcript_name', transcript_name)
 
+    @memoize
     def exon_ids_of_transcript_id(self, transcript_id):
         return self._query_exon_ids('transcript_id', transcript_id)

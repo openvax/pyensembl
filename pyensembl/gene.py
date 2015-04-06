@@ -20,7 +20,6 @@ from typechecks import require_string, require_instance
 from .biotypes import is_valid_biotype
 from .database import Database
 from .locus import Locus
-from .transcript import Transcript
 
 class Gene(Locus):
 
@@ -100,15 +99,14 @@ class Gene(Locus):
         # its particular information, might be more efficient if we
         # just get all the columns here, but how do we keep that modular?
         return [
-            Transcript(result[0], self.ensembl)
+            self.ensembl.transcript_by_id(result[0])
             for result in transcript_id_results
         ]
 
     @memoized_property
     def exons(self):
-        exons_dict = {}
+        exon_set = set([])
         for transcript in self.transcripts:
             for exon in transcript.exons:
-                if exon.id not in exons_dict:
-                    exons_dict[exon.id] = exon
-        return list(exons_dict.values())
+                exon_set.add(exon)
+        return list(sorted(exon_set))
