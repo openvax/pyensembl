@@ -18,6 +18,22 @@ from typechecks import is_string
 
 CACHE_SUBDIR = "ensembl"
 
+def _memoize_cache_key(args, kwargs):
+    """Turn args tuple and kwargs dictionary into a hashable key"""
+    cache_key = args + tuple(sorted(kwargs.items()))
+
+    try:
+        # if any element of the cache isn't hashable then we switch
+        # to using the types and string representations of
+        # all the elements in the cache key
+        hash(cache_key)
+    except TypeError:
+        cache_key = tuple(
+            (type(key_element), repr(key_element))
+            for key_element in cache_key
+        )
+    return cache_key
+
 def memoize(fn):
     """Simple reset-able memoization decorator for functions and methods,
     assumes that all arguments to the function can be hashed and
@@ -27,21 +43,7 @@ def memoize(fn):
 
     @wraps(fn)
     def wrapped_fn(*args, **kwargs):
-        cache_key = args + tuple(sorted(kwargs.items()))
-
-        try:
-            # if any element of the cache isn't hashable then we switch
-            # to using the types and string representations of
-            # all the elements in the cache key
-            hash(cache_key)
-        except TypeError:
-            print(cache_key)
-            raise
-            cache_key = tuple(
-                (type(key_element), repr(key_element))
-                for key_element in cache_key
-            )
-
+        cache_key = _memoize_cache_key(args, kwargs)
         try:
             return cache[cache_key]
 
@@ -56,6 +58,11 @@ def memoize(fn):
     # Needed to ensure that EnsemblRelease.clear_cache
     # is able to clear memoized values from each of its methods
     wrapped_fn.clear_cache = clear_cache
+    # expose the cache so we can check if an item has already been computed
+    wrapped_fn.cache = cache
+    # if we want to check whether an item is in the cache, first need
+    # to construct the same cache key as used by wrapped_fn
+    wrapped_fn.make_cache_key = _memoize_cache_key
     return wrapped_fn
 
 def is_valid_ensembl_id(ensembl_id):
