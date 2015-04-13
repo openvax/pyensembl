@@ -35,14 +35,16 @@ class Transcript(Locus):
     def __init__(
             self,
             transcript_id,
+            transcript_name,
+            contig,
+            start,
+            end,
+            strand,
+            biotype,
+            gene_id,
+            gene_name,
             ensembl):
-        """
-        Parameters
-        ----------
-        transcript_id : str
 
-        ensembl : pyensembl.EnsemblRelease
-        """
         require_string(transcript_id, "transcript ID")
 
         self.id = transcript_id
@@ -51,55 +53,18 @@ class Transcript(Locus):
         self.db = ensembl.db
         require_instance(self.db, Database, "db")
 
-        columns = [
-            'transcript_name',
-            'transcript_biotype',
-            'seqname',
-            'start',
-            'end',
-            'strand',
-            'gene_name',
-            'gene_id',
-        ]
-
-        name, biotype, contig, start, end, strand, gene_name, gene_id = \
-            self.db.query_one(
-                select_column_names=columns,
-                filter_column='transcript_id',
-                filter_value=transcript_id,
-                feature='transcript',
-                distinct=True)
-
         Locus.__init__(self, contig, start, end, strand)
 
-        if name:
-            self.name = name
-        else:
-            raise ValueError(
-                "Missing name for transcript with ID=%s" % transcript_id)
+        self.name = transcript_name
 
         if not is_valid_biotype(biotype):
             raise ValueError(
                 "Invalid biotype '%s' for transcript with ID=%s, name=%s" % (
-                    biotype, transcript_id, name))
-        elif biotype:
-            self.biotype = biotype
-        else:
-            raise ValueError(
-                "Missing biotype for transcript with ID=%s, name=%s" % (
-                    transcript_id, name))
+                    biotype, transcript_id, transcript_name))
 
-        if gene_name:
-            self.gene_name = gene_name
-        else:
-            raise ValueError(
-                "Missing gene name for transcript with ID=%s" % transcript_id)
-
-        if gene_id:
-            self.gene_id = gene_id
-        else:
-            raise ValueError(
-                "Missing gene ID for transcript with ID=%s" % transcript_id)
+        self.biotype = biotype
+        self.gene_name = gene_name
+        self.gene_id = gene_id
 
     def __str__(self):
         return "Transcript(id=%s, name=%s, gene_name=%s, location=%s:%d-%d)" % (
@@ -131,7 +96,7 @@ class Transcript(Locus):
     @memoized_property
     def exons(self):
         columns = ['exon_number', 'exon_id']
-        results = self.db.query(
+        exon_numbers_and_ids = self.db.query(
             columns,
             filter_column='transcript_id',
             filter_value=self.id,
@@ -139,9 +104,9 @@ class Transcript(Locus):
 
         # fill this list in its correct order (by exon_number) by using
         # the exon_number as a 1-based list offset
-        exons = [None] * len(results)
+        exons = [None] * len(exon_numbers_and_ids)
 
-        for exon_number, exon_id in results:
+        for exon_number, exon_id in exon_numbers_and_ids:
             exon = self.ensembl.exon_by_id(exon_id)
             exon_number = int(exon_number)
             assert exon_number >= 1, "Invalid exon number: %s" % exon_number
@@ -278,7 +243,7 @@ class Transcript(Locus):
                     self.end))
 
         # offset from beginning of unspliced transcript (including introns)
-        unspliced_offset = self.position_offset(position)
+        unspliced_offset = self.offset(position)
         total_spliced_offset = 0
 
         # traverse exons in order of their appearance on the strand

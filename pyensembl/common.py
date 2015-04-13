@@ -27,7 +27,21 @@ def memoize(fn):
 
     @wraps(fn)
     def wrapped_fn(*args, **kwargs):
-        cache_key = tuple(args) + tuple(kwargs.items())
+        cache_key = args + tuple(sorted(kwargs.items()))
+
+        try:
+            # if any element of the cache isn't hashable then we switch
+            # to using the types and string representations of
+            # all the elements in the cache key
+            hash(cache_key)
+        except TypeError:
+            print(cache_key)
+            raise
+            cache_key = tuple(
+                (type(key_element), repr(key_element))
+                for key_element in cache_key
+            )
+
         try:
             return cache[cache_key]
 
@@ -36,14 +50,11 @@ def memoize(fn):
             cache[cache_key] = value
             return value
 
-        except TypeError:
-            # uncachable -- for instance, passing a list as an argument.
-            # Better to not cache than to blow up entirely.
-            return fn.func(*args, **kwargs)
-
     def clear_cache():
         cache.clear()
 
+    # Needed to ensure that EnsemblRelease.clear_cache
+    # is able to clear memoized values from each of its methods
     wrapped_fn.clear_cache = clear_cache
     return wrapped_fn
 

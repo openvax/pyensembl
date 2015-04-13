@@ -120,7 +120,13 @@ class Locus(object):
     def length(self):
         return self.end - self.start + 1
 
-    def position_offset(self, position):
+    def offset(self, position):
+        """Offset of given position from stranded start of this locus.
+
+        For example, if a Locus goes from 10..20 and is on the negative strand,
+        then the offset of position 13 is 7, whereas if the Locus is on the
+        positive strand, then the offset is 3.
+        """
         if position > self.end or position < self.start:
             raise ValueError(
                 "Position %d outside valid range %d..%d of %s" % (

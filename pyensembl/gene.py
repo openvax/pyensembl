@@ -15,7 +15,7 @@
 from __future__ import print_function, division, absolute_import
 
 from memoized_property import memoized_property
-from typechecks import require_string, require_instance
+from typechecks import require_instance
 
 from .biotypes import is_valid_biotype
 from .database import Database
@@ -23,8 +23,16 @@ from .locus import Locus
 
 class Gene(Locus):
 
-    def __init__(self, gene_id, ensembl):
-        require_string(gene_id, "gene ID")
+    def __init__(
+            self,
+            gene_id,
+            gene_name,
+            contig,
+            start,
+            end,
+            strand,
+            biotype,
+            ensembl):
         self.id = gene_id
         # can't check the type of ensembl since it will create a circular
         # dependency between this module and ensembl_release but note that
@@ -32,21 +40,7 @@ class Gene(Locus):
         self.ensembl = ensembl
         self.db = ensembl.db
         require_instance(self.db, Database, "db")
-        columns = [
-            'gene_name',
-            'seqname',
-            'start',
-            'end',
-            'strand',
-            'gene_biotype'
-        ]
-        gene_name, contig, start, end, strand, biotype = self.db.query_one(
-            columns,
-            filter_column='gene_id',
-            filter_value=gene_id,
-            feature='gene')
-        if not gene_name:
-            raise ValueError("Missing name for gene with ID = %s" % gene_id)
+
         self.name = gene_name
 
         Locus.__init__(self, contig, start, end, strand)
@@ -55,11 +49,7 @@ class Gene(Locus):
             raise ValueError(
                 "Invalid gene_biotype %s for gene with ID = %s" % (
                     biotype, gene_id))
-        elif biotype:
-            self.biotype = biotype
-        else:
-            raise ValueError(
-                "Missing gene_biotype for gene with ID = %s" % gene_id)
+        self.biotype = biotype
 
     def __str__(self):
         return "Gene(id=%s, name=%s, location=%s:%d-%d)" % (

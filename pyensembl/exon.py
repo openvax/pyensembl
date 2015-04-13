@@ -14,48 +14,29 @@
 
 from __future__ import print_function, division, absolute_import
 
-from typechecks import require_integer, require_string
+from typechecks import require_integer
 from memoized_property import memoized_property
 
 from .common import memoize
 from .locus import Locus
 
 class Exon(Locus):
-    def __init__(self, exon_id, db):
-        require_string(exon_id, "exon ID")
 
+    def __init__(
+            self,
+            exon_id,
+            contig,
+            start,
+            end,
+            strand,
+            gene_name,
+            gene_id,
+            db):
+        Locus.__init__(self, contig, start, end, strand)
         self.id = exon_id
         self.db = db
-
-        columns = [
-            'seqname',
-            'start',
-            'end',
-            'strand',
-            'gene_name',
-            'gene_id',
-        ]
-
-        result = self.db.query_one(
-            select_column_names=columns,
-            filter_column='exon_id',
-            filter_value=exon_id,
-            feature='exon',
-            distinct=True)
-
-        result_dict = {}
-        for i, column_name in enumerate(columns):
-            result_dict[column_name] = result[i]
-
-        Locus.__init__(
-            self,
-            result_dict['seqname'],
-            result_dict['start'],
-            result_dict['end'],
-            result_dict['strand'])
-
-        self.gene_name = result_dict['gene_name']
-        self.gene_id = result_dict['gene_id']
+        self.gene_name = gene_name
+        self.gene_id = gene_id
 
     def __str__(self):
         return "Exon(exon_id=%s, gene_name=%s, contig=%s, start=%d, end=%s)" % (

@@ -79,32 +79,32 @@ def test_locus_contains():
 
 def test_position_offset():
     forward_locus = Locus("1", 10, 20, "+")
-    assert forward_locus.position_offset(10) == 0
-    assert forward_locus.position_offset(15) == 5
-    assert forward_locus.position_offset(19) == 9
-    assert forward_locus.position_offset(20) == 10
+    assert forward_locus.offset(10) == 0
+    assert forward_locus.offset(15) == 5
+    assert forward_locus.offset(19) == 9
+    assert forward_locus.offset(20) == 10
 
     negative_locus = Locus("1", 10, 20, "-")
-    assert negative_locus.position_offset(10) == 10
-    assert negative_locus.position_offset(15) == 5
-    assert negative_locus.position_offset(19) == 1
-    assert negative_locus.position_offset(20) == 0
+    assert negative_locus.offset(10) == 10
+    assert negative_locus.offset(15) == 5
+    assert negative_locus.offset(19) == 1
+    assert negative_locus.offset(20) == 0
 
     # don't allow negative offsets
     with assert_raises(ValueError, None):
-        forward_locus.position_offset(9)
+        forward_locus.offset(9)
 
     # don't allow negative offsets
     with assert_raises(ValueError, None):
-        negative_locus.position_offset(9)
+        negative_locus.offset(9)
 
     # don't allow offset past the end of the locus
     with assert_raises(ValueError, None):
-        forward_locus.position_offset(21)
+        forward_locus.offset(21)
 
     # don't allow offset past the end of the locus
     with assert_raises(ValueError, None):
-        negative_locus.position_offset(21)
+        negative_locus.offset(21)
 
 
 def test_range_offset():
@@ -148,4 +148,3 @@ def test_locus_distance():
     inf = float("inf")
     assert locus_chr1_10_20_pos.distance_to_locus(locus_chr2_21_25_pos) == inf
     assert locus_chr1_10_20_pos.distance_to_locus(locus_chr1_21_25_neg) == inf
-

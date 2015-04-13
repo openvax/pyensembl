@@ -289,7 +289,7 @@ class Database(object):
         query = """
             SELECT %s%s
             FROM %s
-            WHERE seqname= ?
+            WHERE seqname = ?
             AND start <= ?
             AND end >= ?
 

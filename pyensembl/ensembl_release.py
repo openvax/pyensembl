@@ -386,7 +386,29 @@ class EnsemblRelease(object):
         """
         Construct a Gene object for the given gene ID.
         """
-        return Gene(gene_id, ensembl=self)
+        field_names = [
+            'gene_name',
+            'seqname',
+            'start',
+            'end',
+            'strand',
+            'gene_biotype'
+        ]
+        gene_name, contig, start, end, strand, biotype = self.db.query_one(
+            field_names,
+            filter_column='gene_id',
+            filter_value=gene_id,
+            feature='gene')
+
+        return Gene(
+            gene_id=gene_id,
+            gene_name=gene_name,
+            contig=contig,
+            start=start,
+            end=end,
+            strand=strand,
+            biotype=biotype,
+            ensembl=self)
 
     @memoize
     def genes_by_name(self, gene_name):
@@ -521,13 +543,44 @@ class EnsemblRelease(object):
         """
         transcript_ids = self.transcript_ids(contig=contig, strand=strand)
         return [
-            Transcript(transcript_id, ensembl=self)
+            self.transcript_by_id(transcript_id)
             for transcript_id in transcript_ids
         ]
 
     @memoize
     def transcript_by_id(self, transcript_id):
-        return Transcript(transcript_id, ensembl=self)
+        """Construct Transcript object with given transcript ID"""
+
+        field_names = [
+            'transcript_name',
+            'transcript_biotype',
+            'seqname',
+            'start',
+            'end',
+            'strand',
+            'gene_name',
+            'gene_id',
+        ]
+
+        name, biotype, contig, start, end, strand, gene_name, gene_id = \
+            self.db.query_one(
+                select_column_names=field_names,
+                filter_column='transcript_id',
+                filter_value=transcript_id,
+                feature='transcript',
+                distinct=True)
+
+        return Transcript(
+            transcript_id=transcript_id,
+            transcript_name=name,
+            contig=contig,
+            start=start,
+            end=end,
+            strand=strand,
+            biotype=biotype,
+            gene_id=gene_id,
+            gene_name=gene_name,
+            ensembl=self)
 
     @memoize
     def transcripts_by_name(self, transcript_name):
@@ -655,11 +708,41 @@ class EnsemblRelease(object):
         """
         # DataFrame with single column called 'exon_id'
         exon_ids = self.exon_ids(contig=contig, strand=strand)
-        return [Exon(exon_id, self.db) for exon_id in exon_ids]
+        return [
+            self.exon_by_id(exon_id)
+            for exon_id in exon_ids
+        ]
 
     @memoize
     def exon_by_id(self, exon_id):
-        return Exon(exon_id, self.db)
+        """Construct an Exon object from its ID by looking up the exon's
+        properties in the given Database.
+        """
+        field_names = [
+            'seqname',
+            'start',
+            'end',
+            'strand',
+            'gene_name',
+            'gene_id',
+        ]
+
+        contig, start, end, strand, gene_name, gene_id = self.db.query_one(
+            select_column_names=field_names,
+            filter_column='exon_id',
+            filter_value=exon_id,
+            feature='exon',
+            distinct=True)
+
+        return Exon(
+            exon_id=exon_id,
+            contig=contig,
+            start=start,
+            end=end,
+            strand=strand,
+            gene_name=gene_name,
+            gene_id=gene_id,
+            db=self.db)
 
     @memoize
     def exon_by_transcript_id_and_number(self, transcript_id, exon_number):
