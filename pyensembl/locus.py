@@ -20,7 +20,7 @@ def normalize_chromosome(c):
     if is_integer(c):
         if c == 0:
             raise ValueError("Contig cannot be 0")
-        c = str(c)
+        return str(c)
 
     require_string(c, "contig name", nonempty=True)
 
@@ -32,13 +32,9 @@ def normalize_chromosome(c):
     # standardize mitochondrial genome to be "MT"
     if c == "M":
         return "MT"
-    # just in case someone is being lazy, capitalize "X" and "Y"
-    elif c == "x":
-        return "X"
-    elif c == "y":
-        return "Y"
     else:
-        return c
+        # just in case someone is being lazy, capitalize "X" and "Y"
+        return c.upper()
 
 def normalize_strand(strand):
     if strand == "+" or strand == "-":

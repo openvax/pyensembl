@@ -133,7 +133,7 @@ class EnsemblRelease(object):
         for maybe_fn in self.__dict__.values():
             # clear cache associated with all memoization decorators,
             # GTF and SequenceData objects
-            if hasattr(maybe_fn, 'clear_cache'):
+            if hasattr(maybe_fn, "clear_cache"):
                 maybe_fn.clear_cache()
 
         self._delete_cached_files()
@@ -166,7 +166,7 @@ class EnsemblRelease(object):
             Restrict query to particular contig
 
         strand : str, optional
-            Restrict results to '+' or '-' strands
+            Restrict results to "+" or "-" strands
 
         Returns a list constructed from query results.
         """
@@ -220,14 +220,14 @@ class EnsemblRelease(object):
 
     def transcript_sequence(self, transcript_id):
         """Return cDNA nucleotide sequence of transcript, or None if
-        transcript doesn't cDNA sequence.
+        transcript doesn't have cDNA sequence.
         """
         require_human_transcript_id(transcript_id)
         return self.transcript_sequences.get(transcript_id)
 
     def protein_sequence(self, protein_id):
         """Return cDNA nucleotide sequence of transcript, or None if
-        transcript doesn't cDNA sequence.
+        transcript doesn't have cDNA sequence.
         """
         require_human_protein_id(protein_id)
         return self.protein_sequences.get(protein_id)
@@ -268,8 +268,8 @@ class EnsemblRelease(object):
 
     def gene_ids_at_locus(self, contig, position, end=None, strand=None):
         return self.db.distinct_column_values_at_locus(
-            column='gene_id',
-            feature='gene',
+            column="gene_id",
+            feature="gene",
             contig=contig,
             position=position,
             end=end,
@@ -277,8 +277,8 @@ class EnsemblRelease(object):
 
     def gene_names_at_locus(self, contig, position, end=None, strand=None):
         return self.db.distinct_column_values_at_locus(
-             column='gene_name',
-             feature='gene',
+             column="gene_name",
+             feature="gene",
              contig=contig,
              position=position,
              end=end,
@@ -286,8 +286,8 @@ class EnsemblRelease(object):
 
     def exon_ids_at_locus(self, contig, position, end=None, strand=None):
         return self.db.distinct_column_values_at_locus(
-            column='exon_id',
-            feature='exon',
+            column="exon_id",
+            feature="exon",
             contig=contig,
             position=position,
             end=end,
@@ -295,8 +295,8 @@ class EnsemblRelease(object):
 
     def transcript_ids_at_locus(self, contig, position, end=None, strand=None):
         return self.db.distinct_column_values_at_locus(
-            column='transcript_id',
-            feature='transcript',
+            column="transcript_id",
+            feature="transcript",
             contig=contig,
             position=position,
             end=end,
@@ -305,8 +305,8 @@ class EnsemblRelease(object):
     def transcript_names_at_locus(
             self, contig, position, end=None, strand=None):
         return self.db.distinct_column_values_at_locus(
-            column='transcript_name',
-            feature='transcript',
+            column="transcript_name",
+            feature="transcript",
             contig=contig,
             position=position,
             end=end,
@@ -314,8 +314,8 @@ class EnsemblRelease(object):
 
     def protein_ids_at_locus(self, contig, position, end=None, strand=None):
         return self.db.distinct_column_values_at_locus(
-            column='protein_id',
-            feature='transcript',
+            column="protein_id",
+            feature="transcript",
             contig=contig,
             position=position,
             end=end,
@@ -334,9 +334,9 @@ class EnsemblRelease(object):
         Given a gene ID returns Locus with: chromosome, start, stop, strand
         """
         return self.db.query_locus(
-            filter_column='gene_id',
+            filter_column="gene_id",
             filter_value=gene_id,
-            feature='gene')
+            feature="gene")
 
     def loci_of_gene_names(self, gene_name):
         """
@@ -345,19 +345,19 @@ class EnsemblRelease(object):
         You can get multiple results since a gene might have multiple copies
         in the genome.
         """
-        return self.db.query_loci('gene_name', gene_name, 'gene')
+        return self.db.query_loci("gene_name", gene_name, "gene")
 
     def locus_of_transcript_id(self, transcript_id):
         return self.db.query_locus(
-            filter_column='transcript_id',
+            filter_column="transcript_id",
             filter_value=transcript_id,
-            feature='transcript')
+            feature="transcript")
 
     def locus_of_exon_id(self, exon_id):
         """
         Given an exon ID returns Locus
         """
-        return self.db.query_locus('exon_id', exon_id, feature='exon')
+        return self.db.query_locus("exon_id", exon_id, feature="exon")
 
     ###################################################
     #
@@ -387,18 +387,18 @@ class EnsemblRelease(object):
         Construct a Gene object for the given gene ID.
         """
         field_names = [
-            'gene_name',
-            'seqname',
-            'start',
-            'end',
-            'strand',
-            'gene_biotype'
+            "gene_name",
+            "seqname",
+            "start",
+            "end",
+            "strand",
+            "gene_biotype"
         ]
         gene_name, contig, start, end, strand, biotype = self.db.query_one(
             field_names,
-            filter_column='gene_id',
+            filter_column="gene_id",
             filter_value=gene_id,
-            feature='gene')
+            feature="gene")
 
         return Gene(
             gene_id=gene_id,
@@ -452,28 +452,28 @@ class EnsemblRelease(object):
         optionally restrict to a chromosome and/or strand.
         """
         return self.all_feature_values(
-            column='gene_name',
-            feature='gene',
+            column="gene_name",
+            feature="gene",
             contig=contig,
             strand=strand)
 
     @memoize
     def gene_name_of_gene_id(self, gene_id):
-        return self._query_gene_name("gene_id", gene_id, 'gene')
+        return self._query_gene_name("gene_id", gene_id, "gene")
 
     @memoize
     def gene_name_of_transcript_id(self, transcript_id):
         return self._query_gene_name(
-            "transcript_id", transcript_id, 'transcript')
+            "transcript_id", transcript_id, "transcript")
 
     @memoize
     def gene_name_of_transcript_name(self, transcript_name):
         return self._query_gene_name(
-            "transcript_name", transcript_name, 'transcript')
+            "transcript_name", transcript_name, "transcript")
 
     @memoize
     def gene_name_of_exon_id(self, exon_id):
-        return self._query_gene_name("exon_id", exon_id, 'exon')
+        return self._query_gene_name("exon_id", exon_id, "exon")
 
     ###################################################
     #
@@ -481,9 +481,9 @@ class EnsemblRelease(object):
     #
     ###################################################
 
-    def _query_gene_ids(self, property_name, value, feature='gene'):
+    def _query_gene_ids(self, property_name, value, feature="gene"):
         results = self.db.query(
-            select_column_names=['gene_id'],
+            select_column_names=["gene_id"],
             filter_column=property_name,
             filter_value=value,
             feature=feature,
@@ -498,8 +498,8 @@ class EnsemblRelease(object):
         (optionally restrict to a given chromosome/contig and/or strand)
         """
         return self.all_feature_values(
-            column='gene_id',
-            feature='gene',
+            column="gene_id",
+            feature="gene",
             contig=contig,
             strand=strand)
 
@@ -509,7 +509,7 @@ class EnsemblRelease(object):
         What are the Ensembl gene IDs associated with a given gene name?
         (due to copy events, there might be multiple genes per name)
         """
-        results = self._query_gene_ids('gene_name', gene_name)
+        results = self._query_gene_ids("gene_name", gene_name)
         if len(results) == 0:
             raise ValueError("Gene name not found: %s" % gene_name)
         return results
@@ -519,8 +519,8 @@ class EnsemblRelease(object):
         """
         What is the Ensembl gene ID associated with a given protein ID?
         """
-        results = self._query_gene_ids('protein_id', protein_id,
-                                       feature='CDS')
+        results = self._query_gene_ids("protein_id", protein_id,
+                                       feature="CDS")
         if len(results) == 0:
             raise ValueError("Protein ID not found: %s" % protein_id)
         assert len(results) == 1, \
@@ -552,22 +552,22 @@ class EnsemblRelease(object):
         """Construct Transcript object with given transcript ID"""
 
         field_names = [
-            'transcript_name',
-            'transcript_biotype',
-            'seqname',
-            'start',
-            'end',
-            'strand',
-            'gene_name',
-            'gene_id',
+            "transcript_name",
+            "transcript_biotype",
+            "seqname",
+            "start",
+            "end",
+            "strand",
+            "gene_name",
+            "gene_id",
         ]
 
         name, biotype, contig, start, end, strand, gene_name, gene_id = \
             self.db.query_one(
                 select_column_names=field_names,
-                filter_column='transcript_id',
+                filter_column="transcript_id",
                 filter_value=transcript_id,
-                feature='transcript',
+                feature="transcript",
                 distinct=True)
 
         return Transcript(
@@ -603,10 +603,10 @@ class EnsemblRelease(object):
 
     def _query_transcript_names(self, property_name, value):
         results = self.db.query(
-            select_column_names=['transcript_name'],
+            select_column_names=["transcript_name"],
             filter_column=property_name,
             filter_value=value,
-            feature='transcript',
+            feature="transcript",
             distinct=True,
             required=True)
         return [result[0] for result in results]
@@ -618,19 +618,19 @@ class EnsemblRelease(object):
         (optionally, restrict to a given chromosome and/or strand)
         """
         return self.all_feature_values(
-            column='transcript_name',
-            feature='transcript',
+            column="transcript_name",
+            feature="transcript",
             contig=contig,
             strand=strand)
 
     @memoize
     def transcript_names_of_gene_name(self, gene_name):
-        return self._query_transcript_names('gene_name', gene_name)
+        return self._query_transcript_names("gene_name", gene_name)
 
     @memoize
     def transcript_name_of_transcript_id(self, transcript_id):
         transcript_names = self._query_transcript_names(
-            'transcript_id', transcript_id)
+            "transcript_id", transcript_id)
         if len(transcript_names) == 0:
             raise ValueError(
                 "No transcript names for transcript ID = %s" % transcript_id)
@@ -645,9 +645,9 @@ class EnsemblRelease(object):
     ###################################################
 
     def _query_transcript_ids(self, property_name, value,
-                              feature='transcript'):
+                              feature="transcript"):
         results = self.db.query(
-            select_column_names=['transcript_id'],
+            select_column_names=["transcript_id"],
             filter_column=property_name,
             filter_value=value,
             feature=feature,
@@ -658,26 +658,26 @@ class EnsemblRelease(object):
     @memoize
     def transcript_ids(self, contig=None, strand=None):
         return self.all_feature_values(
-            column='transcript_id',
-            feature='transcript',
+            column="transcript_id",
+            feature="transcript",
             contig=contig,
             strand=strand)
 
     @memoize
     def transcript_ids_of_gene_id(self, gene_id):
-        return self._query_transcript_ids('gene_id', gene_id)
+        return self._query_transcript_ids("gene_id", gene_id)
 
     @memoize
     def transcript_ids_of_gene_name(self, gene_name):
-        return self._query_transcript_ids('gene_name', gene_name)
+        return self._query_transcript_ids("gene_name", gene_name)
 
     @memoize
     def transcript_ids_of_transcript_name(self, transcript_name):
-        return self._query_transcript_ids('transcript_name', transcript_name)
+        return self._query_transcript_ids("transcript_name", transcript_name)
 
     @memoize
     def transcript_ids_of_exon_id(self, exon_id):
-        return self._query_transcript_ids('exon_id', exon_id)
+        return self._query_transcript_ids("exon_id", exon_id)
 
     @memoize
     def transcript_id_of_protein_id(self, protein_id):
@@ -685,8 +685,8 @@ class EnsemblRelease(object):
         What is the Ensembl transcript ID associated with a given
         protein ID?
         """
-        results = self._query_transcript_ids('protein_id', protein_id,
-                                             feature='CDS')
+        results = self._query_transcript_ids("protein_id", protein_id,
+                                             feature="CDS")
         if len(results) == 0:
             raise ValueError("Protein ID not found: %s" % protein_id)
         assert len(results) == 1, \
@@ -706,7 +706,7 @@ class EnsemblRelease(object):
         Create exon object for all exons in the database, optionally
         restrict to a particular chromosome using the `contig` argument.
         """
-        # DataFrame with single column called 'exon_id'
+        # DataFrame with single column called "exon_id"
         exon_ids = self.exon_ids(contig=contig, strand=strand)
         return [
             self.exon_by_id(exon_id)
@@ -715,23 +715,23 @@ class EnsemblRelease(object):
 
     @memoize
     def exon_by_id(self, exon_id):
-        """Construct an Exon object from its ID by looking up the exon's
+        """Construct an Exon object from its ID by looking up the exon"s
         properties in the given Database.
         """
         field_names = [
-            'seqname',
-            'start',
-            'end',
-            'strand',
-            'gene_name',
-            'gene_id',
+            "seqname",
+            "start",
+            "end",
+            "strand",
+            "gene_name",
+            "gene_id",
         ]
 
         contig, start, end, strand, gene_name, gene_id = self.db.query_one(
             select_column_names=field_names,
-            filter_column='exon_id',
+            filter_column="exon_id",
             filter_value=exon_id,
-            feature='exon',
+            feature="exon",
             distinct=True)
 
         return Exon(
@@ -741,19 +741,7 @@ class EnsemblRelease(object):
             end=end,
             strand=strand,
             gene_name=gene_name,
-            gene_id=gene_id,
-            db=self.db)
-
-    @memoize
-    def exon_by_transcript_id_and_number(self, transcript_id, exon_number):
-        transcript = self.transcript_by_id(transcript_id)
-        if len(transcript.exons) > exon_number:
-            raise ValueError(
-                "Invalid exon number for transcript %s" % transcript_id)
-
-        # exon numbers in Ensembl are 1-based, need to subtract 1 to get
-        # a list index
-        return transcript.exons[exon_number - 1]
+            gene_id=gene_id)
 
     ###################################################
     #
@@ -763,10 +751,10 @@ class EnsemblRelease(object):
 
     def _query_exon_ids(self, property_name, value):
         results = self.db.query(
-            select_column_names=['exon_id'],
+            select_column_names=["exon_id"],
             filter_column=property_name,
             filter_value=value,
-            feature='exon',
+            feature="exon",
             distinct=True,
             required=True)
         return [result[0] for result in results]
@@ -774,23 +762,23 @@ class EnsemblRelease(object):
     @memoize
     def exon_ids(self, contig=None, strand=None):
         return self.all_feature_values(
-            column='exon_id',
-            feature='exon',
+            column="exon_id",
+            feature="exon",
             contig=contig,
             strand=strand)
 
     @memoize
     def exon_ids_of_gene_id(self, gene_id):
-        return self._query_exon_ids('gene_id', gene_id)
+        return self._query_exon_ids("gene_id", gene_id)
 
     @memoize
     def exon_ids_of_gene_name(self, gene_name):
-        return self._query_exon_ids('gene_name', gene_name)
+        return self._query_exon_ids("gene_name", gene_name)
 
     @memoize
     def exon_ids_of_transcript_name(self, transcript_name):
-        return self._query_exon_ids('transcript_name', transcript_name)
+        return self._query_exon_ids("transcript_name", transcript_name)
 
     @memoize
     def exon_ids_of_transcript_id(self, transcript_id):
-        return self._query_exon_ids('transcript_id', transcript_id)
+        return self._query_exon_ids("transcript_id", transcript_id)
