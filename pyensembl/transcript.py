@@ -72,7 +72,6 @@ class Transcript(Locus):
         """
         Length of a transcript is the sum of its exon lengths
         """
-        # return sum(end - start + 1 for (start, end) in self.exon_intervals)
         return sum(len(exon) for exon in self.exons)
 
     def __eq__(self, other):
@@ -266,7 +265,6 @@ class Transcript(Locus):
         # Exon Name:                exon 1                exon 2
         # Spliced Offset:           123456                789...
         # Intron vs. Exon: ...iiiiiieeeeeeiiiiiiiiiiiiiiiieeeeeeiiiiiiiiiii...
-        # for (exon_start_position, exon_end_position) in self.exon_intervals:
         for exon in self.exons:
             exon_unspliced_start, exon_unspliced_end = self.offset_range(
                 exon.start, exon.end)

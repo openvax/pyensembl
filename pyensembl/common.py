@@ -19,11 +19,15 @@ from typechecks import is_string
 CACHE_SUBDIR = "ensembl"
 
 def _memoize_cache_key(args, kwargs):
-    """Turn args tuple and kwargs dictionary into a hashable key"""
+    """Turn args tuple and kwargs dictionary into a hashable key.
+
+    Expects that all arguments to a memoized function are either hashable
+    or can be uniquely identified from type(arg) and repr(arg).
+    """
     cache_key = args + tuple(sorted(kwargs.items()))
 
     try:
-        # if any element of the cache isn't hashable then we switch
+        # if any element of the cache key isn't hashable then we switch
         # to using the types and string representations of
         # all the elements in the cache key
         hash(cache_key)
