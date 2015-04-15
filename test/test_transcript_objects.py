@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from pyensembl import Locus, Transcript
+from pyensembl import Locus
 from nose.tools import eq_, assert_not_equal, assert_greater
 
 from .test_common import ensembl_grch38, test_ensembl_releases
@@ -150,8 +150,8 @@ def test_transcript_cds_CTNNIP1_004():
 @test_ensembl_releases()
 def test_equal_transcripts(ensembl):
     t1 = ensembl.transcripts_by_name("TP53-001")[0]
-    # make an identical gene
-    t2 = Transcript(t1.id, ensembl)
+    # get an identical gene
+    t2 = ensembl.transcript_by_id(t1.id)
     eq_(t1, t2)
     eq_(hash(t1), hash(t2))
 

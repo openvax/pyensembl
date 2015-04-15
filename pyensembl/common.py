@@ -13,24 +13,60 @@
 # limitations under the License.
 
 from functools import wraps
+
 from typechecks import is_string
 
 CACHE_SUBDIR = "ensembl"
 
+def _memoize_cache_key(args, kwargs):
+    """Turn args tuple and kwargs dictionary into a hashable key.
+
+    Expects that all arguments to a memoized function are either hashable
+    or can be uniquely identified from type(arg) and repr(arg).
+    """
+    cache_key = args + tuple(sorted(kwargs.items()))
+
+    try:
+        # if any element of the cache key isn't hashable then we switch
+        # to using the types and string representations of
+        # all the elements in the cache key
+        hash(cache_key)
+    except TypeError:
+        cache_key = tuple(
+            (type(key_element), repr(key_element))
+            for key_element in cache_key
+        )
+    return cache_key
+
 def memoize(fn):
-    """Simple memoization decorator for functions and methods,
+    """Simple reset-able memoization decorator for functions and methods,
     assumes that all arguments to the function can be hashed and
     compared.
     """
-    memoized_values = {}
+    cache = {}
 
     @wraps(fn)
     def wrapped_fn(*args, **kwargs):
-        key = (args, tuple(sorted(kwargs.items())))
-        if key not in memoized_values:
-            memoized_values[key] = fn(*args, **kwargs)
-        return memoized_values[key]
+        cache_key = _memoize_cache_key(args, kwargs)
+        try:
+            return cache[cache_key]
 
+        except KeyError:
+            value = fn(*args, **kwargs)
+            cache[cache_key] = value
+            return value
+
+    def clear_cache():
+        cache.clear()
+
+    # Needed to ensure that EnsemblRelease.clear_cache
+    # is able to clear memoized values from each of its methods
+    wrapped_fn.clear_cache = clear_cache
+    # expose the cache so we can check if an item has already been computed
+    wrapped_fn.cache = cache
+    # if we want to check whether an item is in the cache, first need
+    # to construct the same cache key as used by wrapped_fn
+    wrapped_fn.make_cache_key = _memoize_cache_key
     return wrapped_fn
 
 def is_valid_ensembl_id(ensembl_id):

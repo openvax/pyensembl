@@ -1,7 +1,5 @@
 from __future__ import absolute_import
 
-from pyensembl import Gene
-
 from .test_common import test_ensembl_releases
 from .data import TP53_gene_id
 
@@ -30,8 +28,8 @@ def test_TP53_gene_object_by_name(ensembl):
 @test_ensembl_releases()
 def test_equal_genes(ensembl):
     gene1 = ensembl.genes_by_name("TP53")[0]
-    # make an identical gene
-    gene2 = Gene(gene1.id, ensembl)
+    # get an identical gene
+    gene2 = ensembl.gene_by_id(gene1.id)
 
     assert hash(gene1) == hash(gene2)
     assert gene1 == gene2
