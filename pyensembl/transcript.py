@@ -84,6 +84,10 @@ class Transcript(Locus):
         return hash(self.id)
 
     @memoized_property
+    def gene(self):
+        return self.ensembl.gene_by_id(self.gene_id)
+
+    @memoized_property
     def exons(self):
         # need to look up exon_number alongside ID since each exon may
         # appear in multiple transcripts and have a different exon number
