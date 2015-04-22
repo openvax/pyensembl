@@ -1,10 +1,9 @@
 from __future__ import print_function, absolute_import
 
-from pyensembl import EnsemblRelease
+from pyensembl import ensembl_grch38 as ensembl
 
 from tinytimer import benchmark
 
-ensembl = EnsemblRelease(78)
 contigs = [str(i + 1) for i in range(22)] + ["X", "Y"]
 
 def make_repeat_lookup_fn(lookup_fn, n_positions):
