@@ -6,7 +6,7 @@ TODO: Implement tests for EnsemblRelease.gene_ids
 """
 from __future__ import absolute_import
 from .test_common import test_ensembl_releases
-from pyensembl import EnsemblRelease
+from pyensembl import ensembl_grch38 as ensembl
 
 def test_gene_ids_ensembl77_hla_a():
     # chr6:29,945,884  is a position for HLA-A
@@ -14,8 +14,7 @@ def test_gene_ids_ensembl77_hla_a():
     # based on:
     # http://useast.ensembl.org/Homo_sapiens/Gene/
     # Summary?db=core;g=ENSG00000206503;r=6:29941260-29945884
-    ids = (EnsemblRelease(77, auto_download=True).
-           gene_ids_at_locus(6, 29945884))
+    ids = ensembl.gene_ids_at_locus(6, 29945884)
     expected = "ENSG00000206503"
     assert ids == ["ENSG00000206503"], \
         "Expected HLA-A, gene ID = %s, got: %s" % (expected, ids)

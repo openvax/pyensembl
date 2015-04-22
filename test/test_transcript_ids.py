@@ -4,7 +4,7 @@ converting from some type of name or ID.
 """
 from __future__ import absolute_import
 
-from pyensembl import EnsemblRelease
+from pyensembl import ensembl_grch38 as ensembl
 from nose.tools import eq_
 
 from .test_common import test_ensembl_releases
@@ -26,7 +26,6 @@ def test_transcript_ids_ensembl77_hla_a():
     # based on:
     # http://useast.ensembl.org/Homo_sapiens/Gene/
     # Summary?db=core;g=ENSG00000206503;r=6:29941260-29945884
-    ensembl = EnsemblRelease(77, auto_download=True)
     transcript_ids = ensembl.transcript_ids_at_locus(6, 29941260, 29945884)
     for transcript_id in HLA_A_TRANSCRIPT_IDS:
         assert transcript_id in transcript_ids, \

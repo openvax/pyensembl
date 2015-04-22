@@ -4,9 +4,7 @@ from the Ensembl website, make sure same IDs are found by pyensembl.
 """
 from __future__ import absolute_import
 
-from pyensembl import EnsemblRelease
-
-ensembl = EnsemblRelease(77, auto_download=True)
+from pyensembl import ensembl_grch38 as ensembl
 
 # all exons associated with TP53 gene in Ensembl release 77
 TP53_EXON_IDS_RELEASE_77 = [
@@ -47,8 +45,7 @@ def test_exon_ids_of_gene_id():
         "Wrong number of exons, expected %d but got %d (n_distinct=%d)" % (
             len(TP53_EXON_IDS_RELEASE_77),
             len(exon_ids),
-            len(set(exon_ids))
-        )
+            len(set(exon_ids)))
     assert all(exon_id in TP53_EXON_IDS_RELEASE_77 for exon_id in exon_ids)
 
 def test_exon_ids_of_gene_name():
@@ -61,8 +58,7 @@ def test_exon_ids_of_gene_name():
         "Wrong number of exons, expected %d but got %d (n_distinct=%d)" % (
             len(TP53_EXON_IDS_RELEASE_77),
             len(exon_ids),
-            len(set(exon_ids))
-        )
+            len(set(exon_ids)))
     assert all(exon_id in TP53_EXON_IDS_RELEASE_77 for exon_id in exon_ids)
 
 # Exon IDs of transcript TP53-026
@@ -85,10 +81,9 @@ def test_exon_ids_of_transcript_name():
     """
     exon_ids = ensembl.exon_ids_of_transcript_name("TP53-026")
     assert len(exon_ids) == len(TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77), \
-        "Expected %d exons, got %d"  % (
+        "Expected %d exons, got %d" % (
             len(TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77),
-            len(exon_ids)
-        )
+            len(exon_ids))
     assert all(
             exon_id in TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77
             for exon_id in exon_ids
@@ -102,11 +97,9 @@ def exon_ids_of_transcript_id():
     """
     exon_ids = ensembl.exon_ids_of_transcript_id("ENST00000610623")
     assert len(exon_ids) == len(TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77), \
-        "Expected %d exons, got %d"  % (
+        "Expected %d exons, got %d" % (
             len(TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77),
-            len(exon_ids)
-        )
+            len(exon_ids))
     assert all(
             exon_id in TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77
-            for exon_id in exon_ids
-    )
+            for exon_id in exon_ids)

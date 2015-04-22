@@ -1,11 +1,9 @@
 from __future__ import absolute_import
 
-from pyensembl import EnsemblRelease
+from pyensembl import ensembl_grch37 as ensembl
 
 import pandas as pd
 from nose.tools import eq_
-
-ensembl = EnsemblRelease(75, auto_download=True)
 
 def test_dataframe_column_at_locus():
     series = ensembl.gtf.dataframe_column_at_locus(

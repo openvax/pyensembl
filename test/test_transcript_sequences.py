@@ -5,13 +5,9 @@ and `reverse_complement`
 
 from __future__ import absolute_import
 from nose.tools import eq_
-from pyensembl import EnsemblRelease
-
-
-ensembl54 = EnsemblRelease(54, auto_download=True)
+from pyensembl import ensembl54
 
 def test_transcript_sequence_ensembl54():
-
     seq = ensembl54.transcript_sequence("ENST00000321606")
     assert len(seq) == 414, \
         "Expected transcript ENST00000321606 to have 414nt, got %s : %d" % (

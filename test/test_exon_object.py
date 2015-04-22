@@ -5,9 +5,7 @@ the expected gene ID and location.
 """
 from __future__ import absolute_import
 
-from pyensembl import EnsemblRelease
-
-ensembl = EnsemblRelease(79, auto_download=True)
+from pyensembl import ensembl_grch38 as ensembl
 
 def test_exon_object_by_id():
     """
