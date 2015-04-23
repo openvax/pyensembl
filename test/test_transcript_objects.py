@@ -14,6 +14,7 @@ from .data import (
     CTTNNIP1_004_exon_lengths,
     CTTNNIP1_004_exon_ids,
     EGFR_001_protein_sequence,
+    TP53_gene_id,
 )
 
 def test_transcript_start_codon():
@@ -168,3 +169,8 @@ def test_protein_id():
 def test_protein_protein_sequence():
     transcript = ensembl_grch38.transcripts_by_name("EGFR-001")[0]
     eq_(transcript.protein_sequence, EGFR_001_protein_sequence)
+
+def transcript_gene_should_match_parent_gene():
+    gene = ensembl_grch38.gene_by_id(TP53_gene_id)
+    for transcript in gene.transcripts:
+        eq_(transcript.gene, gene)
