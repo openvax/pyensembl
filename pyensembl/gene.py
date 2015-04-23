@@ -52,9 +52,10 @@ class Gene(Locus):
         self.biotype = biotype
 
     def __str__(self):
-        return "Gene(id=%s, name=%s, location=%s:%d-%d)" % (
+        return "Gene(id=%s, name=%s, biotype=%s, location=%s:%d-%d)" % (
             self.id,
             self.name,
+            self.biotype,
             self.contig,
             self.start,
             self.end)
