@@ -17,7 +17,6 @@ from __future__ import print_function, division, absolute_import
 from .locus import Locus
 
 class Exon(Locus):
-
     def __init__(
             self,
             exon_id,

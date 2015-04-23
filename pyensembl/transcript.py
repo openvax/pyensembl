@@ -40,7 +40,6 @@ class Transcript(Locus):
             strand,
             biotype,
             gene_id,
-            gene_name,
             ensembl):
         if not is_valid_biotype(biotype):
             raise ValueError(
@@ -53,14 +52,13 @@ class Transcript(Locus):
         self.ensembl = ensembl
         self.db = ensembl.db
         self.biotype = biotype
-        self.gene_name = gene_name
         self.gene_id = gene_id
 
     def __str__(self):
         return "Transcript(id=%s, name=%s, gene_name=%s, location=%s:%d-%d)" % (
                     self.id,
                     self.name,
-                    self.gene_name,
+                    self.gene.name,
                     self.contig,
                     self.start,
                     self.end)

@@ -329,6 +329,7 @@ class EnsemblRelease(object):
     #
     ###################################################
 
+    @memoize
     def locus_of_gene_id(self, gene_id):
         """
         Given a gene ID returns Locus with: chromosome, start, stop, strand
@@ -338,6 +339,7 @@ class EnsemblRelease(object):
             filter_value=gene_id,
             feature="gene")
 
+    @memoize
     def loci_of_gene_names(self, gene_name):
         """
         Given a gene name returns list of Locus objects with fields:
@@ -347,12 +349,14 @@ class EnsemblRelease(object):
         """
         return self.db.query_loci("gene_name", gene_name, "gene")
 
+    @memoize
     def locus_of_transcript_id(self, transcript_id):
         return self.db.query_locus(
             filter_column="transcript_id",
             filter_value=transcript_id,
             feature="transcript")
 
+    @memoize
     def locus_of_exon_id(self, exon_id):
         """
         Given an exon ID returns Locus
@@ -365,6 +369,7 @@ class EnsemblRelease(object):
     #
     ###################################################
 
+    @memoize
     def genes(self, contig=None, strand=None):
         """
         Returns all Gene objects in Ensembl. Can be restricted to a
@@ -435,6 +440,7 @@ class EnsemblRelease(object):
     #
     ###################################################
 
+    @memoize
     def _query_gene_name(self, property_name, property_value, feature_type):
         results = self.db.query(
             select_column_names=["gene_name"],
@@ -481,6 +487,7 @@ class EnsemblRelease(object):
     #
     ###################################################
 
+    @memoize
     def _query_gene_ids(self, property_name, value, feature="gene"):
         results = self.db.query(
             select_column_names=["gene_id"],
@@ -558,11 +565,10 @@ class EnsemblRelease(object):
             "start",
             "end",
             "strand",
-            "gene_name",
             "gene_id",
         ]
 
-        name, biotype, contig, start, end, strand, gene_name, gene_id = \
+        name, biotype, contig, start, end, strand, gene_id = \
             self.db.query_one(
                 select_column_names=field_names,
                 filter_column="transcript_id",
@@ -579,7 +585,6 @@ class EnsemblRelease(object):
             strand=strand,
             biotype=biotype,
             gene_id=gene_id,
-            gene_name=gene_name,
             ensembl=self)
 
     @memoize
@@ -601,6 +606,7 @@ class EnsemblRelease(object):
     #
     ###################################################
 
+    @memoize
     def _query_transcript_names(self, property_name, value):
         results = self.db.query(
             select_column_names=["transcript_name"],
@@ -644,8 +650,12 @@ class EnsemblRelease(object):
     #
     ###################################################
 
-    def _query_transcript_ids(self, property_name, value,
-                              feature="transcript"):
+    @memoize
+    def _query_transcript_ids(
+            self,
+            property_name,
+            value,
+            feature="transcript"):
         results = self.db.query(
             select_column_names=["transcript_id"],
             filter_column=property_name,
@@ -749,6 +759,7 @@ class EnsemblRelease(object):
     #
     ###################################################
 
+    @memoize
     def _query_exon_ids(self, property_name, value):
         results = self.db.query(
             select_column_names=["exon_id"],
