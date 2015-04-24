@@ -55,10 +55,16 @@ class Transcript(Locus):
         self.gene_id = gene_id
 
     def __str__(self):
-        return "Transcript(id=%s, name=%s, gene_name=%s, location=%s:%d-%d)" % (
+        return (
+            "Transcript(id=%s,"
+            " name=%s,"
+            " gene_name=%s,"
+            " biotype=%s,"
+            " location=%s:%d-%d)") % (
                     self.id,
                     self.name,
                     self.gene.name,
+                    self.biotype,
                     self.contig,
                     self.start,
                     self.end)
@@ -74,7 +80,7 @@ class Transcript(Locus):
 
     def __eq__(self, other):
         return (
-            isinstance(other, Transcript) and
+            other.__class__ is Transcript and
             self.id == other.id and
             self.ensembl == other.ensembl)
 

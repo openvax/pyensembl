@@ -52,9 +52,10 @@ class Gene(Locus):
         self.biotype = biotype
 
     def __str__(self):
-        return "Gene(id=%s, name=%s, location=%s:%d-%d)" % (
+        return "Gene(id=%s, name=%s, biotype=%s, location=%s:%d-%d)" % (
             self.id,
             self.name,
+            self.biotype,
             self.contig,
             self.start,
             self.end)
@@ -64,7 +65,7 @@ class Gene(Locus):
 
     def __eq__(self, other):
         return (
-            isinstance(other, Gene) and
+            other.__class__ is Gene and
             self.id == other.id and
             self.ensembl == other.ensembl)
 

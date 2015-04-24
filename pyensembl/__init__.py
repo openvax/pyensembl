@@ -40,5 +40,8 @@ def cached_release(version, auto_download=True):
 
 ensembl_grch36 = ensembl54 = cached_release(54)  # last release for GRCh36/hg18
 ensembl_grch37 = ensembl75 = cached_release(75)  # last release for GRCh37/hg19
+
+ensembl77 = cached_release(77)
+ensembl78 = cached_release(78)
 ensembl79 = cached_release(79)
 ensembl_grch38 = ensembl79  # most recent for GRCh38
