@@ -37,3 +37,15 @@ class Exon(Locus):
 
     def __repr__(self):
         return str(self)
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def __eq__(self, other):
+        return (
+            other.__class__ is Exon and
+            self.contig == other.contig and
+            self.start == other.start and
+            self.end == other.end and
+            self.strand == other.strand and
+            self.id == other.id)

@@ -110,7 +110,7 @@ class EnsemblRelease(object):
 
     def __eq__(self, other):
         return (
-            isinstance(other, EnsemblRelease) and
+            other.__class__ is EnsemblRelease and
             self.release == other.release and
             self.species == other.species)
 

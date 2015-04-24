@@ -65,7 +65,7 @@ class Gene(Locus):
 
     def __eq__(self, other):
         return (
-            isinstance(other, Gene) and
+            other.__class__ is Gene and
             self.id == other.id and
             self.ensembl == other.ensembl)
 

@@ -80,7 +80,7 @@ class Transcript(Locus):
 
     def __eq__(self, other):
         return (
-            isinstance(other, Transcript) and
+            other.__class__ is Transcript and
             self.id == other.id and
             self.ensembl == other.ensembl)
 

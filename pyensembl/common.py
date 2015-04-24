@@ -24,19 +24,21 @@ def _memoize_cache_key(args, kwargs):
     Expects that all arguments to a memoized function are either hashable
     or can be uniquely identified from type(arg) and repr(arg).
     """
-    cache_key = args + tuple(sorted(kwargs.items()))
+    cache_key_list = []
 
-    try:
-        # if any element of the cache key isn't hashable then we switch
-        # to using the types and string representations of
-        # all the elements in the cache key
-        hash(cache_key)
-    except TypeError:
-        cache_key = tuple(
-            (type(key_element), repr(key_element))
-            for key_element in cache_key
-        )
-    return cache_key
+    # hack to get around the unhashability of lists,
+    # add a special case to convert them to tuples
+    for arg in args:
+        if type(arg) is list:
+            cache_key_list.append(tuple(arg))
+        else:
+            cache_key_list.append(arg)
+    for (k, v) in sorted(kwargs.items()):
+        if type(v) is list:
+            cache_key_list.append((k, tuple(v)))
+        else:
+            cache_key_list.append((k, v))
+    return tuple(cache_key_list)
 
 def memoize(fn):
     """Simple reset-able memoization decorator for functions and methods,
@@ -48,13 +50,12 @@ def memoize(fn):
     @wraps(fn)
     def wrapped_fn(*args, **kwargs):
         cache_key = _memoize_cache_key(args, kwargs)
-        try:
-            return cache[cache_key]
-
-        except KeyError:
+        if cache_key not in cache:
             value = fn(*args, **kwargs)
             cache[cache_key] = value
             return value
+        else:
+            return cache[cache_key]
 
     def clear_cache():
         cache.clear()

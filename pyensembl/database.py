@@ -55,7 +55,7 @@ class Database(object):
         self.logger.setLevel(logging.INFO)
 
     def __eq__(self, other):
-        return isinstance(other, Database) and self.gtf == other.gtf
+        return other.__class__ is Database and self.gtf == other.gtf
 
     def __hash__(self):
         return hash(self.gtf)
