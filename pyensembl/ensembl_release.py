@@ -399,12 +399,14 @@ class EnsemblRelease(object):
             "strand",
             "gene_biotype"
         ]
-        gene_name, contig, start, end, strand, biotype = self.db.query_one(
+        result = self.db.query_one(
             field_names,
             filter_column="gene_id",
             filter_value=gene_id,
             feature="gene")
-
+        if not result:
+            raise ValueError("Gene not found: %s" % (gene_id,))
+        gene_name, contig, start, end, strand, biotype = result
         return Gene(
             gene_id=gene_id,
             gene_name=gene_name,
@@ -567,15 +569,15 @@ class EnsemblRelease(object):
             "strand",
             "gene_id",
         ]
-
-        name, biotype, contig, start, end, strand, gene_id = \
-            self.db.query_one(
-                select_column_names=field_names,
-                filter_column="transcript_id",
-                filter_value=transcript_id,
-                feature="transcript",
-                distinct=True)
-
+        result = self.db.query_one(
+            select_column_names=field_names,
+            filter_column="transcript_id",
+            filter_value=transcript_id,
+            feature="transcript",
+            distinct=True)
+        if not result:
+            raise ValueError("Transcript not found: %s" % (transcript_id,))
+        name, biotype, contig, start, end, strand, gene_id = result
         return Transcript(
             transcript_id=transcript_id,
             transcript_name=name,
