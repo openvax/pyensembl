@@ -49,15 +49,16 @@ class EnsemblRelease(object):
     a particular release of the Ensembl database and provides a wide
     variety of helper methods for accessing this data.
     """
-
     def __init__(self,
                  release=MAX_ENSEMBL_RELEASE,
                  server=ENSEMBL_FTP_SERVER,
+                 db_url=None,
                  auto_download=False):
 
         self.release = check_release_number(release)
         self.species = "homo_sapiens"
         self.server = server
+        self.db_url = db_url
         self.auto_download = auto_download
         self.reference_name = which_human_reference_name(self.release)
 
@@ -70,9 +71,12 @@ class EnsemblRelease(object):
             server,
             auto_download=auto_download)
 
-        # Database object turns the GTF dataframes into sqlite3 tables
+        # Database object turns the GTF dataframes into database tables
         # and wraps them with methods like `query_one`
-        self.db = Database(gtf=self.gtf, auto_download=auto_download)
+        self.db = Database(gtf=self.gtf,
+                           db_url=db_url,
+                           collection_name=self.gtf.base_filename(),
+                           auto_download=auto_download)
 
         # get the URL for the cDNA FASTA file containing
         # this releases's transcript sequences
@@ -100,10 +104,11 @@ class EnsemblRelease(object):
         self.logger.setLevel(logging.INFO)
 
     def __str__(self):
-        return "EnsemblRelease(release=%d, species=%s, genome=%s)" % (
-                    self.release,
-                    self.species,
-                    self.reference_name)
+        return "EnsemblRelease(release=%d, species=%s, genome=%s, db_url=%s)" % (
+            self.release,
+            self.species,
+            self.reference_name,
+            self.db_url)
 
     def __repr__(self):
         return str(self)

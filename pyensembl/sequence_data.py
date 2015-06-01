@@ -63,7 +63,7 @@ class SequenceData(object):
 
     def _create_local_filename(self, remote_filename):
         """
-        We sometimes need to add the release number to a local FASTAfilename
+        We sometimes need to add the release number to a local FASTA filename
         since some Ensembl releases only have the genome name in the FASTA
         filename but still differ subtly between releases.
         For example, a transcript ID may be missing in Ensembl 75 but present
@@ -226,7 +226,6 @@ class SequenceData(object):
 
     def get(self, sequence_id):
         """Get sequence associated with given ID or return None if missing"""
-
         if sequence_id not in self._sequence_cache:
             # all Ensembl identifiers start with ENS e.g. ENST, ENSP, ENSE
             require_ensembl_id(sequence_id)

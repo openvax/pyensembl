@@ -15,8 +15,10 @@
 from __future__ import print_function, division, absolute_import
 
 import logging
-from os.path import join, exists
-import sqlite3
+from os.path import join
+from sqlalchemy import MetaData
+from sqlalchemy.sql import text
+from sqlalchemy.exc import OperationalError
 
 import datacache
 from typechecks import require_integer, require_string
@@ -24,17 +26,20 @@ from typechecks import require_integer, require_string
 from .common import CACHE_SUBDIR, memoize
 from .locus import normalize_chromosome, normalize_strand, Locus
 
-# any time we update the database schema, increment this version number
-DATABASE_SCHEMA_VERSION = 2
+# Any time we update the database schema, increment this version number
+DATABASE_SCHEMA_VERSION = 3
 
 class Database(object):
     """
-    Wrapper around sqlite3 database so that the rest of the
-    library doesn't have to worry about constructing the .db file or
-    writing SQL queries directly.
-    """
+    Wrapper around a database so that the rest of the library doesn't
+    have to worry about constructing the DB or writing SQL queries
+    directly.
 
-    def __init__(self, gtf, auto_download=False):
+    This "Database" represents a collection that may share a physical
+    database with other collections.
+    """
+    def __init__(self, gtf, collection_name=None, db_url=None,
+                 auto_download=False):
         """
         Parameters
         ----------
@@ -42,12 +47,25 @@ class Database(object):
             Object which parses Ensembl GTF annotation files and presents their
             contents as Pandas DataFrames
 
+        collection_name : str, optional
+            A name describing the set of data, e.g.
+            Homo_sapiens.GRCh37.62
+
+        db_url : str, optional
+            Database connection description: see
+            http://docs.sqlalchemy.org/en/latest/core/engines.html
+            #database-urls
+            Fall back to a sqlite DB file if no DB URL is provided
+
         auto_download : bool, optional (default = False)
             If GTF file is missing, force the `gtf` object to download
             and parse it. If file is missing and auto_download = False then
             raise an exception.
         """
         self.gtf = gtf
+        self.db_url = db_url
+        self.collection_name = (collection_name if collection_name
+                                else self.gtf.base_filename())
         self.auto_download = auto_download
         self._connection = None
 
@@ -55,10 +73,21 @@ class Database(object):
         self.logger.setLevel(logging.INFO)
 
     def __eq__(self, other):
-        return other.__class__ is Database and self.gtf == other.gtf
+        return (other.__class__ is Database and
+                self.gtf == other.gtf and
+                self.db_url == other.db_url)
 
     def __hash__(self):
-        return hash(self.gtf)
+        return hash((self.gtf, self.db_url))
+
+    def build_table_name(self, feature_name):
+        """This duplicates functionality in datacache that appends
+        a collection name to a table name, but we need it in PyEnsembl
+        when directly querying the DB created by datacache.
+
+        See datacache.database_helpers.table_name
+        """
+        return "%s_%s" % (feature_name, self.collection_name)
 
     def local_db_filename(self):
         base = self.gtf.base_filename()
@@ -163,8 +192,9 @@ class Database(object):
         return result
 
     def _create_database(self, force=False):
-        print("Creating database: %s" % self.local_db_path())
-        filename = self.local_db_filename()
+        print("Creating database collection: %s" %
+              self.collection_name)
+
         df = self.gtf.dataframe()
 
         all_index_groups = self._all_possible_indices(df.columns)
@@ -172,6 +202,7 @@ class Database(object):
         # split single DataFrame into dictionary mapping each unique
         # feature name onto that subset of the data
         feature_names = df['feature'].unique()
+        
         dataframes = {}
         # every table gets the same set of indices
         indices_dict = {}
@@ -180,19 +211,18 @@ class Database(object):
 
         for feature in feature_names:
             df_subset = df[df.feature == feature]
-            dataframes[feature] = df_subset
-
             primary_key = self._get_primary_key(feature, df_subset)
+            dataframes[feature] = df_subset
             if primary_key:
                 primary_keys[feature] = primary_key
-
             indices_dict[feature] = self._feature_indices(
                 all_index_groups,
                 primary_key,
                 df_subset)
 
         self._connection = datacache.db_from_dataframes(
-            db_filename=filename,
+            collection_name=self.collection_name,
+            db_url=self.db_url,
             dataframes=dataframes,
             indices=indices_dict,
             primary_keys=primary_keys,
@@ -203,30 +233,30 @@ class Database(object):
 
     def _connect_if_exists(self):
         """
-        Return the connection if the DB exists, and otherwise return
-        None. As a side effect, stores the database connection in
-        self._connection.
+        Return the connection if the database collection exists, and
+        otherwise return None. As a side effect, stores the database 
+        connection in self._connection.
         """
         if self._connection is None:
-            db_path = self.local_db_path()
-            if exists(db_path):
-                # since version metadata is filled in last in datacache,
-                # checking for a version also implicitly checks for
-                # having finishing fill in all the tables/rows.
-                #
-                # TODO: expose this more explicitly in datacache
-                #
-                self._connection = datacache.connect_if_correct_version(
-                    db_path, DATABASE_SCHEMA_VERSION)
+            # since version metadata is filled in last in datacache,
+            # checking for a version also implicitly checks for
+            # having finishing fill in all the tables/rows.
+            #
+            # TODO: expose this more explicitly in datacache
+            #
+            self._connection = datacache.connect_if_correct_version(
+                db_url=self.db_url,
+                collection_name=self.collection_name,
+                subdir=CACHE_SUBDIR,
+                version=DATABASE_SCHEMA_VERSION)
         return self._connection
 
     @property
     def connection(self):
         """
-        Return the sqlite3 database for this Ensembl release
-        (download and/or construct it if necessary, if auto_download
-        is on). As a side effect, stores the database connection in
-        self._connection.
+        Return the database for this Ensembl release (download and/or 
+        construct it if necessary, if auto_download is on). As a side 
+        effect, stores the database connection in self._connection.
         """
         connection = self._connect_if_exists()
         if connection:
@@ -241,9 +271,9 @@ class Database(object):
 
     @memoize
     def columns(self, table_name):
-        sql = "PRAGMA table_info(%s)" % table_name
-        table_info = self.connection.execute(sql).fetchall()
-        return [info[1] for info in table_info]
+        metadata = MetaData(bind=self.connection)
+        metadata.reflect(only=[table_name])
+        return [column.name for column in metadata.tables[table_name].columns]
 
     @memoize
     def column_exists(self, table_name, column_name):
@@ -277,9 +307,10 @@ class Database(object):
 
         require_integer(end, "end")
 
-        if not self.column_exists(feature, column_name):
-            raise ValueError("Table %s doesn't have column %s" % (
-                feature, column_name,))
+        table_name = self.build_table_name(feature)
+        if not self.column_exists(table, column_name):
+            raise ValueError("Table \"%s\" doesn't have column \"%s\"" % (
+                table_name, column_name,))
 
         if distinct:
             distinct_string = "DISTINCT "
@@ -287,21 +318,21 @@ class Database(object):
             distinct_string = ""
 
         query = """
-            SELECT %s%s
-            FROM %s
-            WHERE seqname = ?
-            AND start <= ?
-            AND end >= ?
+            SELECT %s\"%s\"
+            FROM \"%s\"
+            WHERE \"seqname\" = :contig
+            AND \"start\" <= :end
+            AND \"end\" >= :position
 
-        """ % (distinct_string, column_name, feature)
+        """ % (distinct_string, column_name, table)
 
-        query_params = [contig, end, position]
+        query_params = {"contig": contig, "end": end, "position": position}
 
         if strand:
-            query += " AND strand = ?"
-            query_params.append(strand)
+            query += " AND strand = :end"
+            query_params["strand"] = strand
 
-        tuples = self.connection.execute(query, query_params).fetchall()
+        tuples = self.connection.execute(text(query), query_params).fetchall()
 
         # each result is a tuple, so pull out its first element
         results = [t[0] for t in tuples if t[0] is not None]
@@ -368,13 +399,13 @@ class Database(object):
         required : bool
             Raise an error if no results found in the database
 
-        query_params : list
-            For each '?' in the query there must be a corresponding value in
-            this list.
+        query_params : dict
+            For each binding in the query there must be a corresponding 
+            key/value in this dict.
         """
         try:
-            cursor = self.connection.execute(sql, query_params)
-        except sqlite3.OperationalError as e:
+            cursor = self.connection.execute(text(sql), query_params)
+        except OperationalError as e:
             logging.warn(
                 "Encountered error \"%s\" from query \"%s\" with parameters %s",
                 e.message, sql, query_params)
@@ -397,18 +428,19 @@ class Database(object):
             distinct=False,
             required=False):
         """
-        Construct a SQL query and run against the ensembl sqlite3 database,
+        Construct a SQL query and run against the ensembl database,
         filtered both by the feature type and a user-provided column/value.
         """
+        table_name = self.build_table_name(feature)
         sql = """
             SELECT %s%s
-            FROM %s
-            WHERE %s = ?
+            FROM \"%s\"
+            WHERE \"%s\" = :filter_value
         """ % ("distinct " if distinct else "",
-               ", ".join(select_column_names),
-               feature,
+               ", ".join(["\"%s\"" % col for col in select_column_names]),
+               table_name,
                filter_column)
-        query_params = [filter_value]
+        query_params = {"filter_value": filter_value}
         return self.run_sql_query(
             sql, required=required, query_params=query_params)
 
@@ -450,25 +482,26 @@ class Database(object):
             contig=None,
             strand=None):
         """
-        Run a SQL query against the Ensembl sqlite3 database, filtered
+        Run a SQL query against the Ensembl database, filtered
         only on the feature type.
         """
+        table_name = self.build_table_name(feature)
         query = """
-            SELECT %s%s
-            FROM %s
+            SELECT %s\"%s\"
+            FROM \"%s\"
             WHERE 1=1
-        """ % ("DISTINCT " if distinct else "", column, feature)
-        query_params = []
+        """ % ("DISTINCT " if distinct else "", column, table_name)
+        query_params = {}
 
         if contig:
             contig = normalize_chromosome(contig)
-            query += " AND seqname = ?"
-            query_params.append(contig)
+            query += " AND seqname = :contig"
+            query_params["contig"] = contig
 
         if strand:
             strand = normalize_strand(strand)
-            query += " AND strand = ?"
-            query_params.append(strand)
+            query += " AND strand = :strand"
+            query_params["strand"] = strand
 
         rows = self.run_sql_query(query, query_params=query_params)
         return [row[0] for row in rows if row is not None]
