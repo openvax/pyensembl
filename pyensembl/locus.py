@@ -16,25 +16,37 @@ from __future__ import print_function, division, absolute_import
 
 from typechecks import is_integer, require_string
 
+# Manually memoizing here, since our simple common.memoize function has
+# noticable overhead in this instance.
+NORMALIZE_CHROMOSOME_CACHE = {}
 def normalize_chromosome(c):
-    if is_integer(c):
-        if c == 0:
+    try:
+        return NORMALIZE_CHROMOSOME_CACHE[c]
+    except KeyError:
+        pass
+
+    result = c
+    if is_integer(result):
+        if result == 0:
             raise ValueError("Contig cannot be 0")
-        return str(c)
-
-    require_string(c, "contig name", nonempty=True)
-
-    # only strip off lowercase chr since some of the non-chromosomal contigs
-    # start with "CHR"
-    if c.startswith("chr"):
-        c = c[3:]
-
-    # standardize mitochondrial genome to be "MT"
-    if c == "M":
-        return "MT"
+        result = str(result)
     else:
-        # just in case someone is being lazy, capitalize "X" and "Y"
-        return c.upper()
+        require_string(result, "contig name", nonempty=True)
+
+        # only strip off lowercase chr since some of the non-chromosomal
+        # contigs start with "CHR"
+        if result.startswith("chr"):
+            result = result[3:]
+
+        # standardize mitochondrial genome to be "MT"
+        if result == "M":
+            result = "MT"
+        else:
+            # just in case someone is being lazy, capitalize "X" and "Y"
+            result = result.upper()
+        
+    NORMALIZE_CHROMOSOME_CACHE[c] = result
+    return result
 
 def normalize_strand(strand):
     if strand == "+" or strand == "-":
