@@ -50,12 +50,12 @@ def memoize(fn):
     @wraps(fn)
     def wrapped_fn(*args, **kwargs):
         cache_key = _memoize_cache_key(args, kwargs)
-        if cache_key not in cache:
+        try:
+            return cache[cache_key]
+        except KeyError:
             value = fn(*args, **kwargs)
             cache[cache_key] = value
             return value
-        else:
-            return cache[cache_key]
 
     def clear_cache():
         cache.clear()
