@@ -38,14 +38,18 @@ class GTF(object):
             species="homo_sapiens",
             server=ENSEMBL_FTP_SERVER,
             auto_download=False,
-            decompress=True):
+            decompress=True,
+            url=None):
         self.cache = datacache.Cache(CACHE_SUBDIR)
         self.release = release
         self.decompress = decompress
-        self.url = gtf_url(
-            ensembl_release=release,
-            species=species,
-            server=server)
+        if url:
+            self.url = url
+        else:
+            self.url = gtf_url(
+                ensembl_release=release,
+                species=species,
+                server=server)
 
         self.remote_filename = split(self.url)[1]
 

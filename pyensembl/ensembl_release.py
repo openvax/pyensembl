@@ -37,7 +37,6 @@ from .gtf import GTF
 from .release_info import (
     check_release_number,
     MAX_ENSEMBL_RELEASE,
-    which_human_reference_name
 )
 from .sequence_data import SequenceData
 from .transcript import Transcript
@@ -53,13 +52,15 @@ class EnsemblRelease(object):
     def __init__(self,
                  release=MAX_ENSEMBL_RELEASE,
                  server=ENSEMBL_FTP_SERVER,
-                 auto_download=False):
+                 auto_download=False,
+                 gtf_url=None,
+                 transcript_fasta_url=None,
+                 protein_fasta_url=None):
 
         self.release = check_release_number(release)
         self.species = "homo_sapiens"
         self.server = server
         self.auto_download = auto_download
-        self.reference_name = which_human_reference_name(self.release)
 
         # GTF object wraps the source GTF file from which we get
         # genome annotations for each Ensembl release. Presents access
@@ -68,7 +69,8 @@ class EnsemblRelease(object):
             self.release,
             self.species,
             server,
-            auto_download=auto_download)
+            auto_download=auto_download,
+            url=gtf_url)
 
         # Database object turns the GTF dataframes into sqlite3 tables
         # and wraps them with methods like `query_one`
@@ -76,34 +78,35 @@ class EnsemblRelease(object):
 
         # get the URL for the cDNA FASTA file containing
         # this releases's transcript sequences
-        transcript_sequences_fasta_url = fasta_url(
+        if not transcript_fasta_url:
+            transcript_fasta_url = fasta_url(
                 ensembl_release=self.release,
                 species=self.species,
                 sequence_type="cdna",
                 server=self.server)
         self.transcript_sequences = SequenceData(
             ensembl_release=self.release,
-            fasta_url=transcript_sequences_fasta_url,
+            fasta_url=transcript_fasta_url,
             auto_download=auto_download)
 
-        protein_sequences_fasta_url = fasta_url(
-            ensembl_release=self.release,
-            species=self.species,
-            sequence_type="pep",
-            server=self.server)
+        if not protein_fasta_url:
+            protein_fasta_url = fasta_url(
+                ensembl_release=self.release,
+                species=self.species,
+                sequence_type="pep",
+                server=self.server)
         self.protein_sequences = SequenceData(
             ensembl_release=self.release,
-            fasta_url=protein_sequences_fasta_url,
+            fasta_url=protein_fasta_url,
             auto_download=auto_download)
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
 
     def __str__(self):
-        return "EnsemblRelease(release=%d, species=%s, genome=%s)" % (
-                    self.release,
-                    self.species,
-                    self.reference_name)
+        return "EnsemblRelease(release=%d, species=%s)" % (
+            self.release,
+            self.species)
 
     def __repr__(self):
         return str(self)

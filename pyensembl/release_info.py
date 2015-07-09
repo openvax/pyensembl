@@ -20,14 +20,20 @@ MAX_ENSEMBL_RELEASE = 79
 def check_release_number(release):
     """
     Convert a user-provided release number into
-    an integer, check to make sure it's in the
-    valid range of Ensembl releases
+    an integer.
     """
     try:
         release = int(release)
     except:
         raise ValueError("Invalid Ensembl release: %s" % release)
+    return release
 
+def check_human_release_number(release):
+    """
+    Check to make sure a human release is in the valid range of
+    Ensembl releases.
+    """
+    release = check_release_number(release)
     if release < MIN_ENSEMBL_RELEASE or release > MAX_ENSEMBL_RELEASE:
         raise ValueError(
             "Invalid Ensembl releases %d, must be between %d and %d" % (
@@ -50,7 +56,7 @@ for i in range(76, MAX_ENSEMBL_RELEASE + 1):
     _human_references[i] = 'GRCh38'
 
 def which_human_reference_name(release):
-    release = check_release_number(release)
+    release = check_human_release_number(release)
     if release not in _human_references:
         raise ValueError(
             "No reference found for release %d" % release)
