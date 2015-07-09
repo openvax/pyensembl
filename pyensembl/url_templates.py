@@ -69,6 +69,9 @@ def _normalize_release_properties(ensembl_release, species):
     ensembl_release = check_release_number(ensembl_release)
     species = normalize_species_name(species)
     # TODO: generalize this to species other than human
+    # Currently, non-human species can be specified via GTF and FASTA
+    # URLs; however, automatically generating those URLs (such as in
+    # this chunk of code) is not yet implemented.
     assert species == "homo_sapiens"
     reference_name = which_human_reference_name(ensembl_release)
     return ensembl_release, species, reference_name

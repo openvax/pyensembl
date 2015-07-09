@@ -16,10 +16,13 @@ from __future__ import print_function, division, absolute_import
 
 from .compute_cache import clear_cached_objects
 from .ensembl_release import EnsemblRelease
+from .genome import Genome
+from .genome_source import GenomeSource
+from .ensembl_release_source import EnsemblReleaseSource
 from .gene import Gene
 from .gtf import GTF
 from .locus import Locus
-from .release_info import check_release_number
+from .release_info import check_human_release_number
 from .search import find_nearest_locus
 from .sequence_data import SequenceData
 from .transcript import Transcript
@@ -31,7 +34,7 @@ def cached_release(version, auto_download=True):
     the same EnsemblRelease object since each one will store a lot of cached
     annotation data in-memory.
     """
-    version = check_release_number(version)
+    version = check_human_release_number(version)
     key = version, auto_download
     if key not in _cache:
         ensembl = EnsemblRelease(version, auto_download=auto_download)
