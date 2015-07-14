@@ -23,7 +23,6 @@ from .gtf_parsing import load_gtf_as_dataframe
 from .common import CACHE_SUBDIR
 from .locus import normalize_chromosome, normalize_strand
 from .compute_cache import cached_dataframe, clear_cached_objects
-from .url_templates import ENSEMBL_FTP_SERVER, gtf_url
 
 
 class GTF(object):
@@ -34,23 +33,13 @@ class GTF(object):
     """
     def __init__(
             self,
-            release,
-            species="homo_sapiens",
-            server=ENSEMBL_FTP_SERVER,
+            genome_source,
             auto_download=False,
-            decompress=True,
-            url=None):
+            decompress=True):
         self.cache = datacache.Cache(CACHE_SUBDIR)
-        self.release = release
         self.decompress = decompress
-        if url:
-            self.url = url
-        else:
-            self.url = gtf_url(
-                ensembl_release=release,
-                species=species,
-                server=server)
-
+        self.genome_source = genome_source
+        self.url = genome_source.gtf_url
         self.remote_filename = split(self.url)[1]
 
         assert self.remote_filename.endswith(".gtf.gz"), \
@@ -106,8 +95,8 @@ class GTF(object):
 
     def local_gtf_path(self):
         """
-        Returns local path to GTF file for given release of Ensembl,
-        download from the Ensembl FTP server if not already cached and
+        Returns local path to GTF file for given genome source,
+        download from the relevant server if not already cached and
         auto download is enabled.
         """
         if self.local_copy_exists() or self.auto_download:
@@ -116,11 +105,11 @@ class GTF(object):
                 self.url,
                 self.local_filename(),
                 decompress=self.decompress)
-        raise ValueError('Ensembl annotation data is not currently '
-                         'installed for release %s. Run '
-                         '"pyensembl install --release %s" or call '
-                         '"EnsemblRelease(%s).install()"' %
-                         ((self.release,) * 3))
+        raise ValueError("Genome annotation data is not currently "
+                         "installed for this genome source. Run %s '"
+                         " or call %s" % (
+                             self.genome_source.install_string_console(),
+                             self.genome_source.install_string_python()))
 
     def local_dir(self):
         return split(self.local_gtf_path())[0]
@@ -134,7 +123,7 @@ class GTF(object):
             distinct=False,
             extension=".csv"):
         """
-        Path to local file for storing materialized views of the Ensembl data.
+        Path to local file for storing materialized views of the genomic data.
         Typically this is a CSV file, the filename reflects which filters have
         been applied to the entries of the database.
 
@@ -187,14 +176,14 @@ class GTF(object):
 
     def _load_full_dataframe_from_gtf(self):
         """
-        Parse this release's GTF file and load it as a Pandas DataFrame
+        Parse this genome source's GTF file and load it as a Pandas DataFrame
         """
         path = self.local_gtf_path()
         return load_gtf_as_dataframe(path)
 
     def dataframe(self, contig=None, feature=None, strand=None):
         """
-        Load Ensembl entries as a DataFrame, optionally restricted to
+        Load genome entries as a DataFrame, optionally restricted to
         particular contig or feature type.
         """
         if contig:
@@ -222,7 +211,7 @@ class GTF(object):
 
                 full_df = self._load_full_dataframe()
                 assert len(full_df) > 0, \
-                    "Dataframe representation of Ensembl database empty!"
+                    "Dataframe representation of genomic database empty!"
 
                 # rename since we're going to be filtering the entries but
                 # may still want to access the full dataset
@@ -269,7 +258,7 @@ class GTF(object):
         df_contig = self.dataframe(contig=contig, strand=strand)
 
         assert column_name in df_contig, \
-            "Unknown Ensembl property: %s" % column_name
+            "Unknown genome property: %s" % column_name
 
         return self._slice_column(
             df_contig[column_name],

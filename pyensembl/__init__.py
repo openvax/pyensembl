@@ -16,6 +16,9 @@ from __future__ import print_function, division, absolute_import
 
 from .compute_cache import clear_cached_objects
 from .ensembl_release import EnsemblRelease
+from .genome import Genome
+from .genome_source import GenomeSource
+from .ensembl_release_source import EnsemblReleaseSource
 from .gene import Gene
 from .gtf import GTF
 from .locus import Locus
