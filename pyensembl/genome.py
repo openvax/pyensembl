@@ -68,7 +68,7 @@ class Genome(object):
         # and wraps them with methods like `query_one`
         self.db = Database(gtf=self.gtf, auto_download=auto_download)
 
-        # get the URL for the cDNA FASTA file containing
+        # get the path for the cDNA FASTA file containing
         # this genome database's transcript sequences
         self.transcript_sequences = SequenceData(
             genome_source=genome_source,
