@@ -45,6 +45,9 @@ class SequenceData(object):
         # to be a decompressed text file
         self.fasta_decompress = True
         self.path = genome_source.fasta_path(fasta_type)
+        assert self.path, ("Attempted to create SequenceData with "
+                           "missing FASTA path for %s data" %
+                           fasta_type)
         self.remote_filename = split(self.path)[1]
 
         if local_filename_func:
