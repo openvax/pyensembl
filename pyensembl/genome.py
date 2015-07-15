@@ -101,9 +101,9 @@ class Genome(object):
         return (
             other.__class__ is Genome and
             self.name == other.name and
-            self.version = other.version and
+            self.version == other.version and
             self.species == other.species and
-            self.genome_source = other.genome_source)
+            self.genome_source == other.genome_source)
 
     def __hash__(self):
         return hash((self.name, self.version, self.species,

@@ -17,6 +17,8 @@ Contains the EnsemblRelease class, which extends the Genome class
 to be specific to (a particular release of) Ensembl.
 """
 
+from .genome import Genome
+from .ensembl_release_source import EnsemblReleaseSource
 from .release_info import (
     check_release_number,
     MAX_ENSEMBL_RELEASE,
@@ -24,7 +26,7 @@ from .release_info import (
 from .url_templates import ENSEMBL_FTP_SERVER
 
 
-class EnsemblRelease(object):
+class EnsemblRelease(Genome):
     """
     Bundles together the genomic annotation and sequence data associated with
     a particular release of the Ensembl database.
@@ -46,7 +48,7 @@ class EnsemblRelease(object):
                         version=release,
                         species=species,
                         auto_download=auto_download,
-                        local_filename_func=local_fasta_filename_func,
+                        local_fasta_filename_func=self.local_fasta_filename_func,
                         require_ensembl_ids=True)
 
     def local_fasta_filename_func(self, remote_filename):

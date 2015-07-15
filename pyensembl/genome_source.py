@@ -36,20 +36,20 @@ class GenomeSource(object):
 
     def install_string_console(self):
         console_str = "pyensembl install"
-        for name, path in paths.items():
+        for name, path in self.paths.items():
             console_str += "--%s %s" % (name, path)
         return console_str
 
     def _arg_list_str(self):
         args = []
-        for path, name in paths.items():
-            args.append("%s=%s")
+        for name, path in self.paths.items():
+            args.append("%s=%s" % (name, path))
         return ",".join(args)
 
     def install_string_python(self):
         return "Genome(GenomeSource(%s)).install()" % self._arg_list_str()
 
-    def fasta_path(fasta_type):
+    def fasta_path(self, fasta_type):
         assert fasta_type in ["transcript", "protein"], \
             "Invalid FASTA type: %s" % fasta_type
         if fasta_type == "transcript":
