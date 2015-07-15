@@ -68,7 +68,7 @@ class Genome(object):
         # and wraps them with methods like `query_one`
         self.db = Database(gtf=self.gtf, auto_download=auto_download)
 
-        # get the URL for the cDNA FASTA file containing
+        # get the path for the cDNA FASTA file containing
         # this genome database's transcript sequences
         self.transcript_sequences = SequenceData(
             genome_source=genome_source,
@@ -101,9 +101,9 @@ class Genome(object):
         return (
             other.__class__ is Genome and
             self.name == other.name and
-            self.version = other.version and
+            self.version == other.version and
             self.species == other.species and
-            self.genome_source = other.genome_source)
+            self.genome_source == other.genome_source)
 
     def __hash__(self):
         return hash((self.name, self.version, self.species,

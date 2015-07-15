@@ -14,7 +14,7 @@
 
 from __future__ import print_function, division, absolute_import
 from os import remove
-from os.path import exists, split
+from os.path import exists, split, isfile
 import logging
 
 from Bio import SeqIO
@@ -44,8 +44,8 @@ class SequenceData(object):
         # expect the remote FASTA file to be gzipped and the local needs
         # to be a decompressed text file
         self.fasta_decompress = True
-        self.url = genome_source.fasta_url(fasta_type)
-        self.remote_filename = split(self.url)[1]
+        self.path = genome_source.fasta_path(fasta_type)
+        self.remote_filename = split(self.path)[1]
 
         if local_filename_func:
             self.local_filename = local_filename_func(self.remote_filename)
@@ -66,8 +66,9 @@ class SequenceData(object):
         self._fasta_keys = None
 
     def __str__(self):
-        return "SequenceData(url=%s, local_path=%s)" % (
-            self.url,
+        return "SequenceData(path=%s, version=%s, local_path=%s)" % (
+            self.path,
+            self.version,
             self.local_fasta_path)
 
     def __repr__(self):
@@ -81,7 +82,7 @@ class SequenceData(object):
     def __eq__(self, other):
         return (
             isinstance(other, SequenceData) and
-            self.url == other.url and
+            self.path == other.path and
             self.version == other.version)
 
     @property
@@ -91,6 +92,11 @@ class SequenceData(object):
         cached, download it from the Ensembl FTP server if auto
         download is enabled.
         """
+        # If the path is a local file as opposed to a URL, then
+        # that's our local path.
+        if isfile(self.path):
+            return self.path
+
         # If the fasta is already cached, fetching it won't initiate a
         # download. But it's always okay to initiate a download if
         # auto download is enabled.
@@ -123,7 +129,7 @@ class SequenceData(object):
 
     def local_file_exists(self):
         return self.cache.exists(
-                self.url,
+                self.path,
                 filename=self.local_filename,
                 decompress=self.fasta_decompress)
 
@@ -133,7 +139,7 @@ class SequenceData(object):
         Return local path
         """
         return self.cache.fetch(
-            url=self.url,
+            url=self.path,
             filename=self.local_filename,
             decompress=self.fasta_decompress,
             force=force)
@@ -143,6 +149,11 @@ class SequenceData(object):
 
         If `force` is True, overwrites any existing file.
         """
+        # If the path is a local file as opposed to a URL, then
+        # no download is necesary.
+        if isfile(self.path):
+            return
+
         if not self.local_file_exists() or force:
             self._fetch(force=force)
 

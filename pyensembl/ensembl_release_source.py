@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .genome_source import GenomeSource
+from .release_info import MAX_ENSEMBL_RELEASE
+from .url_templates import ENSEMBL_FTP_SERVER, make_gtf_url, make_fasta_url
+
 
 class EnsemblReleaseSource(GenomeSource):
     """
@@ -22,23 +26,28 @@ class EnsemblReleaseSource(GenomeSource):
                  release=MAX_ENSEMBL_RELEASE,
                  species="homo_sapiens",
                  server=ENSEMBL_FTP_SERVER):
-        gtf_url = gtf_url(
+        self.release = release
+        self.species = species
+        self.server = server
+
+        gtf_url = make_gtf_url(
             ensembl_release=release,
             species=species,
             server=server)
-        transcript_fasta_url = fasta_url(
-            ensembl_release=self.release,
-            species=self.species,
+        transcript_fasta_url = make_fasta_url(
+            ensembl_release=release,
+            species=species,
             sequence_type="cdna",
-            server=self.server)
-        protein_fasta_url = fasta_url(
-            ensembl_release=self.release,
-            species=self.species,
+            server=server)
+        protein_fasta_url = make_fasta_url(
+            ensembl_release=release,
+            species=species,
             sequence_type="pep",
-            server=self.server)
-        GenomeSource.__init__(gtf_url=gtf_url,
-                              transcript_fasta_url=transcript_fasta_url,
-                              protein_fasta_url=protein_fasta_url)
+            server=server)
+        GenomeSource.__init__(self,
+                              gtf_path=gtf_url,
+                              transcript_fasta_path=transcript_fasta_url,
+                              protein_fasta_path=protein_fasta_url)
 
     def install_string_console(self):
         return "pyensembl install --release %d" % self.release

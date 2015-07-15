@@ -15,46 +15,46 @@
 
 class GenomeSource(object):
     """
-    Represents the source (URLs) of a genome database, which
-    currently includes: GTF, transcript FASTA file, and protein
-    FASTA file.
+    Represents the source (URLs or local file paths) of a genome
+    database, which currently includes: GTF, transcript FASTA file, 
+    and protein FASTA file.
     """
     def __init__(self,
-                 gtf_url,
-                 transcript_fasta_url=None,
-                 protein_fasta_url=None):
-        self.gtf_url = gtf_url
-        self.transcript_fasta_url = transcript_fasta_url
-        self.protein_fasta_url = protein_fasta_url
+                 gtf_path,
+                 transcript_fasta_path=None,
+                 protein_fasta_path=None):
+        self.gtf_path = gtf_path
+        self.transcript_fasta_path = transcript_fasta_path
+        self.protein_fasta_path = protein_fasta_path
 
-        urls = {"gtf_url": gtf_url}
-        if transcript_fasta_url:
-            urls["transcript_fasta_url"] = transcript_fasta_url
-        if protein_fasta_url:
-            urls["protein_fasta_url"] = protein_fasta_url
-        self.urls = urls
+        paths = {"gtf_path": gtf_path}
+        if transcript_fasta_path:
+            paths["transcript_fasta_path"] = transcript_fasta_path
+        if protein_fasta_path:
+            paths["protein_fasta_path"] = protein_fasta_path
+        self.paths = paths
 
     def install_string_console(self):
         console_str = "pyensembl install"
-        for name, url in urls.items():
-            console_str += "--%s %s" % (name, url)
+        for name, path in self.paths.items():
+            console_str += "--%s %s" % (name, path)
         return console_str
 
     def _arg_list_str(self):
         args = []
-        for url, name in urls.items():
-            args.append("%s=%s")
+        for name, path in self.paths.items():
+            args.append("%s=%s" % (name, path))
         return ",".join(args)
 
     def install_string_python(self):
         return "Genome(GenomeSource(%s)).install()" % self._arg_list_str()
 
-    def fasta_url(fasta_type):
+    def fasta_path(self, fasta_type):
         assert fasta_type in ["transcript", "protein"], \
             "Invalid FASTA type: %s" % fasta_type
         if fasta_type == "transcript":
-            return self.transcript_fasta_url
-        return self.protein_fasta_url
+            return self.transcript_fasta_path
+        return self.protein_fasta_path
 
     def __str__(self):
         return "GenomeSource(%s)" % self._arg_list_str()
@@ -65,8 +65,7 @@ class GenomeSource(object):
     def __eq__(self, other):
         return (
             other.__class__ is GenomeSource and
-            self.urls == other.urls)
+            self.paths == other.paths)
 
     def __hash_(self):
-        return hash((self.urls))
-
+        return hash((self.paths))
