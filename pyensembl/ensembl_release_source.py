@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from os.path import split
+
 from .genome_source import GenomeSource
 from .release_info import MAX_ENSEMBL_RELEASE
 from .url_templates import ENSEMBL_FTP_SERVER, make_gtf_url, make_fasta_url
@@ -34,6 +36,11 @@ class EnsemblReleaseSource(GenomeSource):
             ensembl_release=release,
             species=species,
             server=server)
+        remote_gtf_filename = split(gtf_url)[1]
+        assert remote_gtf_filename.endswith(".gtf.gz"), \
+            "Expected remote GTF file %s to end with '.gtf.gz'" % (
+                remote_gtf_filename)
+
         transcript_fasta_url = make_fasta_url(
             ensembl_release=release,
             species=species,

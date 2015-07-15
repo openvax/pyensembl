@@ -41,11 +41,6 @@ class GTF(object):
         self.genome_source = genome_source
         self.path = genome_source.gtf_path
         self.remote_filename = split(self.path)[1]
-
-        assert self.remote_filename.endswith(".gtf.gz"), \
-            "Expected remote GTF file %s to end with '.gtf.gz'" % (
-                self.remote_filename,)
-
         self.auto_download = auto_download
 
         # lazily load DataFrame of all GTF entries if necessary

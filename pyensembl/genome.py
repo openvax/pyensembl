@@ -70,19 +70,25 @@ class Genome(object):
 
         # get the path for the cDNA FASTA file containing
         # this genome database's transcript sequences
-        self.transcript_sequences = SequenceData(
-            genome_source=genome_source,
-            fasta_type="transcript",
-            local_filename_func=local_fasta_filename_func,
-            require_ensembl_ids=require_ensembl_ids,
-            auto_download=auto_download)
- 
-        self.protein_sequences = SequenceData(
-            genome_source=genome_source,
-            fasta_type="protein",
-            local_filename_func=local_fasta_filename_func,
-            require_ensembl_ids=require_ensembl_ids,
-            auto_download=auto_download)
+        transcript_sequences = None
+        if genome_source.transcript_fasta_path:
+            transcript_sequences = SequenceData(
+                genome_source=genome_source,
+                fasta_type="transcript",
+                local_filename_func=local_fasta_filename_func,
+                require_ensembl_ids=require_ensembl_ids,
+                auto_download=auto_download)
+        self.transcript_sequences = transcript_sequences
+
+        protein_sequences = None
+        if genome_source.protein_fasta_path:
+            protein_sequences = SequenceData(
+                genome_source=genome_source,
+                fasta_type="protein",
+                local_filename_func=local_fasta_filename_func,
+                require_ensembl_ids=require_ensembl_ids,
+                auto_download=auto_download)
+        self.protein_sequences = protein_sequences
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
@@ -207,13 +213,18 @@ class Genome(object):
         Raises an error if data is not downloaded.
         """
         self.db.create(force=force)
-        self.transcript_sequences.index(force=force)
-        self.protein_sequences.index(force=force)
+        if self.transcript_sequences:
+            self.transcript_sequences.index(force=force)
+        if self.protein_sequences:
+            self.protein_sequences.index(force=force)
 
     def transcript_sequence(self, transcript_id):
         """Return cDNA nucleotide sequence of transcript, or None if
         transcript doesn't have cDNA sequence.
         """
+        assert self.transcript_sequences, (
+            "This genome source does not include transcript FASTA data: %s"
+            % self.genome_source)
         require_human_transcript_id(transcript_id)
         return self.transcript_sequences.get(transcript_id)
 
@@ -221,6 +232,9 @@ class Genome(object):
         """Return cDNA nucleotide sequence of transcript, or None if
         transcript doesn't have cDNA sequence.
         """
+        assert self.protein_sequences, (
+            "This genome source does not include protein FASTA data: %s"
+            % self.genome_source)
         require_human_protein_id(protein_id)
         return self.protein_sequences.get(protein_id)
 
@@ -234,8 +248,10 @@ class Genome(object):
             Download data even if we already have a local copy.
         """
         self.gtf.download(force=force)
-        self.transcript_sequences.download(force=force)
-        self.protein_sequences.download(force=force)
+        if self.transcript_sequences:
+            self.transcript_sequences.download(force=force)
+        if self.protein_sequences:
+            self.protein_sequences.download(force=force)
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
         gene_ids = self.gene_ids_at_locus(
