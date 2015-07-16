@@ -47,14 +47,14 @@ class Genome(object):
                  genome_source,
                  name=None,
                  version=None,
-                 species="homo_sapiens",
+                 only_human=False,
                  auto_download=False,
                  local_fasta_filename_func=None,
                  require_ensembl_ids=True):
         self.genome_source = genome_source
         self.name = name
         self.version = version
-        self.species = species
+        self.only_human = only_human
         self.auto_download = auto_download
 
         # GTF object wraps the source GTF file from which we get
@@ -94,10 +94,10 @@ class Genome(object):
         self.logger.setLevel(logging.INFO)
 
     def __str__(self):
-        return "Genome(name=%s, version=%s, species=%s, genome_source=%s)" % (
+        return "Genome(name=%s, version=%s, only_human=%s, genome_source=%s)" % (
             self.name,
             self.version,
-            self.species,
+            self.only_human,
             self.genome_source)
 
     def __repr__(self):
@@ -108,11 +108,11 @@ class Genome(object):
             other.__class__ is Genome and
             self.name == other.name and
             self.version == other.version and
-            self.species == other.species and
+            self.only_human == other.only_human and
             self.genome_source == other.genome_source)
 
     def __hash__(self):
-        return hash((self.name, self.version, self.species,
+        return hash((self.name, self.version, self.only_human,
                      self.genome_source))
 
     def _delete_cached_files(self):
@@ -225,7 +225,8 @@ class Genome(object):
         assert self.transcript_sequences, (
             "This genome source does not include transcript FASTA data: %s"
             % self.genome_source)
-        require_human_transcript_id(transcript_id)
+        if self.only_human:
+            require_human_transcript_id(transcript_id)
         return self.transcript_sequences.get(transcript_id)
 
     def protein_sequence(self, protein_id):
@@ -235,7 +236,8 @@ class Genome(object):
         assert self.protein_sequences, (
             "This genome source does not include protein FASTA data: %s"
             % self.genome_source)
-        require_human_protein_id(protein_id)
+        if self.only_human:
+            require_human_protein_id(protein_id)
         return self.protein_sequences.get(protein_id)
 
     def download(self, force=True):
