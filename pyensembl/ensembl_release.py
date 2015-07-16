@@ -42,11 +42,12 @@ class EnsemblRelease(Genome):
         genome_source = EnsemblReleaseSource(release=release,
                                              species=species,
                                              server=server)
+        only_human = species == "homo_sapiens"
         Genome.__init__(self,
                         genome_source=genome_source,
                         name="Ensembl",
                         version=release,
-                        species=species,
+                        only_human=only_human,
                         auto_download=auto_download,
                         local_fasta_filename_func=self.local_fasta_filename_func,
                         require_ensembl_ids=True)

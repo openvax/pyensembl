@@ -47,14 +47,14 @@ class Genome(object):
                  genome_source,
                  name=None,
                  version=None,
-                 species="homo_sapiens",
+                 only_human=False,
                  auto_download=False,
                  local_fasta_filename_func=None,
                  require_ensembl_ids=True):
         self.genome_source = genome_source
         self.name = name
         self.version = version
-        self.species = species
+        self.only_human = only_human
         self.auto_download = auto_download
 
         # GTF object wraps the source GTF file from which we get
@@ -94,10 +94,10 @@ class Genome(object):
         self.logger.setLevel(logging.INFO)
 
     def __str__(self):
-        return "Genome(name=%s, version=%s, species=%s, genome_source=%s)" % (
+        return "Genome(name=%s, version=%s, only_human=%s, genome_source=%s)" % (
             self.name,
             self.version,
-            self.species,
+            self.only_human,
             self.genome_source)
 
     def __repr__(self):
@@ -108,11 +108,11 @@ class Genome(object):
             other.__class__ is Genome and
             self.name == other.name and
             self.version == other.version and
-            self.species == other.species and
+            self.only_human == other.only_human and
             self.genome_source == other.genome_source)
 
     def __hash__(self):
-        return hash((self.name, self.version, self.species,
+        return hash((self.name, self.version, self.only_human,
                      self.genome_source))
 
     def _delete_cached_files(self):
@@ -225,7 +225,8 @@ class Genome(object):
         assert self.transcript_sequences, (
             "This genome source does not include transcript FASTA data: %s"
             % self.genome_source)
-        require_human_transcript_id(transcript_id)
+        if self.only_human:
+            require_human_transcript_id(transcript_id)
         return self.transcript_sequences.get(transcript_id)
 
     def protein_sequence(self, protein_id):
@@ -235,7 +236,8 @@ class Genome(object):
         assert self.protein_sequences, (
             "This genome source does not include protein FASTA data: %s"
             % self.genome_source)
-        require_human_protein_id(protein_id)
+        if self.only_human:
+            require_human_protein_id(protein_id)
         return self.protein_sequences.get(protein_id)
 
     def download(self, force=True):
@@ -400,13 +402,19 @@ class Genome(object):
         Construct a Gene object for the given gene ID.
         """
         field_names = [
-            "gene_name",
             "seqname",
             "start",
             "end",
             "strand",
-            "gene_biotype"
         ]
+        optional_field_names = [
+            "gene_name",
+            "gene_biotype",
+        ]
+        # Do not look for gene_name and gene_biotype if they are
+        # not in the database.
+        field_names.extend([name for name in optional_field_names
+                            if self.db.column_exists("gene", name)])
         result = self.db.query_one(
             field_names,
             filter_column="gene_id",
@@ -414,7 +422,19 @@ class Genome(object):
             feature="gene")
         if not result:
             raise ValueError("Gene not found: %s" % (gene_id,))
-        gene_name, contig, start, end, strand, biotype = result
+
+        gene_name, gene_biotype = None, None
+        assert len(result) >= 4 and len(result) <= 6, \
+            "Result is not the expected length: %d" % len(result)
+        contig, start, end, strand = result[:4]
+        if len(result) == 5:
+            if "gene_name" in field_names:
+                gene_name = result[4]
+            else:
+                gene_biotype = result[4]
+        elif len(result) == 6:
+            gene_name, gene_biotype = result[4:]
+
         return Gene(
             gene_id=gene_id,
             gene_name=gene_name,
@@ -422,8 +442,9 @@ class Genome(object):
             start=start,
             end=end,
             strand=strand,
-            biotype=biotype,
-            ensembl=self)
+            biotype=gene_biotype,
+            ensembl=self,
+            require_valid_biotype=("gene_biotype" in field_names))
 
     @memoize
     def genes_by_name(self, gene_name):
@@ -568,15 +589,21 @@ class Genome(object):
     def transcript_by_id(self, transcript_id):
         """Construct Transcript object with given transcript ID"""
 
-        field_names = [
+        optional_field_names = [
             "transcript_name",
             "transcript_biotype",
+        ]
+        field_names = [
             "seqname",
             "start",
             "end",
             "strand",
             "gene_id",
         ]
+        # Do not look for transcript_name and transcript_biotype if
+        # they are not in the database.
+        field_names.extend([name for name in optional_field_names
+                            if self.db.column_exists("transcript", name)])
         result = self.db.query_one(
             select_column_names=field_names,
             filter_column="transcript_id",
@@ -585,17 +612,30 @@ class Genome(object):
             distinct=True)
         if not result:
             raise ValueError("Transcript not found: %s" % (transcript_id,))
-        name, biotype, contig, start, end, strand, gene_id = result
+
+        transcript_name, transcript_biotype = None, None
+        assert len(result) >= 5 and len(result) <= 7, \
+            "Result is not the expected length: %d" % len(result)
+        contig, start, end, strand, gene_id = result[:5]
+        if len(result) == 6:
+            if "transcript_name" in field_names:
+                transcript_name = result[5]
+            else:
+                transcript_biotype = result[5]
+        elif len(result) == 7:
+            transcript_name, transcript_biotype = result[5:]
+
         return Transcript(
             transcript_id=transcript_id,
-            transcript_name=name,
+            transcript_name=transcript_name,
             contig=contig,
             start=start,
             end=end,
             strand=strand,
-            biotype=biotype,
+            biotype=transcript_biotype,
             gene_id=gene_id,
-            ensembl=self)
+            ensembl=self,
+            require_valid_biotype=("transcript_biotype" in field_names))
 
     @memoize
     def transcripts_by_name(self, transcript_name):

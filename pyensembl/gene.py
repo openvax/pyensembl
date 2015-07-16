@@ -32,7 +32,8 @@ class Gene(Locus):
             end,
             strand,
             biotype,
-            ensembl):
+            ensembl,
+            require_valid_biotype=True):
         self.id = gene_id
         # can't check the type of ensembl since it will create a circular
         # dependency between this module and ensembl_release but note that
@@ -45,7 +46,7 @@ class Gene(Locus):
 
         Locus.__init__(self, contig, start, end, strand)
 
-        if not is_valid_biotype(biotype):
+        if require_valid_biotype and not is_valid_biotype(biotype):
             raise ValueError(
                 "Invalid gene_biotype %s for gene with ID = %s" % (
                     biotype, gene_id))

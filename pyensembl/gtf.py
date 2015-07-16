@@ -111,7 +111,7 @@ class GTF(object):
                 self.local_filename(),
                 decompress=self.decompress)
         raise ValueError("Genome annotation data is not currently "
-                         "installed for this genome source. Run %s '"
+                         "installed for this genome source. Run %s "
                          " or call %s" % (
                              self.genome_source.install_string_console(),
                              self.genome_source.install_string_python()))
