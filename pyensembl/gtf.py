@@ -13,14 +13,14 @@
 # limitations under the License.
 
 from __future__ import print_function, division, absolute_import
-from os.path import split, join, isfile
+from os.path import split, join
 import pandas as pd
 
 import datacache
 from typechecks import require_string
 
 from .gtf_parsing import load_gtf_as_dataframe
-from .common import CACHE_SUBDIR
+from .common import CACHE_SUBDIR, is_url_format
 from .locus import normalize_chromosome, normalize_strand
 from .compute_cache import cached_dataframe, clear_cached_objects
 
@@ -84,7 +84,7 @@ class GTF(object):
     def local_copy_exists(self):
         # If the path is a local file as opposed to a URL, then
         # that's our local copy.
-        if isfile(self.path):
+        if not is_url_format(self.path):
             return True
 
         """Has a local copy of the GTF file been downloaded?"""
@@ -101,7 +101,7 @@ class GTF(object):
         """
         # If the path is a local file as opposed to a URL, then
         # no download is necesary.
-        if isfile(self.path):
+        if not is_url_format(self.path):
             return self.path
 
         if self.local_copy_exists() or self.auto_download:
@@ -343,7 +343,7 @@ class GTF(object):
         """
         # If the path is a local file as opposed to a URL, then
         # no download is necesary.
-        if isfile(self.path):
+        if not is_url_format(self.path):
             return
 
         if not self.local_copy_exists() or force:
