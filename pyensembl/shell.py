@@ -54,7 +54,7 @@ def run():
     parser.add_argument("--release",
         type=int,
         nargs="+",
-        default=[MAX_ENSEMBL_RELEASE],
+        default=None,
         help="Ensembl release. Defaults to latest release %(default)s. "
              "Multiple releases may be specified.")
     parser.add_argument("action", choices=("install", "download", "index"),
@@ -69,6 +69,8 @@ def run():
     genomes = []
     # If specific genome source URLs are provided, use those
     if args.gtf_path:
+        assert not args.release, ("A release cannot be specified if "
+                                  "specific paths are specified.")
         genome_source = GenomeSource(
             gtf_path=args.gtf_path,
             transcript_fasta_path=args.transcript_fasta_path,
@@ -76,8 +78,14 @@ def run():
         genomes.append(Genome(genome_source=genome_source))
     # Otherwise, use Ensembl release information
     else:
-        for release in args.release:
-            genomes.append(EnsemblRelease(release))
+        assert not args.transcript_fasta_path and not args.protein_fasta_path, \
+            "A GTF path must be specified along with other paths." 
+
+        if not args.release:
+            genomes.append(EnsemblRelease(MAX_ENSEMBL_RELEASE))
+        else:
+            for release in args.release:
+                genomes.append(EnsemblRelease(release))
 
     for genome in genomes:
         assert args.action in ["install", "download", "index"], \
