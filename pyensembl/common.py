@@ -93,3 +93,6 @@ def is_valid_human_protein_id(protein_id):
 def require_human_protein_id(protein_id):
     if not is_valid_human_protein_id(protein_id):
         raise ValueError("Invalid protein ID '%s'" % protein_id)
+
+def is_url_format(string):
+    return "://" in string

@@ -14,13 +14,13 @@
 
 from __future__ import print_function, division, absolute_import
 from os import remove
-from os.path import exists, split, isfile
+from os.path import exists, split
 import logging
 
 from Bio import SeqIO
 import datacache
 
-from .common import CACHE_SUBDIR, require_ensembl_id
+from .common import CACHE_SUBDIR, require_ensembl_id, is_url_format
 
 
 class SequenceData(object):
@@ -97,7 +97,7 @@ class SequenceData(object):
         """
         # If the path is a local file as opposed to a URL, then
         # that's our local path.
-        if isfile(self.path):
+        if not is_url_format(self.path):
             return self.path
 
         # If the fasta is already cached, fetching it won't initiate a
@@ -154,7 +154,7 @@ class SequenceData(object):
         """
         # If the path is a local file as opposed to a URL, then
         # no download is necesary.
-        if isfile(self.path):
+        if not is_url_format(self.path):
             return
 
         if not self.local_file_exists() or force:
