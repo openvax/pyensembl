@@ -231,7 +231,7 @@ def _dataframe_from_groups(groups, feature):
 
     for conditional_column_name in conditional_column_names:
         if conditional_column_name in groups.first().columns:
-            column = groups[column_name].first()
+            column = groups[conditional_column_name].first()
             columns.append(column) 
 
     df = pd.concat(columns, axis=1).reset_index()
