@@ -64,3 +64,14 @@ class EnsemblReleaseSource(GenomeSource):
 
     def __str__(self):
         return "EnsemblReleaseSource(%s)" % self._arg_list_str()
+
+    def __repr__(self):
+        return str(self)
+
+    def __eq__(self, other):
+        return (
+            other.__class__ is EnsemblReleaseSource and
+            self.paths == other.paths)
+
+    def __hash_(self):
+        return hash((self.paths))
