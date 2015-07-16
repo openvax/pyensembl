@@ -26,7 +26,7 @@ To install particular Ensembl release(s):
     %(prog)s install --release 75 77
 
 To install any Genomic database:
-    %(prog)s install --gtf-url URL --transcript-fasta-url URL --protein-fasta-url URL
+    %(prog)s install --gtf-path URL_OR_PATH --transcript-fasta-path URL_OR_PATH --protein-fasta-path URL_OR_PATH
 
 """
 
@@ -39,20 +39,18 @@ from .release_info import MAX_ENSEMBL_RELEASE
 
 def run():
     parser = argparse.ArgumentParser(usage=__doc__)
-    parser.add_argument("--gtf-url",
+    parser.add_argument("--gtf-path",
                         type=str,
-                        nargs=1,
-                        help="URL for a GTF file containing annotations.")
-    parser.add_argument("--transcript-fasta-url",
-                        type=str,
-                        nargs=1,
                         default=None,
-                        help="URL for a FASTA file containing transcript data.")
-    parser.add_argument("--protein-fasta-url",
+                        help="URL or local path to a GTF file containing annotations.")
+    parser.add_argument("--transcript-fasta-path",
                         type=str,
-                        nargs=1,
                         default=None,
-                        help="URL for a FASTA file containing protein data.")
+                        help="URL or local path to a FASTA file containing transcript data.")
+    parser.add_argument("--protein-fasta-path",
+                        type=str,
+                        default=None,
+                        help="URL or local path to a FASTA file containing protein data.")
     parser.add_argument("--release",
         type=int,
         nargs="+",
@@ -60,21 +58,21 @@ def run():
         help="Ensembl release. Defaults to latest release %(default)s. "
              "Multiple releases may be specified.")
     parser.add_argument("action", choices=("install", "download", "index"),
-        help=""install" will download and index any data that is  not "
+        help="\"install\" will download and index any data that is  not "
         "currently downloaded or indexed. \"download\" will download data, "
         "regardless of whether it is already downloaded. \"index\" will index "
         "data, regardless of whether it is already indexed, and will raise "
         "an error if the data is not already downloaded.")
 
     args = parser.parse_args()
-    genomes = []
 
+    genomes = []
     # If specific genome source URLs are provided, use those
-    if "gtf_url" in args:
+    if args.gtf_path:
         genome_source = GenomeSource(
-            gtf_url=args.gtf_url,
-            transcript_fasta_url=args.transcript_fasta_url,
-            protein_fasta_url=args.protein_fasta_url)
+            gtf_path=args.gtf_path,
+            transcript_fasta_path=args.transcript_fasta_path,
+            protein_fasta_path=args.protein_fasta_path)
         genomes.append(Genome(genome_source=genome_source))
     # Otherwise, use Ensembl release information
     else:
