@@ -39,7 +39,7 @@ class Database(object):
         Parameters
         ----------
         gtf : pyensembl.GTF instance
-            Object which parses Ensembl GTF annotation files and presents their
+            Object which parses GTF annotation files and presents their
             contents as Pandas DataFrames
 
         auto_download : bool, optional (default = False)
@@ -74,7 +74,7 @@ class Database(object):
         Create list of tuples containing all possible index groups
         we might want to create over tables in this database.
 
-        If a release is missing some column we want to index on,
+        If a genomic database is missing some column we want to index on,
         we have to drop any indices which use that column.
 
         A specific table may later drop some of these indices if they're
@@ -100,7 +100,8 @@ class Database(object):
             skip = False
             for column_name in column_group:
                 # some columns, such as 'exon_id',
-                # are not available in all releases of Ensembl
+                # are not available in all releases of Ensembl (or
+                # other GTFs)
                 if column_name not in column_set:
                     logging.info(
                         "Skipping database index for {%s}",
@@ -223,7 +224,7 @@ class Database(object):
     @property
     def connection(self):
         """
-        Return the sqlite3 database for this Ensembl release
+        Return the sqlite3 database for this Genomic database
         (download and/or construct it if necessary, if auto_download
         is on). As a side effect, stores the database connection in
         self._connection.
@@ -233,11 +234,11 @@ class Database(object):
             return connection
         if self.auto_download:
             return self._create_database()
-        raise ValueError('Genome annotation data is not currently '
-                         'installed for release %s. Run '
-                         '"pyensembl install --release %s" or call '
-                         '"EnsemblRelease(%s).install()"' %
-                         ((self.gtf.release,) * 3))
+        raise ValueError("Genome annotation data is not currently "
+                         "installed for this genome source. Run %s "
+                         " or call %s" % (
+                             self.gtf.genome_source.install_string_console(),
+                             self.gtf.genome_source.install_string_python()))
 
     @memoize
     def columns(self, table_name):
@@ -357,7 +358,7 @@ class Database(object):
 
     def run_sql_query(self, sql, required=False, query_params=[]):
         """
-        Given an arbitrary SQL query, run it against the Ensembl database
+        Given an arbitrary SQL query, run it against the database
         and return the results.
 
         Parameters
@@ -397,7 +398,7 @@ class Database(object):
             distinct=False,
             required=False):
         """
-        Construct a SQL query and run against the ensembl sqlite3 database,
+        Construct a SQL query and run against the sqlite3 database,
         filtered both by the feature type and a user-provided column/value.
         """
         sql = """
@@ -450,7 +451,7 @@ class Database(object):
             contig=None,
             strand=None):
         """
-        Run a SQL query against the Ensembl sqlite3 database, filtered
+        Run a SQL query against the sqlite3 database, filtered
         only on the feature type.
         """
         query = """
