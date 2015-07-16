@@ -236,7 +236,7 @@ class Database(object):
             return self._create_database()
         raise ValueError("Genome annotation data is not currently "
                          "installed for this genome source. Run %s "
-                         " or call %s" % (
+                         "or call %s" % (
                              self.gtf.genome_source.install_string_console(),
                              self.gtf.genome_source.install_string_python()))
 

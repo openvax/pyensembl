@@ -44,6 +44,7 @@ class Genome(object):
     provides a wide variety of helper methods for accessing this data.
     """
     def __init__(self,
+                 reference_name,
                  genome_source,
                  name=None,
                  version=None,
@@ -51,6 +52,7 @@ class Genome(object):
                  auto_download=False,
                  local_fasta_filename_func=None,
                  require_ensembl_ids=True):
+        self.reference_name = reference_name
         self.genome_source = genome_source
         self.name = name
         self.version = version
@@ -94,9 +96,11 @@ class Genome(object):
         self.logger.setLevel(logging.INFO)
 
     def __str__(self):
-        return "Genome(name=%s, version=%s, only_human=%s, genome_source=%s)" % (
+        return ("Genome(name=%s, version=%s, reference_name=%s, "
+                "only_human=%s, genome_source=%s)") % (
             self.name,
             self.version,
+            self.reference_name,
             self.only_human,
             self.genome_source)
 

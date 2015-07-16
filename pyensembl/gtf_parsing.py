@@ -231,7 +231,7 @@ def _dataframe_from_groups(groups, feature):
 
     for conditional_column_name in conditional_column_names:
         if conditional_column_name in groups.first().columns:
-            column = groups[column_name].first()
+            column = groups[conditional_column_name].first()
             columns.append(column) 
 
     df = pd.concat(columns, axis=1).reset_index()
@@ -258,6 +258,9 @@ def reconstruct_transcript_rows(df):
         feature='transcript'
     )
     return pd.concat([df, transcripts_df], ignore_index=True)
+
+def can_reconstruct_exon_id_column(df):
+    return "transcript_id" in df and "exon_number" in df
 
 def reconstruct_exon_id_column(df, inplace=True):
     """
@@ -353,8 +356,10 @@ def load_gtf_as_dataframe(filename):
         logging.info("Creating entries for feature='transcript'")
         df = reconstruct_transcript_rows(df)
 
-    #if 'exon_id' not in df:
-    #    logging.info("Creating 'exon_id' column")
-    #   df = reconstruct_exon_id_column(df)
-
+    if 'exon_id' not in df:
+        if can_reconstruct_exon_id_column(df):
+            logging.info("Creating 'exon_id' column")
+            df = reconstruct_exon_id_column(df)
+        else:
+            logging.info("Cannot create 'exon_id' column")
     return df

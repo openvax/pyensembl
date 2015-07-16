@@ -19,7 +19,17 @@ exon_ids  = data.exon_ids_of_gene_name('HLA-A')
 ```
 # Arbitrary Genomic Databases
 
-PyEnsembl also allows arbitrary genomic databases as follows:
+PyEnsembl also allows arbitrary genomic databases via the specification
+of local file paths or remote URLs to both Ensembl and non-Ensembl GTF
+and FASTA files. (Warning: GTF formats can vary, and handling of
+non-Ensembl data is still very much in development.)
+
+For example:
+
+```
+data = Genome(reference_name='GRCh38', GenomeSource(gtf_path='/My/local/gtf/path.gtf'))
+gene_names = data.gene_names_at_locus(contig=6, position=29945884)
+```
 
 # Installation
 
