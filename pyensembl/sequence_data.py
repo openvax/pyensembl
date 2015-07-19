@@ -20,7 +20,8 @@ import logging
 from Bio import SeqIO
 import datacache
 
-from .common import CACHE_SUBDIR, require_ensembl_id, is_url_format
+from .common import (CACHE_SUBDIR, require_ensembl_id, is_url_format,
+                     copy_to_cache_if_needed, local_file_cache_path)
 
 
 class SequenceData(object):
@@ -93,24 +94,26 @@ class SequenceData(object):
     def local_fasta_path(self):
         """
         Returns local path to FASTA file. If it's not already
-        cached, download it from the Ensembl FTP server if auto
+        cached, download it from the appropriate server if auto
         download is enabled.
         """
-        # If the path is a local file as opposed to a URL, then
-        # that's our local path.
-        if not is_url_format(self.path):
-            return self.path
-
         # If the fasta is already cached, fetching it won't initiate a
         # download. But it's always okay to initiate a download if
         # auto download is enabled.
         if self.local_file_exists() or self.auto_download:
+            # If the path is a local file as opposed to a URL, then
+            # just manually copy it to the datacache directory if
+            # we're auto-downloading.
+            if not is_url_format(self.path):
+                return copy_to_cache_if_needed(self.path, self.cache,
+                                               force=False)
+
             # Does a download if the cache is empty, otherwise just returns
             # the local path
             return self._fetch(force=False)
         raise ValueError("Genome %s sequence data %s is not currently "
                          "installed for this genome source. Run %s "
-                         " or call %s" % (
+                         "or call %s" % (
                              self.fasta_type,
                              self.genome_source.install_string_console(),
                              self.genome_source.install_string_python()))
@@ -132,6 +135,11 @@ class SequenceData(object):
         return split(self.local_fasta_path)[0]
 
     def local_file_exists(self):
+        # If the path is a local file as opposed to a URL, then
+        # check to see if it was copied into the cache directory.
+        if not is_url_format(self.path):
+            return exists(local_file_cache_path(self.path, self.cache))
+
         return self.cache.exists(
                 self.path,
                 filename=self.local_filename,
@@ -154,9 +162,10 @@ class SequenceData(object):
         If `force` is True, overwrites any existing file.
         """
         # If the path is a local file as opposed to a URL, then
-        # no download is necesary.
+        # just copy it to the datacache direcotry as a "download".
         if not is_url_format(self.path):
-            return
+            return copy_to_cache_if_needed(self.path, self.cache,
+                                           force=force)
 
         if not self.local_file_exists() or force:
             self._fetch(force=force)

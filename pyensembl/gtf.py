@@ -13,14 +13,15 @@
 # limitations under the License.
 
 from __future__ import print_function, division, absolute_import
-from os.path import split, join
+from os.path import split, join, exists
 import pandas as pd
 
 import datacache
 from typechecks import require_string
 
 from .gtf_parsing import load_gtf_as_dataframe
-from .common import CACHE_SUBDIR, is_url_format
+from .common import (CACHE_SUBDIR, is_url_format, local_file_cache_path,
+                     copy_to_cache_if_needed)
 from .locus import normalize_chromosome, normalize_strand
 from .compute_cache import cached_dataframe, clear_cached_objects
 
@@ -83,9 +84,9 @@ class GTF(object):
 
     def local_copy_exists(self):
         # If the path is a local file as opposed to a URL, then
-        # that's our local copy.
+        # check to see if it was copied into the cache directory.
         if not is_url_format(self.path):
-            return True
+            return exists(local_file_cache_path(self.path, self.cache))
 
         """Has a local copy of the GTF file been downloaded?"""
         return self.cache.exists(
@@ -99,12 +100,14 @@ class GTF(object):
         download from the relevant server if not already cached and
         auto download is enabled.
         """
-        # If the path is a local file as opposed to a URL, then
-        # no download is necesary.
-        if not is_url_format(self.path):
-            return self.path
-
         if self.local_copy_exists() or self.auto_download:
+            # If the path is a local file as opposed to a URL, then
+            # just manually copy it to the datacache directory if
+            # we're auto-downloading.
+            if not is_url_format(self.path):
+                return copy_to_cache_if_needed(self.path, self.cache,
+                                               force=False)
+
             # Does a download if the cache is empty
             return self.cache.fetch(
                 self.path,
@@ -112,7 +115,7 @@ class GTF(object):
                 decompress=self.decompress)
         raise ValueError("Genome annotation data is not currently "
                          "installed for this genome source. Run %s "
-                         " or call %s" % (
+                         "or call %s" % (
                              self.genome_source.install_string_console(),
                              self.genome_source.install_string_python()))
 
@@ -342,9 +345,10 @@ class GTF(object):
         True, overwrites any existing file.
         """
         # If the path is a local file as opposed to a URL, then
-        # no download is necesary.
+        # just copy it to the datacache direcotry as a "download".
         if not is_url_format(self.path):
-            return
+            return copy_to_cache_if_needed(self.path, self.cache,
+                                           force=force)
 
         if not self.local_copy_exists() or force:
             self.cache.fetch(
