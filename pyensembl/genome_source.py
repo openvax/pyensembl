@@ -35,16 +35,16 @@ class GenomeSource(object):
         self.paths = paths
 
     def install_string_console(self):
-        console_str = "pyensembl install"
+        console_str = "pyensembl install "
         for name, path in self.paths.items():
-            console_str += "--%s %s" % (name, path)
+            console_str += "--%s \"%s\"" % (name, path)
         return console_str
 
     def _arg_list_str(self):
         args = []
         for name, path in self.paths.items():
-            args.append("%s=%s" % (name, path))
-        return ",".join(args)
+            args.append("%s=\"%s\"" % (name, path))
+        return ", ".join(args)
 
     def install_string_python(self):
         return "Genome(GenomeSource(%s)).install()" % self._arg_list_str()
