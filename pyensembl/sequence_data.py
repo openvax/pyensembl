@@ -49,6 +49,7 @@ class SequenceData(object):
                            "missing FASTA path for %s data" %
                            fasta_type)
         self.remote_filename = split(self.path)[1]
+        self.require_ensembl_ids = require_ensembl_ids
 
         if local_filename_func:
             self.local_filename = local_filename_func(self.remote_filename)
@@ -227,7 +228,7 @@ class SequenceData(object):
 
         if sequence_id not in self._sequence_cache:
             # all Ensembl identifiers start with ENS e.g. ENST, ENSP, ENSE
-            if require_ensembl_ids:
+            if self.require_ensembl_ids:
                 require_ensembl_id(sequence_id)
 
             # get sequence from database

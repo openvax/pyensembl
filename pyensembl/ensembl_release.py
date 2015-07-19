@@ -22,6 +22,7 @@ from .ensembl_release_source import EnsemblReleaseSource
 from .release_info import (
     check_release_number,
     MAX_ENSEMBL_RELEASE,
+    which_human_reference_name
 )
 from .url_templates import ENSEMBL_FTP_SERVER
 
@@ -43,6 +44,8 @@ class EnsemblRelease(Genome):
                                              species=species,
                                              server=server)
         only_human = species == "homo_sapiens"
+        self.reference_name = (which_human_reference_name(self.release)
+                               if only_human else None)
         Genome.__init__(self,
                         genome_source=genome_source,
                         name="Ensembl",
