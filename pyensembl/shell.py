@@ -39,24 +39,33 @@ from .release_info import MAX_ENSEMBL_RELEASE
 
 def run():
     parser = argparse.ArgumentParser(usage=__doc__)
-    parser.add_argument("--gtf-path",
-                        type=str,
-                        default=None,
-                        help="URL or local path to a GTF file containing annotations.")
-    parser.add_argument("--transcript-fasta-path",
-                        type=str,
-                        default=None,
-                        help="URL or local path to a FASTA file containing transcript data.")
-    parser.add_argument("--protein-fasta-path",
-                        type=str,
-                        default=None,
-                        help="URL or local path to a FASTA file containing protein data.")
-    parser.add_argument("--release",
+    root_group = parser.add_mutually_exclusive_group()
+    release_group = root_group.add_argument_group()
+    release_group.add_argument(
+        "--release",
         type=int,
         nargs="+",
         default=None,
-        help="Ensembl release. Defaults to latest release %(default)s. "
-             "Multiple releases may be specified.")
+        help=("Ensembl release. Defaults to latest release %(default)s. "
+              "Multiple releases may be specified."))
+
+    path_group = root_group.add_argument_group()
+    path_group.add_argument(
+        "--gtf-path",
+        type=str,
+        default=None,
+        help="URL or local path to a GTF file containing annotations.")
+    path_group.add_argument(
+        "--transcript-fasta-path",
+        type=str,
+        default=None,
+        help="URL or local path to a FASTA file containing transcript data.")
+    path_group.add_argument(
+        "--protein-fasta-path",
+        type=str,
+        default=None,
+        help="URL or local path to a FASTA file containing protein data.")
+
     parser.add_argument("action", choices=("install", "download", "index"),
         help="\"install\" will download and index any data that is  not "
         "currently downloaded or indexed. \"download\" will download data, "
