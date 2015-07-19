@@ -1,11 +1,11 @@
 from __future__ import absolute_import
 
+from . import data_path
 from pyensembl import Genome, GenomeSource
 from nose.tools import eq_
-from os.path import join, dirname
 
-UCSC_GENCODE_PATH = join(dirname(__file__), "data/gencode.ucsc.small.gtf")
-UCSC_REFSEQ_PATH = join(dirname(__file__), "data/refseq.ucsc.small.gtf")
+UCSC_GENCODE_PATH = data_path("gencode.ucsc.small.gtf")
+UCSC_REFSEQ_PATH = data_path("refseq.ucsc.small.gtf")
 
 def test_ucsc_gencode():
     """
@@ -13,7 +13,7 @@ def test_ucsc_gencode():
     http://genome.ucsc.edu/cgi-bin/hgTables
     """
     genome = Genome(GenomeSource(gtf_path=UCSC_GENCODE_PATH))
-    genome.index()
+    genome.install()
     eq_(len(genome.genes()), 7)
     eq_(len(genome.transcripts()), 7)
 
@@ -34,7 +34,7 @@ def test_ucsc_refseq():
     http://genome.ucsc.edu/cgi-bin/hgTables
     """
     genome = Genome(GenomeSource(gtf_path=UCSC_REFSEQ_PATH))
-    genome.index()
+    genome.install()
     eq_(len(genome.genes()), 2)
     eq_(len(genome.transcripts()), 2)
 
