@@ -244,6 +244,8 @@ coding_pseudogenes = {
     'IG_J_pseudogene',
     'IG_pseudogene',
     'IG_V_pseudogene',
+    # Found in ftp://ftp.ensembl.org/pub/release-81/gtf/mus_musculus
+    'IG_D_pseudogene',
     'processed_pseudogene',
     'pseudogene',
     'transcribed_processed_pseudogene',
