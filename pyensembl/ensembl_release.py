@@ -46,8 +46,11 @@ class EnsemblRelease(Genome):
                                              server=server)
         only_human = species == "homo_sapiens"
         if not reference_name:
-            reference_name = (which_human_reference_name(self.release)
-                              if only_human else None)
+            if only_human:
+                reference_name = which_human_reference_name(self.release)
+            else:
+                raise ValueError("Must provide a reference_name for "
+                                 "non-human Ensembl releases.")
         Genome.__init__(self,
                         reference_name=reference_name,
                         genome_source=genome_source,
