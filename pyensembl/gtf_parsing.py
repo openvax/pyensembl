@@ -259,6 +259,9 @@ def reconstruct_transcript_rows(df):
     )
     return pd.concat([df, transcripts_df], ignore_index=True)
 
+def can_reconstruct_exon_id_column(df):
+    return "transcript_id" in df and "exon_number" in df
+
 def reconstruct_exon_id_column(df, inplace=True):
     """
     Construct missing exon_id column for older GTFs by concatenating
@@ -353,8 +356,10 @@ def load_gtf_as_dataframe(filename):
         logging.info("Creating entries for feature='transcript'")
         df = reconstruct_transcript_rows(df)
 
-    #if 'exon_id' not in df:
-    #    logging.info("Creating 'exon_id' column")
-    #   df = reconstruct_exon_id_column(df)
-
+    if 'exon_id' not in df:
+        if can_reconstruct_exon_id_column(df):
+            logging.info("Creating 'exon_id' column")
+            df = reconstruct_exon_id_column(df)
+        else:
+            logging.info("Cannot create 'exon_id' column")
     return df
