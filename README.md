@@ -27,7 +27,7 @@ non-Ensembl data is still very much in development.)
 For example:
 
 ```
-data = Genome(GenomeSource(gtf_path='/My/local/gtf/path.gtf'))
+data = Genome(reference_name='GRCh38', GenomeSource(gtf_path='/My/local/gtf/path.gtf'))
 gene_names = data.gene_names_at_locus(contig=6, position=29945884)
 ```
 

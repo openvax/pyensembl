@@ -36,6 +36,7 @@ class EnsemblRelease(Genome):
                  release=MAX_ENSEMBL_RELEASE,
                  species="homo_sapiens",
                  server=ENSEMBL_FTP_SERVER,
+                 reference_name=None,
                  auto_download=False):
         self.release = check_release_number(release)
         self.species = species
@@ -44,9 +45,11 @@ class EnsemblRelease(Genome):
                                              species=species,
                                              server=server)
         only_human = species == "homo_sapiens"
-        self.reference_name = (which_human_reference_name(self.release)
-                               if only_human else None)
+        if not reference_name:
+            reference_name = (which_human_reference_name(self.release)
+                              if only_human else None)
         Genome.__init__(self,
+                        reference_name=reference_name,
                         genome_source=genome_source,
                         name="Ensembl",
                         version=release,

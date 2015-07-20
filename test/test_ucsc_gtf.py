@@ -12,7 +12,7 @@ def test_ucsc_gencode():
     Testing with a small GENCODE GTF file downloaded from 
     http://genome.ucsc.edu/cgi-bin/hgTables
     """
-    genome = Genome(GenomeSource(gtf_path=UCSC_GENCODE_PATH))
+    genome = Genome("GRCh38", GenomeSource(gtf_path=UCSC_GENCODE_PATH))
     genome.install()
     eq_(len(genome.genes()), 7)
     eq_(len(genome.transcripts()), 7)
@@ -33,7 +33,7 @@ def test_ucsc_refseq():
     Testing with a small RefSeq GTF file downloaded from
     http://genome.ucsc.edu/cgi-bin/hgTables
     """
-    genome = Genome(GenomeSource(gtf_path=UCSC_REFSEQ_PATH))
+    genome = Genome("GRCh38", GenomeSource(gtf_path=UCSC_REFSEQ_PATH))
     genome.install()
     eq_(len(genome.genes()), 2)
     eq_(len(genome.transcripts()), 2)

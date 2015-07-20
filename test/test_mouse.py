@@ -28,10 +28,12 @@ def test_mouse_ENSMUSG00000017167():
     Tested against:
     http://useast.ensembl.org/Mus_musculus/Gene/Summary?db=core;g=ENSMUSG00000017167
     """
-    genome = Genome(GenomeSource(
-        gtf_path=MOUSE_ENSMUSG00000017167_PATH,
-        transcript_fasta_path=MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH,
-        protein_fasta_path=MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH))
+    genome = Genome(
+        reference_name="GRCm38",
+        genome_source=GenomeSource(
+            gtf_path=MOUSE_ENSMUSG00000017167_PATH,
+            transcript_fasta_path=MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH,
+            protein_fasta_path=MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH))
     genome.install()
     genes_cntnap1 = genome.genes_by_name("Cntnap1")
     eq_(len(genes_cntnap1), 1)
