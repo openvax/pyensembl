@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from __future__ import print_function, division, absolute_import
-from os.path import split, join
+from os.path import split, join, exists
 import pandas as pd
 
 import datacache
@@ -23,36 +23,25 @@ from .gtf_parsing import load_gtf_as_dataframe
 from .common import CACHE_SUBDIR
 from .locus import normalize_chromosome, normalize_strand
 from .compute_cache import cached_dataframe, clear_cached_objects
-from .url_templates import ENSEMBL_FTP_SERVER, gtf_url
 
 
 class GTF(object):
     """
-    Download and parse a GTF gene annotation file from a given URL.
+    Download and parse a GTF gene annotation file from a given source.
     Represent its contents as a Pandas DataFrame (optionally filtered
     by locus, column, contig, &c).
+
+    gtf_source is a GenomeSource object that represents a local
+    file path or remote URL.
     """
     def __init__(
             self,
-            release,
-            species="homo_sapiens",
-            server=ENSEMBL_FTP_SERVER,
+            gtf_source,
             auto_download=False,
             decompress=True):
+        self.gtf_source = gtf_source
         self.cache = datacache.Cache(CACHE_SUBDIR)
-        self.release = release
         self.decompress = decompress
-        self.url = gtf_url(
-            ensembl_release=release,
-            species=species,
-            server=server)
-
-        self.remote_filename = split(self.url)[1]
-
-        assert self.remote_filename.endswith(".gtf.gz"), \
-            "Expected remote GTF file %s to end with '.gtf.gz'" % (
-                self.remote_filename,)
-
         self.auto_download = auto_download
 
         # lazily load DataFrame of all GTF entries if necessary
@@ -62,10 +51,10 @@ class GTF(object):
     def __eq__(self, other):
         return (
             isinstance(other, GTF) and
-            other.url == self.url)
+            other.gtf_source == self.gtf_source)
 
     def __hash__(self):
-        return hash(self.url)
+        return hash(self.gtf_source)
 
     def clear_cache(self):
         # clear any dataframes we constructed
@@ -80,48 +69,60 @@ class GTF(object):
         leaving only the base filename which should be used
         to construct other derived filenames for cached data.
         """
-        assert ".gtf" in self.remote_filename, \
+        assert ".gtf" in self.gtf_source.original_filename, \
             "GTF filename must contain .gtf extension: %s" % (
-                self.remote_filename,)
+                self.gtf_source.original_filename,)
 
-        return self.remote_filename.split(".gtf")[0]
+        return self.gtf_source.original_filename.split(".gtf")[0]
 
-    def local_filename(self):
-        """Filename used for local copy of GTF"""
+    def cached_filename(self):
+        """Filename used for cached copy of GTF"""
         if self.decompress:
             return self.base_filename() + ".gtf"
         else:
-            return self.remote_filename
+            return self.gtf_source.original_filename
 
-    def local_copy_exists(self):
-        """Has a local copy of the GTF file been downloaded?"""
+    def cached_copy_exists(self):
+        # If the source is a local file as opposed to a URL, then
+        # check to see if it was copied into the cache directory.
+        if not self.gtf_source.is_url_format():
+            return exists(self.gtf_source.cached_path(self.cache))
+
+        """Has a cached copy of the GTF file been downloaded/copied?"""
         return self.cache.exists(
-            self.url,
-            self.local_filename(),
+            self.gtf_source.path_or_url,
+            self.cached_filename(),
             decompress=self.decompress)
 
-    def local_gtf_path(self):
+    def cached_gtf_path(self):
         """
-        Returns local path to GTF file for given release of Ensembl,
-        download from the Ensembl FTP server if not already cached and
+        Returns cached path to GTF file, download from the relevant
+        server (or copy from local) if not already cached and
         auto download is enabled.
         """
-        if self.local_copy_exists() or self.auto_download:
+        if self.cached_copy_exists() or self.auto_download:
+            # If the source is a local file as opposed to a URL, then
+            # just manually copy it to the datacache directory if
+            # we're auto-downloading.
+            if not self.gtf_source.is_url_format():
+                return self.gtf_source.copy_to_cache_if_needed(self.cache,
+                                                               force=False)
+
             # Does a download if the cache is empty
             return self.cache.fetch(
-                self.url,
-                self.local_filename(),
+                self.gtf_source.path_or_url,
+                self.cached_filename(),
                 decompress=self.decompress)
-        raise ValueError('Ensembl annotation data is not currently '
-                         'installed for release %s. Run '
-                         '"pyensembl install --release %s" or call '
-                         '"EnsemblRelease(%s).install()"' %
-                         ((self.release,) * 3))
+        raise ValueError("Genome annotation data is not currently "
+                         "installed for this genome. Run %s "
+                         "or call %s" % (
+                             self.gtf_source.install_string_console(),
+                             self.gtf_source.install_string_python()))
 
-    def local_dir(self):
-        return split(self.local_gtf_path())[0]
+    def cached_dir(self):
+        return split(self.cached_gtf_path())[0]
 
-    def local_data_file_path(
+    def cached_data_file_path(
             self,
             contig=None,
             feature=None,
@@ -130,7 +131,7 @@ class GTF(object):
             distinct=False,
             extension=".csv"):
         """
-        Path to local file for storing materialized views of the Ensembl data.
+        Path to cached file for storing materialized views of the genomic data.
         Typically this is a CSV file, the filename reflects which filters have
         been applied to the entries of the database.
 
@@ -151,8 +152,8 @@ class GTF(object):
         distinct : bool, optional
             Only keep unique values (default=False)
         """
-        base = self.local_filename()
-        dirpath = self.local_dir()
+        base = self.cached_filename()
+        dirpath = self.cached_dir()
         csv_filename = base + ".expanded"
         if contig:
             contig = normalize_chromosome(contig)
@@ -178,19 +179,19 @@ class GTF(object):
         """
         Loads full dataframe from cached CSV or constructs it from GTF
         """
-        csv_path = self.local_data_file_path()
+        csv_path = self.cached_data_file_path()
         return cached_dataframe(csv_path, self._load_full_dataframe_from_gtf)
 
     def _load_full_dataframe_from_gtf(self):
         """
-        Parse this release's GTF file and load it as a Pandas DataFrame
+        Parse this genome source's GTF file and load it as a Pandas DataFrame
         """
-        path = self.local_gtf_path()
+        path = self.cached_gtf_path()
         return load_gtf_as_dataframe(path)
 
     def dataframe(self, contig=None, feature=None, strand=None):
         """
-        Load Ensembl entries as a DataFrame, optionally restricted to
+        Load genome entries as a DataFrame, optionally restricted to
         particular contig or feature type.
         """
         if contig:
@@ -205,20 +206,20 @@ class GTF(object):
         key = (contig, feature, strand)
 
         if key not in self._dataframes:
-            csv_path = self.local_data_file_path(
+            csv_path = self.cached_data_file_path(
                 contig=contig,
                 feature=feature,
                 strand=strand,
                 distinct=False)
 
-            def local_loader_fn():
+            def cached_loader_fn():
                 # pylint: disable=no-member
                 # pylint has trouble with df.seqname and similar
                 # statements in this function.
 
                 full_df = self._load_full_dataframe()
                 assert len(full_df) > 0, \
-                    "Dataframe representation of Ensembl database empty!"
+                    "Dataframe representation of genomic database empty!"
 
                 # rename since we're going to be filtering the entries but
                 # may still want to access the full dataset
@@ -242,7 +243,7 @@ class GTF(object):
 
                 return df
 
-            self._dataframes[key] = cached_dataframe(csv_path, local_loader_fn)
+            self._dataframes[key] = cached_dataframe(csv_path, cached_loader_fn)
 
         return self._dataframes[key]
 
@@ -265,7 +266,7 @@ class GTF(object):
         df_contig = self.dataframe(contig=contig, strand=strand)
 
         assert column_name in df_contig, \
-            "Unknown Ensembl property: %s" % column_name
+            "Unknown genome property: %s" % column_name
 
         return self._slice_column(
             df_contig[column_name],
@@ -343,9 +344,15 @@ class GTF(object):
         Download the GTF file if one does not exist. If `force` is
         True, overwrites any existing file.
         """
-        if not self.local_copy_exists() or force:
+        # If the source is a local file as opposed to a URL, then
+        # just copy it to the datacache direcotry as a "download".
+        if not self.gtf_source.is_url_format():
+            return self.gtf_source.copy_to_cache_if_needed(self.cache,
+                                                           force=force)
+
+        if not self.cached_copy_exists() or force:
             self.cache.fetch(
-                self.url,
-                self.local_filename(),
+                self.gtf_source.path_or_url,
+                self.cached_filename(),
                 decompress=self.decompress,
                 force=force)

@@ -69,6 +69,9 @@ def _normalize_release_properties(ensembl_release, species):
     ensembl_release = check_release_number(ensembl_release)
     species = normalize_species_name(species)
     # TODO: generalize this to species other than human
+    # Currently, non-human species can be specified via GTF and FASTA
+    # URLs; however, automatically generating those URLs (such as in
+    # this chunk of code) is not yet implemented.
     assert species == "homo_sapiens"
     reference_name = which_human_reference_name(ensembl_release)
     return ensembl_release, species, reference_name
@@ -76,7 +79,7 @@ def _normalize_release_properties(ensembl_release, species):
 # GTF annotation file example: Homo_sapiens.GTCh38.gtf.gz
 GTF_FILENAME_TEMPLATE = "%(Species)s.%(reference)s.%(release)d.gtf.gz"
 
-def gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
+def make_gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
     """
     Returns a URL and a filename, which can be joined together.
     """
@@ -102,7 +105,7 @@ def gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
 FASTA_DNA_CHROMOSOME_FILENAME_TEMPLATE = \
     "%(Species)s.%(reference)s.%(release)d.%(sequence_type)s.chromosome.%(contig)s.fa.gz"
 
-def fasta_dna_url(
+def make_fasta_dna_url(
         ensembl_release,
         species,
         contig,
@@ -141,7 +144,7 @@ OLD_FASTA_FILENAME_TEMPLATE = \
 NEW_FASTA_FILENAME_TEMPLATE = \
     "%(Species)s.%(reference)s.%(sequence_type)s.all.fa.gz"
 
-def fasta_url(
+def make_fasta_url(
         ensembl_release,
         species,
         sequence_type,

@@ -2,7 +2,7 @@
 Test all methods which return collections of gene names that aren't converting
 from some other type of name or ID.
 """
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 from pyensembl import EnsemblRelease
 from .test_common import test_ensembl_releases
 
@@ -23,7 +23,6 @@ def test_all_gene_names(ensembl):
     gene_names = ensembl.gene_names()
     print(type(gene_names))
     for gene_name in KNOWN_GENE_NAMES:
-        print(str(gene_name) in set(gene_names))
         assert gene_name in gene_names, \
             "Missing gene name %s from %s" % (gene_name, ensembl)
 

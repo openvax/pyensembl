@@ -20,7 +20,8 @@ into their own columns,
 Columns of a GTF file:
 
     seqname   - name of the chromosome or scaffold; chromosome names
-                without a 'chr'
+                without a 'chr' in Ensembl (but sometimes with a 'chr'
+                elsewhere)
     source    - name of the program that generated this feature, or
                 the data source (database or project name)
     feature   - feature type name. Current allowed features are
@@ -49,6 +50,8 @@ Columns of a GTF file:
 from __future__ import print_function, division, absolute_import
 import logging
 from os.path import exists
+
+from .locus import normalize_chromosome
 
 import numpy as np
 import pandas as pd
@@ -95,7 +98,8 @@ def _read_gtf(filename):
         na_filter=False,
         compression=compression)
 
-    df['seqname'] = df['seqname'].map(str)
+    df['seqname'] = df['seqname'].map(
+        lambda seqname: normalize_chromosome(str(seqname)))
 
     # very old GTF files use the second column to store the gene biotype
     # others use it to store the transcript biotype and
@@ -181,19 +185,18 @@ def _extend_with_attributes(df):
         df[k] = df[k].str.replace("\"", "")
     return df
 
-# In addition to the required 8 columns and names and IDs genes & transcripts,
+# In addition to the required 8 columns and IDs of genes & transcripts,
 # there might also be annotations like 'transcript_biotype' but these aren't
 # available for all species/releases.
 
+# TODO: gene and transcript names, as well as biotypes, should have
+# the option to be required.
 REQUIRED_ATTRIBUTE_COLUMNS = [
-    'gene_name',
     'gene_id',
-    'gene_biotype',
-    'transcript_name',
     'transcript_id',
 ]
 
-def _dataframe_from_groups(groups, feature, extra_column_names=[]):
+def _dataframe_from_groups(groups, feature):
     """
     Helper function used to construct a missing feature such as 'transcript'
     or 'gene'. For example, a sufficiently old release might only have
@@ -206,8 +209,13 @@ def _dataframe_from_groups(groups, feature, extra_column_names=[]):
     end = groups.end.max()
     strand = groups.strand.first()
     seqname = groups.seqname.first()
-    gene_name = groups.gene_name.first()
-    gene_biotype = groups.gene_biotype.first()
+
+    # Include these columns when they're available. We also want to
+    # include gene_id if we're grouping by transcript_id and vice versa.
+    conditional_column_names = [
+        "gene_name", "gene_biotype", "transcript_name",
+        "transcript_biotype", "gene_id", "transcript_id"
+    ]
 
     def pick_protein_id(candidates):
         for c in candidates:
@@ -215,11 +223,17 @@ def _dataframe_from_groups(groups, feature, extra_column_names=[]):
                 return c
         return None
 
-    protein_id = groups.protein_id.apply(pick_protein_id)
-    columns = [seqname, gene_biotype, start, end, strand, gene_name, protein_id]
-    for column_name in extra_column_names:
-        column = groups[column_name].first()
-        columns.append(column)
+    columns = [seqname, start, end, strand]
+
+    if "protein_id" in groups.first().columns:
+        protein_id = groups.protein_id.apply(pick_protein_id)
+        columns.append(protein_id)
+
+    for conditional_column_name in conditional_column_names:
+        if conditional_column_name in groups.first().columns:
+            column = groups[conditional_column_name].first()
+            columns.append(column) 
+
     df = pd.concat(columns, axis=1).reset_index()
 
     # score seems to be always this value, not sure why it's in the GTFs
@@ -241,10 +255,12 @@ def reconstruct_transcript_rows(df):
     transcript_id_groups = df.groupby(['transcript_id'])
     transcripts_df = _dataframe_from_groups(
         transcript_id_groups,
-        feature='transcript',
-        extra_column_names=['transcript_name']
+        feature='transcript'
     )
     return pd.concat([df, transcripts_df], ignore_index=True)
+
+def can_reconstruct_exon_id_column(df):
+    return "transcript_id" in df and "exon_number" in df
 
 def reconstruct_exon_id_column(df, inplace=True):
     """
@@ -325,6 +341,7 @@ def load_gtf_as_dataframe(filename):
     #   - CDS
     #   - start_codon
     #   - stop_codon
+    # (And this also applies to other non-Ensembl GTF files.)
     #
     # Might have to manually reconstruct gene & transcript entries
     # by grouping the gene_id and transcript_id columns of existing features
@@ -340,7 +357,9 @@ def load_gtf_as_dataframe(filename):
         df = reconstruct_transcript_rows(df)
 
     if 'exon_id' not in df:
-        logging.info("Creating 'exon_id' column")
-        df = reconstruct_exon_id_column(df)
-
+        if can_reconstruct_exon_id_column(df):
+            logging.info("Creating 'exon_id' column")
+            df = reconstruct_exon_id_column(df)
+        else:
+            logging.info("Cannot create 'exon_id' column")
     return df

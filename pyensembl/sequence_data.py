@@ -20,33 +20,34 @@ import logging
 from Bio import SeqIO
 import datacache
 
-from .common import CACHE_SUBDIR, require_ensembl_id
-from .release_info import check_release_number
+from .common import (CACHE_SUBDIR, require_ensembl_id)
 
 
 class SequenceData(object):
-    """Container for reference nucleotide and amino acid sequenes.
+    """
+    Container for reference nucleotide and amino acid sequenes.
 
     Downloads and caches FASTA file, creates database mapping
     identifiers to sequences.
+
+    fasta_source is a GenomeSource object that represents a local
+    file path or remote URL.
     """
     def __init__(
             self,
-            ensembl_release,
-            fasta_url,
+            fasta_source,
+            require_ensembl_ids=True,
             auto_download=False):
-
+        self.fasta_source = fasta_source
         # download cache for fetching reference FASTA files
         self.cache = datacache.Cache(CACHE_SUBDIR)
         self.auto_download = auto_download
-        self.release = check_release_number(ensembl_release)
-        # expect the remote FASTA file to be gzipped and the local needs
+        # expect the original FASTA file to be gzipped and the cached needs
         # to be a decompressed text file
         self.fasta_decompress = True
-        self.url = fasta_url
-        self.remote_filename = split(self.url)[1]
-
-        self.local_filename = self._create_local_filename(self.remote_filename)
+        assert self.fasta_source, (
+            "Attempted to create SequenceData with missing FASTA source")
+        self.require_ensembl_ids = require_ensembl_ids
         self._init_lazy_fields()
 
     def _init_lazy_fields(self):
@@ -61,31 +62,11 @@ class SequenceData(object):
         # key set for fasta dictionary, for faster membership tests,
         self._fasta_keys = None
 
-    def _create_local_filename(self, remote_filename):
-        """
-        We sometimes need to add the release number to a local FASTAfilename
-        since some Ensembl releases only have the genome name in the FASTA
-        filename but still differ subtly between releases.
-        For example, a transcript ID may be missing in Ensembl 75 but present
-        in 76, though both have the same FASTA filename
-        """
-        if ".%d." % self.release in remote_filename:
-            return remote_filename
-
-        filename_parts = self.remote_filename.split(".fa.")
-        assert len(filename_parts) == 2, \
-            "Expected remote filename %s to contain '.fa.gz'" % (
-                self.remote_filename,)
-        return "".join([
-            filename_parts[0],
-            ".%d.fa." % self.release,
-            filename_parts[1]])
-
     def __str__(self):
-        return "SequenceData(ensembl_release=%d, url=%s, local_path=%s)" % (
-            self.release,
-            self.url,
-            self.local_fasta_path)
+        return "SequenceData(fasta_source=%s, cached_path=%s, version=%s)" % (
+            self.fasta_source,
+            self.cached_fasta_path,
+            self.version)
 
     def __repr__(self):
         return str(self)
@@ -98,59 +79,72 @@ class SequenceData(object):
     def __eq__(self, other):
         return (
             isinstance(other, SequenceData) and
-            self.url == other.url and
-            self.release == other.release)
+            self.fasta_source == other.fasta_source and
+            self.version == other.version)
 
     @property
-    def local_fasta_path(self):
+    def cached_fasta_path(self):
         """
-        Returns local path to FASTA file. If it's not already
-        cached, download it from the Ensembl FTP server if auto
-        download is enabled.
+        Returns cached path to FASTA file. If it's not already
+        cached, download it from the appropriate server (or copy
+        from local) if auto download is enabled.
         """
         # If the fasta is already cached, fetching it won't initiate a
         # download. But it's always okay to initiate a download if
         # auto download is enabled.
-        if self.local_file_exists() or self.auto_download:
+        if self.cached_file_exists() or self.auto_download:
+            # If the source is a local file as opposed to a URL, then
+            # just manually copy it to the datacache directory if
+            # we're auto-downloading.
+            if not self.fasta_source.is_url_format():
+                self.fasta_source.copy_to_cache_if_needed(self.cache,
+                                                          force=False)
+
             # Does a download if the cache is empty, otherwise just returns
-            # the local path
+            # the cached path
             return self._fetch(force=False)
-        raise ValueError("Ensembl sequence data %s is not currently "
-                         "installed for release %s. Run "
-                         "\"pyensembl install --relase %s\" or call "
-                         "EnsemblRelease(%s).install()" %
-                         ((self.local_filename,) + (self.release,) * 3))
+        raise ValueError("Genome sequence data (%s) is not currently "
+                         "installed for this genome source. Run %s "
+                         "or call %s" % (
+                             self.fasta_source.
+                             self.fasta_source.install_string_console(),
+                             self.fasta_source.install_string_python()))
 
     def clear_cache(self):
-        """Delete the local FASTA file and its associated database,
+        """Delete the cached FASTA file and its associated database,
         and clear any in-memory cached sequence data.
         """
         # reset in-memory cached object
         self._init_lazy_fields()
 
-        if self.local_file_exists():
-            remove(self.local_fasta_path)
-        if exists(self.local_database_path):
-            remove(self.local_fasta_path)
+        if self.cached_file_exists():
+            remove(self.cached_fasta_path)
+        if exists(self.cached_database_path):
+            remove(self.cached_fasta_path)
 
     @property
-    def local_dir(self):
-        return split(self.local_fasta_path)[0]
+    def cached_dir(self):
+        return split(self.cached_fasta_path)[0]
 
-    def local_file_exists(self):
+    def cached_file_exists(self):
+        # If the source is a local file as opposed to a URL, then
+        # check to see if it was copied into the cache directory.
+        if not self.fasta_source.is_url_format():
+            return exists(self.fasta_source.cached_path(self.cache))
+
         return self.cache.exists(
-                self.url,
-                filename=self.local_filename,
-                decompress=self.fasta_decompress)
+            self.fasta_source.path_or_url,
+            filename=self.fasta_source.cached_filename,
+            decompress=self.fasta_decompress)
 
     def _fetch(self, force):
         """Download file from remote URL if not present or if force=True
 
-        Return local path
+        Return cached path
         """
         return self.cache.fetch(
-            url=self.url,
-            filename=self.local_filename,
+            url=self.fasta_source.path_or_url,
+            filename=self.fasta_source.cached_filename,
             decompress=self.fasta_decompress,
             force=force)
 
@@ -159,18 +153,24 @@ class SequenceData(object):
 
         If `force` is True, overwrites any existing file.
         """
-        if not self.local_file_exists() or force:
+        # If the source is a local file as opposed to a URL, then
+        # just copy it to the datacache direcotry as a "download".
+        if not self.fasta_source.is_url_format():
+            return self.fasta_source.copy_to_cache_if_needed(
+                self.cache, force=force)
+
+        if not self.cached_file_exists() or force:
             self._fetch(force=force)
 
     @property
-    def local_database_path(self):
-        return self.local_fasta_path + ".db"
+    def cached_database_path(self):
+        return self.cached_fasta_path + ".db"
 
     def _create_or_open_fasta_db(self):
         """Create an index database from a transcript sequence FASTA file"""
         return SeqIO.index_db(
-            self.local_database_path,
-            self.local_fasta_path,
+            self.cached_database_path,
+            self.cached_fasta_path,
             "fasta")
 
     def index(self, force=False):
@@ -186,17 +186,17 @@ class SequenceData(object):
         If no error is raised, then after call self._fasta_dictionary
         should be populated.
         """
-        # This local_fasta_path property access will raise an error
+        # This cached_fasta_path property access will raise an error
         # if the necessary data is not yet downloaded
-        if exists(self.local_database_path):
+        if exists(self.cached_database_path):
             if force:
                 logging.info(
                     "Deleting existing sequence database: %s",
-                    self.local_database_path)
-                remove(self.local_database_path)
+                    self.cached_database_path)
+                remove(self.cached_database_path)
             else:
                 # try opening the existing FASTA database, if it fails then
-                # delete the local file and we'll create a new one further
+                # delete the cached file and we'll create a new one further
                 # below
                 try:
                     self._fasta_dictionary = self._create_or_open_fasta_db()
@@ -208,9 +208,9 @@ class SequenceData(object):
                         logging.warn(
                             ("Recreating transcript database %s"
                              " due to error: %s"),
-                            self.local_database_path,
+                            self.cached_database_path,
                             e.message)
-                        remove(self.local_database_path)
+                        remove(self.cached_database_path)
                     else:
                         raise
         # if database didn't exist or was incomplete, create it now
@@ -229,7 +229,8 @@ class SequenceData(object):
 
         if sequence_id not in self._sequence_cache:
             # all Ensembl identifiers start with ENS e.g. ENST, ENSP, ENSE
-            require_ensembl_id(sequence_id)
+            if self.require_ensembl_ids:
+                require_ensembl_id(sequence_id)
 
             # get sequence from database
             fasta_record = self.fasta_dictionary.get(sequence_id)

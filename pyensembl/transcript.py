@@ -40,8 +40,9 @@ class Transcript(Locus):
             strand,
             biotype,
             gene_id,
-            ensembl):
-        if not is_valid_biotype(biotype):
+            ensembl,
+            require_valid_biotype=True):
+        if require_valid_biotype and not is_valid_biotype(biotype):
             raise ValueError(
                 "Invalid biotype '%s' for transcript with ID=%s, name=%s" % (
                     biotype, transcript_id, transcript_name))
@@ -58,11 +59,13 @@ class Transcript(Locus):
         return (
             "Transcript(id=%s,"
             " name=%s,"
+            " gene_id=%s,"
             " gene_name=%s,"
             " biotype=%s,"
             " location=%s:%d-%d)") % (
                     self.id,
                     self.name,
+                    self.gene.id,
                     self.gene.name,
                     self.biotype,
                     self.contig,

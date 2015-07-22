@@ -24,17 +24,11 @@ A piece of data is returned from one of three sources:
 """
 from __future__ import print_function, division, absolute_import
 
-try:
-    # Python 2: cPickle faster than pickle.
-    import cPickle as pickle
-except ImportError:
-    # Python 3
-    import pickle
-
 import logging
 from os import remove, stat
 from os.path import exists
 
+from six.moves import cPickle as pickle
 import pandas as pd
 
 _memory_cache = {}
