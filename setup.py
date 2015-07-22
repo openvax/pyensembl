@@ -68,6 +68,7 @@ if __name__ == '__main__':
             "biopython>=1.65",
             "memoized-property>=1.0.2",
             "mock>=1.0.1",
+            "six>=1.9.0"
         ],
         long_description=readme,
         packages=['pyensembl'],

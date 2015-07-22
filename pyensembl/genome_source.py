@@ -15,7 +15,6 @@
 from os.path import basename, join, exists
 from shutil import copy2
 
-
 class GenomeSource(object):
     """
     Represents a URL or local file path of a GTF or FASTA file.
@@ -85,5 +84,5 @@ class GenomeSource(object):
             self.name == other.name and
             self.path_or_url == other.path_or_url)
 
-    def __hash_(self):
+    def __hash__(self):
         return hash((self.name, self.path_or_url))
