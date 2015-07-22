@@ -25,8 +25,8 @@ To install the latest Ensembl release:
 To install particular Ensembl release(s):
     %(prog)s install --release 75 77
 
-To install any Genomic database:
-    %(prog)s install --gtf-path URL_OR_PATH --transcript-fasta-path URL_OR_PATH --protein-fasta-path URL_OR_PATH
+To install any genome:
+    %(prog)s install --reference_name "GRCh38" --gtf-path_or_url URL_OR_PATH --transcript-fasta-path_or_url URL_OR_PATH --protein-fasta-path-or-url URL_OR_PATH
 
 """
 
@@ -34,7 +34,6 @@ from __future__ import absolute_import
 import argparse
 from .ensembl_release import EnsemblRelease
 from .genome import Genome
-from .genome_source import GenomeSource
 from .release_info import MAX_ENSEMBL_RELEASE
 
 def run():
@@ -51,17 +50,22 @@ def run():
 
     path_group = root_group.add_argument_group()
     path_group.add_argument(
-        "--gtf-path",
+        "--reference-name",
+        type=str,
+        default=None,
+        help="Name of the reference, e.g. GRCh38") 
+    path_group.add_argument(
+        "--gtf-path-or-url",
         type=str,
         default=None,
         help="URL or local path to a GTF file containing annotations.")
     path_group.add_argument(
-        "--transcript-fasta-path",
+        "--transcript-fasta-path-or-url",
         type=str,
         default=None,
         help="URL or local path to a FASTA file containing transcript data.")
     path_group.add_argument(
-        "--protein-fasta-path",
+        "--protein-fasta-path-or-url",
         type=str,
         default=None,
         help="URL or local path to a FASTA file containing protein data.")
@@ -77,17 +81,19 @@ def run():
 
     genomes = []
     # If specific genome source URLs are provided, use those
-    if args.gtf_path:
+    if args.gtf_path_or_url:
         assert not args.release, ("A release cannot be specified if "
                                   "specific paths are specified.")
-        genome_source = GenomeSource(
-            gtf_path=args.gtf_path,
-            transcript_fasta_path=args.transcript_fasta_path,
-            protein_fasta_path=args.protein_fasta_path)
-        genomes.append(Genome(genome_source=genome_source))
+        assert args.reference_name, "Must specify a reference name"
+        genomes.append(Genome(
+            args.reference_name,
+            gtf_path_or_url=args.gtf_path_or_url,
+            transcript_fasta_path_or_url=args.transcript_fasta_path_or_url,
+            protein_fasta_path_or_url=args.protein_fasta_path_or_url))
     # Otherwise, use Ensembl release information
     else:
-        assert not args.transcript_fasta_path and not args.protein_fasta_path, \
+        assert (not args.transcript_fasta_path_or_url and
+                not args.protein_fasta_path_or_url), \
             "A GTF path must be specified along with other paths." 
 
         if not args.release:

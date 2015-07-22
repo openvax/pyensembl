@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 from . import data_path
-from pyensembl import Genome, GenomeSource
+from pyensembl import Genome
 from nose.tools import eq_
 
 MOUSE_ENSMUSG00000017167_PATH = data_path(
@@ -30,10 +30,9 @@ def test_mouse_ENSMUSG00000017167():
     """
     genome = Genome(
         reference_name="GRCm38",
-        genome_source=GenomeSource(
-            gtf_path=MOUSE_ENSMUSG00000017167_PATH,
-            transcript_fasta_path=MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH,
-            protein_fasta_path=MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH))
+        gtf_path_or_url=MOUSE_ENSMUSG00000017167_PATH,
+        transcript_fasta_path_or_url=MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH,
+        protein_fasta_path_or_url=MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH)
     genome.install()
     genes_cntnap1 = genome.genes_by_name("Cntnap1")
     eq_(len(genes_cntnap1), 1)

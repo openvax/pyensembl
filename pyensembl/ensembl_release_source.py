@@ -12,45 +12,52 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from os.path import split
-
 from .genome_source import GenomeSource
-from .release_info import MAX_ENSEMBL_RELEASE
-from .url_templates import ENSEMBL_FTP_SERVER, make_gtf_url, make_fasta_url
 
 
 class EnsemblReleaseSource(GenomeSource):
     """
-    Represents the source (URLs) of an Ensembl release. The superclass
-    represents the source of any genomic database.
+    Represents a URL or local file path of a GTF or FASTA file
+    within an Ensembl release. Also handles some Ensembl-specific
+    local filename transformation and generates Ensembl-specific
+    install messages.
     """
     def __init__(self,
-                 release=MAX_ENSEMBL_RELEASE,
-                 species="homo_sapiens",
-                 server=ENSEMBL_FTP_SERVER):
-        self.release = release
-        self.species = species
-        self.server = server
+                 name,
+                 path_or_url):
+        GenomeSource.__init__(self,
+                              name=name,
+                              path_or_url=path_or_url)
 
-        gtf_url = make_gtf_url(
-            ensembl_release=release,
-            species=species,
-            server=server)
-        remote_gtf_filename = split(gtf_url)[1]
-        assert remote_gtf_filename.endswith(".gtf.gz"), \
+    @property
+    def original_filename(self):
+        original_filename = super(EnsemblReleaseSource, self).original_filename
+        assert original_filename.endswith(".gtf.gz"), \
             "Expected remote GTF file %s to end with '.gtf.gz'" % (
-                remote_gtf_filename)
+                original_filename)
+        return original_filename
 
-        transcript_fasta_url = make_fasta_url(
-            ensembl_release=release,
-            species=species,
-            sequence_type="cdna",
-            server=server)
-        protein_fasta_url = make_fasta_url(
-            ensembl_release=release,
-            species=species,
-            sequence_type="pep",
-            server=server)
+    @property
+    def cached_filename(self):
+        """
+        We sometimes need to add the release number to a cached FASTA filename
+        since some Ensembl releases only have the genome name in the FASTA
+        filename but still differ subtly between releases.
+        For example, a transcript ID may be missing in Ensembl 75 but present
+        in 76, though both have the same FASTA filename
+        """
+        if ".%d." % self.release in self.original_filename:
+            return self.original_filename
+
+        filename_parts = self.original_filename.split(".fa.")
+        assert len(filename_parts) == 2, \
+            "Expected remote filename %s to contain '.fa.gz'" % (
+                self.original_filename,)
+        return "".join([
+            filename_parts[0],
+            ".%d.fa." % self.release,
+            filename_parts[1]])
+
         GenomeSource.__init__(self,
                               gtf_path=gtf_url,
                               transcript_fasta_path=transcript_fasta_url,

@@ -24,7 +24,7 @@ from .release_info import (
     MAX_ENSEMBL_RELEASE,
     which_human_reference_name
 )
-from .url_templates import ENSEMBL_FTP_SERVER
+from .url_templates import ENSEMBL_FTP_SERVER, make_gtf_url, make_fasta_url
 
 
 class EnsemblRelease(Genome):
@@ -41,9 +41,21 @@ class EnsemblRelease(Genome):
         self.release = check_release_number(release)
         self.species = species
         self.server = server
-        genome_source = EnsemblReleaseSource(release=release,
-                                             species=species,
-                                             server=server)
+
+        gtf_url = make_gtf_url(
+            ensembl_release=release,
+            species=species,
+            server=server)
+        transcript_fasta_url = make_fasta_url(
+            ensembl_release=release,
+            species=species,
+            sequence_type="cdna",
+            server=server)
+        protein_fasta_url = make_fasta_url(
+            ensembl_release=release,
+            species=species,
+            sequence_type="pep",
+            server=server)
         only_human = species == "homo_sapiens"
         if not reference_name:
             if only_human:
@@ -53,33 +65,14 @@ class EnsemblRelease(Genome):
                                  "non-human Ensembl releases.")
         Genome.__init__(self,
                         reference_name=reference_name,
-                        genome_source=genome_source,
+                        gtf_path_or_url=gtf_url,
+                        transcript_fasta_path_or_url=transcript_fasta_url,
+                        protein_fasta_path_or_url=protein_fasta_url,
                         name="Ensembl",
                         version=release,
                         only_human=only_human,
                         auto_download=auto_download,
-                        local_fasta_filename_func=self.local_fasta_filename_func,
                         require_ensembl_ids=True)
-
-    def local_fasta_filename_func(self, remote_filename):
-        """
-        We sometimes need to add the release number to a local FASTA filename
-        since some Ensembl releases only have the genome name in the FASTA
-        filename but still differ subtly between releases.
-        For example, a transcript ID may be missing in Ensembl 75 but present
-        in 76, though both have the same FASTA filename
-        """
-        if ".%d." % self.release in remote_filename:
-            return remote_filename
-
-        filename_parts = remote_filename.split(".fa.")
-        assert len(filename_parts) == 2, \
-            "Expected remote filename %s to contain '.fa.gz'" % (
-                remote_filename,)
-        return "".join([
-            filename_parts[0],
-            ".%d.fa." % self.release,
-            filename_parts[1]])
 
     def __str__(self):
         return "EnsemblRelease(release=%d, species=%s)" % (

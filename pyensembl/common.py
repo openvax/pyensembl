@@ -13,8 +13,6 @@
 # limitations under the License.
 
 from functools import wraps
-from shutil import copy2
-from os.path import basename, join, exists
 
 from typechecks import is_string
 
@@ -95,26 +93,3 @@ def is_valid_human_protein_id(protein_id):
 def require_human_protein_id(protein_id):
     if not is_valid_human_protein_id(protein_id):
         raise ValueError("Invalid protein ID '%s'" % protein_id)
-
-def is_url_format(string):
-    return "://" in string
-
-def local_file_cache_path(path, cache):
-    """
-    Given a path to a local file, determine the path to that file if it
-    were to be copied to the cache's directory.
-    """
-    return join(cache.cache_directory_path,
-                basename(path))
-
-def copy_to_cache_if_needed(path, cache, force):
-    """
-    Given a path to a file, copy the file to the cache's directory
-    and return the path to the new file within the cache's directory.
-
-    If `force` is True, overwrites an existing cache directory file.
-    """
-    new_path = local_file_cache_path(path, cache)
-    if not exists(new_path) or force:
-        copy2(path, new_path)
-    return new_path

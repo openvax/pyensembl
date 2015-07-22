@@ -12,52 +12,69 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from os.path import basename, join, exists
+from shutil import copy2
+
 
 class GenomeSource(object):
     """
-    Represents the source (URLs or local file paths) of a genome
-    database, which currently includes: GTF, transcript FASTA file, 
-    and protein FASTA file.
+    Represents a URL or local file path of a GTF or FASTA file.
     """
-    def __init__(self,
-                 gtf_path,
-                 transcript_fasta_path=None,
-                 protein_fasta_path=None):
-        self.gtf_path = gtf_path
-        self.transcript_fasta_path = transcript_fasta_path
-        self.protein_fasta_path = protein_fasta_path
+    def __init__(self, name, path_or_url, reference_name):
+        self.name = name
+        self.path_or_url = path_or_url
+        self.reference_name = reference_name
 
-        paths = {"gtf_path": gtf_path}
-        if transcript_fasta_path:
-            paths["transcript_fasta_path"] = transcript_fasta_path
-        if protein_fasta_path:
-            paths["protein_fasta_path"] = protein_fasta_path
-        self.paths = paths
+    @property
+    def original_filename(self):
+        return basename(self.path_or_url)
+
+    @property
+    def cached_filename(self):
+        """
+        As opposed to the remote filename or the original filename
+        of a local source, this is the filename after downloading/copying
+        to the cache directory.
+
+        Unless overriden, these are the same.
+        """
+        return self.original_filename
+
+    def cached_path(self, cache):
+        """
+        The full path to the cached file.
+        """
+        return join(cache.cache_directory_path,
+                    self.cached_filename)
 
     def install_string_console(self):
-        console_str = "pyensembl install "
-        for name, path in self.paths.items():
-            console_str += "--%s \"%s\"" % (name, path)
-        return console_str
-
-    def _arg_list_str(self):
-        args = []
-        for name, path in self.paths.items():
-            args.append("%s=\"%s\"" % (name, path))
-        return ", ".join(args)
+        return "pyensembl install --%s \"%s\"" % (
+            self.name, self.path_or_url)
 
     def install_string_python(self):
-        return "Genome(GenomeSource(%s)).install()" % self._arg_list_str()
+        return "Genome(reference_name=%s, %s=\"%s\")).install()" % (
+            self.reference_name, self.name, self.path_or_url)
 
-    def fasta_path(self, fasta_type):
-        assert fasta_type in ["transcript", "protein"], \
-            "Invalid FASTA type: %s" % fasta_type
-        if fasta_type == "transcript":
-            return self.transcript_fasta_path
-        return self.protein_fasta_path
+    def is_url_format(self):
+        return "://" in self.path_or_url
+
+    def copy_to_cache_if_needed(self, cache, force):
+        """
+        Given a path to a file, copy the file to the cache's directory
+        and return the path to the new file within the cache's directory.
+
+        If `force` is True, overwrites an existing cache directory file.
+        """
+        assert not self.is_url_format(), \
+            "Copying should not be called on a URL: %s" % self.path_or_url
+        new_path = self.cached_path(cache)
+        if not exists(new_path) or force:
+            copy2(self.path_or_url, new_path)
+        return new_path
 
     def __str__(self):
-        return "GenomeSource(%s)" % self._arg_list_str()
+        return "GenomeSource(%s=%s)" % (
+            self.name, self.path_or_url)
 
     def __repr__(self):
         return str(self)
@@ -65,7 +82,8 @@ class GenomeSource(object):
     def __eq__(self, other):
         return (
             other.__class__ is GenomeSource and
-            self.paths == other.paths)
+            self.name == other.name and
+            self.path_or_url == other.path_or_url)
 
     def __hash_(self):
-        return hash((self.paths))
+        return hash((self.name, self.path_or_url))

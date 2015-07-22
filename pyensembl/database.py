@@ -65,7 +65,7 @@ class Database(object):
         return base + ".db"
 
     def local_db_path(self):
-        dirpath = self.gtf.local_dir()
+        dirpath = self.gtf.cached_dir()
         filename = self.local_db_filename()
         return join(dirpath, filename)
 
@@ -74,8 +74,8 @@ class Database(object):
         Create list of tuples containing all possible index groups
         we might want to create over tables in this database.
 
-        If a genomic database is missing some column we want to index on,
-        we have to drop any indices which use that column.
+        If a set of genome annotations is missing some column we want
+        to index on, we have to drop any indices which use that column.
 
         A specific table may later drop some of these indices if they're
         missing  values for that feature or are the same as the table's primary key.
@@ -224,7 +224,7 @@ class Database(object):
     @property
     def connection(self):
         """
-        Return the sqlite3 database for this Genomic database
+        Return the sqlite3 database for this set of genome annotations
         (download and/or construct it if necessary, if auto_download
         is on). As a side effect, stores the database connection in
         self._connection.
@@ -237,8 +237,8 @@ class Database(object):
         raise ValueError("Genome annotation data is not currently "
                          "installed for this genome source. Run %s "
                          "or call %s" % (
-                             self.gtf.genome_source.install_string_console(),
-                             self.gtf.genome_source.install_string_python()))
+                             self.gtf.gtf_source.install_string_console(),
+                             self.gtf.gtf_source.install_string_python()))
 
     @memoize
     def columns(self, table_name):
