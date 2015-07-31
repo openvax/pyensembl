@@ -88,6 +88,6 @@ class EnsemblReleaseSource(GenomeSource):
             self.file_type == other.file_type and
             self.reference_name == other.reference_name)
 
-    def __hash_(self):
+    def __hash__(self):
         return hash((self.path_or_url, self.release, self.file_type,
                      self.reference_name))
