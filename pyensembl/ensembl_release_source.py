@@ -14,7 +14,6 @@
 
 from .genome_source import GenomeSource
 
-
 class EnsemblReleaseSource(GenomeSource):
     """
     Represents a URL or local file path of a GTF or FASTA file
@@ -23,18 +22,24 @@ class EnsemblReleaseSource(GenomeSource):
     install messages.
     """
     def __init__(self,
-                 name,
-                 path_or_url):
+                 url,
+                 release,
+                 file_type,
+                 reference_name):
+        self.release = release
+        assert file_type in ["gtf", "fa"], \
+            "Expected a .gtf or .fa file, but got: %s" % file_type
+        self.file_type = file_type
         GenomeSource.__init__(self,
-                              name=name,
-                              path_or_url=path_or_url)
+                              path_or_url=url,
+                              reference_name=reference_name)
 
     @property
     def original_filename(self):
         original_filename = super(EnsemblReleaseSource, self).original_filename
-        assert original_filename.endswith(".gtf.gz"), \
-            "Expected remote GTF file %s to end with '.gtf.gz'" % (
-                original_filename)
+        assert original_filename.endswith(".%s.gz" % self.file_type), \
+            "Expected remote GTF file %s to end with '.%s.gz'" % (
+                original_filename, self.file_type)
         return original_filename
 
     @property
@@ -49,10 +54,10 @@ class EnsemblReleaseSource(GenomeSource):
         if ".%d." % self.release in self.original_filename:
             return self.original_filename
 
-        filename_parts = self.original_filename.split(".fa.")
+        filename_parts = self.original_filename.split(".%s." % self.file_type)
         assert len(filename_parts) == 2, \
-            "Expected remote filename %s to contain '.fa.gz'" % (
-                self.original_filename,)
+            "Expected remote filename %s to contain '.%s.gz'" % (
+                self.original_filename, self.file_type)
         return "".join([
             filename_parts[0],
             ".%d.fa." % self.release,
@@ -78,7 +83,11 @@ class EnsemblReleaseSource(GenomeSource):
     def __eq__(self, other):
         return (
             other.__class__ is EnsemblReleaseSource and
-            self.paths == other.paths)
+            self.path_or_url == other.path_or_url and
+            self.release == other.release and
+            self.file_type == other.file_type and
+            self.reference_name == other.reference_name)
 
     def __hash_(self):
-        return hash((self.paths))
+        return hash((self.path_or_url, self.release, self.file_type,
+                     self.reference_name))

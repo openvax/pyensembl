@@ -19,10 +19,10 @@ class GenomeSource(object):
     """
     Represents a URL or local file path of a GTF or FASTA file.
     """
-    def __init__(self, name, path_or_url, reference_name):
-        self.name = name
+    def __init__(self, path_or_url, reference_name, arg_name=None):
         self.path_or_url = path_or_url
         self.reference_name = reference_name
+        self.arg_name = arg_name
 
     @property
     def original_filename(self):
@@ -47,12 +47,22 @@ class GenomeSource(object):
                     self.cached_filename)
 
     def install_string_console(self):
-        return "pyensembl install --%s \"%s\"" % (
-            self.name, self.path_or_url)
+        if not self.arg_name:
+            raise ValueError("Expected GenomeSource to contain an arg_name: %s"
+                             % str(self))
+
+        # The shell script expects dashed arguments
+        console_arg_name = self.arg_name.replace("_", "-")
+
+        return "pyensembl install --reference-name %s --%s \"%s\"" % (
+            self.reference_name, console_arg_name, self.path_or_url)
 
     def install_string_python(self):
+        if not self.arg_name:
+            raise ValueError("Expected GenomeSource to contain an arg_name: %s"
+                             % str(self))
         return "Genome(reference_name=%s, %s=\"%s\")).install()" % (
-            self.reference_name, self.name, self.path_or_url)
+            self.reference_name, self.arg_name, self.path_or_url)
 
     def is_url_format(self):
         return "://" in self.path_or_url
@@ -72,8 +82,8 @@ class GenomeSource(object):
         return new_path
 
     def __str__(self):
-        return "GenomeSource(%s=%s)" % (
-            self.name, self.path_or_url)
+        return "GenomeSource(path_or_url=%s, reference_name=%s, arg_name=%s)" % (
+            self.path_or_url, self.reference_name, self.arg_name)
 
     def __repr__(self):
         return str(self)
@@ -81,8 +91,9 @@ class GenomeSource(object):
     def __eq__(self, other):
         return (
             other.__class__ is GenomeSource and
-            self.name == other.name and
-            self.path_or_url == other.path_or_url)
+            self.path_or_url == other.path_or_url and
+            self.reference_name == other.reference_name and
+            self.arg_name == other.arg_name)
 
     def __hash__(self):
-        return hash((self.name, self.path_or_url))
+        return hash((self.path_or_url, self.reference_name, self.arg_name))

@@ -18,12 +18,14 @@ to be specific to (a particular release of) Ensembl.
 """
 
 from .genome import Genome
+from .gtf import GTF
 from .ensembl_release_source import EnsemblReleaseSource
 from .release_info import (
     check_release_number,
     MAX_ENSEMBL_RELEASE,
     which_human_reference_name
 )
+from .sequence_data import SequenceData
 from .url_templates import ENSEMBL_FTP_SERVER, make_gtf_url, make_fasta_url
 
 
@@ -42,37 +44,75 @@ class EnsemblRelease(Genome):
         self.species = species
         self.server = server
 
-        gtf_url = make_gtf_url(
+        self.gtf_url = make_gtf_url(
             ensembl_release=release,
             species=species,
             server=server)
-        transcript_fasta_url = make_fasta_url(
+        self.transcript_fasta_url = make_fasta_url(
             ensembl_release=release,
             species=species,
             sequence_type="cdna",
             server=server)
-        protein_fasta_url = make_fasta_url(
+        self.protein_fasta_url = make_fasta_url(
             ensembl_release=release,
             species=species,
             sequence_type="pep",
             server=server)
         only_human = species == "homo_sapiens"
+
         if not reference_name:
             if only_human:
                 reference_name = which_human_reference_name(self.release)
             else:
                 raise ValueError("Must provide a reference_name for "
                                  "non-human Ensembl releases.")
+        self.reference_name = reference_name
+
         Genome.__init__(self,
-                        reference_name=reference_name,
-                        gtf_path_or_url=gtf_url,
-                        transcript_fasta_path_or_url=transcript_fasta_url,
-                        protein_fasta_path_or_url=protein_fasta_url,
+                        reference_name=self.reference_name,
+                        gtf_path_or_url=self.gtf_url,
+                        transcript_fasta_path_or_url=self.transcript_fasta_url,
+                        protein_fasta_path_or_url=self.protein_fasta_url,
                         name="Ensembl",
-                        version=release,
+                        version=self.release,
                         only_human=only_human,
                         auto_download=auto_download,
                         require_ensembl_ids=True)
+
+    def build_gtf(self):
+        return GTF(gtf_source=EnsemblReleaseSource(url=self.gtf_url,
+                                                   release=self.release,
+                                                   file_type="gtf",
+                                                   reference_name=self.reference_name),
+                   auto_download=self.auto_download)
+
+    def build_transcript_sequences(self):
+        transcript_sequences = None
+        if self.transcript_fasta_url:
+            transcript_fasta_source = EnsemblReleaseSource(
+                url=self.transcript_fasta_url,
+                release=self.release,
+                file_type="fa",
+                reference_name=self.reference_name)
+            transcript_sequences = SequenceData(
+                fasta_source=transcript_fasta_source,
+                require_ensembl_ids=self.require_ensembl_ids,
+                auto_download=self.auto_download)
+        return transcript_sequences
+
+    def build_protein_sequences(self):
+        protein_sequences = None
+        if self.protein_fasta_url:
+            protein_fasta_source = EnsemblReleaseSource(
+                url=self.protein_fasta_url,
+                release=self.release,
+                file_type="fa",
+                reference_name=self.reference_name)
+            protein_sequences = SequenceData(
+                fasta_source=protein_fasta_source,
+                require_ensembl_ids=self.require_ensembl_ids,
+                auto_download=self.auto_download)
+        return protein_sequences
 
     def __str__(self):
         return "EnsemblRelease(release=%d, species=%s)" % (
