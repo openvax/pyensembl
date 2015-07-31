@@ -31,6 +31,9 @@ from os.path import exists
 from six.moves import cPickle as pickle
 import pandas as pd
 
+# Use a protocol that works with both Python 2 and 3
+PICKLE_PROTOCOL = 2
+
 _memory_cache = {}
 
 def is_empty(filename):
@@ -113,6 +116,6 @@ def cached_object(path, compute_fn):
     else:
         obj = compute_fn()
         with open(path, 'wb') as f:
-            pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(obj, f, PICKLE_PROTOCOL)
     _memory_cache[path] = obj
     return obj
