@@ -107,7 +107,7 @@ class SequenceData(object):
         raise ValueError("Genome sequence data (%s) is not currently "
                          "installed for this genome source. Run %s "
                          "or call %s" % (
-                             self.fasta_source.
+                             self.fasta_source,
                              self.fasta_source.install_string_console(),
                              self.fasta_source.install_string_python()))
 
