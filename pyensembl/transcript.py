@@ -23,8 +23,7 @@ from .locus import Locus
 
 class Transcript(Locus):
     """
-    Transcript encompasses the locus, exons, and sequence of an Ensembl
-    transcript.
+    Transcript encompasses the locus, exons, and sequence of a transcript.
 
     Lazily fetches sequence in case we"re constructing many Transcripts
     and not using the sequence, avoid the memory/performance overhead
@@ -40,7 +39,7 @@ class Transcript(Locus):
             strand,
             biotype,
             gene_id,
-            ensembl,
+            genome,
             require_valid_biotype=True):
         if require_valid_biotype and not is_valid_biotype(biotype):
             raise ValueError(
@@ -50,8 +49,8 @@ class Transcript(Locus):
         Locus.__init__(self, contig, start, end, strand)
         self.id = transcript_id
         self.name = transcript_name
-        self.ensembl = ensembl
-        self.db = ensembl.db
+        self.genome = genome
+        self.db = genome.db
         self.biotype = biotype
         self.gene_id = gene_id
 
@@ -85,14 +84,14 @@ class Transcript(Locus):
         return (
             other.__class__ is Transcript and
             self.id == other.id and
-            self.ensembl == other.ensembl)
+            self.genome == other.genome)
 
     def __hash__(self):
         return hash(self.id)
 
     @memoized_property
     def gene(self):
-        return self.ensembl.gene_by_id(self.gene_id)
+        return self.genome.gene_by_id(self.gene_id)
 
     @memoized_property
     def exons(self):
@@ -111,7 +110,7 @@ class Transcript(Locus):
         exons = [None] * len(exon_numbers_and_ids)
 
         for exon_number, exon_id in exon_numbers_and_ids:
-            exon = self.ensembl.exon_by_id(exon_id)
+            exon = self.genome.exon_by_id(exon_id)
             exon_number = int(exon_number)
             assert exon_number >= 1, "Invalid exon number: %s" % exon_number
             assert exon_number <= len(exons), \
@@ -167,7 +166,7 @@ class Transcript(Locus):
         # contiguous ranges. Collect all the nucleotide positions into a
         # single list.
         for (start, end) in ranges:
-            # since Ensembl ranges are [inclusive, inclusive] and
+            # since ranges are [inclusive, inclusive] and
             # Python ranges are [inclusive, exclusive) we have to increment
             # the end position
             for position in range(start, end + 1):
@@ -198,7 +197,7 @@ class Transcript(Locus):
     @memoized_property
     def contains_start_codon(self):
         """
-        Does this transcript have an annotated start_codon entry in Ensembl?
+        Does this transcript have an annotated start_codon entry?
         """
         start_codons = self._transcript_feature_position_ranges(
             "start_codon", required=False)
@@ -207,7 +206,7 @@ class Transcript(Locus):
     @memoized_property
     def contains_stop_codon(self):
         """
-        Does this transcript have an annotated stop_codon entry in Ensembl?
+        Does this transcript have an annotated stop_codon entry?
         """
         stop_codons = self._transcript_feature_position_ranges(
             "stop_codon", required=False)
@@ -230,7 +229,7 @@ class Transcript(Locus):
     @memoized_property
     def exon_intervals(self):
         """List of (start,end) tuples for each exon of this transcript,
-        in the order specified by the 'exon_number' column of the Ensembl
+        in the order specified by the 'exon_number' column of the
         exon table.
         """
         results = self.db.query(
@@ -386,11 +385,11 @@ class Transcript(Locus):
         Spliced cDNA sequence of transcript
         (includes 5" UTR, coding sequence, and 3" UTR)
         """
-        if not self.ensembl.transcript_sequences:
+        if not self.genome.transcript_sequences:
             raise ValueError("No transcript FASTA supplied to this Genome: %s" %
-                             str(self.ensembl))
+                             str(self.genome))
 
-        return self.ensembl.transcript_sequences.get(self.id)
+        return self.genome.transcript_sequences.get(self.id)
 
     @memoized_property
     def first_start_codon_spliced_offset(self):
@@ -463,10 +462,10 @@ class Transcript(Locus):
     @memoized_property
     def protein_sequence(self):
         if self.protein_id:
-            if not self.ensembl.protein_sequences:
+            if not self.genome.protein_sequences:
                 raise ValueError("No protein FASTA supplied to this Genome: %s" %
-                                 str(self.ensembl))
+                                 str(self.genome))
 
-            return self.ensembl.protein_sequences.get(self.protein_id)
+            return self.genome.protein_sequences.get(self.protein_id)
         else:
             return None

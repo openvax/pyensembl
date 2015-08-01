@@ -482,7 +482,7 @@ class Genome(object):
             end=end,
             strand=strand,
             biotype=gene_biotype,
-            ensembl=self,
+            genome=self,
             require_valid_biotype=("gene_biotype" in field_names))
 
     @memoize
@@ -673,7 +673,7 @@ class Genome(object):
             strand=strand,
             biotype=transcript_biotype,
             gene_id=gene_id,
-            ensembl=self,
+            genome=self,
             require_valid_biotype=("transcript_biotype" in field_names))
 
     @memoize

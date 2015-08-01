@@ -32,14 +32,14 @@ class Gene(Locus):
             end,
             strand,
             biotype,
-            ensembl,
+            genome,
             require_valid_biotype=True):
+        """
+        genome is a Genome object.
+        """
         self.id = gene_id
-        # can't check the type of ensembl since it will create a circular
-        # dependency between this module and ensembl_release but note that
-        # it's expected to be an EnsemblRelease object
-        self.ensembl = ensembl
-        self.db = ensembl.db
+        self.genome = genome
+        self.db = genome.db
         require_instance(self.db, Database, "db")
 
         self.name = gene_name
@@ -68,7 +68,7 @@ class Gene(Locus):
         return (
             other.__class__ is Gene and
             self.id == other.id and
-            self.ensembl == other.ensembl)
+            self.genome == other.genome)
 
     def __hash__(self):
         return hash(self.id)
@@ -91,7 +91,7 @@ class Gene(Locus):
         # its particular information, might be more efficient if we
         # just get all the columns here, but how do we keep that modular?
         return [
-            self.ensembl.transcript_by_id(result[0])
+            self.genome.transcript_by_id(result[0])
             for result in transcript_id_results
         ]
 

@@ -12,13 +12,13 @@ MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH = data_path(
     "mouse.ensembl.81.partial.ENSMUSG00000017167.pep")
 
 def no_gtf_(cm):
-    ok_("No GTF supplied" in cm.exception.message)
+    ok_("No GTF supplied" in str(cm.exception))
 
 def no_transcript_(cm):
-    ok_("No transcript FASTA supplied" in cm.exception.message)
+    ok_("No transcript FASTA supplied" in str(cm.exception))
 
 def no_protein_(cm):
-    ok_("No protein FASTA supplied" in cm.exception.message)
+    ok_("No protein FASTA supplied" in str(cm.exception))
 
 def test_transcript_fasta_only():
     genome = Genome(
@@ -26,7 +26,7 @@ def test_transcript_fasta_only():
         transcript_fasta_path_or_url=MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH)
     genome.install()
 
-    eq_(2, len(genome.transcript_sequences.fasta_dictionary.keys()))
+    eq_(2, len(genome.transcript_sequences.fasta_dictionary))
 
     with assert_raises(ValueError) as cm:
         genome.genes()
@@ -50,7 +50,7 @@ def test_protein_fasta_only():
         protein_fasta_path_or_url=MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH)
     genome.install()
 
-    eq_(4, len(genome.protein_sequences.fasta_dictionary.keys()))
+    eq_(4, len(genome.protein_sequences.fasta_dictionary))
 
     with assert_raises(ValueError) as cm:
         genome.genes()
