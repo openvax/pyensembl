@@ -58,7 +58,6 @@ data = Genome(reference_name='GRCh38', gtf_path_or_url='/My/local/gtf/path.gtf')
 gene_names = data.gene_names_at_locus(contig=6, position=29945884)
 ```
 
-
 # API
 
 The `EnsemblRelease` object has methods to let you access all possible
