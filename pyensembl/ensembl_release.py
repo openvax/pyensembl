@@ -87,32 +87,26 @@ class EnsemblRelease(Genome):
                    auto_download=self.auto_download)
 
     def build_transcript_sequences(self):
-        transcript_sequences = None
-        if self.transcript_fasta_url:
-            transcript_fasta_source = EnsemblReleaseSource(
-                url=self.transcript_fasta_url,
-                release=self.release,
-                file_type="fa",
-                reference_name=self.reference_name)
-            transcript_sequences = SequenceData(
-                fasta_source=transcript_fasta_source,
-                require_ensembl_ids=self.require_ensembl_ids,
-                auto_download=self.auto_download)
-        return transcript_sequences
+        transcript_fasta_source = EnsemblReleaseSource(
+            url=self.transcript_fasta_url,
+            release=self.release,
+            file_type="fa",
+            reference_name=self.reference_name)
+        return SequenceData(
+            fasta_source=transcript_fasta_source,
+            require_ensembl_ids=self.require_ensembl_ids,
+            auto_download=self.auto_download)
 
     def build_protein_sequences(self):
-        protein_sequences = None
-        if self.protein_fasta_url:
-            protein_fasta_source = EnsemblReleaseSource(
-                url=self.protein_fasta_url,
-                release=self.release,
-                file_type="fa",
-                reference_name=self.reference_name)
-            protein_sequences = SequenceData(
-                fasta_source=protein_fasta_source,
-                require_ensembl_ids=self.require_ensembl_ids,
-                auto_download=self.auto_download)
-        return protein_sequences
+        protein_fasta_source = EnsemblReleaseSource(
+            url=self.protein_fasta_url,
+            release=self.release,
+            file_type="fa",
+            reference_name=self.reference_name)
+        return SequenceData(
+            fasta_source=protein_fasta_source,
+            require_ensembl_ids=self.require_ensembl_ids,
+            auto_download=self.auto_download)
 
     def __str__(self):
         return "EnsemblRelease(release=%d, species=%s)" % (

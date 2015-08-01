@@ -386,6 +386,10 @@ class Transcript(Locus):
         Spliced cDNA sequence of transcript
         (includes 5" UTR, coding sequence, and 3" UTR)
         """
+        if not self.ensembl.transcript_sequences:
+            raise ValueError("No transcript FASTA supplied to this Genome: %s" %
+                             str(self.ensembl))
+
         return self.ensembl.transcript_sequences.get(self.id)
 
     @memoized_property
@@ -459,6 +463,10 @@ class Transcript(Locus):
     @memoized_property
     def protein_sequence(self):
         if self.protein_id:
+            if not self.ensembl.protein_sequences:
+                raise ValueError("No protein FASTA supplied to this Genome: %s" %
+                                 str(self.ensembl))
+
             return self.ensembl.protein_sequences.get(self.protein_id)
         else:
             return None

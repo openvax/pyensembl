@@ -63,10 +63,9 @@ class SequenceData(object):
         self._fasta_keys = None
 
     def __str__(self):
-        return "SequenceData(fasta_source=%s, cached_path=%s, version=%s)" % (
+        return "SequenceData(fasta_source=%s, cached_path=%s)" % (
             self.fasta_source,
-            self.cached_fasta_path,
-            self.version)
+            self.cached_fasta_path)
 
     def __repr__(self):
         return str(self)
@@ -79,8 +78,10 @@ class SequenceData(object):
     def __eq__(self, other):
         return (
             isinstance(other, SequenceData) and
-            self.fasta_source == other.fasta_source and
-            self.version == other.version)
+            self.fasta_source == other.fasta_source)
+
+    def __hash__(self):
+        return hash(self.fasta_source)
 
     @property
     def cached_fasta_path(self):

@@ -81,7 +81,7 @@ def run():
 
     genomes = []
     # If specific genome source URLs are provided, use those
-    if args.gtf_path_or_url:
+    if args.gtf_path_or_url or args.transcript_fasta_path_or_url or args.protein_fasta_path_or_url:
         assert not args.release, ("A release cannot be specified if "
                                   "specific paths are specified.")
         assert args.reference_name, "Must specify a reference name"
@@ -92,10 +92,6 @@ def run():
             protein_fasta_path_or_url=args.protein_fasta_path_or_url))
     # Otherwise, use Ensembl release information
     else:
-        assert (not args.transcript_fasta_path_or_url and
-                not args.protein_fasta_path_or_url), \
-            "A GTF path must be specified along with other paths." 
-
         if not args.release:
             genomes.append(EnsemblRelease(MAX_ENSEMBL_RELEASE))
         else:
