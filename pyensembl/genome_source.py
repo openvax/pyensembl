@@ -61,7 +61,7 @@ class GenomeSource(object):
         if not self.arg_name:
             raise ValueError("Expected GenomeSource to contain an arg_name: %s"
                              % str(self))
-        return "Genome(reference_name=%s, %s=\"%s\")).install()" % (
+        return "Genome(reference_name=\"%s\", %s=\"%s\")).install()" % (
             self.reference_name, self.arg_name, self.path_or_url)
 
     def is_url_format(self):
