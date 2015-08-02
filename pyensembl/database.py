@@ -57,14 +57,26 @@ class Database(object):
     def __eq__(self, other):
         return other.__class__ is Database and self.gtf == other.gtf
 
+    def __str__(self):
+        return ("Database(gtf=%s, auto_download=%s)" % (
+            self.gtf, self.auto_download))
+
     def __hash__(self):
         return hash(self.gtf)
 
     def local_db_filename(self):
+        if not self.gtf:
+            raise ValueError("No GTF supplied to this Database: %s" %
+                             str(self))
+
         base = self.gtf.base_filename()
         return base + ".db"
 
     def local_db_path(self):
+        if not self.gtf:
+            raise ValueError("No GTF supplied to this Database: %s" %
+                             str(self))
+
         dirpath = self.gtf.cached_dir()
         filename = self.local_db_filename()
         return join(dirpath, filename)
@@ -164,6 +176,10 @@ class Database(object):
         return result
 
     def _create_database(self, force=False):
+        if not self.gtf:
+            raise ValueError("No GTF supplied to this Database: %s" %
+                             str(self))
+
         print("Creating database: %s" % self.local_db_path())
         filename = self.local_db_filename()
         df = self.gtf.dataframe()

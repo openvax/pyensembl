@@ -46,7 +46,7 @@ class Genome(object):
     """
     def __init__(self,
                  reference_name,
-                 gtf_path_or_url,
+                 gtf_path_or_url=None,
                  transcript_fasta_path_or_url=None,
                  protein_fasta_path_or_url=None,
                  name=None,
@@ -62,48 +62,54 @@ class Genome(object):
         self.version = version
         self.only_human = only_human
         self.auto_download = auto_download
+        self.require_ensembl_ids = require_ensembl_ids
 
         # GTF object wraps the source GTF file from which we get
         # genome annotations. Presents access to each feature
         # annotations as a pandas.DataFrame.
-        self.gtf = GTF(
-            gtf_source=GenomeSource(name="gtf_path_or_url",
-                                    path_or_url=gtf_path_or_url,
-                                    reference_name=self.reference_name),
-            auto_download=auto_download)
+        self.gtf = self.build_gtf() if self.gtf_path_or_url else None
 
         # Database object turns the GTF dataframes into sqlite3 tables
         # and wraps them with methods like `query_one`
         self.db = Database(gtf=self.gtf, auto_download=auto_download)
 
-        # get the path for the cDNA FASTA file containing
-        # this genome database's transcript sequences
-        transcript_sequences = None
-        if transcript_fasta_path_or_url:
-            transcript_fasta_source = GenomeSource(
-                name="transcript_fasta_path_or_url",
-                path_or_url=transcript_fasta_path_or_url,
-                reference_name=self.reference_name)
-            transcript_sequences = SequenceData(
-                fasta_source=transcript_fasta_source,
-                require_ensembl_ids=require_ensembl_ids,
-                auto_download=auto_download)
-        self.transcript_sequences = transcript_sequences
-
-        protein_sequences = None
-        if protein_fasta_path_or_url:
-            protein_fasta_source = GenomeSource(
-                name="protein_fasta_path_or_url",
-                path_or_url=protein_fasta_path_or_url,
-                reference_name=self.reference_name)
-            protein_sequences = SequenceData(
-                fasta_source=protein_fasta_source,
-                require_ensembl_ids=require_ensembl_ids,
-                auto_download=auto_download)
-        self.protein_sequences = protein_sequences
+        # get the path for the cDNA and pep FASTA files containing
+        # this genome's transcript and protein sequences
+        self.transcript_sequences = (self.build_transcript_sequences()
+                                     if self.transcript_fasta_path_or_url
+                                     else None)
+        self.protein_sequences = (self.build_protein_sequences()
+                                  if self.protein_fasta_path_or_url
+                                  else None)
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
+
+    def build_gtf(self):
+        return GTF(gtf_source=GenomeSource(path_or_url=self.gtf_path_or_url,
+                                           reference_name=self.reference_name,
+                                           arg_name="gtf_path_or_url"),
+                   auto_download=self.auto_download)
+
+    def build_transcript_sequences(self):
+        transcript_fasta_source = GenomeSource(
+            path_or_url=self.transcript_fasta_path_or_url,
+            reference_name=self.reference_name,
+            arg_name="transcript_fasta_path_or_url")
+        return SequenceData(
+            fasta_source=transcript_fasta_source,
+            require_ensembl_ids=self.require_ensembl_ids,
+            auto_download=self.auto_download)
+
+    def build_protein_sequences(self):
+        protein_fasta_source = GenomeSource(
+            path_or_url=self.protein_fasta_path_or_url,
+            reference_name=self.reference_name,
+            arg_name="protein_fasta_path_or_url")
+        return SequenceData(
+            fasta_source=protein_fasta_source,
+            require_ensembl_ids=self.require_ensembl_ids,
+            auto_download=self.auto_download)
 
     def __str__(self):
         return ("Genome(reference_name=%s, "
@@ -145,11 +151,12 @@ class Genome(object):
         is assumed to be some view of the this genome database's data
         and thus safe to delete.
         """
-        base = self.gtf.base_filename()
-        dirpath = self.gtf.local_gtf_path()
-        for path in glob(join(dirpath, base + "*")):
-            logging.info("Deleting cached file %s", path)
-            remove(path)
+        if self.gtf:
+            base = self.gtf.base_filename()
+            dirpath = self.gtf.local_gtf_path()
+            for path in glob(join(dirpath, base + "*")):
+                logging.info("Deleting cached file %s", path)
+                remove(path)
 
     def clear_cache(self):
         for maybe_fn in self.__dict__.values():
@@ -192,6 +199,10 @@ class Genome(object):
 
         Returns a list constructed from query results.
         """
+        if not self.gtf:
+            raise ValueError("No GTF supplied to this Genome: %s" %
+                             str(self))
+
         # since we're constructing a list, rather than a DataFrame,
         # we're going to store it using pickling rather than the Pandas
         # CSV serializer. Change the default extension from ".csv" to ".pickle"
@@ -236,7 +247,8 @@ class Genome(object):
 
         Raises an error if data is not downloaded.
         """
-        self.db.create(force=force)
+        if self.gtf:
+            self.db.create(force=force)
         if self.transcript_sequences:
             self.transcript_sequences.index(force=force)
         if self.protein_sequences:
@@ -246,9 +258,10 @@ class Genome(object):
         """Return cDNA nucleotide sequence of transcript, or None if
         transcript doesn't have cDNA sequence.
         """
-        assert self.transcript_sequences, (
-            "This genome does not include transcript FASTA data: %s"
-            % self.transcript_fasta_path_or_url)
+        if not self.transcript_sequences:
+            raise ValueError("No transcript FASTA supplied to this Genome: %s" %
+                             str(self))
+
         if self.only_human:
             require_human_transcript_id(transcript_id)
         return self.transcript_sequences.get(transcript_id)
@@ -257,9 +270,10 @@ class Genome(object):
         """Return cDNA nucleotide sequence of transcript, or None if
         transcript doesn't have cDNA sequence.
         """
-        assert self.protein_sequences, (
-            "This genome does not include protein FASTA data: %s"
-            % self.protein_fasta_path_or_url)
+        if not self.protein_sequences:
+            raise ValueError("No protein FASTA supplied to this Genome: %s" %
+                             str(self))
+
         if self.only_human:
             require_human_protein_id(protein_id)
         return self.protein_sequences.get(protein_id)
@@ -273,7 +287,8 @@ class Genome(object):
         force : bool
             Download data even if we already have a local copy.
         """
-        self.gtf.download(force=force)
+        if self.gtf:
+            self.gtf.download(force=force)
         if self.transcript_sequences:
             self.transcript_sequences.download(force=force)
         if self.protein_sequences:
@@ -467,7 +482,7 @@ class Genome(object):
             end=end,
             strand=strand,
             biotype=gene_biotype,
-            ensembl=self,
+            genome=self,
             require_valid_biotype=("gene_biotype" in field_names))
 
     @memoize
@@ -658,7 +673,7 @@ class Genome(object):
             strand=strand,
             biotype=transcript_biotype,
             gene_id=gene_id,
-            ensembl=self,
+            genome=self,
             require_valid_biotype=("transcript_biotype" in field_names))
 
     @memoize
