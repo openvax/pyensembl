@@ -30,6 +30,7 @@ from .common import (
     memoize
 )
 from .compute_cache import cached_object
+import download_cache
 from .database import Database
 from .exon import Exon
 from .gene import Gene
@@ -51,7 +52,7 @@ class Genome(object):
                  protein_fasta_path_or_url=None,
                  name=None,
                  version=None,
-                 only_human=False,
+                 species=None,
                  auto_download=False,
                  require_ensembl_ids=True):
         self.reference_name = reference_name
@@ -60,9 +61,15 @@ class Genome(object):
         self.protein_fasta_path_or_url = protein_fasta_path_or_url
         self.name = name
         self.version = version
-        self.only_human = only_human
+        self.species = species
         self.auto_download = auto_download
         self.require_ensembl_ids = require_ensembl_ids
+
+        self.cache = download_cache.get_download_cache(
+            reference_name=self.reference_name,
+            species=self.species,
+            annotation_name=self.name,
+            annotation_version=self.version)
 
         # GTF object wraps the source GTF file from which we get
         # genome annotations. Presents access to each feature
@@ -116,14 +123,14 @@ class Genome(object):
                 "gtf_path_or_url=%s, "
                 "transcript_fasta_path_or_url=%s, "
                 "protein_fasta_path_or_url=%s, "
-                "name=%s, version=%s, only_human=%s)" % (
+                "name=%s, version=%s, species=%s)" % (
                     self.reference_name,
                     self.gtf_path_or_url,
                     self.transcript_fasta_path_or_url,
                     self.protein_fasta_path_or_url,
                     self.name,
                     self.version,
-                    self.only_human))
+                    self.species))
 
     def __repr__(self):
         return str(self)
@@ -137,7 +144,7 @@ class Genome(object):
             self.protein_fasta_path_or_url == other.protein_fasta_path_or_url and
             self.name == other.name and
             self.version == other.version and
-            self.only_human == other.only_human)
+            self.species == other.species)
 
     def __hash__(self):
         return hash((self.reference_name, self.gtf_path_or_url,
