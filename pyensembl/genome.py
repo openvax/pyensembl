@@ -45,31 +45,29 @@ class Genome(object):
     a particular genomic database source (e.g. a single Ensembl release) and
     provides a wide variety of helper methods for accessing this data.
     """
-    def __init__(self,
-                 reference_name,
-                 gtf_path_or_url=None,
-                 transcript_fasta_path_or_url=None,
-                 protein_fasta_path_or_url=None,
-                 name=None,
-                 version=None,
-                 species=None,
-                 auto_download=False,
-                 require_ensembl_ids=True):
+    def __init__(
+            self,
+            reference_name,
+            annotation_name,
+            annotation_version=None,
+            gtf_path_or_url=None,
+            transcript_fasta_path_or_url=None,
+            protein_fasta_path_or_url=None,
+            auto_download=False,
+            require_ensembl_ids=True):
         self.reference_name = reference_name
         self.gtf_path_or_url = gtf_path_or_url
         self.transcript_fasta_path_or_url = transcript_fasta_path_or_url
         self.protein_fasta_path_or_url = protein_fasta_path_or_url
-        self.name = name
-        self.version = version
-        self.species = species
+        self.annotation_name = annotation_name
+        self.annotation_version = annotation_version
         self.auto_download = auto_download
         self.require_ensembl_ids = require_ensembl_ids
 
         self.cache = download_cache.get_download_cache(
             reference_name=self.reference_name,
-            species=self.species,
-            annotation_name=self.name,
-            annotation_version=self.version)
+            annotation_name=self.annotation_name,
+            annotation_version=self.annotation_version)
 
         # GTF object wraps the source GTF file from which we get
         # genome annotations. Presents access to each feature
@@ -192,37 +190,38 @@ class Genome(object):
 
     def __str__(self):
         return ("Genome(reference_name=%s, "
+                "annotation_name=%s, annotation_version=%s, "
                 "gtf_path_or_url=%s, "
                 "transcript_fasta_path_or_url=%s, "
-                "protein_fasta_path_or_url=%s, "
-                "name=%s, version=%s, species=%s)" % (
+                "protein_fasta_path_or_url=%s)" % (
                     self.reference_name,
+                    self.annotation_name,
+                    self.annotation_version,
                     self.gtf_path_or_url,
                     self.transcript_fasta_path_or_url,
-                    self.protein_fasta_path_or_url,
-                    self.name,
-                    self.version,
-                    self.species))
+                    self.protein_fasta_path_or_url))
 
     def __repr__(self):
         return str(self)
 
+    def _fields(self):
+        return (
+            self.reference_name,
+            self.gtf_path_or_url,
+            self.annotation_name,
+            self.annotation_version,
+            self.transcript_fasta_path_or_url,
+            self.protein_fasta_path_or_url,
+        )
+
     def __eq__(self, other):
         return (
             other.__class__ is Genome and
-            self.reference_name == other.reference_name and
-            self.gtf_path_or_url == other.gtf_path_or_url and
-            self.transcript_fasta_path_or_url == other.transcript_fasta_path_or_url and
-            self.protein_fasta_path_or_url == other.protein_fasta_path_or_url and
-            self.name == other.name and
-            self.version == other.version and
-            self.species == other.species)
+            self._fields() == other._fields()
+        )
 
     def __hash__(self):
-        return hash((self.reference_name, self.gtf_path_or_url,
-                     self.transcript_fasta_path_or_url,
-                     self.protein_fasta_path_or_url,
-                     self.name, self.version, self.only_human))
+        return hash(self._fields())
 
     def _delete_cached_files(self):
         """
