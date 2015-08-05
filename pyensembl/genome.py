@@ -92,6 +92,78 @@ class Genome(object):
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
 
+    """
+    Copied from GTF
+    """
+    def cached_copy_exists(self):
+        # If the source is a local file as opposed to a URL, then
+        # check to see if it was copied into the cache directory.
+        if not self.gtf_source.is_url_format():
+            return exists(self.gtf_source.cached_path(self.cache))
+
+        """Has a cached copy of the GTF file been downloaded/copied?"""
+        return self.cache.exists(
+            self.gtf_source.path_or_url,
+            self.cached_filename(),
+            decompress=self.decompress)
+
+    def cached_filename(self):
+        """Filename used for cached copy of GTF"""
+        if self.decompress:
+            return self.base_filename() + ".gtf"
+        else:
+            return self.gtf_source.original_filename
+
+    def cached_gtf_path(self):
+        """
+        Returns cached path to GTF file, download from the relevant
+        server (or copy from local) if not already cached and
+        auto download is enabled.
+        """
+        if self.cached_copy_exists() or self.auto_download:
+            # If the source is a local file as opposed to a URL, then
+            # just manually copy it to the datacache directory if
+            # we're auto-downloading.
+            if not self.gtf_source.is_url_format():
+                return self.gtf_source.copy_to_cache_if_needed(self.cache,
+                                                               force=False)
+
+            # Does a download if the cache is empty
+            return self.cache.fetch(
+                self.gtf_source.path_or_url,
+                self.cached_filename(),
+                decompress=self.decompress)
+        raise ValueError("Genome annotation data is not currently "
+                         "installed for this genome. Run %s "
+                         "or call %s" % (
+                             self.gtf_source.install_string_console(),
+                             self.gtf_source.install_string_python()))
+
+    def cached_dir(self):
+        return split(self.cached_gtf_path())[0]
+
+    def download(self, force=False):
+        """
+        Download the GTF file if one does not exist. If `force` is
+        True, overwrites any existing file.
+        """
+        # If the source is a local file as opposed to a URL, then
+        # just copy it to the datacache direcotry as a "download".
+        if not self.gtf_source.is_url_format():
+            return self.gtf_source.copy_to_cache_if_needed(self.cache,
+                                                           force=force)
+
+        if not self.cached_copy_exists() or force:
+            self.cache.fetch(
+                self.gtf_source.path_or_url,
+                self.cached_filename(),
+                decompress=self.decompress,
+                force=force)
+    """
+    ^^^
+    End of copied methods from GTF
+    """
+
     def build_gtf(self):
         return GTF(gtf_source=GenomeSource(path_or_url=self.gtf_path_or_url,
                                            reference_name=self.reference_name,

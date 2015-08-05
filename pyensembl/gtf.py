@@ -20,30 +20,23 @@ import datacache
 from typechecks import require_string
 
 from .gtf_parsing import load_gtf_as_dataframe
-from .common import CACHE_SUBDIR
+from .download_cache import cache_directory_path
 from .locus import normalize_chromosome, normalize_strand
-from .compute_cache import cached_dataframe, clear_cached_objects
-
+from .memory_cache import MemoryCache
 
 class GTF(object):
     """
-    Download and parse a GTF gene annotation file from a given source.
+    Parse a GTF gene annotation file from a given local path.
     Represent its contents as a Pandas DataFrame (optionally filtered
     by locus, column, contig, &c).
-
-    gtf_source is a GenomeSource object that represents a local
-    file path or remote URL.
     """
-    def __init__(
-            self,
-            gtf_source,
-            auto_download=False,
-            decompress=True):
-        self.gtf_source = gtf_source
-        self.cache = datacache.Cache(CACHE_SUBDIR)
-        self.decompress = decompress
-        self.auto_download = auto_download
+    def __init__(self, gtf_path, cache_dir=None):
+        self.gtf_path = gtf_path
 
+        # if cache directory isn't given then put cached files
+        # in the base cache directory
+        self.cache_dir = cache_dir if cache_dir else cache_directory_path()
+        self.memory_cache = MemoryCache(self.cache_dir)
         # lazily load DataFrame of all GTF entries if necessary
         # for database construction
         self._dataframes = {}
@@ -51,17 +44,17 @@ class GTF(object):
     def __eq__(self, other):
         return (
             isinstance(other, GTF) and
-            other.gtf_source == self.gtf_source)
+            other.gtf_path == self.gtf_path)
 
     def __hash__(self):
-        return hash(self.gtf_source)
+        return hash(self.gtf_path)
 
     def clear_cache(self):
         # clear any dataframes we constructed
         self._dataframes.clear()
 
         # clear cached dataframes loaded from CSV
-        clear_cached_objects()
+        self.memory_cache.clear_cached_objects()
 
     def base_filename(self):
         """

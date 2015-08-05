@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
+from __future__ import print_function, absolute_import, division
 
-    _latin_to_common_names = {}
-           for synonym in self.synonyms:
-            Species._latin_to_common_names[self.latin_name] = synonym
-"""
+from .release_info import MIN_ENSEMBL_RELEASE, MAX_ENSEMBL_RELEASE
+
+
 class Species(object):
     """
     Container for combined information about a species name, its synonyn names
@@ -49,6 +48,69 @@ class Species(object):
                 self.latin_name, ensembl_release))
         return self._release_to_genome[ensembl_release]
 
+
+_latin_names_to_species = {}
+_common_names_to_species = {}
+
+def add_species(latin_name, synonyms, reference_assemblies):
+    species = Species(
+        latin_name=latin_name,
+        synonyms=synonyms,
+        reference_assemblies=reference_assemblies)
+    _latin_names_to_species[species.latin_name] = species
+    for synonym in synonyms:
+        _common_names_to_species[synonym] = species
+    return species
+
+grch38 = EnsemblGenomeInfo(
+    name="GRCh38",
+    first_release=76,
+    last_release=MAX_ENSEMBL_RELEASE)
+
+human = add_species(
+    latin_name="homo_sapiens",
+    synonyms=["human"],
+    reference_assemblies=[grch38, grch37, human_ncbi36])
+
+mouse = add_species(
+    latin_name="mus_musculus",
+    synonyms=["mouse", "house mouse"],
+    reference_assemblies=[grcm38])
+
+
+def normalize_species_name(name):
+    """
+    If species name was "Homo sapiens" then replace spaces with underscores
+    and return "homo_sapiens". Also replace common names like "human" with
+    "homo_sapiens".
+    """
+    lower_name = name.lower().strip()
+
+    # if given a common name such as "human", look up its latin equivalent
+    if lower_name in _common_names_to_species:
+        return _common_names_to_species[lower_name].latin_name
+
+    return lower_name.replace(" ", "_")
+
+def find_species_by_name(species_name):
+    latin_name = normalize_species_name(species_name)
+    if latin_name not in _latin_names_to_species:
+        raise ValueError("Species not found: %s" % species_name)
+    return _latin_names_to_species[latin_name]
+
+def find_species_by_reference(reference_name):
+    species = Species._reference_to_species.get(reference_name)
+    if not species:
+        raise ValueError("Reference genome '%s' not found" % reference_name)
+    return species
+
+def species_reference(species_name, ensembl_release):
+    return find_species_by_name(species_name).which_reference(ensembl_release)
+
+def max_ensembl_release(reference_name):
+    pass
+
+"""
 
 _latin_to_common_names = {
     "ailuropoda_melanoleuca": ["panda"],
@@ -142,63 +204,4 @@ _latin_to_common_names = {
     "xenopus_tropicalis": ["western clawed frog"],
     "xiphophorus_maculatus": ["southern platyfish"],
 }
-
-
-_latin_names_to_species = {}
-
-def add_species(latin_name, synonyms, reference_assemblies):
-    species = Species(
-        latin_name=latin_name,
-        synonyms=synonyms,
-        reference_assemblies=reference_assemblies)
-    _latin_names_to_species[species.latin_name] = species
-    return species
-
-human = add_species(
-    latin_name="homo_sapiens",
-    synonyms=["human"],
-    reference_assemblies={
-        "GRCh38": (76, MAX_ENSEMBL_RELEASE),
-        "GRCh37": (54, 75)
-    })
-
-
-
-def normalize_species_name(name):
-    """
-    If species name was "Homo sapiens" then replace spaces with underscores
-    and return "homo_sapiens". Also replace common names like "human" with
-    "homo_sapiens".
-    """
-    lower_name = name.lower().strip()
-
-    # if given a common name such as "human", look up its latin equivalent
-    if lower_name in _common_to_latin_name:
-        return _common_to_latin_name[lower_name]
-
-    return lower_name.replace(" ", "_")
-
-def find_species_by_name(species_name):
-    latin_name = normalize_species_name(species_name)
-    if latin_name not in _latin_names_to_species:
-        raise ValueError("Species not found: %s" % species_name)
-    return _latin_names_to_species[latin_name]
-
-def find_species_by_reference(reference_name):
-    species = Species._reference_to_species.get(reference_name)
-    if not species:
-        raise ValueError("Reference genome '%s' not found" % reference_name)
-    return species
-
-def species_reference(species_name, ensembl_release):
-    return find_species(species_name).which_reference(ensembl_release)
-
-def max_ensembl_release(reference_name):
-    pass
-
-_common_to_latin_name = {}
-for (latin_name, common_names) in _latin_to_common_names.items():
-    for common_name in common_names:
-        assert common_name not in _common_to_latin_name, \
-            "Common name %s (for %s) appears twice" % (common_name, latin_name)
-        _common_to_latin_name[common_name] = latin_name
+"""

@@ -19,7 +19,10 @@ import datacache
 
 CACHE_BASE_SUBDIR = "pyensembl"
 
-def cache_subdir(annotation_name, annotation_version=None, reference_name=None):
+def cache_subdir(
+        annotation_name=None,
+        annotation_version=None,
+        reference_name=None):
     result = CACHE_BASE_SUBDIR
     for subdir in [annotation_name, annotation_version, reference_name]:
         if subdir is not None:
@@ -27,8 +30,18 @@ def cache_subdir(annotation_name, annotation_version=None, reference_name=None):
     return result
 
 def get_download_cache(
-        annotation_name,
+        annotation_name=None,
         annotation_version=None,
         reference_name=None):
     subdir = cache_subdir(annotation_name, annotation_version, reference_name)
     return datacache.Cache(subdir)
+
+def cache_directory_path(
+        annotation_name=None,
+        annotation_version=None,
+        reference_name=None):
+    cache = get_download_cache(
+                annotation_name,
+                annotation_version,
+                reference_name)
+    return cache.cache_directory_path
