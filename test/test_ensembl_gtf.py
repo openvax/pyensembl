@@ -1,9 +1,17 @@
 from __future__ import absolute_import
+from os.path import exists
 
 from pyensembl import ensembl_grch37 as ensembl
-
 import pandas as pd
 from nose.tools import eq_
+
+from .test_common import test_ensembl_releases
+
+@test_ensembl_releases()
+def gtf_path_endswith_gtf_gz(ensembl):
+    path = ensembl.gtf.local_gtf_path()
+    assert exists(path)
+    assert path.endswith(".gtf.gz")
 
 def test_dataframe_column_at_locus():
     series = ensembl.gtf.dataframe_column_at_locus(

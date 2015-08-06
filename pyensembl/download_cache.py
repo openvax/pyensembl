@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from os.path import basename, join, exists, split, abspath
+from os.path import join, exists, split, abspath
 from shutil import copy2
 
 import datacache
 
 CACHE_BASE_SUBDIR = "pyensembl"
 
-def cache_subdir(
+def cache_subdirectory(
         annotation_name=None,
         annotation_version=None,
         reference_name=None):
@@ -29,19 +29,9 @@ def cache_subdir(
             result = join(result, str(subdir))
     return result
 
-def cache_directory_path(
-        annotation_name=None,
-        annotation_version=None,
-        reference_name=None):
-    """
-    What directory are cached files placed in for a particular genome
-    annotation?
-    """
-    subdir = cache_subdir(
-        annotation_name=annotation_name,
-        annotation_version=annotation_version,
-        reference_name=reference_name)
-    return datacache.data_dir(subdir=subdir)
+class MissingRemoteFile(Exception):
+    def __init__(self, path_or_url):
+        self.path_or_url = path_or_url
 
 class DownloadCache(object):
     """
@@ -55,6 +45,7 @@ class DownloadCache(object):
             annotation_version=None,
             auto_download=False,
             force_download=False,
+            decompress_on_download=True,
             copy_local_to_cache=False,
             local_filename_function=None,
             install_string_function=None):
@@ -79,6 +70,10 @@ class DownloadCache(object):
         force_download : bool, optional
             Download files even if already cached
 
+        decompress_on_download : bool, optional
+            If downloading a .fa.gz file, should we automatically expand it
+            into a decompressed FASTA file?
+
         copy_local_to_cache : bool, optional
             If file is on the local file system, should we still copy it
             into the cache?
@@ -95,13 +90,16 @@ class DownloadCache(object):
         self.annotation_name = annotation_name
         self.annotation_version = annotation_version
 
-        self.cache_directory_path = cache_directory_path(
+        self.cache_subdirectory = cache_subdirectory(
             reference_name=reference_name,
             annotation_name=annotation_name,
             annotation_version=annotation_version)
+        self.cache_directory_path = datacache.data_dir(
+            subdir=self.cache_subdirectory)
 
         self.auto_download = auto_download
         self.force_download = force_download
+        self.decompress_on_download = decompress_on_download
         self.copy_local_to_cache = copy_local_to_cache
         if local_filename_function:
             self.local_filename_function = local_filename_function
@@ -142,14 +140,14 @@ class DownloadCache(object):
     def __repr__(self):
         return str(self)
 
-    def default_local_filename_function(self, url):
+    def default_local_filename_function(self, path_or_url):
         """
         Default is to name local files the same as their remote counterparts.
         """
-        remote_filename = split(url)[1]
+        remote_filename = split(path_or_url)[1]
         if len(remote_filename) == 0:
             raise ValueError("Can't determine local filename for %s" % (
-                url,))
+                path_or_url,))
         return remote_filename
 
     def default_install_string(self, missing_files):
@@ -171,16 +169,44 @@ class DownloadCache(object):
     def is_url_format(self, path_or_url):
         return "://" in path_or_url
 
+    def cached_path(self, path_or_url):
+        filename = self.local_filename(path_or_url)
+        return join(self.cache_directory_path, filename)
+
     def local_path(self, path_or_url):
+        """
+        Get the local path to a possibly remote file.
+
+        Always download remote  files if self.force_download is True or if the
+        file is missing from the cache directory and self.auto_download is True.
+        If the file is on the local file system then return its path, unless
+        self.copy_local_to_cache is True, and then copy it to the cache first.
+        """
+        cache_filename = self.local_filename(path_or_url)
+        cached_path = join(self.cache_directory_path, cache_filename)
+
+        if exists(cached_path) and not self.force_download:
+            return cached_path
         if self.is_url(path_or_url):
-            local_filename = self.local_filename_function(path_or_url)
-            local_path = join(self.cache_directory_path, local_filename)
+            if self.auto_download or self.force_download:
+                return datacache.fetch_file(
+                    download_url=path_or_url,
+                    filename=cache_filename,
+                    decompress=self.decompress_on_download,
+                    subdir=self.cache_subdirectory,
+                    force=self.force_download)
+            else:
+                raise MissingRemoteFile(path_or_url)
         else:
-            if self.copy_local_to_cache:
-                # COPY
-                local_path
-        if not exists(local_path):
-            raise ValueError("Missing local file: %s" % (local_path,))
+            local_path = abspath(path_or_url)
+            if not exists(local_path):
+                raise ValueError(
+                    "Couldn't find genome data file %s" % local_path)
+            elif self.copy_local_to_cache:
+                copy2(local_path, cached_path)
+                return cached_path
+            else:
+                return local_path
         return local_path
 
     def local_paths(self, **sources):
@@ -188,21 +214,23 @@ class DownloadCache(object):
         Constructs result dictionary with local path for each (k, path_or_url)
         mapping in the sources dict.
         """
-        return {
-            (k, self.local_path(path_or_url))
-            for (k, path_or_url) in sources.items()
-        }
+        missing_urls_dict = {}
+        results = {}
+        for (field_name, path_or_url) in sources.items():
+            try:
+                local_path = self.local_path(path_or_url)
+                results[field_name] = local_path
+            except MissingRemoteFile:
+                missing_urls_dict[field_name] = path_or_url
 
-    def copy_to_cache_if_needed(self, cache, force):
-        """
-        Given a path to a file, copy the file to the cache's directory
-        and return the path to the new file within the cache's directory.
+        if len(missing_urls_dict) == 0:
+            return results
 
-        If `force` is True, overwrites an existing cache directory file.
-        """
-        assert not self.is_url_format(), \
-            "Copying should not be called on a URL: %s" % self.path_or_url
-        new_path = self.cached_path(cache)
-        if not exists(new_path) or force:
-            copy2(self.path_or_url, new_path)
-        return new_path
+        install_string = self.install_string_function(missing_urls_dict)
+        missing_urls = list(missing_urls_dict.values())
+        if len(missing_urls) == 1:
+            raise ValueError("Missing genome data file from %s, run: %s" % (
+                missing_urls[0], install_string))
+        else:
+            raise ValueError("Missing genome data files from %s, run: %s" % (
+                missing_urls, install_string))
