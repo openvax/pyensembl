@@ -2,10 +2,12 @@ from __future__ import absolute_import
 
 import tempfile
 
-from pyensembl import compute_cache
+from pyensembl import MemoryCache
 
 import pandas as pd
 from nose.tools import raises
+
+memory_cache = MemoryCache()
 
 class Counter(object):
     """
@@ -33,7 +35,7 @@ def test_cached_object_with_tempfile():
     counter = Counter()
     with tempfile.NamedTemporaryFile() as f:
         # call repeatedly to test the hot and cold cache logic
-        result = compute_cache.cached_object(
+        result = memory_cache.cached_object(
             f.name, compute_fn=counter.increment)
         assert result == 1, "Expected result=1, got %s" % (result,)
         assert counter.count == 1, \
@@ -51,7 +53,7 @@ def test_cached_dataframe_with_tempfile():
     with tempfile.NamedTemporaryFile(suffix='.csv') as f:
         # call repeatedly to test hot and cold cache logic
         for _ in range(2):
-            df = compute_cache.cached_dataframe(
+            df = memory_cache.cached_dataframe(
                 f.name, compute_fn=counter.increment_dataframe)
             # get counter value from inside of dataframe
             result = df['x'].ix[0]
@@ -67,7 +69,7 @@ def test_cached_dataframe_returns_correct_type():
     with tempfile.NamedTemporaryFile(suffix='.csv') as f:
         # call repeatedly to test the cold and hot cache logic
         for _ in range(2):
-            df = compute_cache.cached_dataframe(
+            df = memory_cache.cached_dataframe(
                 f.name, compute_fn=make_a_dataframe)
             assert isinstance(df, pd.DataFrame), \
                 "Expected DataFrame, got %s : %s" % (df, type(df))
@@ -78,7 +80,7 @@ def test_cached_object_with_list_returns_correct_type():
     with tempfile.NamedTemporaryFile() as f:
         # call repeatedly to test the cold and hot cache logic
         for _ in range(2):
-            df = compute_cache.cached_object(
+            df = memory_cache.cached_object(
                 f.name, compute_fn=make_a_list)
             assert isinstance(df, list), \
                 "Expected list, got %s : %s" % (df, type(df))
@@ -87,6 +89,6 @@ def test_cached_object_with_list_returns_correct_type():
 def test_dataframe_path_must_be_csv():
     # compute_cache should raise an exception when filename doesn't
     # end with .csv extension
-    compute_cache.cached_dataframe(
+    memory_cache.cached_dataframe(
         csv_path="tempfile_not_csv",
         compute_fn=lambda _: pd.DataFrame({'x': []}))

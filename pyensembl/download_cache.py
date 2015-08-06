@@ -45,7 +45,7 @@ class DownloadCache(object):
             annotation_version=None,
             auto_download=False,
             force_download=False,
-            decompress_on_download=True,
+            decompress_on_download=False,
             copy_local_to_cache=False,
             local_filename_function=None,
             install_string_function=None):
@@ -94,21 +94,30 @@ class DownloadCache(object):
             reference_name=reference_name,
             annotation_name=annotation_name,
             annotation_version=annotation_version)
-        self.cache_directory_path = datacache.data_dir(
+        # hidden since access to this variable is combined
+        # with ensuring that the directpry actually exists
+        self._cache_directory_path = datacache.data_dir(
             subdir=self.cache_subdirectory)
 
         self.auto_download = auto_download
         self.force_download = force_download
         self.decompress_on_download = decompress_on_download
         self.copy_local_to_cache = copy_local_to_cache
+
         if local_filename_function:
             self.local_filename_function = local_filename_function
         else:
             self.local_filename_function = self.default_local_filename_function
+
         if install_string_function:
             self.install_string_function = install_string_function
         else:
             self.install_string_function = self.default_install_string
+
+    @property
+    def cache_directory_path(self):
+        datacache.ensure_dir(self._cache_directory_path)
+        return self._cache_directory_path
 
     def _fields(self):
         """
@@ -121,7 +130,8 @@ class DownloadCache(object):
             ('cache_directory_path', self.cache_directory_path),
             ('auto_download', self.auto_download),
             ('force_download', self.force_download),
-            ('copy_local_to_cache', self.copy_local_to_cache)
+            ('copy_local_to_cache', self.copy_local_to_cache),
+            ('decompress_on_download', self.decompress_on_download)
         )
 
     def __eq__(self, other):
@@ -168,10 +178,6 @@ class DownloadCache(object):
 
     def is_url_format(self, path_or_url):
         return "://" in path_or_url
-
-    def cached_path(self, path_or_url):
-        filename = self.local_filename(path_or_url)
-        return join(self.cache_directory_path, filename)
 
     def local_path(self, path_or_url):
         """
