@@ -103,10 +103,6 @@ class Genome(object):
         self.annotation_name = annotation_name
         self.annotation_version = annotation_version
 
-        self.gtf_source = gtf_source
-        self.transcript_fasta_source = transcript_fasta_source
-        self.protein_fasta_source = protein_fasta_source
-
         self.auto_download = auto_download
         self.force_download = force_download
         self.decompress_on_download = decompress_on_download
@@ -125,112 +121,56 @@ class Genome(object):
             local_filename_function=None,
             install_string_function=self.install_string)
 
+        if gtf_source:
+            self.gtf_path = self.download_cache.local_path(gtf_source)
+            # GTF object wraps the source GTF file from which we get
+            # genome annotations. Presents access to each feature
+            # annotations as a pandas.DataFrame.
+            self.gtf = GTF(gtf_path=self.gtf_path)
 
-        # GTF object wraps the source GTF file from which we get
-        # genome annotations. Presents access to each feature
-        # annotations as a pandas.DataFrame.
-        self.gtf = self.build_gtf() if self.gtf_path_or_url else None
-
-        # Database object turns the GTF dataframes into sqlite3 tables
-        # and wraps them with methods like `query_one`
-        self.db = Database(gtf=self.gtf, auto_download=auto_download)
+            # Database object turns the GTF dataframes into sqlite3 tables
+            # and wraps them with methods like `query_one`
+            self.db = Database(gtf=self.gtf)
+        else:
+            self.gtf_path = self.gtf = self.db = None
 
         # get the path for the cDNA and pep FASTA files containing
         # this genome's transcript and protein sequences
-        self.transcript_sequences = (self.build_transcript_sequences()
-                                     if self.transcript_fasta_path_or_url
-                                     else None)
-        self.protein_sequences = (self.build_protein_sequences()
-                                  if self.protein_fasta_path_or_url
-                                  else None)
+        if protein_fasta_source:
+            self.protein_fasta_path = self.download_cache.local_path(
+                protein_fasta_source)
+            self.protein_sequences = SequenceData(
+                fasta_path=self.protein_fasta_path,
+                require_ensembl_ids=self.require_ensembl_ids)
+        else:
+            self.protein_fasta_path = self.protein_sequences = None
+
+        if transcript_fasta_source:
+            self.transcript_fasta_path = self.download_cache.local_path(
+                transcript_fasta_source)
+            self.transcript_sequences = SequenceData(
+                fasta_path=self.transcript_fasta_path,
+                require_ensembl_ids=self.require_ensembl_ids)
+        else:
+            self.transcript_fasta_path = self.transcript_sequences = None
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
         self.memory_cache = MemoryCache()
 
-
-    """
-    Copied from GTF
-    """
-    def cached_copy_exists(self):
-        # If the source is a local file as opposed to a URL, then
-        # check to see if it was copied into the cache directory.
-        if not self.gtf_source.is_url_format():
-            return exists(self.gtf_source.cached_path(self.cache))
-
-        """Has a cached copy of the GTF file been downloaded/copied?"""
-        return self.cache.exists(
-            self.gtf_source.path_or_url,
-            self.cached_filename(),
-            decompress=self.decompress)
-
-    def cached_filename(self):
-        """Filename used for cached copy of GTF"""
-        if self.decompress:
-            return self.base_filename() + ".gtf"
-        else:
-            return self.gtf_source.original_filename
-
-    def download(self, force=False):
-        """
-        Download the GTF file if one does not exist. If `force` is
-        True, overwrites any existing file.
-        """
-        # If the source is a local file as opposed to a URL, then
-        # just copy it to the datacache direcotry as a "download".
-        if not self.gtf_source.is_url_format():
-            return self.gtf_source.copy_to_cache_if_needed(self.cache,
-                                                           force=force)
-
-        if not self.cached_copy_exists() or force:
-            self.cache.fetch(
-                self.gtf_source.path_or_url,
-                self.cached_filename(),
-                decompress=self.decompress,
-                force=force)
-    """
-    ^^^
-    End of copied methods from GTF
-    """
-
-    def build_gtf(self):
-        return GTF(gtf_source=GenomeSource(path_or_url=self.gtf_path_or_url,
-                                           reference_name=self.reference_name,
-                                           arg_name="gtf_path_or_url"),
-                   auto_download=self.auto_download)
-
-    def build_transcript_sequences(self):
-        transcript_fasta_source = GenomeSource(
-            path_or_url=self.transcript_fasta_path_or_url,
-            reference_name=self.reference_name,
-            arg_name="transcript_fasta_path_or_url")
-        return SequenceData(
-            fasta_source=transcript_fasta_source,
-            require_ensembl_ids=self.require_ensembl_ids,
-            auto_download=self.auto_download)
-
-    def build_protein_sequences(self):
-        protein_fasta_source = GenomeSource(
-            path_or_url=self.protein_fasta_path_or_url,
-            reference_name=self.reference_name,
-            arg_name="protein_fasta_path_or_url")
-        return SequenceData(
-            fasta_source=protein_fasta_source,
-            require_ensembl_ids=self.require_ensembl_ids,
-            auto_download=self.auto_download)
-
     def __str__(self):
         return ("Genome(reference_name=%s, "
-                "annotation_name=%s, annotation_version=%s, "
-                "gtf_path_or_url=%s, "
-                "transcript_fasta_path_or_url=%s, "
-                "protein_fasta_path_or_url=%s)" % (
+                "annotation_name=%s, "
+                "annotation_version=%s, "
+                "gtf_path=%s, "
+                "transcript_fasta_path=%s, "
+                "protein_fasta_path=%s)" % (
                     self.reference_name,
                     self.annotation_name,
                     self.annotation_version,
-                    self.gtf_path_or_url,
-                    self.transcript_fasta_path_or_url,
-                    self.protein_fasta_path_or_url))
+                    self.gtf_path,
+                    self.transcript_fasta_path,
+                    self.protein_fasta_path))
 
     def __repr__(self):
         return str(self)
@@ -238,11 +178,11 @@ class Genome(object):
     def _fields(self):
         return (
             self.reference_name,
-            self.gtf_path_or_url,
             self.annotation_name,
             self.annotation_version,
-            self.transcript_fasta_path_or_url,
-            self.protein_fasta_path_or_url,
+            self.gtf_path,
+            self.protein_fasta_path,
+            self.transcript_fasta_path,
         )
 
     def __eq__(self, other):

@@ -188,12 +188,12 @@ class DownloadCache(object):
         If the file is on the local file system then return its path, unless
         self.copy_local_to_cache is True, and then copy it to the cache first.
         """
-        cache_filename = self.local_filename(path_or_url)
+        cache_filename = self.local_filename_function(path_or_url)
         cached_path = join(self.cache_directory_path, cache_filename)
 
         if exists(cached_path) and not self.force_download:
             return cached_path
-        if self.is_url(path_or_url):
+        if self.is_url_format(path_or_url):
             if self.auto_download or self.force_download:
                 return datacache.fetch_file(
                     download_url=path_or_url,
