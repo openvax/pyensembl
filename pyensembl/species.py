@@ -14,7 +14,7 @@
 
 from __future__ import print_function, absolute_import, division
 
-from .release_info import MIN_ENSEMBL_RELEASE, MAX_ENSEMBL_RELEASE
+from .ensembl_release_version import MAX_ENSEMBL_RELEASE
 
 
 class Species(object):
@@ -38,7 +38,7 @@ class Species(object):
         self.synonyms = synonyms
         self.reference_assemblies = reference_assemblies
         self._release_to_genome = {}
-        for (genome_name, (start, end)) in self.reference_assemblies:
+        for (genome_name, (start, end)) in self.reference_assemblies.items():
             for i in range(start, end + 1):
                 self._release_to_genome[i] = genome_name
 
@@ -51,31 +51,49 @@ class Species(object):
 
 _latin_names_to_species = {}
 _common_names_to_species = {}
+_reference_names_to_species = {}
 
 def add_species(latin_name, synonyms, reference_assemblies):
+    """
+    Create a Species object from the given arguments and enter into
+    all the dicts used to look the species up by its fields.
+    """
     species = Species(
         latin_name=latin_name,
         synonyms=synonyms,
         reference_assemblies=reference_assemblies)
     _latin_names_to_species[species.latin_name] = species
     for synonym in synonyms:
+        if synonym in _common_names_to_species:
+            raise ValueError("Can't use synonym '%s' for both %s and %s" % (
+                synonym,
+                species,
+                _common_names_to_species[synonym]))
         _common_names_to_species[synonym] = species
+    for reference_name in reference_assemblies:
+        if reference_name in _reference_names_to_species:
+            raise ValueError("Can't use reference '%s' for both %s and %s" % (
+                reference_name,
+                species,
+                _reference_names_to_species[reference_name]))
+        _reference_names_to_species[reference_name] = species
     return species
-
-grch38 = EnsemblGenomeInfo(
-    name="GRCh38",
-    first_release=76,
-    last_release=MAX_ENSEMBL_RELEASE)
 
 human = add_species(
     latin_name="homo_sapiens",
     synonyms=["human"],
-    reference_assemblies=[grch38, grch37, human_ncbi36])
+    reference_assemblies={
+        "GRCh38": (76, MAX_ENSEMBL_RELEASE),
+        "GRCh37": (55, 75)
+    })
 
 mouse = add_species(
     latin_name="mus_musculus",
     synonyms=["mouse", "house mouse"],
-    reference_assemblies=[grcm38])
+    # TODO: fix release range
+    reference_assemblies={
+        "GRCm38": (78, MAX_ENSEMBL_RELEASE)
+    })
 
 
 def normalize_species_name(name):
@@ -99,16 +117,18 @@ def find_species_by_name(species_name):
     return _latin_names_to_species[latin_name]
 
 def find_species_by_reference(reference_name):
-    species = Species._reference_to_species.get(reference_name)
+    species = _reference_names_to_species.get(reference_name)
     if not species:
         raise ValueError("Reference genome '%s' not found" % reference_name)
     return species
 
-def species_reference(species_name, ensembl_release):
+def which_reference(species_name, ensembl_release):
     return find_species_by_name(species_name).which_reference(ensembl_release)
 
 def max_ensembl_release(reference_name):
-    pass
+    species = find_species_by_reference(reference_name)
+    (_, max_release) = species.reference_assemblies[reference_name]
+    return max_release
 
 """
 

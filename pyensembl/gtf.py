@@ -29,7 +29,8 @@ class GTF(object):
     by locus, column, contig, &c).
     """
     def __init__(self, gtf_path, cache_dir=None):
-        if not gtf_path.endswith(".gtf"):
+
+        if not (gtf_path.endswith(".gtf") or gtf_path.endswith(".gtf.gz")):
             raise ValueError("Wrong extension for GTF file: %s" % (gtf_path,))
         self.gtf_path = abspath(gtf_path)
 
@@ -64,7 +65,7 @@ class GTF(object):
         # clear cached dataframes loaded from CSV
         self.memory_cache.clear_cached_objects()
 
-    def csv_data_path(
+    def data_subset_path(
             self,
             contig=None,
             feature=None,
@@ -120,7 +121,7 @@ class GTF(object):
         Loads full dataframe from cached CSV or constructs it from GTF
         """
         return self.memory_cache.cached_dataframe(
-            csv_path=self.csv_data_path(),
+            csv_path=self.data_subset_path(),
             compute_fn=self._load_full_dataframe_from_gtf)
 
     def _load_full_dataframe_from_gtf(self):
@@ -146,7 +147,7 @@ class GTF(object):
         key = (contig, feature, strand)
 
         if key not in self._dataframes:
-            csv_path = self.csv_data_path(
+            csv_path = self.data_subset_path(
                 contig=contig,
                 feature=feature,
                 strand=strand,

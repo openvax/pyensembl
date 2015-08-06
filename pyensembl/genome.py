@@ -24,20 +24,21 @@ import logging
 from os.path import join
 from os import remove
 
+
 from .common import (
     require_human_transcript_id,
     require_human_protein_id,
     memoize
 )
-from .compute_cache import cached_object
-import download_cache
+from .memory_cache import MemoryCache
+from .download_cache import DownloadCache
 from .database import Database
 from .exon import Exon
 from .gene import Gene
 from .gtf import GTF
 from .sequence_data import SequenceData
 from .transcript import Transcript
-from .genome_source import GenomeSource
+
 
 class Genome(object):
     """
@@ -50,18 +51,65 @@ class Genome(object):
             reference_name,
             annotation_name,
             annotation_version=None,
-            gtf_path_or_url=None,
-            transcript_fasta_path_or_url=None,
-            protein_fasta_path_or_url=None,
+            gtf_source=None,
+            transcript_fasta_source=None,
+            protein_fasta_source=None,
             auto_download=False,
+            force_download=False,
             require_ensembl_ids=True):
+        """
+        Parameters
+        ----------
+        reference_name : str
+            Name of genome assembly which annotations in GTF are aligned against
+            (and from which sequence data is drawn)
+
+        annotation_name : str
+            Name of annotation source (e.g. "Ensembl)
+
+        annotation_version : int or str
+            Version of annotation database (e.g. 75)
+
+        gtf_source : str
+            Path or URL of GTF file
+
+        transcript_fasta_source : str
+            Path or URL of FASTA file containing transcript sequences
+
+        protein_fasta_source : str
+            Path or URL of FASTA file containing protein sequences
+
+        auto_download : bool
+            Download remote sources if they are not locally cached
+
+        force_download : bool
+            Download remote sources even if they locally cached
+
+        require_ensembl_ids : bool
+            Check gene/transcript/exon IDs to make sure they start with "ENS"
+        """
+
         self.reference_name = reference_name
-        self.gtf_path_or_url = gtf_path_or_url
-        self.transcript_fasta_path_or_url = transcript_fasta_path_or_url
-        self.protein_fasta_path_or_url = protein_fasta_path_or_url
+        self.gtf_source = gtf_source
         self.annotation_name = annotation_name
         self.annotation_version = annotation_version
+
+        self.transcript_fasta_source = transcript_fasta_source
+
+        self.source = GenomeSource(
+            gtf_path_or_url=gtf_path_or_url,
+            transcript_fasta_path_or_url=transcript_fasta_path_or_url)
+        if is_url(self.transcript_fasta_source):
+            raise ValueError("NONSENSE")
+        else:
+            self.transcript_fasta_path = abspath(transcript_fasta_source)
+            if not exists(self.transcript_fasta_path):
+                raise ValueError("Transcript FASTA file not found: %s" % (
+                    self.transcript_fasta_path,))
+
+        self.protein_fasta_source = protein_fasta_source
         self.auto_download = auto_download
+        self.force_download = force_download
         self.require_ensembl_ids = require_ensembl_ids
 
         self.cache = download_cache.get_download_cache(
@@ -89,6 +137,9 @@ class Genome(object):
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
+        self.memory_cache = MemoryCache()
+        self.download_cache = DownloadCache()
+
 
     """
     Copied from GTF
@@ -111,34 +162,6 @@ class Genome(object):
             return self.base_filename() + ".gtf"
         else:
             return self.gtf_source.original_filename
-
-    def cached_gtf_path(self):
-        """
-        Returns cached path to GTF file, download from the relevant
-        server (or copy from local) if not already cached and
-        auto download is enabled.
-        """
-        if self.cached_copy_exists() or self.auto_download:
-            # If the source is a local file as opposed to a URL, then
-            # just manually copy it to the datacache directory if
-            # we're auto-downloading.
-            if not self.gtf_source.is_url_format():
-                return self.gtf_source.copy_to_cache_if_needed(self.cache,
-                                                               force=False)
-
-            # Does a download if the cache is empty
-            return self.cache.fetch(
-                self.gtf_source.path_or_url,
-                self.cached_filename(),
-                decompress=self.decompress)
-        raise ValueError("Genome annotation data is not currently "
-                         "installed for this genome. Run %s "
-                         "or call %s" % (
-                             self.gtf_source.install_string_console(),
-                             self.gtf_source.install_string_python()))
-
-    def cached_dir(self):
-        return split(self.cached_gtf_path())[0]
 
     def download(self, force=False):
         """
@@ -284,7 +307,7 @@ class Genome(object):
         # since we're constructing a list, rather than a DataFrame,
         # we're going to store it using pickling rather than the Pandas
         # CSV serializer. Change the default extension from ".csv" to ".pickle"
-        pickle_path = self.gtf.cached_data_file_path(
+        pickle_path = self.gtf.data_subset_path(
             feature=feature,
             column=column,
             contig=contig,
@@ -304,7 +327,8 @@ class Genome(object):
                     type(results))
             return results
 
-        return cached_object(pickle_path, compute_fn=run_query)
+        return self.memory_cache.cached_object(
+            pickle_path, compute_fn=run_query)
 
     def install(self):
         """

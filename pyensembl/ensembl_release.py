@@ -19,11 +19,14 @@ to be specific to (a particular release of) Ensembl.
 
 from .genome import Genome
 from .gtf import GTF
-from .ensembl_release_source import EnsemblReleaseSource
-from .release_info import check_release_number, MAX_ENSEMBL_RELEASE,
-from .species import species_from_name, human, Species
+from .ensembl_release_version import check_release_number, MAX_ENSEMBL_RELEASE
+from .species import find_species_by_name, human, Species
 from .sequence_data import SequenceData
-from .url_templates import ENSEMBL_FTP_SERVER, make_gtf_url, make_fasta_url
+from .ensembl_url_templates import (
+    ENSEMBL_FTP_SERVER,
+    make_gtf_url,
+    make_fasta_url
+)
 
 class EnsemblRelease(Genome):
     """
@@ -39,7 +42,7 @@ class EnsemblRelease(Genome):
         if isinstance(species, Species):
             self.species = species
         elif isinstance(species, str):
-            self.species = species_from_name(species)
+            self.species = find_species_by_name(species)
         else:
             raise ValueError("Unexpected type for species: %s : %s" % (
                 species, type(species)))
@@ -74,7 +77,9 @@ class EnsemblRelease(Genome):
                         auto_download=auto_download)
 
     def install_string_console(self):
-        return "pyensembl install --release %d" % self.release
+        return "pyensembl install --release %d --species %s" % (
+            self.release,
+            self.species.latin_name)
 
     def install_string_python(self):
         return "EnsemblRelease(%d).install()" % self.release
@@ -124,3 +129,43 @@ class EnsemblRelease(Genome):
 
     def __hash__(self):
         return hash((self.release, self.species))
+
+    """
+    From ensembl_release_source:
+
+    @property
+    def original_filename(self):
+        original_filename = super(EnsemblReleaseSource, self).original_filename
+        assert original_filename.endswith(".%s.gz" % self.file_type), \
+            "Expected remote GTF file %s to end with '.%s.gz'" % (
+                original_filename, self.file_type)
+        return original_filename
+
+    @property
+    def cached_filename(self):
+        '''
+        We sometimes need to add the release number to a cached FASTA filename
+        since some Ensembl releases only have the genome name in the FASTA
+        filename but still differ subtly between releases.
+        For example, a transcript ID may be missing in Ensembl 75 but present
+        in 76, though both have the same FASTA filename
+        '''
+        if ".%d." % self.release in self.original_filename:
+            return self.original_filename
+
+        filename_parts = self.original_filename.split(".%s." % self.file_type)
+        assert len(filename_parts) == 2, \
+            "Expected remote filename %s to contain '.%s.gz'" % (
+                self.original_filename, self.file_type)
+        return "".join([
+            filename_parts[0],
+            ".%d.fa." % self.release,
+            filename_parts[1]])
+
+        GenomeSource.__init__(self,
+                              gtf_path=gtf_url,
+                              transcript_fasta_path=transcript_fasta_url,
+                              protein_fasta_path=protein_fasta_url)
+
+
+"""
