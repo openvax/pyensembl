@@ -36,8 +36,9 @@ class EnsemblRelease(Genome):
     def __init__(self,
                  release=MAX_ENSEMBL_RELEASE,
                  species=human,
-                 server=ENSEMBL_FTP_SERVER,
-                 auto_download=False):
+                 auto_download=False,
+                 force_download=False,
+                 server=ENSEMBL_FTP_SERVER):
         self.release = check_release_number(release)
         if isinstance(species, Species):
             self.species = species
@@ -67,22 +68,19 @@ class EnsemblRelease(Genome):
 
         Genome.__init__(self,
                         reference_name=self.reference_name,
-                        gtf_path_or_url=self.gtf_url,
-                        transcript_fasta_path_or_url=self.transcript_fasta_url,
-                        protein_fasta_path_or_url=self.protein_fasta_url,
-                        annotation_name="Ensembl",
+                        annotation_name="ensembl",
                         annotation_version=self.release,
-                        species_name=self.species.latin_name,
-                        require_ensembl_ids=True,
-                        auto_download=auto_download)
+                        gtf_source=self.gtf_url,
+                        transcript_fasta_source=self.transcript_fasta_url,
+                        protein_fasta_source=self.protein_fasta_url,
+                        auto_download=auto_download,
+                        force_download=force_download,
+                        require_ensembl_ids=True)
 
-    def install_string_console(self):
+    def install_string(self):
         return "pyensembl install --release %d --species %s" % (
             self.release,
             self.species.latin_name)
-
-    def install_string_python(self):
-        return "EnsemblRelease(%d).install()" % self.release
 
     def build_gtf(self):
         return GTF(gtf_source=EnsemblReleaseSource(url=self.gtf_url,

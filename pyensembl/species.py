@@ -84,7 +84,8 @@ human = add_species(
     synonyms=["human"],
     reference_assemblies={
         "GRCh38": (76, MAX_ENSEMBL_RELEASE),
-        "GRCh37": (55, 75)
+        "GRCh37": (55, 75),
+        "NCBI36": (54, 54),
     })
 
 mouse = add_species(

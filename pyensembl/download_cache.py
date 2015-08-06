@@ -96,7 +96,7 @@ class DownloadCache(object):
             annotation_version=annotation_version)
         # hidden since access to this variable is combined
         # with ensuring that the directpry actually exists
-        self._cache_directory_path = datacache.data_dir(
+        self._cache_directory_path = datacache.get_data_dir(
             subdir=self.cache_subdirectory)
 
         self.auto_download = auto_download

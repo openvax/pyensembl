@@ -56,6 +56,10 @@ class Genome(object):
             protein_fasta_source=None,
             auto_download=False,
             force_download=False,
+            decompress_on_download=False,
+            copy_local_to_cache=False,
+            local_filename_function=None,
+            install_string_function=None,
             require_ensembl_ids=True):
         """
         Parameters
@@ -85,37 +89,42 @@ class Genome(object):
         force_download : bool
             Download remote sources even if they locally cached
 
+        decompress_on_download : bool
+            If remote file is compressed, decompress the local copy?
+
+        copy_local_to_cache : bool
+            If genome data file is local use it directly or copy to cache first?
+
         require_ensembl_ids : bool
             Check gene/transcript/exon IDs to make sure they start with "ENS"
         """
 
         self.reference_name = reference_name
-        self.gtf_source = gtf_source
         self.annotation_name = annotation_name
         self.annotation_version = annotation_version
 
+        self.gtf_source = gtf_source
         self.transcript_fasta_source = transcript_fasta_source
-
-        self.source = GenomeSource(
-            gtf_path_or_url=gtf_path_or_url,
-            transcript_fasta_path_or_url=transcript_fasta_path_or_url)
-        if is_url(self.transcript_fasta_source):
-            raise ValueError("NONSENSE")
-        else:
-            self.transcript_fasta_path = abspath(transcript_fasta_source)
-            if not exists(self.transcript_fasta_path):
-                raise ValueError("Transcript FASTA file not found: %s" % (
-                    self.transcript_fasta_path,))
-
         self.protein_fasta_source = protein_fasta_source
+
         self.auto_download = auto_download
         self.force_download = force_download
+        self.decompress_on_download = decompress_on_download
+        self.copy_local_to_cache = copy_local_to_cache
+
         self.require_ensembl_ids = require_ensembl_ids
 
-        self.cache = download_cache.get_download_cache(
+        self.download_cache = DownloadCache(
             reference_name=self.reference_name,
             annotation_name=self.annotation_name,
-            annotation_version=self.annotation_version)
+            annotation_version=self.annotation_version,
+            auto_download=self.auto_download,
+            force_download=self.force_download,
+            decompress_on_download=self.decompress_on_download,
+            copy_local_to_cache=self.copy_local_to_cache,
+            local_filename_function=None,
+            install_string_function=self.install_string)
+
 
         # GTF object wraps the source GTF file from which we get
         # genome annotations. Presents access to each feature
@@ -138,7 +147,6 @@ class Genome(object):
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
         self.memory_cache = MemoryCache()
-        self.download_cache = DownloadCache()
 
 
     """
@@ -379,22 +387,6 @@ class Genome(object):
         if self.only_human:
             require_human_protein_id(protein_id)
         return self.protein_sequences.get(protein_id)
-
-    def download(self, force=True):
-        """
-        Download all data for this genome source.
-
-        Parameters
-        ----------
-        force : bool
-            Download data even if we already have a local copy.
-        """
-        if self.gtf:
-            self.gtf.download(force=force)
-        if self.transcript_sequences:
-            self.transcript_sequences.download(force=force)
-        if self.protein_sequences:
-            self.protein_sequences.download(force=force)
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
         gene_ids = self.gene_ids_at_locus(
