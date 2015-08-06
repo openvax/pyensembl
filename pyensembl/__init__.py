@@ -33,7 +33,7 @@ from .transcript import Transcript
 
 _cache = {}
 
-def cached_release(version, species="human", auto_download=True):
+def cached_release(version, species="human", auto_download=False):
     """Cached construction of EnsemblRelease objects. It's desirable to reuse
     the same EnsemblRelease object since each one will store a lot of cached
     annotation data in-memory.
@@ -53,5 +53,7 @@ ensembl_grch37 = ensembl75 = cached_release(75)  # last release for GRCh37/hg19
 
 ensembl77 = cached_release(77)
 ensembl78 = cached_release(78)
-ensembl79 = cached_release(MAX_ENSEMBL_RELEASE)
-ensembl_grch38 = ensembl79  # most recent for GRCh38
+ensembl79 = cached_release(79)
+ensembl80 = cached_release(80)
+ensembl81 = cached_release(81)
+ensembl_grch38 = ensembl81  # most recent for GRCh38

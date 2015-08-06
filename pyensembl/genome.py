@@ -122,7 +122,8 @@ class Genome(object):
             install_string_function=self.install_string)
 
         if gtf_source:
-            self.gtf_path = self.download_cache.local_path(gtf_source)
+            self.gtf_path = self.download_cache.local_path(
+                "gtf", gtf_source)
             # GTF object wraps the source GTF file from which we get
             # genome annotations. Presents access to each feature
             # annotations as a pandas.DataFrame.
@@ -138,7 +139,7 @@ class Genome(object):
         # this genome's transcript and protein sequences
         if protein_fasta_source:
             self.protein_fasta_path = self.download_cache.local_path(
-                protein_fasta_source)
+                "protein-fasta", protein_fasta_source)
             self.protein_sequences = SequenceData(
                 fasta_path=self.protein_fasta_path,
                 require_ensembl_ids=self.require_ensembl_ids)
@@ -147,7 +148,7 @@ class Genome(object):
 
         if transcript_fasta_source:
             self.transcript_fasta_path = self.download_cache.local_path(
-                transcript_fasta_source)
+                "transcript-fasta", transcript_fasta_source)
             self.transcript_sequences = SequenceData(
                 fasta_path=self.transcript_fasta_path,
                 require_ensembl_ids=self.require_ensembl_ids)

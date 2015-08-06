@@ -14,39 +14,21 @@
 
 from __future__ import print_function, division, absolute_import
 from os import remove
-from os.path import exists, split
+from os.path import exists, abspath
 import logging
 
 from Bio import SeqIO
-import datacache
 
-from .common import (CACHE_SUBDIR, require_ensembl_id)
-
+from .common import require_ensembl_id
 
 class SequenceData(object):
     """
     Container for reference nucleotide and amino acid sequenes.
-
-    Downloads and caches FASTA file, creates database mapping
-    identifiers to sequences.
-
-    fasta_source is a GenomeSource object that represents a local
-    file path or remote URL.
     """
-    def __init__(
-            self,
-            fasta_source,
-            require_ensembl_ids=True,
-            auto_download=False):
-        self.fasta_source = fasta_source
-        # download cache for fetching reference FASTA files
-        self.cache = datacache.Cache(CACHE_SUBDIR)
-        self.auto_download = auto_download
-        # expect the original FASTA file to be gzipped and the cached needs
-        # to be a decompressed text file
-        self.fasta_decompress = True
-        assert self.fasta_source, (
-            "Attempted to create SequenceData with missing FASTA source")
+    def __init__(self, fasta_path, require_ensembl_ids=False):
+        self.fasta_path = abspath(fasta_path)
+        if not exists(self.fasta_path):
+            raise ValueError("Couldn't find FASTA file %s" % (self.fasta_path,))
         self.require_ensembl_ids = require_ensembl_ids
         self._init_lazy_fields()
 
@@ -63,9 +45,9 @@ class SequenceData(object):
         self._fasta_keys = None
 
     def __str__(self):
-        return "SequenceData(fasta_source=%s, cached_path=%s)" % (
-            self.fasta_source,
-            self.cached_fasta_path)
+        return "SequenceData(fasta_path=%s, require_ensembl_ids=%s)" % (
+            self.fasta_path,
+            self.require_ensembl_ids)
 
     def __repr__(self):
         return str(self)
@@ -78,38 +60,10 @@ class SequenceData(object):
     def __eq__(self, other):
         return (
             isinstance(other, SequenceData) and
-            self.fasta_source == other.fasta_source)
+            self.fasta_path == other.fasta_path)
 
     def __hash__(self):
         return hash(self.fasta_source)
-
-    @property
-    def cached_fasta_path(self):
-        """
-        Returns cached path to FASTA file. If it's not already
-        cached, download it from the appropriate server (or copy
-        from local) if auto download is enabled.
-        """
-        # If the fasta is already cached, fetching it won't initiate a
-        # download. But it's always okay to initiate a download if
-        # auto download is enabled.
-        if self.cached_file_exists() or self.auto_download:
-            # If the source is a local file as opposed to a URL, then
-            # just manually copy it to the datacache directory if
-            # we're auto-downloading.
-            if not self.fasta_source.is_url_format():
-                self.fasta_source.copy_to_cache_if_needed(self.cache,
-                                                          force=False)
-
-            # Does a download if the cache is empty, otherwise just returns
-            # the cached path
-            return self._fetch(force=False)
-        raise ValueError("Genome sequence data (%s) is not currently "
-                         "installed for this genome source. Run %s "
-                         "or call %s" % (
-                             self.fasta_source,
-                             self.fasta_source.install_string_console(),
-                             self.fasta_source.install_string_python()))
 
     def clear_cache(self):
         """Delete the cached FASTA file and its associated database,
@@ -122,46 +76,6 @@ class SequenceData(object):
             remove(self.cached_fasta_path)
         if exists(self.cached_database_path):
             remove(self.cached_fasta_path)
-
-    @property
-    def cached_dir(self):
-        return split(self.cached_fasta_path)[0]
-
-    def cached_file_exists(self):
-        # If the source is a local file as opposed to a URL, then
-        # check to see if it was copied into the cache directory.
-        if not self.fasta_source.is_url_format():
-            return exists(self.fasta_source.cached_path(self.cache))
-
-        return self.cache.exists(
-            self.fasta_source.path_or_url,
-            filename=self.fasta_source.cached_filename,
-            decompress=self.fasta_decompress)
-
-    def _fetch(self, force):
-        """Download file from remote URL if not present or if force=True
-
-        Return cached path
-        """
-        return self.cache.fetch(
-            url=self.fasta_source.path_or_url,
-            filename=self.fasta_source.cached_filename,
-            decompress=self.fasta_decompress,
-            force=force)
-
-    def download(self, force=False):
-        """Download the FASTA file if one does not exist.
-
-        If `force` is True, overwrites any existing file.
-        """
-        # If the source is a local file as opposed to a URL, then
-        # just copy it to the datacache direcotry as a "download".
-        if not self.fasta_source.is_url_format():
-            return self.fasta_source.copy_to_cache_if_needed(
-                self.cache, force=force)
-
-        if not self.cached_file_exists() or force:
-            self._fetch(force=force)
 
     @property
     def cached_database_path(self):

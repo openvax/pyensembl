@@ -66,16 +66,17 @@ class EnsemblRelease(Genome):
 
         self.reference_name = self.species.which_reference(self.release)
 
-        Genome.__init__(self,
-                        reference_name=self.reference_name,
-                        annotation_name="ensembl",
-                        annotation_version=self.release,
-                        gtf_source=self.gtf_url,
-                        transcript_fasta_source=self.transcript_fasta_url,
-                        protein_fasta_source=self.protein_fasta_url,
-                        auto_download=auto_download,
-                        force_download=force_download,
-                        require_ensembl_ids=True)
+        Genome.__init__(
+            self,
+            reference_name=self.reference_name,
+            annotation_name="ensembl",
+            annotation_version=self.release,
+            gtf_source=self.gtf_url,
+            transcript_fasta_source=self.transcript_fasta_url,
+            protein_fasta_source=self.protein_fasta_url,
+            auto_download=auto_download,
+            force_download=force_download,
+            require_ensembl_ids=True)
 
     def install_string(self):
         return "pyensembl install --release %d --species %s" % (

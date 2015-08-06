@@ -179,7 +179,7 @@ class DownloadCache(object):
     def is_url_format(self, path_or_url):
         return "://" in path_or_url
 
-    def local_path(self, path_or_url):
+    def _local_path(self, path_or_url):
         """
         Get the local path to a possibly remote file.
 
@@ -215,6 +215,23 @@ class DownloadCache(object):
                 return local_path
         return local_path
 
+    def raise_missing_file_error(self, missing_urls_dict):
+        install_string = self.install_string_function(missing_urls_dict)
+        missing_urls = list(missing_urls_dict.values())
+        assert len(missing_urls_dict) > 0
+        if len(missing_urls) == 1:
+            raise ValueError("Missing genome data file from %s, run: %s" % (
+                missing_urls[0], install_string))
+        else:
+            raise ValueError("Missing genome data files from %s, run: %s" % (
+                missing_urls, install_string))
+
+    def local_path(self, field_name, path_or_url):
+        try:
+            return self._local_path(path_or_url)
+        except MissingRemoteFile:
+            self.raise_missing_file_error({field_name: path_or_url})
+
     def local_paths(self, **sources):
         """
         Constructs result dictionary with local path for each (k, path_or_url)
@@ -224,7 +241,7 @@ class DownloadCache(object):
         results = {}
         for (field_name, path_or_url) in sources.items():
             try:
-                local_path = self.local_path(path_or_url)
+                local_path = self._local_path(path_or_url)
                 results[field_name] = local_path
             except MissingRemoteFile:
                 missing_urls_dict[field_name] = path_or_url
@@ -232,11 +249,4 @@ class DownloadCache(object):
         if len(missing_urls_dict) == 0:
             return results
 
-        install_string = self.install_string_function(missing_urls_dict)
-        missing_urls = list(missing_urls_dict.values())
-        if len(missing_urls) == 1:
-            raise ValueError("Missing genome data file from %s, run: %s" % (
-                missing_urls[0], install_string))
-        else:
-            raise ValueError("Missing genome data files from %s, run: %s" % (
-                missing_urls, install_string))
+        self.raise_missing_file_error(missing_urls_dict)
