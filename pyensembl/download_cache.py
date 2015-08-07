@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from os.path import join, exists, split, abspath
-from shutil import copy2
+from shutil import copy2, rmtree
 
 import datacache
 
@@ -30,8 +30,15 @@ def cache_subdirectory(
     return result
 
 class MissingRemoteFile(Exception):
-    def __init__(self, path_or_url):
-        self.path_or_url = path_or_url
+    def __init__(self, url):
+        self.url = url
+
+class MissingLocalFile(Exception):
+    def __init__(self, path):
+        self.path = path
+
+    def __str__(self):
+        return("MissingFile(%s)" % self.path)
 
 class DownloadCache(object):
     """
@@ -206,8 +213,7 @@ class DownloadCache(object):
         else:
             local_path = abspath(path_or_url)
             if not exists(local_path):
-                raise ValueError(
-                    "Couldn't find genome data file %s" % local_path)
+                raise MissingLocalFile(local_path)
             elif self.copy_local_to_cache:
                 copy2(local_path, cached_path)
                 return cached_path
@@ -248,5 +254,7 @@ class DownloadCache(object):
 
         if len(missing_urls_dict) == 0:
             return results
-
         self.raise_missing_file_error(missing_urls_dict)
+
+    def delete_all_files(self):
+        rmtree(self.cache_directory_path)
