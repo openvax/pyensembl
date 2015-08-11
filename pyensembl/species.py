@@ -49,12 +49,12 @@ class Species(object):
         return self._release_to_genome[ensembl_release]
 
     def __str__(self):
-        return self.latin_name
+        return (
+            "Species(latin_name='%s', synonyms=%s, reference_assemblies=%s)" % (
+                self.latin_name, self.synonyms, self.reference_assemblies))
 
     def __repr__(self):
-        return (
-            "Species(latin_name=%s, synonyms=%s, reference_assemblies=%s)" % (
-                self.latin_name, self.synonyms, self.reference_assemblies))
+        return str(self)
 
 _latin_names_to_species = {}
 _common_names_to_species = {}

@@ -65,18 +65,6 @@ class SequenceData(object):
     def __hash__(self):
         return hash(self.fasta_source)
 
-    def clear_cache(self):
-        """Delete the cached FASTA file and its associated database,
-        and clear any in-memory cached sequence data.
-        """
-        # reset in-memory cached object
-        self._init_lazy_fields()
-
-        if self.cached_file_exists():
-            remove(self.cached_fasta_path)
-        if exists(self.cached_database_path):
-            remove(self.cached_fasta_path)
-
     @property
     def database_path(self):
         return self.fasta_path + ".db"
@@ -101,14 +89,12 @@ class SequenceData(object):
         If no error is raised, then after call self._fasta_dictionary
         should be populated.
         """
-        # This cached_fasta_path property access will raise an error
-        # if the necessary data is not yet downloaded
-        if exists(self.cached_database_path):
+        if exists(self.database_path):
             if force:
                 logging.info(
                     "Deleting existing sequence database: %s",
-                    self.cached_database_path)
-                remove(self.cached_database_path)
+                    self.database_path)
+                remove(self.database_path)
             else:
                 # try opening the existing FASTA database, if it fails then
                 # delete the cached file and we'll create a new one further
@@ -119,15 +105,12 @@ class SequenceData(object):
                 except ValueError as e:
                     # if there was an error opening the database
                     # delete the version we have and try again
-                    if "database" in e.message:
-                        logging.warn(
-                            ("Recreating transcript database %s"
-                             " due to error: %s"),
-                            self.cached_database_path,
-                            e.message)
-                        remove(self.cached_database_path)
-                    else:
-                        raise
+                    logging.warn(
+                        "Recreating transcript database %s due to error: %s",
+                        self.database_path,
+                        e)
+                    remove(self.database_path)
+
         # if database didn't exist or was incomplete, create it now
         self._fasta_dictionary = self._create_or_open_fasta_db()
 

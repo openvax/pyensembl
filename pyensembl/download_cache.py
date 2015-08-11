@@ -145,8 +145,11 @@ class DownloadCache(object):
         return "://" in path_or_url
 
     def cached_path(self, path_or_url):
-        cache_filename = self.cached_filename_function(path_or_url)
-        return join(self.cache_directory_path, cache_filename)
+        if self.cached_filename_function is None:
+            cached_filename = split(path_or_url)[1]
+        else:
+            cached_filename = self.cached_filename_function(path_or_url)
+        return join(self.cache_directory_path, cached_filename)
 
     def download_or_copy_if_necessary(
             self,
@@ -201,6 +204,9 @@ class DownloadCache(object):
                 return local_path
 
     def _raise_missing_file_error(self, missing_urls_dict):
+        if self.install_string_function is None:
+            return "Missing genome data files from %s" % missing_urls_dict
+
         install_string = self.install_string_function(missing_urls_dict)
         missing_urls = list(missing_urls_dict.values())
         assert len(missing_urls_dict) > 0

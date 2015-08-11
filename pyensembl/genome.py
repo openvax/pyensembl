@@ -25,11 +25,7 @@ from os.path import join, split
 from os import remove
 
 
-from .common import (
-    require_human_transcript_id,
-    require_human_protein_id,
-    memoize
-)
+from .common import memoize
 from .memory_cache import MemoryCache
 from .download_cache import DownloadCache
 from .database import Database
@@ -343,24 +339,18 @@ class Genome(object):
         """Return cDNA nucleotide sequence of transcript, or None if
         transcript doesn't have cDNA sequence.
         """
-        if not self.transcript_sequences:
-            raise ValueError("No transcript FASTA supplied to this Genome: %s" %
-                             str(self))
-
-        if self.only_human:
-            require_human_transcript_id(transcript_id)
+        if self.transcript_sequences is None:
+            raise ValueError(
+                "No transcript FASTA supplied to this Genome: %s" % self)
         return self.transcript_sequences.get(transcript_id)
 
     def protein_sequence(self, protein_id):
         """Return cDNA nucleotide sequence of transcript, or None if
         transcript doesn't have cDNA sequence.
         """
-        if not self.protein_sequences:
-            raise ValueError("No protein FASTA supplied to this Genome: %s" %
-                             str(self))
-
-        if self.only_human:
-            require_human_protein_id(protein_id)
+        if self.protein_sequences is None:
+            raise ValueError(
+                "No protein FASTA supplied to this Genome: %s" % self)
         return self.protein_sequences.get(protein_id)
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
