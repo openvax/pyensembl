@@ -14,7 +14,7 @@
 
 from __future__ import print_function, absolute_import, division
 
-from .ensembl_release_version import MAX_ENSEMBL_RELEASE
+from .ensembl_release_versions import MAX_ENSEMBL_RELEASE
 
 
 class Species(object):

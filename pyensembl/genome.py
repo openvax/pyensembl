@@ -18,12 +18,7 @@ around an arbitrary genomic database.
 """
 
 from __future__ import print_function, division, absolute_import
-
-from glob import glob
 import logging
-from os.path import join, split
-from os import remove
-
 
 from .common import memoize
 from .memory_cache import MemoryCache
@@ -110,7 +105,6 @@ class Genome(object):
             annotation_version=self.annotation_version,
             decompress_on_download=self.decompress_on_download,
             copy_local_files_to_cache=self.copy_local_files_to_cache,
-            cached_filename_function=self.cached_filename,
             install_string_function=self.install_string)
 
         self.gtf_path_or_url = gtf_path_or_url
@@ -137,68 +131,73 @@ class Genome(object):
             auto_download=self.auto_download,
             overwrite=self.overwrite_cached_files)
 
+    def _create_gtf_object(self):
+        self.gtf_path = self._get_cached_path(
+            field_name="gtf",
+            path_or_url=self.gtf_path_or_url)
+
+        # GTF object wraps the source GTF file from which we get
+        # genome annotations. Presents access to each feature
+        # annotations as a pandas.DataFrame.
+        self._gtf = GTF(gtf_path=self.gtf_path)
+
+    def _create_transcript_sequences(self):
+        self.transcript_fasta_path = self._get_cached_path(
+            field_name="transcript-fasta",
+            path_or_url=self.transcript_fasta_path_or_url)
+        self._transcript_sequences = SequenceData(
+            fasta_path=self.transcript_fasta_path,
+            require_ensembl_ids=self.require_ensembl_ids)
+        self._transcript_sequences.index(force=self.overwrite_cached_files)
+
+    def _create_protein_sequences(self):
+        # get the path for peptide FASTA files containing
+        # this genome's protein sequences
+        self.protein_fasta_path = self._get_cached_path(
+            field_name="protein-fasta",
+            path_or_url=self.protein_fasta_path_or_url)
+
+        self._protein_sequences = SequenceData(
+            fasta_path=self.protein_fasta_path,
+            require_ensembl_ids=self.require_ensembl_ids)
+        self._protein_sequences.index(force=self.overwrite_cached_files)
+
+    def _create_gtf_database(self):
+        # Database object turns the GTF dataframes into sqlite3 tables
+        # and wraps them with methods like `query_one`
+        self._db = Database(gtf=self.gtf)
+        # if we forced a download, also force a reindexing
+        self._db.create(force=self.overwrite_cached_files)
+
+    def get_all_data(self):
+        self._create_gtf_object()
+        self._create_gtf_database()
+        self._create_transcript_sequences()
+        self._create_protein_sequences()
+
     @property
     def gtf(self):
         if self._gtf is None:
-            self.gtf_path = self._get_cached_path(
-                field_name="gtf",
-                path_or_url=self.gtf_path_or_url)
-
-            # GTF object wraps the source GTF file from which we get
-            # genome annotations. Presents access to each feature
-            # annotations as a pandas.DataFrame.
-            self._gtf = GTF(gtf_path=self.gtf_path)
+            self._create_gtf_object()
         return self._gtf
 
     @property
     def db(self):
         if self._db is None:
-            # Database object turns the GTF dataframes into sqlite3 tables
-            # and wraps them with methods like `query_one`
-            self._db = Database(gtf=self.gtf)
-            # if we forced a download, also force a reindexing
-            self.db.create(force=self.overwrite_cached_files)
+            self._create_gtf_database()
         return self._db
 
     @property
     def protein_sequences(self):
         if self._protein_sequences is None:
-            # get the path for peptide FASTA files containing
-            # this genome's protein sequences
-            self.protein_fasta_path = self._get_cached_path(
-                field_name="protein-fasta",
-                path_or_url=self.protein_fasta_path_or_url)
-
-            self._protein_sequences = SequenceData(
-                fasta_path=self.protein_fasta_path,
-                require_ensembl_ids=self.require_ensembl_ids)
-            self.protein_sequences.index(force=self.overwrite_cached_files)
+            self.create_protein_sequences()
         return self._protein_sequences
 
     @property
     def transcript_sequences(self):
         if self._transcript_sequences:
-            self.transcript_fasta_path = self._get_cached_path(
-                field_name="transcript-fasta",
-                fasta_path_or_url=self.transcript_fasta_path_or_url)
-            self.transcript_sequences = SequenceData(
-                fasta_path=self.transcript_fasta_path,
-                require_ensembl_ids=self.require_ensembl_ids)
-            self.transcript_sequences.index(force=self.overwrite_cached_files)
+            self._create_transcript_sequences()
         return self._transcript_sequences
-
-    def cached_filename(self, path_or_url):
-        """
-        When downloading remote files, the default behavior is to name local
-        files the same as their remote counterparts. Can be overrided by
-        EnsemblRelease to deal with name collisions from versions of Ensembl
-        that don't include the release number in FASTA filenames.
-        """
-        remote_filename = split(path_or_url)[1]
-        if len(remote_filename) == 0:
-            raise ValueError("Can't determine local filename for %s" % (
-                path_or_url,))
-        return remote_filename
 
     def install_string(self, missing_files):
         """
@@ -251,27 +250,13 @@ class Genome(object):
     def __hash__(self):
         return hash(self._fields())
 
-    def _delete_cached_files(self):
-        """
-        Any files which start with the same name as our GTF file
-        is assumed to be some view of the this genome database's data
-        and thus safe to delete.
-        """
-        if self.gtf:
-            base = self.gtf.base_filename()
-            dirpath = self.gtf.local_gtf_path()
-            for path in glob(join(dirpath, base + "*")):
-                logging.info("Deleting cached file %s", path)
-                remove(path)
-
     def clear_cache(self):
         for maybe_fn in self.__dict__.values():
             # clear cache associated with all memoization decorators,
             # GTF and SequenceData objects
             if hasattr(maybe_fn, "clear_cache"):
                 maybe_fn.clear_cache()
-
-        self._delete_cached_files()
+        self.download_cache.delete_files_except_suffixes(["gtf", "fasta"])
 
     def all_feature_values(
             self,

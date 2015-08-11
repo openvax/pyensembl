@@ -24,7 +24,7 @@ def cache_subdirectory(
         annotation_version=None,
         reference_name=None):
     result = CACHE_BASE_SUBDIR
-    for subdir in [annotation_name, annotation_version, reference_name]:
+    for subdir in [reference_name, annotation_name, annotation_version]:
         if subdir is not None:
             result = join(result, str(subdir))
     return result
@@ -53,7 +53,6 @@ class DownloadCache(object):
             auto_download=False,
             decompress_on_download=False,
             copy_local_files_to_cache=False,
-            cached_filename_function=None,
             install_string_function=None):
         """
         Parameters
@@ -104,7 +103,6 @@ class DownloadCache(object):
         self.decompress_on_download = decompress_on_download
         self.copy_local_files_to_cache = copy_local_files_to_cache
 
-        self.cached_filename_function = cached_filename_function
         self.install_string_function = install_string_function
 
     @property
@@ -145,10 +143,14 @@ class DownloadCache(object):
         return "://" in path_or_url
 
     def cached_path(self, path_or_url):
-        if self.cached_filename_function is None:
-            cached_filename = split(path_or_url)[1]
-        else:
-            cached_filename = self.cached_filename_function(path_or_url)
+        """
+        When downloading remote files, the default behavior is to name local
+        files the same as their remote counterparts.
+        """
+        cached_filename = split(path_or_url)[1]
+        if len(cached_filename) == 0:
+            raise ValueError("Can't determine local filename for %s" % (
+                path_or_url,))
         return join(self.cache_directory_path, cached_filename)
 
     def download_or_copy_if_necessary(

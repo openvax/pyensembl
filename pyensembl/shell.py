@@ -17,24 +17,31 @@
 """
 Manipulate pyensembl's local cache.
 
-    %(prog)s {install,download,index} [--release XXX ...]
+    %(prog)s {install,delete} [--release XXX --species human...]
 
 To install the latest Ensembl release:
     %(prog)s install
 
-To install particular Ensembl release(s):
+To install particular Ensembl human release(s):
     %(prog)s install --release 75 77
 
-To install any genome:
-    %(prog)s install --reference_name "GRCh38" --gtf-path_or_url URL_OR_PATH --transcript-fasta-path_or_url URL_OR_PATH --protein-fasta-path-or-url URL_OR_PATH
 
+To install particular Ensembl mouse release(s):
+    %(prog)s install --release 75 77 --species mouse
+
+To install any genome:
+    %(prog)s install \
+ --reference_name "GRCh38" \
+ --gtf URL_OR_PATH \
+ --transcript-fasta URL_OR_PATH \
+ --protein-fasta URL_OR_PATH
 """
 
 from __future__ import absolute_import
 import argparse
+
 from .ensembl_release import EnsemblRelease
 from .genome import Genome
-from .release_info import MAX_ENSEMBL_RELEASE
 
 def run():
     parser = argparse.ArgumentParser(usage=__doc__)
@@ -51,9 +58,8 @@ def run():
         "--release",
         type=int,
         nargs="+",
-        default=None,
-        help=("Ensembl release. Defaults to latest release %(default)s. "
-              "Multiple releases may be specified."))
+        default=[],
+        help="Ensembl release version, multiple releases may be specified.")
 
     release_group.add_argument(
         "--species",
@@ -90,14 +96,14 @@ def run():
         default=None,
         help="URL or local path to a FASTA file containing protein data.")
 
-    parser.add_argument("action", choices=("install", "download", "index"),
+    parser.add_argument("action", choices=("install", "delete"),
         help="\"install\" will download and index any data that is  not "
-        "currently downloaded or indexed. \"download\" will download data, "
-        "regardless of whether it is already downloaded. \"index\" will index "
-        "data, regardless of whether it is already indexed, and will raise "
-        "an error if the data is not already downloaded.")
+        "currently downloaded or indexed. \"delete\" will delete all data "
+        "associated with a genome annotation.")
 
     args = parser.parse_args()
+
+    auto_download = args.action == "install"
 
     genomes = []
     # If specific genome source URLs are provided, use those
@@ -116,28 +122,28 @@ def run():
             gtf_path_or_url=args.gtf,
             transcript_fasta_path_or_url=args.transcript_fasta,
             protein_fasta_path_or_url=args.protein_fasta,
-            auto_download=True,
+            auto_download=auto_download,
             force_download=args.force))
-    # Otherwise, use Ensembl release information
     else:
-        versions = args.release if args.release else [MAX_ENSEMBL_RELEASE]
-        for version in versions:
-                genomes.append(
-                    EnsemblRelease(
-                        version,
-                        species=args.species,
-                        auto_download=True))
+        # Otherwise, use Ensembl release information
+        for version in args.release:
+            genomes.append(
+                EnsemblRelease(
+                    version,
+                    species=args.species,
+                    auto_download=auto_download))
 
+    if len(genomes) == 0:
+        print("ERROR: No genomes selected!\n")
+        parser.print_help()
     for genome in genomes:
-        if args.action not in ["download"]:
-            "Invalid action: %s" % args.action
-        if args.action == "install":
-            genome.install()
-        elif args.action == "download":
-            genome.download()
+        print("-- Running '%s' for %s" % (args.action, genome))
+        if args.action == "delete":
+            genome.download_cache.delete_all_files()
+        elif args.action == "install":
+            genome.get_all_data()
         else:
-            genome.index()
-
+            raise ValueError("Invalid action: %s" % args.action)
 
 if __name__ == "__main__":
     run()

@@ -18,7 +18,7 @@ to be specific to (a particular release of) Ensembl.
 """
 
 from .genome import Genome
-from .ensembl_release_version import check_release_number, MAX_ENSEMBL_RELEASE
+from .ensembl_release_versions import check_release_number, MAX_ENSEMBL_RELEASE
 from .species import find_species_by_name, human, Species
 
 from .ensembl_url_templates import (
@@ -83,9 +83,9 @@ class EnsemblRelease(Genome):
             self.species.latin_name)
 
     def __str__(self):
-        return "EnsemblRelease(release=%d, species=%s)" % (
+        return "EnsemblRelease(release=%d, species='%s')" % (
             self.release,
-            self.species)
+            self.species.latin_name)
 
     def __repr__(self):
         return str(self)
@@ -98,43 +98,3 @@ class EnsemblRelease(Genome):
 
     def __hash__(self):
         return hash((self.release, self.species))
-
-    """
-    From ensembl_release_source:
-
-    @property
-    def original_filename(self):
-        original_filename = super(EnsemblReleaseSource, self).original_filename
-        assert original_filename.endswith(".%s.gz" % self.file_type), \
-            "Expected remote GTF file %s to end with '.%s.gz'" % (
-                original_filename, self.file_type)
-        return original_filename
-
-    @property
-    def cached_filename(self):
-        '''
-        We sometimes need to add the release number to a cached FASTA filename
-        since some Ensembl releases only have the genome name in the FASTA
-        filename but still differ subtly between releases.
-        For example, a transcript ID may be missing in Ensembl 75 but present
-        in 76, though both have the same FASTA filename
-        '''
-        if ".%d." % self.release in self.original_filename:
-            return self.original_filename
-
-        filename_parts = self.original_filename.split(".%s." % self.file_type)
-        assert len(filename_parts) == 2, \
-            "Expected remote filename %s to contain '.%s.gz'" % (
-                self.original_filename, self.file_type)
-        return "".join([
-            filename_parts[0],
-            ".%d.fa." % self.release,
-            filename_parts[1]])
-
-        GenomeSource.__init__(self,
-                              gtf_path=gtf_url,
-                              transcript_fasta_path=transcript_fasta_url,
-                              protein_fasta_path=protein_fasta_url)
-
-
-"""

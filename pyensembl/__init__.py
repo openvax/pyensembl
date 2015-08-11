@@ -17,7 +17,7 @@ from __future__ import print_function, division, absolute_import
 from .memory_cache import MemoryCache
 from .download_cache import DownloadCache
 from .ensembl_release import EnsemblRelease
-from .ensembl_release_version import check_release_number, MAX_ENSEMBL_RELEASE
+from .ensembl_release_versions import check_release_number, MAX_ENSEMBL_RELEASE
 from .genome import Genome
 from .gene import Gene
 from .gtf import GTF

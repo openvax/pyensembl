@@ -27,7 +27,7 @@ from os.path import join
 from six.moves.urllib_parse import urljoin
 
 from .species import Species, find_species_by_name
-from .ensembl_release_version import check_release_number
+from .ensembl_release_versions import check_release_number
 
 ENSEMBL_FTP_SERVER = "ftp://ftp.ensembl.org"
 
