@@ -21,7 +21,7 @@ from __future__ import print_function, division, absolute_import
 
 from glob import glob
 import logging
-from os.path import join
+from os.path import join, split
 from os import remove
 
 
@@ -39,7 +39,6 @@ from .gtf import GTF
 from .sequence_data import SequenceData
 from .transcript import Transcript
 
-
 class Genome(object):
     """
     Bundles together the genomic annotation and sequence data associated with
@@ -51,15 +50,13 @@ class Genome(object):
             reference_name,
             annotation_name,
             annotation_version=None,
-            gtf_source=None,
-            transcript_fasta_source=None,
-            protein_fasta_source=None,
+            gtf_path_or_url=None,
+            transcript_fasta_path_or_url=None,
+            protein_fasta_path_or_url=None,
             auto_download=False,
-            force_download=False,
+            overwrite_cached_files=False,
             decompress_on_download=False,
-            copy_local_to_cache=False,
-            local_filename_function=None,
-            install_string_function=None,
+            copy_local_files_to_cache=False,
             require_ensembl_ids=True):
         """
         Parameters
@@ -74,25 +71,26 @@ class Genome(object):
         annotation_version : int or str
             Version of annotation database (e.g. 75)
 
-        gtf_source : str
+        gtf_path_or_url : str
             Path or URL of GTF file
 
-        transcript_fasta_source : str
+        transcript_fasta_path_or_url : str
             Path or URL of FASTA file containing transcript sequences
 
-        protein_fasta_source : str
+        protein_fasta_path_or_url : str
             Path or URL of FASTA file containing protein sequences
 
         auto_download : bool
             Download remote sources if they are not locally cached
 
-        force_download : bool
-            Download remote sources even if they locally cached
+        overwrite_cached_files : bool
+            Download remote sources and copy local files even if they are already
+            in the file cache
 
         decompress_on_download : bool
             If remote file is compressed, decompress the local copy?
 
-        copy_local_to_cache : bool
+        copy_local_files_to_cache : bool
             If genome data file is local use it directly or copy to cache first?
 
         require_ensembl_ids : bool
@@ -104,9 +102,9 @@ class Genome(object):
         self.annotation_version = annotation_version
 
         self.auto_download = auto_download
-        self.force_download = force_download
+        self.overwrite_cached_files = overwrite_cached_files
         self.decompress_on_download = decompress_on_download
-        self.copy_local_to_cache = copy_local_to_cache
+        self.copy_local_files_to_cache = copy_local_files_to_cache
 
         self.require_ensembl_ids = require_ensembl_ids
 
@@ -114,50 +112,107 @@ class Genome(object):
             reference_name=self.reference_name,
             annotation_name=self.annotation_name,
             annotation_version=self.annotation_version,
-            auto_download=self.auto_download,
-            force_download=self.force_download,
             decompress_on_download=self.decompress_on_download,
-            copy_local_to_cache=self.copy_local_to_cache,
-            local_filename_function=None,
+            copy_local_files_to_cache=self.copy_local_files_to_cache,
+            cached_filename_function=self.cached_filename,
             install_string_function=self.install_string)
 
-        if gtf_source:
-            self.gtf_path = self.download_cache.local_path(
-                "gtf", gtf_source)
-            # GTF object wraps the source GTF file from which we get
-            # genome annotations. Presents access to each feature
-            # annotations as a pandas.DataFrame.
-            self.gtf = GTF(gtf_path=self.gtf_path)
+        self.gtf_path_or_url = gtf_path_or_url
+        self._gtf = self._db = None
 
-            # Database object turns the GTF dataframes into sqlite3 tables
-            # and wraps them with methods like `query_one`
-            self.db = Database(gtf=self.gtf)
-        else:
-            self.gtf_path = self.gtf = self.db = None
+        self.transcript_fasta_path_or_url = transcript_fasta_path_or_url
+        self._transcript_sequences = None
 
-        # get the path for the cDNA and pep FASTA files containing
-        # this genome's transcript and protein sequences
-        if protein_fasta_source:
-            self.protein_fasta_path = self.download_cache.local_path(
-                "protein-fasta", protein_fasta_source)
-            self.protein_sequences = SequenceData(
-                fasta_path=self.protein_fasta_path,
-                require_ensembl_ids=self.require_ensembl_ids)
-        else:
-            self.protein_fasta_path = self.protein_sequences = None
-
-        if transcript_fasta_source:
-            self.transcript_fasta_path = self.download_cache.local_path(
-                "transcript-fasta", transcript_fasta_source)
-            self.transcript_sequences = SequenceData(
-                fasta_path=self.transcript_fasta_path,
-                require_ensembl_ids=self.require_ensembl_ids)
-        else:
-            self.transcript_fasta_path = self.transcript_sequences = None
+        self.protein_fasta_path_or_url = protein_fasta_path_or_url
+        self._protein_sequences = None
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
         self.memory_cache = MemoryCache()
+
+    @property
+    def gtf(self):
+        if self._gtf is None:
+            self.gtf_path = self.download_cache.add_to_cache(
+                field_name="gtf",
+                path_or_url=self.gtf_path_or_url,
+                auto_download=self.auto_download,
+                overwrite=self.overwrite_cached_files)
+
+            # GTF object wraps the source GTF file from which we get
+            # genome annotations. Presents access to each feature
+            # annotations as a pandas.DataFrame.
+            self._gtf = GTF(gtf_path=self.gtf_path)
+        return self._gtf
+
+    @property
+    def db(self):
+        if self._db is None:
+            # Database object turns the GTF dataframes into sqlite3 tables
+            # and wraps them with methods like `query_one`
+            self._db = Database(gtf=self.gtf)
+            # if we forced a download, also force a reindexing
+            self.db.create(force=self.overwrite_cached_files)
+        return self._db
+
+    @property
+    def protein_sequences(self):
+        if self._protein_sequences is None:
+            # get the path for peptide FASTA files containing
+            # this genome's protein sequences
+            self.protein_fasta_path = self.download_cache.local_path(
+                field_name="protein-fasta",
+                path_or_url=self.protein_fasta_path_or_url,
+                auto_download=self.auto_download,
+                overwrite=self.overwrite_cached_files)
+
+            self._protein_sequences = SequenceData(
+                fasta_path=self.protein_fasta_path,
+                require_ensembl_ids=self.require_ensembl_ids)
+            self.protein_sequences.index(force=self.overwrite_cached_files)
+        return self._protein_sequences
+
+    @property
+    def transcript_sequences(self):
+        if self._transcript_sequences:
+            self.transcript_fasta_path = self.download_cache.local_path(
+                field_name="transcript-fasta",
+                fasta_path_or_url=self.transcript_fasta_path_or_url,
+                auto_download=self.auto_download,
+                overwrite=self.overwrite_cached_files)
+            self.transcript_sequences = SequenceData(
+                fasta_path=self.transcript_fasta_path,
+                require_ensembl_ids=self.require_ensembl_ids)
+            self.transcript_sequences.index(force=self.overwrite_cached_files)
+        return self._transcript_sequences
+
+    def cached_filename(self, path_or_url):
+        """
+        When downloading remote files, the default behavior is to name local
+        files the same as their remote counterparts. Can be overrided by
+        EnsemblRelease to deal with name collisions from versions of Ensembl
+        that don't include the release number in FASTA filenames.
+        """
+        remote_filename = split(path_or_url)[1]
+        if len(remote_filename) == 0:
+            raise ValueError("Can't determine local filename for %s" % (
+                path_or_url,))
+        return remote_filename
+
+    def install_string(self, missing_files):
+        """
+        Add every missing file to the install string shown to the user
+        in an error message.
+        """
+        args = [
+            "--reference_name", self.reference_name,
+            "--annotation_name", self.annotation_name]
+        if self.annotation_version:
+            args.extend(["--annotation-version", str(self.annotation_version)])
+        for (name, url) in missing_files:
+            args.append("--%s" % (name.replace("_", "-"),))
+            args.append("\"%s\"" % (url,))
+        return "pyensembl install %s" % " ".join(args)
 
     def __str__(self):
         return ("Genome(reference_name=%s, "
@@ -278,32 +333,6 @@ class Genome(object):
 
         return self.memory_cache.cached_object(
             pickle_path, compute_fn=run_query)
-
-    def install(self):
-        """
-        Explicitely download and index any data for this genome source that
-        is not yet downloaded and/or indexed.
-        """
-        self.download(force=False)
-        self.index(force=False)
-
-    def index(self, force=True):
-        """
-        Create databases and indices for all data for this genome source
-
-        Parameters
-        ----------
-        force : bool
-            Recreate databases even if already indexed (default = True)
-
-        Raises an error if data is not downloaded.
-        """
-        if self.gtf:
-            self.db.create(force=force)
-        if self.transcript_sequences:
-            self.transcript_sequences.index(force=force)
-        if self.protein_sequences:
-            self.protein_sequences.index(force=force)
 
     def transcript_sequence(self, transcript_id):
         """Return cDNA nucleotide sequence of transcript, or None if

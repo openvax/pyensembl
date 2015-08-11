@@ -38,7 +38,14 @@ from .release_info import MAX_ENSEMBL_RELEASE
 
 def run():
     parser = argparse.ArgumentParser(usage=__doc__)
+    parser.add_argument(
+        "--force",
+        default=False,
+        action="store_true",
+        help="Force download and indexing even if files already exist locally")
+
     root_group = parser.add_mutually_exclusive_group()
+
     release_group = root_group.add_argument_group()
     release_group.add_argument(
         "--release",
@@ -48,24 +55,37 @@ def run():
         help=("Ensembl release. Defaults to latest release %(default)s. "
               "Multiple releases may be specified."))
 
+    release_group.add_argument(
+        "--species",
+        default="human",
+        help="Which species to download Ensembl data for (default=%(default)s.")
+
     path_group = root_group.add_argument_group()
     path_group.add_argument(
         "--reference-name",
         type=str,
         default=None,
-        help="Name of the reference, e.g. GRCh38") 
+        help="Name of the reference, e.g. GRCh38")
     path_group.add_argument(
-        "--gtf-path-or-url",
+        "--annotation-name",
+        default=None,
+        help="Name of annotation source (e.g. refseq)")
+    path_group.add_argument(
+        "--annotation-version",
+        default=None,
+        help="Version of annotation database")
+    path_group.add_argument(
+        "--gtf",
         type=str,
         default=None,
         help="URL or local path to a GTF file containing annotations.")
     path_group.add_argument(
-        "--transcript-fasta-path-or-url",
+        "--transcript-fasta",
         type=str,
         default=None,
         help="URL or local path to a FASTA file containing transcript data.")
     path_group.add_argument(
-        "--protein-fasta-path-or-url",
+        "--protein-fasta",
         type=str,
         default=None,
         help="URL or local path to a FASTA file containing protein data.")
@@ -81,25 +101,35 @@ def run():
 
     genomes = []
     # If specific genome source URLs are provided, use those
-    if args.gtf_path_or_url or args.transcript_fasta_path_or_url or args.protein_fasta_path_or_url:
-        assert not args.release, ("A release cannot be specified if "
-                                  "specific paths are specified.")
-        assert args.reference_name, "Must specify a reference name"
+    if args.gtf or args.transcript_fasta or args.protein_fasta:
+        if args.release:
+            raise ValueError(
+                "An Ensembl release cannot be specified if "
+                "specific paths are also given")
+        if not args.reference_name:
+            raise ValueError("Must specify a reference name")
+        if not args.annotation_name:
+            raise ValueError("Must specify the name of the annotation source")
         genomes.append(Genome(
-            args.reference_name,
-            gtf_path_or_url=args.gtf_path_or_url,
-            transcript_fasta_path_or_url=args.transcript_fasta_path_or_url,
-            protein_fasta_path_or_url=args.protein_fasta_path_or_url))
+            reference_name=args.reference_name,
+            annotation_name=args.annotation_name,
+            gtf_path_or_url=args.gtf,
+            transcript_fasta_path_or_url=args.transcript_fasta,
+            protein_fasta_path_or_url=args.protein_fasta,
+            auto_download=True,
+            force_download=args.force))
     # Otherwise, use Ensembl release information
     else:
-        if not args.release:
-            genomes.append(EnsemblRelease(MAX_ENSEMBL_RELEASE))
-        else:
-            for release in args.release:
-                genomes.append(EnsemblRelease(release))
+        versions = args.release if args.release else [MAX_ENSEMBL_RELEASE]
+        for version in versions:
+                genomes.append(
+                    EnsemblRelease(
+                        version,
+                        species=args.species,
+                        auto_download=True))
 
     for genome in genomes:
-        assert args.action in ["install", "download", "index"], \
+        if args.action not in ["download"]:
             "Invalid action: %s" % args.action
         if args.action == "install":
             genome.install()
