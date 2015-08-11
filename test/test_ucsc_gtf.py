@@ -3,21 +3,27 @@ from __future__ import absolute_import
 from pyensembl import Genome, GTF
 from nose.tools import eq_
 
-from . import data_path
+from .data import data_path
 
 UCSC_GENCODE_PATH = data_path("gencode.ucsc.small.gtf")
 UCSC_REFSEQ_PATH = data_path("refseq.ucsc.small.gtf")
 
 def test_ucsc_gencode_gtf():
     gtf = GTF(UCSC_GENCODE_PATH)
+    df = gtf.dataframe(save_to_disk=False)
+    exons = df[df["feature"] == "exon"]
+    # expect 12 exons from the dataframe
+    eq_(len(exons), 12)
 
 def test_ucsc_gencode_genome():
     """
     Testing with a small GENCODE GTF file downloaded from
     http://genome.ucsc.edu/cgi-bin/hgTables
     """
-    genome = Genome("GRCh38", gtf_path_or_url=UCSC_GENCODE_PATH)
-    genome.install()
+    genome = Genome(
+        reference_name="GRCh38",
+        annotation_name="ucsc_test",
+        gtf_path_or_url=UCSC_GENCODE_PATH)
     eq_(len(genome.genes()), 7)
     eq_(len(genome.transcripts()), 7)
 
@@ -32,21 +38,26 @@ def test_ucsc_gencode_genome():
     transcript_1_30564 = genome.transcripts_at_locus(1, 30564)
     eq_(transcript_1_30564[0].id, "uc057aty.1")
 
-
 def test_ucsc_refseq_gtf():
     """
     Test GTF object with a small RefSeq GTF file downloaded from
     http://genome.ucsc.edu/cgi-bin/hgTables
     """
     gtf = GTF(UCSC_REFSEQ_PATH)
+    df = gtf.dataframe(save_to_disk=False)
+    exons = df[df["feature"] == "exon"]
+    # expect 16 exons from the GTF
+    eq_(len(exons), 16)
 
 def test_ucsc_refseq_genome():
     """
     Test Genome object with a small RefSeq GTF file downloaded from
     http://genome.ucsc.edu/cgi-bin/hgTables
     """
-    genome = Genome("GRCh38", gtf_path_or_url=UCSC_REFSEQ_PATH)
-    genome.install()
+    genome = Genome(
+        reference_name="GRCh38",
+        annotation_name="ucsc_test",
+        gtf_path_or_url=UCSC_REFSEQ_PATH)
     eq_(len(genome.genes()), 2)
     eq_(len(genome.transcripts()), 2)
 

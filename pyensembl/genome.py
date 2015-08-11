@@ -130,14 +130,23 @@ class Genome(object):
         self.logger.setLevel(logging.INFO)
         self.memory_cache = MemoryCache()
 
+    def _get_cached_path(self, field_name, path_or_url):
+        """
+        Get the local path for a possibly remote file, invoking either
+        a download or install error message if it's missing.
+        """
+        return self.download_cache.local_path_or_install_error(
+            field_name=field_name,
+            path_or_url=path_or_url,
+            auto_download=self.auto_download,
+            overwrite=self.overwrite_cached_files)
+
     @property
     def gtf(self):
         if self._gtf is None:
-            self.gtf_path = self.download_cache.add_to_cache(
+            self.gtf_path = self._get_cached_path(
                 field_name="gtf",
-                path_or_url=self.gtf_path_or_url,
-                auto_download=self.auto_download,
-                overwrite=self.overwrite_cached_files)
+                path_or_url=self.gtf_path_or_url)
 
             # GTF object wraps the source GTF file from which we get
             # genome annotations. Presents access to each feature
@@ -160,11 +169,9 @@ class Genome(object):
         if self._protein_sequences is None:
             # get the path for peptide FASTA files containing
             # this genome's protein sequences
-            self.protein_fasta_path = self.download_cache.local_path(
+            self.protein_fasta_path = self._get_cached_path(
                 field_name="protein-fasta",
-                path_or_url=self.protein_fasta_path_or_url,
-                auto_download=self.auto_download,
-                overwrite=self.overwrite_cached_files)
+                path_or_url=self.protein_fasta_path_or_url)
 
             self._protein_sequences = SequenceData(
                 fasta_path=self.protein_fasta_path,
@@ -175,11 +182,9 @@ class Genome(object):
     @property
     def transcript_sequences(self):
         if self._transcript_sequences:
-            self.transcript_fasta_path = self.download_cache.local_path(
+            self.transcript_fasta_path = self._get_cached_path(
                 field_name="transcript-fasta",
-                fasta_path_or_url=self.transcript_fasta_path_or_url,
-                auto_download=self.auto_download,
-                overwrite=self.overwrite_cached_files)
+                fasta_path_or_url=self.transcript_fasta_path_or_url)
             self.transcript_sequences = SequenceData(
                 fasta_path=self.transcript_fasta_path,
                 require_ensembl_ids=self.require_ensembl_ids)
@@ -218,15 +223,15 @@ class Genome(object):
         return ("Genome(reference_name=%s, "
                 "annotation_name=%s, "
                 "annotation_version=%s, "
-                "gtf_path=%s, "
-                "transcript_fasta_path=%s, "
-                "protein_fasta_path=%s)" % (
+                "gtf_path_or_url=%s, "
+                "transcript_fasta_path_or_url=%s, "
+                "protein_fasta_path_or_url=%s)" % (
                     self.reference_name,
                     self.annotation_name,
                     self.annotation_version,
-                    self.gtf_path,
-                    self.transcript_fasta_path,
-                    self.protein_fasta_path))
+                    self.gtf_path_or_url,
+                    self.transcript_fasta_path_or_url,
+                    self.protein_fasta_path_or_url))
 
     def __repr__(self):
         return str(self)
@@ -236,9 +241,9 @@ class Genome(object):
             self.reference_name,
             self.annotation_name,
             self.annotation_version,
-            self.gtf_path,
-            self.protein_fasta_path,
-            self.transcript_fasta_path,
+            self.gtf_path_or_url,
+            self.protein_fasta_path_or_url,
+            self.transcript_fasta_path_or_url,
         )
 
     def __eq__(self, other):

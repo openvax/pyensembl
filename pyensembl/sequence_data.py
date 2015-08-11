@@ -78,14 +78,14 @@ class SequenceData(object):
             remove(self.cached_fasta_path)
 
     @property
-    def cached_database_path(self):
-        return self.cached_fasta_path + ".db"
+    def database_path(self):
+        return self.fasta_path + ".db"
 
     def _create_or_open_fasta_db(self):
         """Create an index database from a transcript sequence FASTA file"""
         return SeqIO.index_db(
-            self.cached_database_path,
-            self.cached_fasta_path,
+            self.database_path,
+            self.fasta_path,
             "fasta")
 
     def index(self, force=False):

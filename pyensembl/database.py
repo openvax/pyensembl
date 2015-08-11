@@ -34,21 +34,16 @@ class Database(object):
     writing SQL queries directly.
     """
 
-    def __init__(self, gtf, auto_download=False):
+    def __init__(self, gtf, create_index_if_missing=True):
         """
         Parameters
         ----------
         gtf : pyensembl.GTF instance
             Object which parses GTF annotation files and presents their
             contents as Pandas DataFrames
-
-        auto_download : bool, optional (default = False)
-            If GTF file is missing, force the `gtf` object to download
-            and parse it. If file is missing and auto_download = False then
-            raise an exception.
         """
         self.gtf = gtf
-        self.auto_download = auto_download
+        self.create_index_if_missing = create_index_if_missing
         self._connection = None
 
         self.logger = logging.getLogger()
@@ -58,8 +53,7 @@ class Database(object):
         return other.__class__ is Database and self.gtf == other.gtf
 
     def __str__(self):
-        return ("Database(gtf=%s, auto_download=%s)" % (
-            self.gtf, self.auto_download))
+        return ("Database(gtf=%s)" % (self.gtf, ))
 
     def __hash__(self):
         return hash(self.gtf)
@@ -68,8 +62,7 @@ class Database(object):
         if not self.gtf:
             raise ValueError("No GTF supplied to this Database: %s" %
                              str(self))
-
-        base = self.gtf.base_filename()
+        base = self.gtf.gtf_base_filename
         return base + ".db"
 
     def local_db_path(self):
@@ -77,7 +70,7 @@ class Database(object):
             raise ValueError("No GTF supplied to this Database: %s" %
                              str(self))
 
-        dirpath = self.gtf.cached_dir()
+        dirpath = self.gtf.cache_dir
         filename = self.local_db_filename()
         return join(dirpath, filename)
 
@@ -248,13 +241,10 @@ class Database(object):
         connection = self._connect_if_exists()
         if connection:
             return connection
-        if self.auto_download:
+        if self.create_index_if_missing:
             return self._create_database()
-        raise ValueError("Genome annotation data is not currently "
-                         "installed for this genome source. Run %s "
-                         "or call %s" % (
-                             self.gtf.gtf_source.install_string_console(),
-                             self.gtf.gtf_source.install_string_python()))
+        raise ValueError("Genome annotation database for %s not indexed" % (
+            self.gtf,))
 
     @memoize
     def columns(self, table_name):

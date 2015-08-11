@@ -130,7 +130,12 @@ class GTF(object):
         """
         return load_gtf_as_dataframe(self.gtf_path)
 
-    def dataframe(self, contig=None, feature=None, strand=None):
+    def dataframe(
+            self,
+            contig=None,
+            feature=None,
+            strand=None,
+            save_to_disk=True):
         """
         Load genome entries as a DataFrame, optionally restricted to
         particular contig or feature type.
@@ -147,17 +152,7 @@ class GTF(object):
         key = (contig, feature, strand)
 
         if key not in self._dataframes:
-            csv_path = self.data_subset_path(
-                contig=contig,
-                feature=feature,
-                strand=strand,
-                distinct=False)
-
-            def cached_loader_fn():
-                # pylint: disable=no-member
-                # pylint has trouble with df.seqname and similar
-                # statements in this function.
-
+            def _construct_df():
                 full_df = self._load_full_dataframe()
                 assert len(full_df) > 0, \
                     "Dataframe representation of genomic database empty!"
@@ -166,7 +161,7 @@ class GTF(object):
                 # may still want to access the full dataset
                 df = full_df
                 if contig:
-                    df = df[df.seqname == contig]
+                    df = df[df["seqname"] == contig]
                     if len(df) == 0:
                         raise ValueError("Contig not found: %s" % (contig,))
 
@@ -175,18 +170,26 @@ class GTF(object):
                     if len(df) == 0:
                         # check to make sure feature was somewhere in
                         # the full dataset before returning an empty dataframe
-                        features = full_df.feature.unique()
+                        features = full_df["feature"].unique()
                         if feature not in features:
                             raise ValueError(
                                 "Feature not found: %s" % (feature,))
                 if strand:
-                    df = df[df.strand == strand]
+                    df = df[df["strand"] == strand]
 
                 return df
-
-            self._dataframes[key] = self.memory_cache.cached_dataframe(
-                csv_path=csv_path,
-                compute_fn=cached_loader_fn)
+            if save_to_disk:
+                csv_path = self.data_subset_path(
+                    contig=contig,
+                    feature=feature,
+                    strand=strand,
+                    distinct=False)
+                df = self.memory_cache.cached_dataframe(
+                    csv_path=csv_path,
+                    compute_fn=_construct_df)
+            else:
+                df = _construct_df()
+            self._dataframes[key] = df
 
         return self._dataframes[key]
 

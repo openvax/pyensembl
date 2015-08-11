@@ -3,7 +3,7 @@ Test all methods which return collections of gene names that aren't converting
 from some other type of name or ID.
 """
 from __future__ import absolute_import, print_function
-from pyensembl import EnsemblRelease
+from pyensembl import ensembl_grch38
 from .test_common import test_ensembl_releases
 
 # make sure that familia
@@ -26,13 +26,12 @@ def test_all_gene_names(ensembl):
         assert gene_name in gene_names, \
             "Missing gene name %s from %s" % (gene_name, ensembl)
 
-def test_gene_names_at_locus_ensembl77_hla_a():
+def test_gene_names_at_locus_grch38_hla_a():
     # chr6:29,945,884  is a position for HLA-A
     # based on:
     # http://useast.ensembl.org/Homo_sapiens/Gene/
     # Summary?db=core;g=ENSG00000206503;r=6:29941260-29945884
-    names = (EnsemblRelease(77, auto_download=True).
-             gene_names_at_locus(6, 29945884))
+    names = ensembl_grch38.gene_names_at_locus(6, 29945884)
     assert names == ["HLA-A"], "Expected gene name HLA-A, got: %s" % (names,)
 
 @test_ensembl_releases()

@@ -148,7 +148,7 @@ class DownloadCache(object):
         cache_filename = self.cached_filename_function(path_or_url)
         return join(self.cache_directory_path, cache_filename)
 
-    def add_to_cache(
+    def download_or_copy_if_necessary(
             self,
             path_or_url,
             auto_download=False,
@@ -157,8 +157,10 @@ class DownloadCache(object):
         Download a remote file or copy
         Get the local path to a possibly remote file.
 
-        Always download remote  files if self.force_download is True or if the
-        file is missing from the cache directory and self.auto_download is True.
+        Download if file is missing from the cache directory and `auto_download`
+        is True. Download even if local file exists if both `auto_download` and
+        `overwrite` are True.
+
         If the file is on the local file system then return its path, unless
         self.copy_local_to_cache is True, and then copy it to the cache first.
 
@@ -216,7 +218,7 @@ class DownloadCache(object):
             auto_download=False,
             overwrite=False):
         try:
-            return self.add_to_cache(
+            return self.download_or_copy_if_necessary(
                 path_or_url,
                 auto_download=auto_download,
                 overwrite=overwrite)
