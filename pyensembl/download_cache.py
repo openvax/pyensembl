@@ -20,14 +20,17 @@ import datacache
 CACHE_BASE_SUBDIR = "pyensembl"
 
 def cache_subdirectory(
-        annotation_name=None,
-        annotation_version=None,
-        reference_name=None):
-    result = CACHE_BASE_SUBDIR
-    for subdir in [reference_name, annotation_name, annotation_version]:
-        if subdir is not None:
-            result = join(result, str(subdir))
-    return result
+        reference_name="",
+        annotation_name="",
+        annotation_version=""):
+    """
+    Which cache subdirectory to use for a given annotation database
+    over a particular reference. All arguments can be omitted to just get
+    the base subdirectory for all pyensembl cached datasets.
+    """
+    reference_dir = join(CACHE_BASE_SUBDIR, reference_name)
+    annotation_dir = "%s%s" % (annotation_name, annotation_version)
+    return join(reference_dir, annotation_dir)
 
 class MissingRemoteFile(Exception):
     def __init__(self, url):

@@ -165,7 +165,9 @@ class Genome(object):
     def _create_gtf_database(self):
         # Database object turns the GTF dataframes into sqlite3 tables
         # and wraps them with methods like `query_one`
-        self._db = Database(gtf=self.gtf)
+        self._db = Database(
+            gtf=self.gtf,
+            cache_subdirectory=self.download_cache.cache_subdirectory)
         # if we forced a download, also force a reindexing
         self._db.create(force=self.overwrite_cached_files)
 

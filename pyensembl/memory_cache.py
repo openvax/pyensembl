@@ -28,11 +28,9 @@ import logging
 from os import remove, stat
 from os.path import exists
 
-from six.moves import cPickle as pickle
 import pandas as pd
 
-# Use a protocol that works with both Python 2 and 3
-PICKLE_PROTOCOL = 2
+from .common import load_pickle, dump_pickle
 
 class MemoryCache(object):
     def __init__(self):
@@ -113,11 +111,9 @@ class MemoryCache(object):
             return self._memory_cache[path]
 
         if exists(path) and not self.is_empty(path):
-            with open(path, 'rb') as f:
-                obj = pickle.load(f)
+            obj = load_pickle(path)
         else:
             obj = compute_fn()
-            with open(path, 'wb') as f:
-                pickle.dump(obj, f, PICKLE_PROTOCOL)
+            dump_pickle(obj, path)
         self._memory_cache[path] = obj
         return obj

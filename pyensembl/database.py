@@ -21,7 +21,7 @@ import sqlite3
 import datacache
 from typechecks import require_integer, require_string
 
-from .common import CACHE_SUBDIR, memoize
+from .common import memoize
 from .locus import normalize_chromosome, normalize_strand, Locus
 
 # any time we update the database schema, increment this version number
@@ -34,16 +34,30 @@ class Database(object):
     writing SQL queries directly.
     """
 
-    def __init__(self, gtf, create_index_if_missing=True):
+    def __init__(
+            self,
+            gtf,
+            cache_subdirectory,
+            create_database_if_missing=True):
         """
         Parameters
         ----------
         gtf : pyensembl.GTF instance
             Object which parses GTF annotation files and presents their
             contents as Pandas DataFrames
+
+        cache_subdirectory : str
+            This argument is a relic of our use of datacache, which constructs
+            full paths internally and can only be given subdirectories
+            relative to a dynamically decided root cache dir.
+
+        create_database_if_missing : bool, optional
+            If database does not exist, should we create it from the GTF's
+            entries?
         """
         self.gtf = gtf
-        self.create_index_if_missing = create_index_if_missing
+        self.cache_subdirectory = cache_subdirectory
+        self.create_database_if_missing = create_database_if_missing
         self._connection = None
 
         self.logger = logging.getLogger()
@@ -206,7 +220,7 @@ class Database(object):
             dataframes=dataframes,
             indices=indices_dict,
             primary_keys=primary_keys,
-            subdir=CACHE_SUBDIR,
+            subdir=self.cache_subdirectory,
             overwrite=force,
             version=DATABASE_SCHEMA_VERSION)
         return self._connection
@@ -241,7 +255,7 @@ class Database(object):
         connection = self._connect_if_exists()
         if connection:
             return connection
-        if self.create_index_if_missing:
+        if self.create_database_if_missing:
             return self._create_database()
         raise ValueError("Genome annotation database for %s not indexed" % (
             self.gtf,))
