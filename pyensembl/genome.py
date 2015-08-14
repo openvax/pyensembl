@@ -20,6 +20,8 @@ around an arbitrary genomic database.
 from __future__ import print_function, division, absolute_import
 import logging
 
+from skbio import DNASequence, ProteinSequence
+
 from .common import memoize
 from .memory_cache import MemoryCache
 from .download_cache import DownloadCache
@@ -106,6 +108,7 @@ class Genome(object):
             decompress_on_download=self.decompress_on_download,
             copy_local_files_to_cache=self.copy_local_files_to_cache,
             install_string_function=self.install_string)
+        self.cache_directory_path = self.download_cache.cache_directory_path
 
         self.gtf_path_or_url = gtf_path_or_url
         self._gtf = self._db = None
@@ -125,13 +128,17 @@ class Genome(object):
         Get the local path for a possibly remote file, invoking either
         a download or install error message if it's missing.
         """
+        assert field_name, "Expected non-empty field name"
+        assert path_or_url, "Expected non-empty path_or_url"
         return self.download_cache.local_path_or_install_error(
             field_name=field_name,
             path_or_url=path_or_url,
             auto_download=self.auto_download,
             overwrite=self.overwrite_cached_files)
 
-    def _create_gtf_object(self):
+    def _load_gtf(self):
+        if not self.gtf_path_or_url:
+            raise ValueError("No GTF source for %s" % self)
         self.gtf_path = self._get_cached_path(
             field_name="gtf",
             path_or_url=self.gtf_path_or_url)
@@ -139,66 +146,82 @@ class Genome(object):
         # GTF object wraps the source GTF file from which we get
         # genome annotations. Presents access to each feature
         # annotations as a pandas.DataFrame.
-        self._gtf = GTF(gtf_path=self.gtf_path)
+        self._gtf = GTF(
+            gtf_path=self.gtf_path,
+            cache_directory_path=self.cache_directory_path)
 
-    def _create_transcript_sequences(self):
+    def _load_transcript_sequences(self):
+        if not self.transcript_fasta_path_or_url:
+            raise ValueError("No transcript FASTA source for %s" % self)
         self.transcript_fasta_path = self._get_cached_path(
             field_name="transcript-fasta",
             path_or_url=self.transcript_fasta_path_or_url)
         self._transcript_sequences = SequenceData(
             fasta_path=self.transcript_fasta_path,
-            require_ensembl_ids=self.require_ensembl_ids)
+            require_ensembl_ids=self.require_ensembl_ids,
+            sequence_type=DNASequence,
+            cache_directory_path=self.cache_directory_path)
+
         self._transcript_sequences.index(force=self.overwrite_cached_files)
 
-    def _create_protein_sequences(self):
+    def _load_protein_sequences(self, overwrite_cached_files=False):
         # get the path for peptide FASTA files containing
         # this genome's protein sequences
+        if not self.protein_fasta_path_or_url:
+            raise ValueError("No protein FASTA source for %s" % self)
         self.protein_fasta_path = self._get_cached_path(
             field_name="protein-fasta",
             path_or_url=self.protein_fasta_path_or_url)
 
         self._protein_sequences = SequenceData(
             fasta_path=self.protein_fasta_path,
-            require_ensembl_ids=self.require_ensembl_ids)
+            require_ensembl_ids=self.require_ensembl_ids,
+            sequence_type=ProteinSequence,
+            cache_directory_path=self.cache_directory_path)
+
         self._protein_sequences.index(force=self.overwrite_cached_files)
 
-    def _create_gtf_database(self):
+    def _load_gtf_database(self, overwrite_cached_files=False):
         # Database object turns the GTF dataframes into sqlite3 tables
         # and wraps them with methods like `query_one`
         self._db = Database(
             gtf=self.gtf,
+            # TODO: change Database to use cache_directory_path instead
             cache_subdirectory=self.download_cache.cache_subdirectory)
         # if we forced a download, also force a reindexing
         self._db.create(force=self.overwrite_cached_files)
 
-    def get_all_data(self):
-        self._create_gtf_object()
-        self._create_gtf_database()
-        self._create_transcript_sequences()
-        self._create_protein_sequences()
+    def load_all_data(self):
+        """
+        Load all data sources (annotation database and sequence dictionaries)
+        """
+        self._load_gtf()
+        self._load_gtf_database()
+        self._load_transcript_sequences()
+        self._load_protein_sequences()
 
     @property
     def gtf(self):
         if self._gtf is None:
-            self._create_gtf_object()
+            self._load_gtf()
         return self._gtf
 
     @property
     def db(self):
         if self._db is None:
-            self._create_gtf_database()
+            self._load_gtf_database()
         return self._db
 
     @property
     def protein_sequences(self):
         if self._protein_sequences is None:
-            self.create_protein_sequences()
+            self._load_protein_sequences()
         return self._protein_sequences
 
     @property
     def transcript_sequences(self):
-        if self._transcript_sequences:
-            self._create_transcript_sequences()
+        if self._transcript_sequences is None:
+            self._load_transcript_sequences()
         return self._transcript_sequences
 
     def install_string(self, missing_files):

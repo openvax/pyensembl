@@ -141,7 +141,7 @@ def run():
         if args.action == "delete":
             genome.download_cache.delete_all_files()
         elif args.action == "install":
-            genome.get_all_data()
+            genome.load_all_data()
         else:
             raise ValueError("Invalid action: %s" % args.action)
 

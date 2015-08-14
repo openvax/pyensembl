@@ -8,14 +8,24 @@ from os.path import exists
 from nose.tools import raises
 from pyensembl import SequenceData
 
+from skbio import DNASequence
 from .data import data_path
 
 FASTA_PATH = data_path("mouse.ensembl.81.partial.ENSMUSG00000017167.fa")
 
-def test_get_sequence():
-    seqs = SequenceData(FASTA_PATH)
+def test_reverse_sequence():
+    seqs = SequenceData(FASTA_PATH, sequence_type=DNASequence)
     seq = seqs.get("ENSMUST00000138942")
     assert len(seq) > 0
+    # make sure returned sequence supports complement and reverse methods:
+    assert len(seq.complement()) == len(seq)
+
+def test_complement_sequence():
+    seqs = SequenceData(FASTA_PATH, sequence_type=DNASequence)
+    seq = seqs.get("ENSMUST00000138942")
+    assert len(seq) > 0
+    # make sure returned sequence supports complement and reverse methods:
+    assert len(seq.reverse()) == len(seq)
 
 @raises(ValueError)
 def test_check_ensembl_id():

@@ -23,7 +23,7 @@ def test_gtf_creates_csv_files_in_cache_dir():
     index files there.
     """
     with TemporaryDirectory() as tmpdir:
-        gtf_object = GTF(gtf_path, cache_dir=tmpdir)
+        gtf_object = GTF(gtf_path, cache_directory_path=tmpdir)
         csv_path = gtf_object.data_subset_path()
         assert tmpdir in csv_path, \
             "Expected CSV path %s to contain cache_dir" % csv_path

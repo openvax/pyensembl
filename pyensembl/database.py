@@ -84,7 +84,7 @@ class Database(object):
             raise ValueError("No GTF supplied to this Database: %s" %
                              str(self))
 
-        dirpath = self.gtf.cache_dir
+        dirpath = self.gtf.cache_directory_path
         filename = self.local_db_filename()
         return join(dirpath, filename)
 

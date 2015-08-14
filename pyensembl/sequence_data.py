@@ -14,7 +14,7 @@
 
 from __future__ import print_function, division, absolute_import
 from os import remove
-from os.path import exists, abspath
+from os.path import exists, abspath, split, join
 import gzip
 import logging
 
@@ -27,17 +27,34 @@ class SequenceData(object):
     """
     Container for reference nucleotide and amino acid sequenes.
     """
-    def __init__(self, fasta_path, require_ensembl_ids=False):
+    def __init__(
+            self,
+            fasta_path,
+            require_ensembl_ids=False,
+            sequence_type=str,
+            cache_directory_path=None):
         self.fasta_path = abspath(fasta_path)
+        self.fasta_directory_path, self.fasta_filename = split(self.fasta_path)
+        if cache_directory_path:
+            self.cache_directory_path = cache_directory_path
+        else:
+            self.cache_directory_path = self.fasta_directory_path
         if not exists(self.fasta_path):
             raise ValueError("Couldn't find FASTA file %s" % (self.fasta_path,))
         self.require_ensembl_ids = require_ensembl_ids
-        self.fasta_dictionary_pickle_path = self.fasta_path + ".pickle"
+        self.sequence_type = sequence_type
+        self.fasta_dictionary_filename = self.fasta_filename + ".pickle"
+        self.fasta_dictionary_pickle_path = join(
+            self.cache_directory_path,
+            self.fasta_dictionary_filename)
+        self._init_lazy_fields()
+
+    def _init_lazy_fields(self):
         self._fasta_dictionary = None
         self._fasta_keys = None
 
     def clear_cache(self):
-        self._fasta_dictionary = None
+        self._init_lazy_fields()
         if exists(self.fasta_dictionary_pickle_path):
             remove(self.fasta_dictionary_pickle_path)
 
@@ -69,8 +86,9 @@ class SequenceData(object):
         else:
             f = open(self.fasta_path, "r")
 
+        sequence_type = self.sequence_type
         for (key, seq) in parse_fasta(f, label_to_name=lambda s: s.split()[0]):
-            fasta_dictionary[key] = seq
+            fasta_dictionary[key] = sequence_type(seq)
         f.close()
         return fasta_dictionary
 
@@ -89,6 +107,11 @@ class SequenceData(object):
 
         self._fasta_dictionary = self._parse_fasta_dictionary()
         dump_pickle(self._fasta_dictionary, self.fasta_dictionary_pickle_path)
+
+    def index(self, force=False):
+        if force:
+            self.clear_cache()
+        self._load_or_create_fasta_dictionary_pickle()
 
     @property
     def fasta_dictionary(self):

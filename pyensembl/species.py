@@ -86,23 +86,6 @@ def add_species(latin_name, synonyms, reference_assemblies):
         _reference_names_to_species[reference_name] = species
     return species
 
-human = add_species(
-    latin_name="homo_sapiens",
-    synonyms=["human"],
-    reference_assemblies={
-        "GRCh38": (76, MAX_ENSEMBL_RELEASE),
-        "GRCh37": (55, 75),
-        "NCBI36": (54, 54),
-    })
-
-mouse = add_species(
-    latin_name="mus_musculus",
-    synonyms=["mouse", "house mouse"],
-    # TODO: fix release range
-    reference_assemblies={
-        "GRCm38": (78, MAX_ENSEMBL_RELEASE)
-    })
-
 
 def normalize_species_name(name):
     """
@@ -138,7 +121,25 @@ def max_ensembl_release(reference_name):
     (_, max_release) = species.reference_assemblies[reference_name]
     return max_release
 
+human = add_species(
+    latin_name="homo_sapiens",
+    synonyms=["human"],
+    reference_assemblies={
+        "GRCh38": (76, MAX_ENSEMBL_RELEASE),
+        "GRCh37": (55, 75),
+        "NCBI36": (54, 54),
+    })
+
+mouse = add_species(
+    latin_name="mus_musculus",
+    synonyms=["mouse", "house mouse"],
+    # TODO: fix release range
+    reference_assemblies={
+        "GRCm38": (78, MAX_ENSEMBL_RELEASE)
+    })
+
 """
+TODO: add all these species
 
 _latin_to_common_names = {
     "ailuropoda_melanoleuca": ["panda"],

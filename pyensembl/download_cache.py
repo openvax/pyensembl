@@ -28,6 +28,12 @@ def cache_subdirectory(
     over a particular reference. All arguments can be omitted to just get
     the base subdirectory for all pyensembl cached datasets.
     """
+    if reference_name is None:
+        reference_name = ""
+    if annotation_name is None:
+        annotation_name = ""
+    if annotation_version is None:
+        annotation_version = ""
     reference_dir = join(CACHE_BASE_SUBDIR, reference_name)
     annotation_dir = "%s%s" % (annotation_name, annotation_version)
     return join(reference_dir, annotation_dir)
@@ -143,6 +149,7 @@ class DownloadCache(object):
         return str(self)
 
     def is_url_format(self, path_or_url):
+        assert path_or_url, "Expected non-empty string for path_or_url"
         return "://" in path_or_url
 
     def cached_path(self, path_or_url):
@@ -150,6 +157,7 @@ class DownloadCache(object):
         When downloading remote files, the default behavior is to name local
         files the same as their remote counterparts.
         """
+        assert path_or_url, "Expected non-empty string for path_or_url"
         cached_filename = split(path_or_url)[1]
         if len(cached_filename) == 0:
             raise ValueError("Can't determine local filename for %s" % (
@@ -182,6 +190,7 @@ class DownloadCache(object):
         overwrite : bool, optional
             Overwrite existing copy if it exists
         """
+        assert path_or_url, "Expected non-empty string for path_or_url"
         cached_path = self.cached_path(path_or_url)
 
         if exists(cached_path) and not overwrite:

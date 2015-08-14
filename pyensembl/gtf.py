@@ -28,7 +28,7 @@ class GTF(object):
     Represent its contents as a Pandas DataFrame (optionally filtered
     by locus, column, contig, &c).
     """
-    def __init__(self, gtf_path, cache_dir=None):
+    def __init__(self, gtf_path, cache_directory_path=None):
 
         if not (gtf_path.endswith(".gtf") or gtf_path.endswith(".gtf.gz")):
             raise ValueError("Wrong extension for GTF file: %s" % (gtf_path,))
@@ -37,12 +37,15 @@ class GTF(object):
         if not exists(self.gtf_path):
             raise ValueError("GTF file %s does not exist" % (self.gtf_path,))
 
-        self.gtf_dir_path, self.gtf_filename = split(self.gtf_path)
+        self.gtf_directory_path, self.gtf_filename = split(self.gtf_path)
         self.gtf_base_filename = splitext(self.gtf_filename)[0]
 
         # if cache directory isn't given then put cached files
         # alongside the GTF
-        self.cache_dir = cache_dir if cache_dir else self.gtf_dir_path
+        if cache_directory_path:
+            self.cache_directory_path = cache_directory_path
+        else:
+            self.cache_directory_path = self.gtf_directory_path
 
         self.memory_cache = MemoryCache()
 
@@ -114,7 +117,7 @@ class GTF(object):
         if distinct:
             csv_filename += ".distinct"
         csv_filename += extension
-        return join(self.cache_dir, csv_filename)
+        return join(self.cache_directory_path, csv_filename)
 
     def _load_full_dataframe(self):
         """
