@@ -20,8 +20,6 @@ around an arbitrary genomic database.
 from __future__ import print_function, division, absolute_import
 import logging
 
-from skbio import DNASequence, ProteinSequence
-
 from .common import memoize
 from .memory_cache import MemoryCache
 from .download_cache import DownloadCache
@@ -159,7 +157,6 @@ class Genome(object):
         self._transcript_sequences = SequenceData(
             fasta_path=self.transcript_fasta_path,
             require_ensembl_ids=self.require_ensembl_ids,
-            sequence_type=DNASequence,
             cache_directory_path=self.cache_directory_path)
 
         self._transcript_sequences.index(force=self.overwrite_cached_files)
@@ -176,7 +173,6 @@ class Genome(object):
         self._protein_sequences = SequenceData(
             fasta_path=self.protein_fasta_path,
             require_ensembl_ids=self.require_ensembl_ids,
-            sequence_type=ProteinSequence,
             cache_directory_path=self.cache_directory_path)
 
         self._protein_sequences.index(force=self.overwrite_cached_files)

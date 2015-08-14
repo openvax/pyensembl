@@ -31,25 +31,6 @@ def test_sequence_type():
         seq = seqs_str.get("ENSMUST00000138942")
         assert isinstance(seq, str)
 
-
-def test_reverse_complement_sequence():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        seqs = SequenceData(
-            FASTA_PATH,
-            sequence_type=DNASequence,
-            cache_directory_path=tmpdir)
-        seq = seqs.get("ENSMUST00000138942")
-        assert len(seq.reverse_complement()) == len(seq)
-
-def test_complement_sequence():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        seqs = SequenceData(
-            FASTA_PATH,
-            sequence_type=DNASequence,
-            cache_directory_path=tmpdir)
-        seq = seqs.get("ENSMUST00000138942")
-        assert len(seq.complement()) == len(seq)
-
 @raises(ValueError)
 def test_check_ensembl_id():
     with tempfile.TemporaryDirectory() as tmpdir:
