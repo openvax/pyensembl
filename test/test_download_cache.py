@@ -11,7 +11,8 @@ def test_download_cache_missing_file():
     # clear the cache
     download_cache.delete_all_files()
     try:
-        download_cache.download_or_copy_if_necessary("test", "test.file")
+        download_cache.download_or_copy_if_necessary(
+            path_or_url="test_file_doesn_not_exist.file")
         assert False, "Should not succeed"
     except MissingLocalFile:
         pass

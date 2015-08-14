@@ -277,7 +277,7 @@ class Genome(object):
             # GTF and SequenceData objects
             if hasattr(maybe_fn, "clear_cache"):
                 maybe_fn.clear_cache()
-        self.download_cache.delete_files_except_suffixes(["gtf", "fasta"])
+        self.download_cache.delete_files(exclude_suffixes=[".gtf", ".fasta"])
 
     def all_feature_values(
             self,

@@ -35,6 +35,7 @@ def test_mouse_ENSMUSG00000017167():
         gtf_path_or_url=MOUSE_ENSMUSG00000017167_PATH,
         transcript_fasta_path_or_url=MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH,
         protein_fasta_path_or_url=MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH)
+    genome.clear_cache()
     genes_cntnap1 = genome.genes_by_name("Cntnap1")
     eq_(len(genes_cntnap1), 1)
     gene_cntnap1 = genes_cntnap1[0]
@@ -47,9 +48,9 @@ def test_mouse_ENSMUSG00000017167():
     ]
     eq_(len(transcripts_coding_cntnap1), 1)
     transcript_cntnap1 = transcripts_coding_cntnap1[0]
-    eq_(transcript_cntnap1.sequence[:120].sequence,
+    eq_(transcript_cntnap1.sequence[:120],
         ("GAGAGAAGGAGAGAGAGAGAGAGAGAGAGAGAGAGAGAGAGAGAGAGAGAGAGAGAGAGA"
          "GAGAGAGAGAGATTGGGGGTAGGAGAGAGGGAAGGGTGGATAAGGACGGAAAAAAGCTTT"))
-    eq_(transcript_cntnap1.protein_sequence[:120].sequence,
+    eq_(transcript_cntnap1.protein_sequence[:120],
         ("MMSLRLFSILLATVVSGAWGWGYYGCNEELVGPLYARSLGASSYYGLFTTARFARLHGIS"
          "GWSPRIGDPNPWLQIDLMKKHRIRAVATQGAFNSWDWVTRYMLLYGDRVDSWTPFYQKGH"))

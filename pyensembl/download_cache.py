@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from os import listdir, remove
 from os.path import join, exists, split, abspath
 from shutil import copy2, rmtree
 
@@ -267,6 +268,14 @@ class DownloadCache(object):
             return results
 
         self._raise_missing_file_error(missing_urls_dict)
+
+    def delete_files(self, exclude_suffixes=[]):
+        for filename in listdir(self.cache_directory_path):
+            if any(filename.endswith(ext) for ext in exclude_suffixes):
+                continue
+            path = join(self.cache_directory_path, filename)
+            print("Deleting %s" % path)
+            remove(path)
 
     def delete_all_files(self):
         rmtree(self.cache_directory_path)
