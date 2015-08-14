@@ -159,9 +159,7 @@ class Genome(object):
             require_ensembl_ids=self.require_ensembl_ids,
             cache_directory_path=self.cache_directory_path)
 
-        self._transcript_sequences.index(force=self.overwrite_cached_files)
-
-    def _load_protein_sequences(self, overwrite_cached_files=False):
+    def _load_protein_sequences(self):
         # get the path for peptide FASTA files containing
         # this genome's protein sequences
         if not self.protein_fasta_path_or_url:
@@ -175,26 +173,28 @@ class Genome(object):
             require_ensembl_ids=self.require_ensembl_ids,
             cache_directory_path=self.cache_directory_path)
 
-        self._protein_sequences.index(force=self.overwrite_cached_files)
-
-    def _load_gtf_database(self, overwrite_cached_files=False):
+    def _load_gtf_database(self):
         # Database object turns the GTF dataframes into sqlite3 tables
         # and wraps them with methods like `query_one`
         self._db = Database(
             gtf=self.gtf,
             # TODO: change Database to use cache_directory_path instead
             cache_subdirectory=self.download_cache.cache_subdirectory)
-        # if we forced a download, also force a reindexing
-        self._db.create(force=self.overwrite_cached_files)
 
     def load_all_data(self):
         """
-        Load all data sources (annotation database and sequence dictionaries)
+        Load all data sources (annotation database and sequence dictionaries),
+        create all cached databases.
         """
         self._load_gtf()
         self._load_gtf_database()
+        self._db.create(force=self.overwrite_cached_files)
+
         self._load_transcript_sequences()
+        self._transcript_sequences.index(force=self.overwrite_cached_files)
+
         self._load_protein_sequences()
+        self._protein_sequences.index(force=self.overwrite_cached_files)
 
     @property
     def gtf(self):

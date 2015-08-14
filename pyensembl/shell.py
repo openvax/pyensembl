@@ -17,17 +17,22 @@
 """
 Manipulate pyensembl's local cache.
 
-    %(prog)s {install,delete} [--release XXX --species human...]
+    %(prog)s {install, delete, delete-sequence-cache} [--release XXX --species human...]
 
-To install the latest Ensembl release:
+To install the latest Ensembl release (default species is human):
     %(prog)s install
 
 To install particular Ensembl human release(s):
     %(prog)s install --release 75 77
 
-
 To install particular Ensembl mouse release(s):
     %(prog)s install --release 75 77 --species mouse
+
+To delete all downloaded and cached data for a particular Ensembl release:
+    %(prog)s delete --release 75 --species human
+
+To delete only cached data related to transcript and protein sequences:
+    %(prog)s delete-sequence-cache --release 75
 
 To install any genome:
     %(prog)s install \
@@ -35,6 +40,8 @@ To install any genome:
  --gtf URL_OR_PATH \
  --transcript-fasta URL_OR_PATH \
  --protein-fasta URL_OR_PATH
+
+
 """
 
 from __future__ import absolute_import
@@ -96,7 +103,9 @@ def run():
         default=None,
         help="URL or local path to a FASTA file containing protein data.")
 
-    parser.add_argument("action", choices=("install", "delete"),
+    parser.add_argument("action",
+        type=lambda arg: arg.lower().strip(),
+        choices=("install", "delete", "delete-sequence-cache"),
         help="\"install\" will download and index any data that is  not "
         "currently downloaded or indexed. \"delete\" will delete all data "
         "associated with a genome annotation.")
@@ -136,10 +145,14 @@ def run():
     if len(genomes) == 0:
         print("ERROR: No genomes selected!\n")
         parser.print_help()
+
     for genome in genomes:
         print("-- Running '%s' for %s" % (args.action, genome))
         if args.action == "delete":
             genome.download_cache.delete_all_files()
+        elif args.action == "delete-sequence-cache":
+            genome.transcript_sequences.clear_cache()
+            genome.protein_sequences.clear_cache()
         elif args.action == "install":
             genome.load_all_data()
         else:
