@@ -113,7 +113,7 @@ def test_sequence_parts(ensembl):
             len(transcript)))
     eq_(
         combined_string,
-        full_sequence,
+        full_sequence.sequence,
         "Expected FOXP3-001 sequence:\n%s\n\n5' UTR + CDS + 3' UTR:\n%s" % (
             full_sequence,
             combined_string))

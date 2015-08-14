@@ -4,6 +4,7 @@ and that we're able to clear and regenrate its cached representation of
 a FASTA dictionary
 """
 from os.path import exists
+import tempfile
 
 from nose.tools import raises
 from pyensembl import SequenceData
@@ -13,45 +14,74 @@ from .data import data_path
 
 FASTA_PATH = data_path("mouse.ensembl.81.partial.ENSMUSG00000017167.fa")
 
-def test_reverse_sequence():
-    seqs = SequenceData(FASTA_PATH, sequence_type=DNASequence)
-    seq = seqs.get("ENSMUST00000138942")
-    assert len(seq) > 0
-    # make sure returned sequence supports complement and reverse methods:
-    assert len(seq.complement()) == len(seq)
+def test_sequence_type():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        seqs_dna = SequenceData(
+            FASTA_PATH,
+            sequence_type=DNASequence,
+            cache_directory_path=tmpdir)
+        seq = seqs_dna.get("ENSMUST00000138942")
+        assert isinstance(seq, DNASequence)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        seqs_str = SequenceData(
+            FASTA_PATH,
+            sequence_type=str,
+            cache_directory_path=tmpdir)
+        seq = seqs_str.get("ENSMUST00000138942")
+        assert isinstance(seq, str)
+
+
+def test_reverse_complement_sequence():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        seqs = SequenceData(
+            FASTA_PATH,
+            sequence_type=DNASequence,
+            cache_directory_path=tmpdir)
+        seq = seqs.get("ENSMUST00000138942")
+        assert len(seq.reverse_complement()) == len(seq)
 
 def test_complement_sequence():
-    seqs = SequenceData(FASTA_PATH, sequence_type=DNASequence)
-    seq = seqs.get("ENSMUST00000138942")
-    assert len(seq) > 0
-    # make sure returned sequence supports complement and reverse methods:
-    assert len(seq.reverse()) == len(seq)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        seqs = SequenceData(
+            FASTA_PATH,
+            sequence_type=DNASequence,
+            cache_directory_path=tmpdir)
+        seq = seqs.get("ENSMUST00000138942")
+        assert len(seq.complement()) == len(seq)
 
 @raises(ValueError)
 def test_check_ensembl_id():
-    seqs = SequenceData(FASTA_PATH, require_ensembl_ids=True)
-    seqs.get("WeirdID")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        seqs = SequenceData(
+            FASTA_PATH,
+            require_ensembl_ids=True,
+            cache_directory_path=tmpdir)
+        seqs.get("WeirdID")
 
 def test_missing_sequence():
-    seqs = SequenceData(FASTA_PATH)
-    seq = seqs.get("NotInFasta")
-    assert seq is None, "Should get None back for missing sequence"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        seqs = SequenceData(FASTA_PATH, cache_directory_path=tmpdir)
+        seq = seqs.get("NotInFasta")
+        assert seq is None, "Should get None back for missing sequence"
 
 def test_clear_cache():
-    seqs = SequenceData(FASTA_PATH)
-    assert not seqs._fasta_dictionary, \
-        "Expected _fasta_dictionary to load lazily"
-    seqs._load_or_create_fasta_dictionary_pickle()
-    assert len(seqs._fasta_dictionary) > 0, \
-        "FASTA dictionary didn't get created"
-    seqs.clear_cache()
-    assert not seqs._fasta_dictionary, \
-        "Expected FASTA dictionary to be empty after clear_cache()"
-    assert not exists(seqs.fasta_dictionary_pickle_path), \
-        "Cached pickle file should have been deleted"
-    seqs._load_or_create_fasta_dictionary_pickle()
-    assert exists(seqs.fasta_dictionary_pickle_path), \
-        "Cached pickle file should have been created"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        seqs = SequenceData(FASTA_PATH, cache_directory_path=tmpdir)
+        assert not seqs._fasta_dictionary, \
+            "Expected _fasta_dictionary to load lazily"
 
+        seqs._load_or_create_fasta_dictionary_pickle()
+        assert len(seqs._fasta_dictionary) > 0, \
+            "FASTA dictionary didn't get created"
 
+        seqs.clear_cache()
+        assert not seqs._fasta_dictionary, \
+            "Expected FASTA dictionary to be empty after clear_cache()"
+        assert not exists(seqs.fasta_dictionary_pickle_path), \
+            "Cached pickle file should have been deleted"
+
+        seqs._load_or_create_fasta_dictionary_pickle()
+        assert exists(seqs.fasta_dictionary_pickle_path), \
+            "Cached pickle file should have been created"
 
