@@ -66,6 +66,7 @@ if __name__ == '__main__':
             "pandas>=0.15",
             "datacache>=0.4.14",
             "biopython>=1.65",
+	    "scikit-bio>=0.4.0",
             "memoized-property>=1.0.2",
             "mock>=1.0.1",
             "six>=1.9.0"
