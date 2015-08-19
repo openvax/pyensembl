@@ -19,7 +19,7 @@ to be specific to (a particular release of) Ensembl.
 
 from .genome import Genome
 from .ensembl_release_versions import check_release_number, MAX_ENSEMBL_RELEASE
-from .species import find_species_by_name, human, Species
+from .species import check_species_object, human
 
 from .ensembl_url_templates import (
     ENSEMBL_FTP_SERVER,
@@ -39,13 +39,7 @@ class EnsemblRelease(Genome):
                  overwrite_cached_files=False,
                  server=ENSEMBL_FTP_SERVER):
         self.release = check_release_number(release)
-        if isinstance(species, Species):
-            self.species = species
-        elif isinstance(species, str):
-            self.species = find_species_by_name(species)
-        else:
-            raise ValueError("Unexpected type for species: %s : %s" % (
-                species, type(species)))
+        self.species = check_species_object(species)
         self.server = server
 
         self.gtf_url = make_gtf_url(

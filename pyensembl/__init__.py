@@ -27,7 +27,8 @@ from .sequence_data import SequenceData
 from .species import (
     find_species_by_name,
     find_species_by_reference,
-    which_reference
+    which_reference,
+    check_species_object
 )
 from .transcript import Transcript
 
@@ -39,6 +40,7 @@ def cached_release(version, species="human", auto_download=False):
     annotation data in-memory.
     """
     version = check_release_number(version)
+    species = check_species_object(species)
     key = version, species, auto_download
     if key not in _cache:
         ensembl = EnsemblRelease(
@@ -47,6 +49,11 @@ def cached_release(version, species="human", auto_download=False):
             auto_download=auto_download)
         _cache[key] = ensembl
     return _cache[key]
+
+def genome_for_reference_name(reference_name):
+    species = find_species_by_reference(reference_name)
+    (_, max_ensembl_release) = species.reference_assemblies[reference_name]
+    return cached_release(max_ensembl_release, species=species)
 
 ensembl_grch36 = ensembl54 = cached_release(54)  # last release for GRCh36/hg18
 ensembl_grch37 = ensembl75 = cached_release(75)  # last release for GRCh37/hg19
