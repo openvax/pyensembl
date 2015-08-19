@@ -6,7 +6,7 @@ a FASTA dictionary
 from os.path import exists
 import tempfile
 
-from nose.tools import raises
+from nose.tools import assert_raises
 from pyensembl import SequenceData
 
 from skbio import DNASequence
@@ -31,14 +31,14 @@ def test_sequence_type():
         seq = seqs_str.get("ENSMUST00000138942")
         assert isinstance(seq, str)
 
-@raises(ValueError)
 def test_check_ensembl_id():
     with tempfile.TemporaryDirectory() as tmpdir:
         seqs = SequenceData(
             FASTA_PATH,
             require_ensembl_ids=True,
             cache_directory_path=tmpdir)
-        seqs.get("WeirdID")
+        with assert_raises(ValueError):
+            seqs.get("WeirdID")
 
 def test_missing_sequence():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -65,4 +65,3 @@ def test_clear_cache():
         seqs._load_or_create_fasta_dictionary_pickle()
         assert exists(seqs.fasta_dictionary_pickle_path), \
             "Cached pickle file should have been created"
-

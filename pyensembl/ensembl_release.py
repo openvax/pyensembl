@@ -77,7 +77,7 @@ class EnsemblRelease(Genome):
             overwrite_cached_files=overwrite_cached_files,
             require_ensembl_ids=True)
 
-    def install_string(self, missing_fields):
+    def install_string(self, missing_urls_dict):
         return "pyensembl install --release %d --species %s" % (
             self.release,
             self.species.latin_name)

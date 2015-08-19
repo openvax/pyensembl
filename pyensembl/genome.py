@@ -180,6 +180,7 @@ class Genome(object):
             gtf=self.gtf,
             # TODO: change Database to use cache_directory_path instead
             cache_subdirectory=self.download_cache.cache_subdirectory)
+        self._db.connect_or_create(overwrite=self.overwrite_cached_files)
 
     def load_all_data(self):
         """
@@ -188,13 +189,12 @@ class Genome(object):
         """
         self._load_gtf()
         self._load_gtf_database()
-        self._db.create(force=self.overwrite_cached_files)
 
         self._load_transcript_sequences()
-        self._transcript_sequences.index(force=self.overwrite_cached_files)
+        self._transcript_sequences.index(overwrite=self.overwrite_cached_files)
 
         self._load_protein_sequences()
-        self._protein_sequences.index(force=self.overwrite_cached_files)
+        self._protein_sequences.index(overwrite=self.overwrite_cached_files)
 
     @property
     def gtf(self):
@@ -220,7 +220,7 @@ class Genome(object):
             self._load_transcript_sequences()
         return self._transcript_sequences
 
-    def install_string(self, missing_files):
+    def install_string(self, missing_urls_dict):
         """
         Add every missing file to the install string shown to the user
         in an error message.
@@ -230,7 +230,7 @@ class Genome(object):
             "--annotation_name", self.annotation_name]
         if self.annotation_version:
             args.extend(["--annotation-version", str(self.annotation_version)])
-        for (name, url) in missing_files:
+        for (name, url) in missing_urls_dict.items():
             args.append("--%s" % (name.replace("_", "-"),))
             args.append("\"%s\"" % (url,))
         return "pyensembl install %s" % " ".join(args)
@@ -277,7 +277,16 @@ class Genome(object):
             # GTF and SequenceData objects
             if hasattr(maybe_fn, "clear_cache"):
                 maybe_fn.clear_cache()
-        self.download_cache.delete_files(exclude_suffixes=[".gtf", ".fasta"])
+        # delete all file types we generate as temporaries (assumed to not
+        # overlap with the kinds of files we download)
+        self.download_cache.delete_cached_files(
+            # TODO: if we ever have to extend this list then
+            # handle it more flexibly
+            suffixes=[
+                ".db",
+                ".pickle",
+                ".csv"
+            ])
 
     def all_feature_values(
             self,

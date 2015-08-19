@@ -34,11 +34,7 @@ class Database(object):
     writing SQL queries directly.
     """
 
-    def __init__(
-            self,
-            gtf,
-            cache_subdirectory,
-            create_database_if_missing=True):
+    def __init__(self, gtf, cache_subdirectory):
         """
         Parameters
         ----------
@@ -50,24 +46,24 @@ class Database(object):
             This argument is a relic of our use of datacache, which constructs
             full paths internally and can only be given subdirectories
             relative to a dynamically decided root cache dir.
-
-        create_database_if_missing : bool, optional
-            If database does not exist, should we create it from the GTF's
-            entries?
         """
         self.gtf = gtf
         self.cache_subdirectory = cache_subdirectory
-        self.create_database_if_missing = create_database_if_missing
         self._connection = None
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
 
     def __eq__(self, other):
-        return other.__class__ is Database and self.gtf == other.gtf
+        return (
+            other.__class__ is Database and
+            self.gtf == other.gtf and
+            self.cache_subdirectory == other.cache_subdirectory)
 
     def __str__(self):
-        return ("Database(gtf=%s)" % (self.gtf, ))
+        return ("Database(gtf=%s, cache_subdirectory=%s)" % (
+            self.gtf,
+            self.cache_subdirectory))
 
     def __hash__(self):
         return hash(self.gtf)
@@ -83,7 +79,6 @@ class Database(object):
         if not self.gtf:
             raise ValueError("No GTF supplied to this Database: %s" %
                              str(self))
-
         dirpath = self.gtf.cache_directory_path
         filename = self.local_db_filename()
         return join(dirpath, filename)
@@ -182,7 +177,14 @@ class Database(object):
             result.append(index_group)
         return result
 
-    def _create_database(self, force=False):
+    def create(self, overwrite=False):
+        """
+        Create the local database (including indexing) if it's not
+        already set up. If `overwrite` is True, always re-create
+        the database from scratch.
+
+        Returns a connection to the database.
+        """
         if not self.gtf:
             raise ValueError("No GTF supplied to this Database: %s" %
                              str(self))
@@ -221,11 +223,12 @@ class Database(object):
             indices=indices_dict,
             primary_keys=primary_keys,
             subdir=self.cache_subdirectory,
-            overwrite=force,
+            overwrite=overwrite,
             version=DATABASE_SCHEMA_VERSION)
         return self._connection
 
-    def _connect_if_exists(self):
+    @property
+    def connection(self):
         """
         Return the connection if the DB exists, and otherwise return
         None. As a side effect, stores the database connection in
@@ -244,21 +247,15 @@ class Database(object):
                     db_path, DATABASE_SCHEMA_VERSION)
         return self._connection
 
-    @property
-    def connection(self):
+    def connect_or_create(self, overwrite=False):
         """
-        Return the sqlite3 database for this set of genome annotations
-        (download and/or construct it if necessary, if auto_download
-        is on). As a side effect, stores the database connection in
-        self._connection.
+        Return a connection to the database if it exists, otherwise create it.
+        Overwrite the existing database if `overwrite` is True.
         """
-        connection = self._connect_if_exists()
-        if connection:
-            return connection
-        if self.create_database_if_missing:
-            return self._create_database()
-        raise ValueError("Genome annotation database for %s not indexed" % (
-            self.gtf,))
+        if self.connection:
+            return self.connection
+        else:
+            return self.create(overwrite=overwrite)
 
     @memoize
     def columns(self, table_name):
@@ -567,17 +564,3 @@ class Database(object):
                 feature, filter_column, filter_value, loci))
         return loci[0]
 
-    def create(self, force=False):
-        """
-        Create the local database (including indexing) if it's not
-        already set up. If `force` is True, always re-create
-        the database from scratch.
-
-        Returns True if the database was re-created.
-
-        Raises an error if the necessary data is not yet downloaded.
-        """
-        if not force and self._connect_if_exists():
-            return False
-        self._create_database(force=force)
-        return True

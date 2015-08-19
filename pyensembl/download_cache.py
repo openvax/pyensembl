@@ -21,9 +21,9 @@ import datacache
 CACHE_BASE_SUBDIR = "pyensembl"
 
 def cache_subdirectory(
-        reference_name="",
-        annotation_name="",
-        annotation_version=""):
+        reference_name=None,
+        annotation_name=None,
+        annotation_version=None):
     """
     Which cache subdirectory to use for a given annotation database
     over a particular reference. All arguments can be omitted to just get
@@ -63,20 +63,17 @@ class DownloadCache(object):
             auto_download=False,
             decompress_on_download=False,
             copy_local_files_to_cache=False,
-            install_string_function=None):
+            install_string_function=lambda d: "Missing genome data files from %s" % d):
         """
         Parameters
         ----------
-        cache_directory_path : str
-            Cache directory used as a destination for downloaded files
-
         reference_name : str
             Name of reference genome
 
         annotation_name : str
             Name of annotation database
 
-        annotation_version : str or int
+        annotation_version : str or int, optional
             Version or release of annotation database
 
         decompress_on_download : bool, optional
@@ -87,13 +84,11 @@ class DownloadCache(object):
             If file is on the local file system, should we still copy it
             into the cache?
 
-        cached_filename_function : fn, optional
-            Function which takes the remote filename and returns a local
-            renamed version
-
         install_string_function : fn, optional
-            Function which takes dictionary of missing sources (and their
-            URLs) and returns an error message with install instructions.
+            Function which takes dictionary of missing field names mapped
+            to their URLs and returns an error message with
+            install instructions. If not provided then the error tells the
+            user what data is missing without install instructions.
         """
 
         self.reference_name = reference_name
@@ -112,7 +107,6 @@ class DownloadCache(object):
 
         self.decompress_on_download = decompress_on_download
         self.copy_local_files_to_cache = copy_local_files_to_cache
-
         self.install_string_function = install_string_function
 
     @property
@@ -165,6 +159,40 @@ class DownloadCache(object):
                 path_or_url,))
         return join(self.cache_directory_path, cached_filename)
 
+    def _download_if_necessary(self, url, auto_download, overwrite):
+        """
+        Return local cached path to a remote file, download it if necessary.
+        """
+        cached_path = self.cached_path(url)
+        if exists(cached_path) and not overwrite:
+            return cached_path
+        if auto_download:
+            cached_filename = split(cached_path)[1]
+            return datacache.fetch_file(
+                download_url=url,
+                filename=cached_filename,
+                decompress=self.decompress_on_download,
+                subdir=self.cache_subdirectory,
+                force=overwrite)
+        else:
+            raise MissingRemoteFile(url)
+
+    def _copy_if_necessary(self, local_path, overwrite):
+        """
+        Return cached path to local file, copying it to the cache if necessary.
+        """
+        local_path = abspath(local_path)
+        if not exists(local_path):
+            raise MissingLocalFile(local_path)
+        elif not self.copy_local_files_to_cache:
+            return local_path
+        else:
+            cached_path = self.cached_path(local_path)
+            if exists(cached_path) and not overwrite:
+                return cached_path
+            copy2(local_path, cached_path)
+            return cached_path
+
     def download_or_copy_if_necessary(
             self,
             path_or_url,
@@ -192,45 +220,24 @@ class DownloadCache(object):
             Overwrite existing copy if it exists
         """
         assert path_or_url, "Expected non-empty string for path_or_url"
-        cached_path = self.cached_path(path_or_url)
-
-        if exists(cached_path) and not overwrite:
-            return cached_path
-
         if self.is_url_format(path_or_url):
-            if auto_download:
-                cached_filename = split(cached_path)[1]
-                return datacache.fetch_file(
-                    download_url=path_or_url,
-                    filename=cached_filename,
-                    decompress=self.decompress_on_download,
-                    subdir=self.cache_subdirectory,
-                    force=overwrite)
-            else:
-                raise MissingRemoteFile(path_or_url)
+            return self._download_if_necessary(
+                path_or_url,
+                auto_download,
+                overwrite)
         else:
-            local_path = abspath(path_or_url)
-            if not exists(local_path):
-                raise MissingLocalFile(local_path)
-            elif self.copy_local_files_to_cache:
-                copy2(local_path, cached_path)
-                return cached_path
-            else:
-                return local_path
+            return self._copy_if_necessary(path_or_url, overwrite)
 
     def _raise_missing_file_error(self, missing_urls_dict):
-        if self.install_string_function is None:
-            return "Missing genome data files from %s" % missing_urls_dict
-
-        install_string = self.install_string_function(missing_urls_dict)
         missing_urls = list(missing_urls_dict.values())
-        assert len(missing_urls_dict) > 0
-        if len(missing_urls) == 1:
-            raise ValueError("Missing genome data file from %s, run: %s" % (
-                missing_urls[0], install_string))
-        else:
-            raise ValueError("Missing genome data files from %s, run: %s" % (
-                missing_urls, install_string))
+        n_missing = len(missing_urls)
+        assert n_missing > 0
+        error_message = "Missing genome data file%s from %s." % (
+            ("s", missing_urls) if n_missing > 1 else ("", missing_urls[0]))
+        if self.install_string_function:
+            install_string = self.install_string_function(missing_urls_dict)
+            error_message += " Run %s" % install_string
+        raise ValueError(error_message)
 
     def local_path_or_install_error(
             self,
@@ -246,36 +253,18 @@ class DownloadCache(object):
         except MissingRemoteFile:
             self._raise_missing_file_error({field_name: path_or_url})
 
-    def local_paths_or_install_error(
-            self,
-            sources_dict,
-            auto_download=False,
-            overwrite=False):
+    def delete_cached_files(self, prefixes=[], suffixes=[]):
         """
-        Constructs result dictionary with local path for each (k, path_or_url)
-        mapping in the sources dict.
+        Deletes any cached files matching the prefixes or suffixes given
         """
-        missing_urls_dict = {}
-        results = {}
-        for (field_name, path_or_url) in sources_dict.items():
-            try:
-                results[field_name] = self.local_path_or_install_error(
-                    path_or_url)
-            except MissingRemoteFile:
-                missing_urls_dict[field_name] = path_or_url
-
-        if len(missing_urls_dict) == 0:
-            return results
-
-        self._raise_missing_file_error(missing_urls_dict)
-
-    def delete_files(self, exclude_suffixes=[]):
         for filename in listdir(self.cache_directory_path):
-            if any(filename.endswith(ext) for ext in exclude_suffixes):
-                continue
-            path = join(self.cache_directory_path, filename)
-            print("Deleting %s" % path)
-            remove(path)
+            delete = (
+                any(filename.endswith(ext) for ext in suffixes) or
+                any(filename.startswith(pre) for pre in prefixes))
+            if delete:
+                path = join(self.cache_directory_path, filename)
+                print("Deleting %s" % path)
+                remove(path)
 
-    def delete_all_files(self):
+    def delete_cache_directory(self):
         rmtree(self.cache_directory_path)

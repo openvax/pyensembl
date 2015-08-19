@@ -19,9 +19,6 @@ Manipulate pyensembl's local cache.
 
     %(prog)s {install, delete, delete-sequence-cache} [--release XXX --species human...]
 
-To install the latest Ensembl release (default species is human):
-    %(prog)s install
-
 To install particular Ensembl human release(s):
     %(prog)s install --release 75 77
 
@@ -53,7 +50,7 @@ from .genome import Genome
 def run():
     parser = argparse.ArgumentParser(usage=__doc__)
     parser.add_argument(
-        "--force",
+        "--overwrite",
         default=False,
         action="store_true",
         help="Force download and indexing even if files already exist locally")
@@ -108,7 +105,8 @@ def run():
         choices=("install", "delete", "delete-sequence-cache"),
         help="\"install\" will download and index any data that is  not "
         "currently downloaded or indexed. \"delete\" will delete all data "
-        "associated with a genome annotation.")
+        "associated with a genome annotation. \"delete-sequence-cache\" deletes"
+        " the indexed sequence database files for transcripts and proteins.")
 
     args = parser.parse_args()
 
@@ -132,7 +130,7 @@ def run():
             transcript_fasta_path_or_url=args.transcript_fasta,
             protein_fasta_path_or_url=args.protein_fasta,
             auto_download=auto_download,
-            force_download=args.force))
+            force_download=args.overwrite))
     else:
         # Otherwise, use Ensembl release information
         for version in args.release:
@@ -140,7 +138,8 @@ def run():
                 EnsemblRelease(
                     version,
                     species=args.species,
-                    auto_download=auto_download))
+                    auto_download=auto_download,
+                    overwrite_cached_files=args.overwrite))
 
     if len(genomes) == 0:
         print("ERROR: No genomes selected!\n")
@@ -149,7 +148,7 @@ def run():
     for genome in genomes:
         print("-- Running '%s' for %s" % (args.action, genome))
         if args.action == "delete":
-            genome.download_cache.delete_all_files()
+            genome.download_cache.delete_cache_directory()
         elif args.action == "delete-sequence-cache":
             genome.transcript_sequences.clear_cache()
             genome.protein_sequences.clear_cache()
