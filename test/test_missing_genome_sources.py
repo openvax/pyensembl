@@ -21,12 +21,13 @@ def no_transcript_(cm):
 def no_protein_(cm):
     ok_("protein" in str(cm.exception))
 
-def test_transcript_fasta_only():
-    genome = Genome(
-        reference_name="GRCm38",
-        annotation_name="_test_mouse_ensembl81_subset",
-        transcript_fasta_path_or_url=MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH)
+genome = Genome(
+    reference_name="GRCm38",
+    annotation_name="_test_mouse_ensembl81_subset",
+    transcript_fasta_path_or_url=MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH)
+genome.index()
 
+def test_transcript_fasta_only():
     eq_(2, len(genome.transcript_sequences.fasta_dictionary))
 
     with assert_raises(ValueError) as cm:
@@ -50,11 +51,6 @@ def test_transcript_fasta_only():
     no_protein_(cm)
 
 def test_protein_fasta_only():
-    genome = Genome(
-        reference_name="GRCm38",
-        annotation_name="_test_mouse_ensembl81_subset",
-        protein_fasta_path_or_url=MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH)
-
     eq_(4, len(genome.protein_sequences.fasta_dictionary))
 
     with assert_raises(ValueError) as cm:
@@ -65,11 +61,6 @@ def test_protein_fasta_only():
     no_transcript_(cm)
 
 def test_gtf_only():
-    genome = Genome(
-        reference_name="GRCm38",
-        annotation_name="_test_mouse_ensembl81_subset",
-        gtf_path_or_url=MOUSE_ENSMUSG00000017167_PATH)
-
     eq_(1, len(genome.genes()))
 
     with assert_raises(ValueError) as cm:
@@ -80,12 +71,6 @@ def test_gtf_only():
     no_protein_(cm)
 
 def test_gtf_transcript_only():
-    genome = Genome(
-        reference_name="GRCm38",
-        annotation_name="_test_mouse_ensembl81_subset",
-        gtf_path_or_url=MOUSE_ENSMUSG00000017167_PATH,
-        transcript_fasta_path_or_url=MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH)
-
     eq_(1, len(genome.genes()))
 
     transcript = genome.transcripts()[0]
@@ -96,12 +81,6 @@ def test_gtf_transcript_only():
     no_protein_(cm)
 
 def test_gtf_protein_only():
-    genome = Genome(
-        reference_name="GRCm38",
-        annotation_name="_test_mouse_ensembl81_subset",
-        gtf_path_or_url=MOUSE_ENSMUSG00000017167_PATH,
-        protein_fasta_path_or_url=MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH)
-
     eq_(1, len(genome.genes()))
 
     transcript = genome.transcripts()[0]

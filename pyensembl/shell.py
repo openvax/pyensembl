@@ -102,11 +102,11 @@ def run():
 
     parser.add_argument("action",
         type=lambda arg: arg.lower().strip(),
-        choices=("install", "delete", "delete-sequence-cache"),
+        choices=("install", "delete-all-files", "delete-index-files"),
         help="\"install\" will download and index any data that is  not "
-        "currently downloaded or indexed. \"delete\" will delete all data "
-        "associated with a genome annotation. \"delete-sequence-cache\" deletes"
-        " the indexed sequence database files for transcripts and proteins.")
+        "currently downloaded or indexed. \"delete-all-files\" will delete all data "
+        "associated with a genome annotation. \"delete-index-files\" deletes"
+        " all files other than the original GTF and FASTA files for a genome.")
 
     args = parser.parse_args()
 
@@ -147,13 +147,13 @@ def run():
 
     for genome in genomes:
         print("-- Running '%s' for %s" % (args.action, genome))
-        if args.action == "delete":
+        if args.action == "delete-all-files":
             genome.download_cache.delete_cache_directory()
-        elif args.action == "delete-sequence-cache":
-            genome.transcript_sequences.clear_cache()
-            genome.protein_sequences.clear_cache()
+        elif args.action == "delete-index-files":
+            genome.delete_index_files()
         elif args.action == "install":
-            genome.load_all_data()
+            genome.download(overwrite=args.overwrite)
+            genome.index(overwrite=args.overwrite)
         else:
             raise ValueError("Invalid action: %s" % args.action)
 

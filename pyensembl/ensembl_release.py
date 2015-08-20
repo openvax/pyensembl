@@ -35,8 +35,6 @@ class EnsemblRelease(Genome):
     def __init__(self,
                  release=MAX_ENSEMBL_RELEASE,
                  species=human,
-                 auto_download=False,
-                 overwrite_cached_files=False,
                  server=ENSEMBL_FTP_SERVER):
         self.release = check_release_number(release)
         self.species = check_species_object(species)
@@ -67,11 +65,9 @@ class EnsemblRelease(Genome):
             gtf_path_or_url=self.gtf_url,
             transcript_fasta_path_or_url=self.transcript_fasta_url,
             protein_fasta_path_or_url=self.protein_fasta_url,
-            auto_download=auto_download,
-            overwrite_cached_files=overwrite_cached_files,
             require_ensembl_ids=True)
 
-    def install_string(self, missing_urls_dict):
+    def install_string(self):
         return "pyensembl install --release %d --species %s" % (
             self.release,
             self.species.latin_name)

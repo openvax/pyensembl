@@ -60,10 +60,9 @@ class DownloadCache(object):
             reference_name,
             annotation_name,
             annotation_version=None,
-            auto_download=False,
             decompress_on_download=False,
             copy_local_files_to_cache=False,
-            install_string_function=lambda d: "Missing genome data files from %s" % d):
+            install_string_function=None):
         """
         Parameters
         ----------
@@ -85,8 +84,7 @@ class DownloadCache(object):
             into the cache?
 
         install_string_function : fn, optional
-            Function which takes dictionary of missing field names mapped
-            to their URLs and returns an error message with
+            Function which returns an error message with
             install instructions. If not provided then the error tells the
             user what data is missing without install instructions.
         """
@@ -159,14 +157,14 @@ class DownloadCache(object):
                 path_or_url,))
         return join(self.cache_directory_path, cached_filename)
 
-    def _download_if_necessary(self, url, auto_download, overwrite):
+    def _download_if_necessary(self, url, download_if_missing, overwrite):
         """
         Return local cached path to a remote file, download it if necessary.
         """
         cached_path = self.cached_path(url)
         if exists(cached_path) and not overwrite:
             return cached_path
-        if auto_download:
+        if download_if_missing:
             cached_filename = split(cached_path)[1]
             return datacache.fetch_file(
                 download_url=url,
@@ -196,15 +194,15 @@ class DownloadCache(object):
     def download_or_copy_if_necessary(
             self,
             path_or_url,
-            auto_download=False,
+            download_if_missing=False,
             overwrite=False):
         """
         Download a remote file or copy
         Get the local path to a possibly remote file.
 
-        Download if file is missing from the cache directory and `auto_download`
-        is True. Download even if local file exists if both `auto_download` and
-        `overwrite` are True.
+        Download if file is missing from the cache directory and
+        `download_if_missing` is True. Download even if local file exists if
+        both `download_if_missing` and `overwrite` are True.
 
         If the file is on the local file system then return its path, unless
         self.copy_local_to_cache is True, and then copy it to the cache first.
@@ -213,7 +211,7 @@ class DownloadCache(object):
         ----------
         path_or_url : str
 
-        auto_download : bool, optional
+        download_if_missing : bool, optional
             Download files if missing from local cache
 
         overwrite : bool, optional
@@ -223,7 +221,7 @@ class DownloadCache(object):
         if self.is_url_format(path_or_url):
             return self._download_if_necessary(
                 path_or_url,
-                auto_download,
+                download_if_missing,
                 overwrite)
         else:
             return self._copy_if_necessary(path_or_url, overwrite)
@@ -235,7 +233,7 @@ class DownloadCache(object):
         error_message = "Missing genome data file%s from %s." % (
             ("s", missing_urls) if n_missing > 1 else ("", missing_urls[0]))
         if self.install_string_function:
-            install_string = self.install_string_function(missing_urls_dict)
+            install_string = self.install_string_function()
             error_message += " Run %s" % install_string
         raise ValueError(error_message)
 
@@ -243,12 +241,12 @@ class DownloadCache(object):
             self,
             field_name,
             path_or_url,
-            auto_download=False,
+            download_if_missing=False,
             overwrite=False):
         try:
             return self.download_or_copy_if_necessary(
                 path_or_url,
-                auto_download=auto_download,
+                download_if_missing=download_if_missing,
                 overwrite=overwrite)
         except MissingRemoteFile:
             self._raise_missing_file_error({field_name: path_or_url})

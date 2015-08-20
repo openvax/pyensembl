@@ -34,19 +34,16 @@ from .transcript import Transcript
 
 _cache = {}
 
-def cached_release(version, species="human", auto_download=False):
+def cached_release(version, species="human"):
     """Cached construction of EnsemblRelease objects. It's desirable to reuse
     the same EnsemblRelease object since each one will store a lot of cached
     annotation data in-memory.
     """
     version = check_release_number(version)
     species = check_species_object(species)
-    key = version, species, auto_download
+    key = (version, species)
     if key not in _cache:
-        ensembl = EnsemblRelease(
-            version,
-            species=species,
-            auto_download=auto_download)
+        ensembl = EnsemblRelease(version, species=species)
         _cache[key] = ensembl
     return _cache[key]
 

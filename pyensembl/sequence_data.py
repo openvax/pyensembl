@@ -104,12 +104,11 @@ class SequenceData(object):
                 logging.warn(
                     "Failed to load %s, attempting to read FASTA directly" % (
                         self.fasta_dictionary_pickle_path,))
-
         self._fasta_dictionary = self._parse_fasta_dictionary()
         dump_pickle(self._fasta_dictionary, self.fasta_dictionary_pickle_path)
 
-    def index(self, force=False):
-        if force:
+    def index(self, overwrite=False):
+        if overwrite:
             self.clear_cache()
         self._load_or_create_fasta_dictionary_pickle()
 
