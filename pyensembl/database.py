@@ -21,7 +21,7 @@ import sqlite3
 import datacache
 from typechecks import require_integer, require_string
 
-from .common import CACHE_SUBDIR, memoize
+from .common import memoize
 from .locus import normalize_chromosome, normalize_strand, Locus
 
 # any time we update the database schema, increment this version number
@@ -34,7 +34,7 @@ class Database(object):
     writing SQL queries directly.
     """
 
-    def __init__(self, gtf, auto_download=False):
+    def __init__(self, gtf, cache_subdirectory, install_string):
         """
         Parameters
         ----------
@@ -42,42 +42,49 @@ class Database(object):
             Object which parses GTF annotation files and presents their
             contents as Pandas DataFrames
 
-        auto_download : bool, optional (default = False)
-            If GTF file is missing, force the `gtf` object to download
-            and parse it. If file is missing and auto_download = False then
-            raise an exception.
+        cache_subdirectory : str
+            This argument is a relic of our use of datacache, which constructs
+            full paths internally and can only be given subdirectories
+            relative to a dynamically decided root cache dir.
+
+        install_string : str
+            Message to tell user if database connection is requested before
+            database is created.
         """
         self.gtf = gtf
-        self.auto_download = auto_download
+        self.cache_subdirectory = cache_subdirectory
+        self.install_string = install_string
         self._connection = None
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
 
     def __eq__(self, other):
-        return other.__class__ is Database and self.gtf == other.gtf
+        return (
+            other.__class__ is Database and
+            self.gtf == other.gtf and
+            self.cache_subdirectory == other.cache_subdirectory)
 
     def __str__(self):
-        return ("Database(gtf=%s, auto_download=%s)" % (
-            self.gtf, self.auto_download))
+        return ("Database(gtf=%s, cache_subdirectory=%s)" % (
+            self.gtf,
+            self.cache_subdirectory))
 
     def __hash__(self):
-        return hash(self.gtf)
+        return hash((self.gtf, self.cache_subdirectory))
 
     def local_db_filename(self):
         if not self.gtf:
             raise ValueError("No GTF supplied to this Database: %s" %
                              str(self))
-
-        base = self.gtf.base_filename()
+        base = self.gtf.gtf_base_filename
         return base + ".db"
 
     def local_db_path(self):
         if not self.gtf:
             raise ValueError("No GTF supplied to this Database: %s" %
                              str(self))
-
-        dirpath = self.gtf.cached_dir()
+        dirpath = self.gtf.cache_directory_path
         filename = self.local_db_filename()
         return join(dirpath, filename)
 
@@ -175,7 +182,14 @@ class Database(object):
             result.append(index_group)
         return result
 
-    def _create_database(self, force=False):
+    def create(self, overwrite=False):
+        """
+        Create the local database (including indexing) if it's not
+        already set up. If `overwrite` is True, always re-create
+        the database from scratch.
+
+        Returns a connection to the database.
+        """
         if not self.gtf:
             raise ValueError("No GTF supplied to this Database: %s" %
                              str(self))
@@ -213,17 +227,12 @@ class Database(object):
             dataframes=dataframes,
             indices=indices_dict,
             primary_keys=primary_keys,
-            subdir=CACHE_SUBDIR,
-            overwrite=force,
+            subdir=self.cache_subdirectory,
+            overwrite=overwrite,
             version=DATABASE_SCHEMA_VERSION)
         return self._connection
 
-    def _connect_if_exists(self):
-        """
-        Return the connection if the DB exists, and otherwise return
-        None. As a side effect, stores the database connection in
-        self._connection.
-        """
+    def _get_connection(self):
         if self._connection is None:
             db_path = self.local_db_path()
             if exists(db_path):
@@ -240,21 +249,26 @@ class Database(object):
     @property
     def connection(self):
         """
-        Return the sqlite3 database for this set of genome annotations
-        (download and/or construct it if necessary, if auto_download
-        is on). As a side effect, stores the database connection in
-        self._connection.
+        Get a connection to the database or raise an exception
         """
-        connection = self._connect_if_exists()
+        connection = self._get_connection()
         if connection:
             return connection
-        if self.auto_download:
-            return self._create_database()
-        raise ValueError("Genome annotation data is not currently "
-                         "installed for this genome source. Run %s "
-                         "or call %s" % (
-                             self.gtf.gtf_source.install_string_console(),
-                             self.gtf.gtf_source.install_string_python()))
+        else:
+            raise ValueError(
+                "GTF database needs to be created, run: %s" % (
+                    self.install_string,))
+
+    def connect_or_create(self, overwrite=False):
+        """
+        Return a connection to the database if it exists, otherwise create it.
+        Overwrite the existing database if `overwrite` is True.
+        """
+        connection = self._get_connection()
+        if connection:
+            return connection
+        else:
+            return self.create(overwrite=overwrite)
 
     @memoize
     def columns(self, table_name):
@@ -563,17 +577,3 @@ class Database(object):
                 feature, filter_column, filter_value, loci))
         return loci[0]
 
-    def create(self, force=False):
-        """
-        Create the local database (including indexing) if it's not
-        already set up. If `force` is True, always re-create
-        the database from scratch.
-
-        Returns True if the database was re-created.
-
-        Raises an error if the necessary data is not yet downloaded.
-        """
-        if not force and self._connect_if_exists():
-            return False
-        self._create_database(force=force)
-        return True

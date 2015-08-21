@@ -13,36 +13,41 @@
 # limitations under the License.
 
 from __future__ import print_function, division, absolute_import
-from os.path import split, join, exists
+from os.path import split, abspath, join, exists, splitext
 import pandas as pd
 
-import datacache
 from typechecks import require_string
 
 from .gtf_parsing import load_gtf_as_dataframe
-from .common import CACHE_SUBDIR
 from .locus import normalize_chromosome, normalize_strand
-from .compute_cache import cached_dataframe, clear_cached_objects
-
+from .memory_cache import MemoryCache
 
 class GTF(object):
     """
-    Download and parse a GTF gene annotation file from a given source.
+    Parse a GTF gene annotation file from a given local path.
     Represent its contents as a Pandas DataFrame (optionally filtered
     by locus, column, contig, &c).
-
-    gtf_source is a GenomeSource object that represents a local
-    file path or remote URL.
     """
-    def __init__(
-            self,
-            gtf_source,
-            auto_download=False,
-            decompress=True):
-        self.gtf_source = gtf_source
-        self.cache = datacache.Cache(CACHE_SUBDIR)
-        self.decompress = decompress
-        self.auto_download = auto_download
+    def __init__(self, gtf_path, cache_directory_path=None):
+
+        if not (gtf_path.endswith(".gtf") or gtf_path.endswith(".gtf.gz")):
+            raise ValueError("Wrong extension for GTF file: %s" % (gtf_path,))
+        self.gtf_path = abspath(gtf_path)
+
+        if not exists(self.gtf_path):
+            raise ValueError("GTF file %s does not exist" % (self.gtf_path,))
+
+        self.gtf_directory_path, self.gtf_filename = split(self.gtf_path)
+        self.gtf_base_filename = splitext(self.gtf_filename)[0]
+
+        # if cache directory isn't given then put cached files
+        # alongside the GTF
+        if cache_directory_path:
+            self.cache_directory_path = cache_directory_path
+        else:
+            self.cache_directory_path = self.gtf_directory_path
+
+        self.memory_cache = MemoryCache()
 
         # lazily load DataFrame of all GTF entries if necessary
         # for database construction
@@ -51,78 +56,19 @@ class GTF(object):
     def __eq__(self, other):
         return (
             isinstance(other, GTF) and
-            other.gtf_source == self.gtf_source)
+            other.gtf_path == self.gtf_path)
 
     def __hash__(self):
-        return hash(self.gtf_source)
+        return hash(self.gtf_path)
 
     def clear_cache(self):
         # clear any dataframes we constructed
         self._dataframes.clear()
 
         # clear cached dataframes loaded from CSV
-        clear_cached_objects()
+        self.memory_cache.clear_cached_objects()
 
-    def base_filename(self):
-        """
-        Trim extensions such as ".gtf" or ".gtf.gz",
-        leaving only the base filename which should be used
-        to construct other derived filenames for cached data.
-        """
-        assert ".gtf" in self.gtf_source.original_filename, \
-            "GTF filename must contain .gtf extension: %s" % (
-                self.gtf_source.original_filename,)
-
-        return self.gtf_source.original_filename.split(".gtf")[0]
-
-    def cached_filename(self):
-        """Filename used for cached copy of GTF"""
-        if self.decompress:
-            return self.base_filename() + ".gtf"
-        else:
-            return self.gtf_source.original_filename
-
-    def cached_copy_exists(self):
-        # If the source is a local file as opposed to a URL, then
-        # check to see if it was copied into the cache directory.
-        if not self.gtf_source.is_url_format():
-            return exists(self.gtf_source.cached_path(self.cache))
-
-        """Has a cached copy of the GTF file been downloaded/copied?"""
-        return self.cache.exists(
-            self.gtf_source.path_or_url,
-            self.cached_filename(),
-            decompress=self.decompress)
-
-    def cached_gtf_path(self):
-        """
-        Returns cached path to GTF file, download from the relevant
-        server (or copy from local) if not already cached and
-        auto download is enabled.
-        """
-        if self.cached_copy_exists() or self.auto_download:
-            # If the source is a local file as opposed to a URL, then
-            # just manually copy it to the datacache directory if
-            # we're auto-downloading.
-            if not self.gtf_source.is_url_format():
-                return self.gtf_source.copy_to_cache_if_needed(self.cache,
-                                                               force=False)
-
-            # Does a download if the cache is empty
-            return self.cache.fetch(
-                self.gtf_source.path_or_url,
-                self.cached_filename(),
-                decompress=self.decompress)
-        raise ValueError("Genome annotation data is not currently "
-                         "installed for this genome. Run %s "
-                         "or call %s" % (
-                             self.gtf_source.install_string_console(),
-                             self.gtf_source.install_string_python()))
-
-    def cached_dir(self):
-        return split(self.cached_gtf_path())[0]
-
-    def cached_data_file_path(
+    def data_subset_path(
             self,
             contig=None,
             feature=None,
@@ -152,9 +98,7 @@ class GTF(object):
         distinct : bool, optional
             Only keep unique values (default=False)
         """
-        base = self.cached_filename()
-        dirpath = self.cached_dir()
-        csv_filename = base + ".expanded"
+        csv_filename = self.gtf_base_filename + ".expanded"
         if contig:
             contig = normalize_chromosome(contig)
             csv_filename += ".contig.%s" % (contig,)
@@ -173,23 +117,28 @@ class GTF(object):
         if distinct:
             csv_filename += ".distinct"
         csv_filename += extension
-        return join(dirpath, csv_filename)
+        return join(self.cache_directory_path, csv_filename)
 
     def _load_full_dataframe(self):
         """
         Loads full dataframe from cached CSV or constructs it from GTF
         """
-        csv_path = self.cached_data_file_path()
-        return cached_dataframe(csv_path, self._load_full_dataframe_from_gtf)
+        return self.memory_cache.cached_dataframe(
+            csv_path=self.data_subset_path(),
+            compute_fn=self._load_full_dataframe_from_gtf)
 
     def _load_full_dataframe_from_gtf(self):
         """
         Parse this genome source's GTF file and load it as a Pandas DataFrame
         """
-        path = self.cached_gtf_path()
-        return load_gtf_as_dataframe(path)
+        return load_gtf_as_dataframe(self.gtf_path)
 
-    def dataframe(self, contig=None, feature=None, strand=None):
+    def dataframe(
+            self,
+            contig=None,
+            feature=None,
+            strand=None,
+            save_to_disk=True):
         """
         Load genome entries as a DataFrame, optionally restricted to
         particular contig or feature type.
@@ -206,17 +155,7 @@ class GTF(object):
         key = (contig, feature, strand)
 
         if key not in self._dataframes:
-            csv_path = self.cached_data_file_path(
-                contig=contig,
-                feature=feature,
-                strand=strand,
-                distinct=False)
-
-            def cached_loader_fn():
-                # pylint: disable=no-member
-                # pylint has trouble with df.seqname and similar
-                # statements in this function.
-
+            def _construct_df():
                 full_df = self._load_full_dataframe()
                 assert len(full_df) > 0, \
                     "Dataframe representation of genomic database empty!"
@@ -225,7 +164,7 @@ class GTF(object):
                 # may still want to access the full dataset
                 df = full_df
                 if contig:
-                    df = df[df.seqname == contig]
+                    df = df[df["seqname"] == contig]
                     if len(df) == 0:
                         raise ValueError("Contig not found: %s" % (contig,))
 
@@ -234,16 +173,26 @@ class GTF(object):
                     if len(df) == 0:
                         # check to make sure feature was somewhere in
                         # the full dataset before returning an empty dataframe
-                        features = full_df.feature.unique()
+                        features = full_df["feature"].unique()
                         if feature not in features:
                             raise ValueError(
                                 "Feature not found: %s" % (feature,))
                 if strand:
-                    df = df[df.strand == strand]
+                    df = df[df["strand"] == strand]
 
                 return df
-
-            self._dataframes[key] = cached_dataframe(csv_path, cached_loader_fn)
+            if save_to_disk:
+                csv_path = self.data_subset_path(
+                    contig=contig,
+                    feature=feature,
+                    strand=strand,
+                    distinct=False)
+                df = self.memory_cache.cached_dataframe(
+                    csv_path=csv_path,
+                    compute_fn=_construct_df)
+            else:
+                df = _construct_df()
+            self._dataframes[key] = df
 
         return self._dataframes[key]
 
@@ -338,21 +287,3 @@ class GTF(object):
         # find genes whose start/end boundaries overlap with the position
         return GTF._slice(df_contig, df_contig.start.name,
                           df_contig.end.name, start, end)
-
-    def download(self, force=False):
-        """
-        Download the GTF file if one does not exist. If `force` is
-        True, overwrites any existing file.
-        """
-        # If the source is a local file as opposed to a URL, then
-        # just copy it to the datacache direcotry as a "download".
-        if not self.gtf_source.is_url_format():
-            return self.gtf_source.copy_to_cache_if_needed(self.cache,
-                                                           force=force)
-
-        if not self.cached_copy_exists() or force:
-            self.cache.fetch(
-                self.gtf_source.path_or_url,
-                self.cached_filename(),
-                decompress=self.decompress,
-                force=force)

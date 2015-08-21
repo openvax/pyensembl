@@ -18,16 +18,14 @@ to be specific to (a particular release of) Ensembl.
 """
 
 from .genome import Genome
-from .gtf import GTF
-from .ensembl_release_source import EnsemblReleaseSource
-from .release_info import (
-    check_release_number,
-    MAX_ENSEMBL_RELEASE,
-    which_human_reference_name
-)
-from .sequence_data import SequenceData
-from .url_templates import ENSEMBL_FTP_SERVER, make_gtf_url, make_fasta_url
+from .ensembl_release_versions import check_release_number, MAX_ENSEMBL_RELEASE
+from .species import check_species_object, human
 
+from .ensembl_url_templates import (
+    ENSEMBL_FTP_SERVER,
+    make_gtf_url,
+    make_fasta_url
+)
 
 class EnsemblRelease(Genome):
     """
@@ -36,82 +34,48 @@ class EnsemblRelease(Genome):
     """
     def __init__(self,
                  release=MAX_ENSEMBL_RELEASE,
-                 species="homo_sapiens",
-                 server=ENSEMBL_FTP_SERVER,
-                 reference_name=None,
-                 auto_download=False):
+                 species=human,
+                 server=ENSEMBL_FTP_SERVER):
         self.release = check_release_number(release)
-        self.species = species
+        self.species = check_species_object(species)
         self.server = server
 
         self.gtf_url = make_gtf_url(
-            ensembl_release=release,
+            ensembl_release=self.release,
             species=species,
             server=server)
         self.transcript_fasta_url = make_fasta_url(
-            ensembl_release=release,
-            species=species,
+            ensembl_release=self.release,
+            species=self.species.latin_name,
             sequence_type="cdna",
             server=server)
         self.protein_fasta_url = make_fasta_url(
-            ensembl_release=release,
-            species=species,
+            ensembl_release=self.release,
+            species=self.species.latin_name,
             sequence_type="pep",
             server=server)
-        only_human = species == "homo_sapiens"
 
-        if not reference_name:
-            if only_human:
-                reference_name = which_human_reference_name(self.release)
-            else:
-                raise ValueError("Must provide a reference_name for "
-                                 "non-human Ensembl releases.")
-        self.reference_name = reference_name
+        self.reference_name = self.species.which_reference(self.release)
 
-        Genome.__init__(self,
-                        reference_name=self.reference_name,
-                        gtf_path_or_url=self.gtf_url,
-                        transcript_fasta_path_or_url=self.transcript_fasta_url,
-                        protein_fasta_path_or_url=self.protein_fasta_url,
-                        name="Ensembl",
-                        version=self.release,
-                        only_human=only_human,
-                        auto_download=auto_download,
-                        require_ensembl_ids=True)
+        Genome.__init__(
+            self,
+            reference_name=self.reference_name,
+            annotation_name="ensembl",
+            annotation_version=self.release,
+            gtf_path_or_url=self.gtf_url,
+            transcript_fasta_path_or_url=self.transcript_fasta_url,
+            protein_fasta_path_or_url=self.protein_fasta_url,
+            require_ensembl_ids=True)
 
-    def build_gtf(self):
-        return GTF(gtf_source=EnsemblReleaseSource(url=self.gtf_url,
-                                                   release=self.release,
-                                                   file_type="gtf",
-                                                   reference_name=self.reference_name),
-                   auto_download=self.auto_download)
-
-    def build_transcript_sequences(self):
-        transcript_fasta_source = EnsemblReleaseSource(
-            url=self.transcript_fasta_url,
-            release=self.release,
-            file_type="fa",
-            reference_name=self.reference_name)
-        return SequenceData(
-            fasta_source=transcript_fasta_source,
-            require_ensembl_ids=self.require_ensembl_ids,
-            auto_download=self.auto_download)
-
-    def build_protein_sequences(self):
-        protein_fasta_source = EnsemblReleaseSource(
-            url=self.protein_fasta_url,
-            release=self.release,
-            file_type="fa",
-            reference_name=self.reference_name)
-        return SequenceData(
-            fasta_source=protein_fasta_source,
-            require_ensembl_ids=self.require_ensembl_ids,
-            auto_download=self.auto_download)
+    def install_string(self):
+        return "pyensembl install --release %d --species %s" % (
+            self.release,
+            self.species.latin_name)
 
     def __str__(self):
-        return "EnsemblRelease(release=%d, species=%s)" % (
+        return "EnsemblRelease(release=%d, species='%s')" % (
             self.release,
-            self.species)
+            self.species.latin_name)
 
     def __repr__(self):
         return str(self)

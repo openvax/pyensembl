@@ -1,4 +1,12 @@
+import os
 from pyensembl import Locus
+
+def data_path(name):
+    """
+    Return the absolute path to a file in the varcode/test/data directory.
+    The name specified should be relative to varcode/test/data.
+    """
+    return os.path.join(os.path.dirname(__file__), "data", name)
 
 # mapping of ensembl releases to transcript IDs for FOXP3-001
 FOXP3_001_transcript_id = "ENST00000376207"

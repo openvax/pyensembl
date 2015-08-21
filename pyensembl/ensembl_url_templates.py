@@ -16,27 +16,18 @@
 Templates for URLs and paths to specific relase, species, and file type
 on the Ensembl ftp server.
 
-For example, the human chromosomal DNA sequences for release 77 are in:
+For example, the human chromosomal DNA sequences for release 78 are in:
 
     ftp://ftp.ensembl.org/pub/release-78/fasta/homo_sapiens/dna/
 
 """
 from __future__ import print_function, division, absolute_import
-
 from os.path import join
 
-try:
-    # Python 3
-    # pylint: disable=no-name-in-module
-    # When pylinting for Python 2, pylint gets angry:
-    # No name "parse" in module "urllib" (no-name-in-module)
-    from urllib.parse import urljoin
-except ImportError:
-    # Python 2
-    from urlparse import urljoin
+from six.moves.urllib_parse import urljoin
 
-from .species import normalize_species_name
-from .release_info import which_human_reference_name, check_release_number
+from .species import Species, find_species_by_name
+from .ensembl_release_versions import check_release_number
 
 ENSEMBL_FTP_SERVER = "ftp://ftp.ensembl.org"
 
@@ -44,7 +35,6 @@ ENSEMBL_FTP_SERVER = "ftp://ftp.ensembl.org"
 # FASTA files: /pub/release-78/fasta/homo_sapiens/
 # GTF annotation files: /pub/release-78/gtf/homo_sapiens/
 SPECIES_SUBDIR_TEMPLATE = "/pub/release-%(release)d/%(filetype)s/%(species)s/"
-
 
 def _species_subdir(
         ensembl_release,
@@ -67,14 +57,10 @@ def _normalize_release_properties(ensembl_release, species):
     normalize the species name, and get its associated reference.
     """
     ensembl_release = check_release_number(ensembl_release)
-    species = normalize_species_name(species)
-    # TODO: generalize this to species other than human
-    # Currently, non-human species can be specified via GTF and FASTA
-    # URLs; however, automatically generating those URLs (such as in
-    # this chunk of code) is not yet implemented.
-    assert species == "homo_sapiens"
-    reference_name = which_human_reference_name(ensembl_release)
-    return ensembl_release, species, reference_name
+    if not isinstance(species, Species):
+        species = find_species_by_name(species)
+    reference_name = species.which_reference(ensembl_release)
+    return ensembl_release, species.latin_name, reference_name
 
 # GTF annotation file example: Homo_sapiens.GTCh38.gtf.gz
 GTF_FILENAME_TEMPLATE = "%(Species)s.%(reference)s.%(release)d.gtf.gz"

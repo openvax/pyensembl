@@ -12,11 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import print_function, absolute_import
 from functools import wraps
+
+from six.moves import cPickle as pickle
 
 from typechecks import is_string
 
-CACHE_SUBDIR = "ensembl"
+def dump_pickle(obj, filepath):
+    with open(filepath, "wb") as f:
+        # use lower protocol for compatibility between Python 2 and Python 3
+        pickle.dump(obj, file=f, protocol=2, fix_imports=True)
+
+def load_pickle(filepath):
+    with open(filepath, "rb") as f:
+        obj = pickle.load(f, fix_imports=True)
+    return obj
 
 def _memoize_cache_key(args, kwargs):
     """Turn args tuple and kwargs dictionary into a hashable key.
