@@ -22,11 +22,11 @@ from typechecks import is_string
 def dump_pickle(obj, filepath):
     with open(filepath, "wb") as f:
         # use lower protocol for compatibility between Python 2 and Python 3
-        pickle.dump(obj, file=f, protocol=2, fix_imports=True)
+        pickle.dump(obj, file=f, protocol=2)
 
 def load_pickle(filepath):
     with open(filepath, "rb") as f:
-        obj = pickle.load(f, fix_imports=True)
+        obj = pickle.load(f)
     return obj
 
 def _memoize_cache_key(args, kwargs):
