@@ -24,6 +24,7 @@ def setup_create_genome():
         transcript_fasta_path_or_url=MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH,
         protein_fasta_path_or_url=MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH)
     mouse_genome.clear_cache()
+    mouse_genome.index()
 
 @with_setup(setup=setup_create_genome)
 def test_mouse_ENSMUSG00000017167():

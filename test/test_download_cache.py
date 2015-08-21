@@ -10,8 +10,7 @@ from pyensembl.download_cache import (
 download_cache = DownloadCache(
     reference_name="__test_reference",
     annotation_name="__test_annotation",
-    copy_local_files_to_cache=False,
-    auto_download=True)
+    copy_local_files_to_cache=False)
 
 def test_download_cache_missing_local_file():
     # clear the cache

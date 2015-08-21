@@ -34,7 +34,7 @@ class Database(object):
     writing SQL queries directly.
     """
 
-    def __init__(self, gtf, cache_subdirectory):
+    def __init__(self, gtf, cache_subdirectory, install_string):
         """
         Parameters
         ----------
@@ -46,9 +46,14 @@ class Database(object):
             This argument is a relic of our use of datacache, which constructs
             full paths internally and can only be given subdirectories
             relative to a dynamically decided root cache dir.
+
+        install_string : str
+            Message to tell user if database connection is requested before
+            database is created.
         """
         self.gtf = gtf
         self.cache_subdirectory = cache_subdirectory
+        self.install_string = install_string
         self._connection = None
 
         self.logger = logging.getLogger()
@@ -66,7 +71,7 @@ class Database(object):
             self.cache_subdirectory))
 
     def __hash__(self):
-        return hash(self.gtf)
+        return hash((self.gtf, self.cache_subdirectory))
 
     def local_db_filename(self):
         if not self.gtf:
@@ -227,13 +232,7 @@ class Database(object):
             version=DATABASE_SCHEMA_VERSION)
         return self._connection
 
-    @property
-    def connection(self):
-        """
-        Return the connection if the DB exists, and otherwise return
-        None. As a side effect, stores the database connection in
-        self._connection.
-        """
+    def _get_connection(self):
         if self._connection is None:
             db_path = self.local_db_path()
             if exists(db_path):
@@ -247,13 +246,27 @@ class Database(object):
                     db_path, DATABASE_SCHEMA_VERSION)
         return self._connection
 
+    @property
+    def connection(self):
+        """
+        Get a connection to the database or raise an exception
+        """
+        connection = self._get_connection()
+        if connection:
+            return connection
+        else:
+            raise ValueError(
+                "GTF database needs to be created, run: %s" % (
+                    self.install_string,))
+
     def connect_or_create(self, overwrite=False):
         """
         Return a connection to the database if it exists, otherwise create it.
         Overwrite the existing database if `overwrite` is True.
         """
-        if self.connection:
-            return self.connection
+        connection = self._get_connection()
+        if connection:
+            return connection
         else:
             return self.create(overwrite=overwrite)
 

@@ -148,6 +148,8 @@ mouse = add_species(
     latin_name="mus_musculus",
     synonyms=["mouse", "house mouse"],
     # TODO: fix release range
+    # The range of releases given for GRCm38  isn't right and we don't have
+    # ranges for other assemblies.
     reference_assemblies={
         "GRCm38": (78, MAX_ENSEMBL_RELEASE)
     })

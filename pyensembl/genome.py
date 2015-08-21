@@ -208,17 +208,17 @@ class Genome(object):
         if self.has_transcript_fasta:
             self.transcript_sequences.index(overwrite=overwrite)
         if self.has_protein_fasta:
-            self._protein_sequences.index(overwrite=overwrite)
+            self.protein_sequences.index(overwrite=overwrite)
 
     @property
     def gtf(self):
         if self._gtf is None:
             if not self.has_gtf:
-                raise ValueError("No GTF source for %s" % self)
+                raise ValueError("Missing GTF source for %s" % self)
             # make sure GTF  file exists locally
             # and populate self.gtf_path
             self._set_local_paths()
-
+            assert self.gtf_path is not None
             # GTF object wraps the source GTF file from which we get
             # genome annotations. Presents access to each feature
             # annotations as a pandas.DataFrame.
@@ -235,18 +235,24 @@ class Genome(object):
             self._db = Database(
                 gtf=self.gtf,
                 # TODO: change Database to use cache_directory_path instead
+                # Any use of subdirectories is because we're relying on
+                # datacache to figure out the global path for us, which is
+                # something we need to move away from to then cut the dependency
+                # on datacache (or make datacache smaller and more focused)
                 cache_subdirectory=self.download_cache.cache_subdirectory,
-                install_string_function=self.install_string)
-            self._db.connect_or_raise_exception(self.install_string())
+                install_string=self.install_string())
         return self._db
 
     @property
     def protein_sequences(self):
         if self._protein_sequences is None:
+            if not self.has_protein_fasta:
+                raise ValueError(
+                    "Missing protein FASTA source for %s" % self)
             # make sure protein FASTA file exists locally
             # and populate self.protein_fasta_path
             self._set_local_paths()
-
+            assert self.protein_fasta_path is not None
             self._protein_sequences = SequenceData(
                 fasta_path=self.protein_fasta_path,
                 require_ensembl_ids=self.require_ensembl_ids,
@@ -256,10 +262,13 @@ class Genome(object):
     @property
     def transcript_sequences(self):
         if self._transcript_sequences is None:
+            if not self.has_transcript_fasta:
+                raise ValueError(
+                    "Missing transcript FASTA source for %s" % self)
             # make sure transcript FASTA file exists locally
             # and populate self.protein_fasta_path
             self._set_local_paths()
-
+            assert self.transcript_fasta_path is not None
             self._transcript_sequences = SequenceData(
                 fasta_path=self.transcript_fasta_path,
                 require_ensembl_ids=self.require_ensembl_ids,

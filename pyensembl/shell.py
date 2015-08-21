@@ -110,8 +110,6 @@ def run():
 
     args = parser.parse_args()
 
-    auto_download = args.action == "install"
-
     genomes = []
     # If specific genome source URLs are provided, use those
     if args.gtf or args.transcript_fasta or args.protein_fasta:
@@ -128,18 +126,12 @@ def run():
             annotation_name=args.annotation_name,
             gtf_path_or_url=args.gtf,
             transcript_fasta_path_or_url=args.transcript_fasta,
-            protein_fasta_path_or_url=args.protein_fasta,
-            auto_download=auto_download,
-            force_download=args.overwrite))
+            protein_fasta_path_or_url=args.protein_fasta))
     else:
         # Otherwise, use Ensembl release information
         for version in args.release:
             genomes.append(
-                EnsemblRelease(
-                    version,
-                    species=args.species,
-                    auto_download=auto_download,
-                    overwrite_cached_files=args.overwrite))
+                EnsemblRelease(version, species=args.species))
 
     if len(genomes) == 0:
         print("ERROR: No genomes selected!\n")
