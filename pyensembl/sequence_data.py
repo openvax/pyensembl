@@ -15,11 +15,10 @@
 from __future__ import print_function, division, absolute_import
 from os import remove
 from os.path import exists, abspath, split, join
-import gzip
 import logging
 
 from six.moves import cPickle as pickle
-from skbio import parse_fasta
+from skbio import read
 
 from .common import require_ensembl_id, load_pickle, dump_pickle
 
@@ -81,15 +80,10 @@ class SequenceData(object):
 
     def _parse_fasta_dictionary(self):
         fasta_dictionary = {}
-        if self.fasta_path.endswith(".gz") or self.fasta_path.endswith(".gzip"):
-            f = gzip.open(self.fasta_path, "r")
-        else:
-            f = open(self.fasta_path, "r")
-
         sequence_type = self.sequence_type
-        for (key, seq) in parse_fasta(f, label_to_name=lambda s: s.split()[0]):
-            fasta_dictionary[key] = sequence_type(seq)
-        f.close()
+        for seq_entry in read(self.fasta_path, format="fasta"):
+            seq_id = seq_entry.metadata["id"]
+            fasta_dictionary[seq_id] = sequence_type(seq_entry)
         return fasta_dictionary
 
     def _load_or_create_fasta_dictionary_pickle(self):
@@ -100,7 +94,10 @@ class SequenceData(object):
                 self._fasta_dictionary = load_pickle(
                     self.fasta_dictionary_pickle_path)
                 return
-            except pickle.UnpicklingError:
+            except (pickle.UnpicklingError, AttributeError):
+                # catch either an UnpicklingError or an AttributeError
+                # resulting from pickled objects refering to classes
+                # that no longer exists
                 logging.warn(
                     "Failed to load %s, attempting to read FASTA directly" % (
                         self.fasta_dictionary_pickle_path,))

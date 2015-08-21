@@ -22,17 +22,3 @@ def test_transcript_sequence_ensembl54():
     ]
     full_transcript_sequence = "".join(nucleotide_lines)
     eq_(str(seq), full_transcript_sequence)
-
-    # make sure the Sequence object's reverse and complement properties work
-    reverse_complement = seq.complement()
-    reverse_complement_lines = [
-        "GAAAAACATTATTTTTTTATGCTGAAAAGATACACATATATTTAGAGTTAGCCAGCTGGACTCAGTTTA",
-        "GGTGATCCCAATTTTGTTACAACATCGAAAGCATCATAATCAGGAGCAAGTCGAACATATGCCTTGTTC",
-        "TCTTTATCAGGACAAATCAGGGTGGTGACCTTGGCCACATCACTGTCATAGAGCTTCTTCACAGCCTGT",
-        "CTGATCTGGTGCTTGTTGGCTTTAACATCCACAGTGAACACAAGCGTGTTGTTTTCTTCTATCTTCTTC",
-        "ACGGCCGACTCAGTGGTCAGCGGAAACTTGATGATAGCATAGTGGCCAAGCTTGTTTCTCCTGGGGGTG",
-        "CTCTTCCGAGGATATCTGGGCTGCCTCCGGAGTCGCAGTGTCTTGGGCCGCCTGAAGGTGGGTGACATG"
-    ]
-    reverse_complement = "".join(reverse_complement_lines)
-    eq_(len(seq.reverse_complement()), 414)
-    eq_(str(seq.reverse_complement()), reverse_complement)

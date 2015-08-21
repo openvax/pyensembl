@@ -9,7 +9,7 @@ import tempfile
 from nose.tools import assert_raises
 from pyensembl import SequenceData
 
-from skbio import DNASequence
+from skbio import DNA
 from .data import data_path
 
 FASTA_PATH = data_path("mouse.ensembl.81.partial.ENSMUSG00000017167.fa")
@@ -18,10 +18,10 @@ def test_sequence_type():
     with tempfile.TemporaryDirectory() as tmpdir:
         seqs_dna = SequenceData(
             FASTA_PATH,
-            sequence_type=DNASequence,
+            sequence_type=DNA,
             cache_directory_path=tmpdir)
         seq = seqs_dna.get("ENSMUST00000138942")
-        assert isinstance(seq, DNASequence)
+        assert isinstance(seq, DNA)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         seqs_str = SequenceData(
