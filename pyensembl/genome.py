@@ -175,15 +175,15 @@ class Genome(object):
     def _set_local_paths(self, download_if_missing=False, overwrite=False):
         if self.has_gtf:
             self.gtf_path = self._get_gtf_path(
-                download_if_missing=True,
+                download_if_missing=download_if_missing,
                 overwrite=overwrite)
         if self.has_transcript_fasta:
             self.transcript_fasta_path = self._get_transcript_fasta_path(
-                download_if_missing=True,
+                download_if_missing=download_if_missing,
                 overwrite=overwrite)
         if self.has_protein_fasta:
             self.protein_fasta_path = self._get_protein_fasta_path(
-                download_if_missing=True,
+                download_if_missing=download_if_missing,
                 overwrite=overwrite)
 
     def download(self, overwrite=False):
