@@ -8,6 +8,8 @@ virtualenv:
 install:
 - pip install -r requirements.txt
 - python setup.py develop
+- pyensembl install --release 75 77 79 81 --species human
+- pyensembl install --release 81 --species mouse
 script: nosetests test && ./lint.sh
 deploy:
   provider: pypi
