@@ -16,11 +16,13 @@ before_install:
 install:
 - pip install -r requirements.txt
 - python setup.py develop
-- travis_wait 60 pyensembl install --release 75 --species human
-- travis_wait 60 pyensembl install --release 77 --species human
-- travis_wait 60 pyensembl install --release 79 --species human
-- travis_wait 60 pyensembl install --release 81 --species human
-- travis_wait 60 pyensembl install --release 81 --species mouse
+# human releases
+- travis_wait pyensembl install --release 75 --species human
+- travis_wait pyensembl install --release 77 --species human
+- travis_wait pyensembl install --release 79 --species human
+- travis_wait pyensembl install --release 81 --species human
+# mouse releases
+- travis_wait pyensembl install --release 81 --species mouse
 script: nosetests test && ./lint.sh
 deploy:
   provider: pypi
