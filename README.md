@@ -33,16 +33,14 @@ Before using PyEnsembl, run the following command to download and install
 Ensembl data:
 
 ```
-pyensembl install --release <list of Ensembl release numbers>
+pyensembl install --release <list of Ensembl release numbers> --species <species-name>
 ```
 
-For example, `pyensembl install --release 75 76` will download and install all
-data for Ensembl releases 75 and 76.
+For example, `pyensembl install --release 75 76 --species human` will download and install all
+human reference data from Ensembl releases 75 and 76.
 
-Alternatively, you can create the `EnsemblRelease` object with
-`auto_download=True`. PyEnsembl will then download your data as you
-need it, and there will be a delay of several minutes after your first
-command.
+Alternatively, you can create the `EnsemblRelease` object from inside a Python
+process and call `ensembl_object.download()` followed by `ensembl_object.index()`.
 
 # Non-Ensembl Data
 
@@ -54,7 +52,12 @@ non-Ensembl data is still very much in development.)
 For example:
 
 ```
-data = Genome(reference_name='GRCh38', gtf_path_or_url='/My/local/gtf/path.gtf'))
+data = Genome
+    reference_name='GRCh38',
+    annotation_name='my_genome_features',
+    gtf_path_or_url='/My/local/gtf/path_to_my_genome_features.gtf'))
+# parse GTF and construct database of genomic features
+data.index()
 gene_names = data.gene_names_at_locus(contig=6, position=29945884)
 ```
 
@@ -148,13 +151,17 @@ Ensembl database, optionally restricted to a particular contig or strand.
 ## Exons
 
 `exon_ids(contig=None, strand=None)`
-: returns all transcript IDs in the annotation database
+: returns list of exons IDs in the annotation database, optionally restricted
+by the given chromosome and strand
 
 `exon_ids_of_gene_id(gene_id)`
+: returns list of exon IDs associated with a given gene ID
 
 `exon_ids_of_gene_name(gene_name)`
-
-`exon_ids_of_transcript_name(transcript_name)`
+: returns list of exon IDs associated with a given gene name
 
 `exon_ids_of_transcript_id(transcript_id)`
+: returns list of exon IDs associated with a given transcript ID
 
+`exon_ids_of_transcript_name(transcript_name)`
+: returns list of exon IDs associated with a given transcript name
