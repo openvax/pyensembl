@@ -12,6 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import print_function, division, absolute_import
+import logging
+from os.path import exists
+
+
+from six.moves import intern
+from .locus import normalize_chromosome
+
+import numpy as np
+import pandas as pd
+
+
 """
 Parse an Ensembl GTF file into a dataframe, expanding all of its attributes
 into their own columns,
@@ -47,17 +59,6 @@ Columns of a GTF file:
 (from ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/README)
 """
 
-from __future__ import print_function, division, absolute_import
-import logging
-from os.path import exists
-import gc
-
-from six.moves import intern
-from .locus import normalize_chromosome
-
-import numpy as np
-import pandas as pd
-
 
 GTF_COLS = [
     'seqname',
@@ -83,7 +84,7 @@ def pandas_series_is_biotype(series):
     """
     return 'protein_coding' in series.values
 
-def _read_gtf(filename):
+def _read_gtf(filename, chunksize=10**5):
     """
     Download GTF annotation data for given release (if not already present),
     parse it into a DataFrame, leave the attributes in a single string column
@@ -92,18 +93,35 @@ def _read_gtf(filename):
     assert filename.endswith(".gtf") or filename.endswith(".gtf.gz"), \
         "Must be a GTF file (%s)" % filename
     compression = "gzip" if filename.endswith(".gz") else None
+    pieces = []
+    for i, df_chunk in enumerate(pd.read_csv(
+            filename,
+            comment='#',
+            sep='\t',
+            names=GTF_COLS,
+            na_filter=False,
+            compression=compression,
+            engine="c",
+            dtype={
+                "seqname": np.object_,
+                "start": np.int64,
+                "end": np.int64,
+            },
+            converters={
+                "seqname": normalize_chromosome
+            },
+            encoding="ascii",
+            chunksize=chunksize)):
+        # TODO: tokenize attribute strings properly
+        # for now, catch mistaken semicolons by replacing "xyz;" with "xyz"
+        # Required to do this since the GTF for Ensembl 78 has
+        # gene_name = "PRAMEF6;"
+        # transcript_name = "PRAMEF6;-201"
+        df_chunk["attribute"] = df_chunk["attribute"].str.replace(';\"', '\"')
+        df_chunk["attribute"] = df_chunk["attribute"].str.replace(";-", "-")
+        pieces.append(df_chunk)
 
-    df = pd.read_csv(
-        filename,
-        comment='#',
-        sep='\t',
-        names=GTF_COLS,
-        na_filter=False,
-        compression=compression,
-        low_memory=True,
-        dtype={0: np.object_})
-    df['seqname'] = df['seqname'].map(
-        lambda seqname: normalize_chromosome(str(seqname)))
+    df = pd.concat(pieces)
 
     # very old GTF files use the second column to store the gene biotype
     # others use it to store the transcript biotype and
@@ -115,19 +133,11 @@ def _read_gtf(filename):
         column_name = 'biotype'
     else:
         column_name = 'source'
-    df.rename(columns={'second_column': column_name}, inplace=True)
-
-    # Problem: PyEnsembl fails on Travis if it uses >3gb of memory, which is easy to
-    # do when parsing Ensembl GTFs.
-    #
-    # Partial solution: run a full garbage collection since parsing and
-    # chromosome normalization might have left a large number of temporary
-    # objects lingering and we're about to generate a lot more garbage expanding
-    # the attributes column into multiple columns.
-    gc.collect()
+    df[column_name] = df["second_column"]
+    del df_chunk["second_column"]
     return df
 
-def _extend_with_attributes(df, lines_before_gc=10**5):
+def _extend_with_attributes(df):
     n = len(df)
 
     attribute_strings = df["attribute"]
@@ -136,19 +146,8 @@ def _extend_with_attributes(df, lines_before_gc=10**5):
 
     extra_columns = {}
     column_order = []
-
-    for i, attr_string in enumerate(attribute_strings):
-        # TODO: tokenize attribute strings properly
-        # for now, catch mistaken semicolons by replacing "xyz;" with "xyz"
-        # Required to do this since the GTF for Ensembl 78 has
-        # gene_name = "PRAMEF6;"
-        # transcript_name = "PRAMEF6;-201"
-        if ';\"' in attr_string:
-            attr_string.replace(';\"', '\"')
-        if ";-" in attr_string:
-            attr_string = attr_string.replace(";-", "-")
-
-        for kv in attr_string.split(";"):
+    for i, attr_strings in enumerate(attribute_strings):
+        for kv in attr_strings.split(";"):
             kv = kv.strip()
             if not kv or " " not in kv:
                 continue
@@ -171,10 +170,7 @@ def _extend_with_attributes(df, lines_before_gc=10**5):
                 # remove quotes around values
                 value = value.replace('\"', "")
             column[i] = value
-            if i % lines_before_gc == 0:
-                # run the garbage collector periodically to keep us under
-                # Travis's 3gb limit
-                gc.collect()
+
     print("Extracted GTF attributes: %s" % column_order)
     for column_name in column_order:
         df[column_name] = extra_columns[column_name]
@@ -231,7 +227,8 @@ def _dataframe_from_groups(groups, feature):
 
     df = pd.concat(columns, axis=1).reset_index()
 
-    # score seems to be always this value, not sure why it's in the GTFs
+    # score seems to be always '.' in Ensembl GTF files value,
+    # not sure why it's even given
     df['score'] = '.'
 
     # frame values only make sense for CDS entries, but need this column

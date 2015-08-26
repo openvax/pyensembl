@@ -15,10 +15,12 @@
 from __future__ import print_function, division, absolute_import
 
 from typechecks import is_integer, require_string
+from six.moves import intern
 
 # Manually memoizing here, since our simple common.memoize function has
 # noticable overhead in this instance.
 NORMALIZE_CHROMOSOME_CACHE = {}
+
 def normalize_chromosome(c):
     try:
         return NORMALIZE_CHROMOSOME_CACHE[c]
@@ -44,7 +46,7 @@ def normalize_chromosome(c):
         else:
             # just in case someone is being lazy, capitalize "X" and "Y"
             result = result.upper()
-        
+    result = intern(result)
     NORMALIZE_CHROMOSOME_CACHE[c] = result
     return result
 
@@ -228,8 +230,7 @@ class Locus(object):
         that e.g. chr1:10-10 overlaps with chr1:10-10
         """
         return (
-            self.can_overlap(contig, strand)
-            and
+            self.can_overlap(contig, strand) and
             self.distance_to_interval(start, end) == 0)
 
     def overlaps_locus(self, other_locus):
@@ -241,10 +242,8 @@ class Locus(object):
 
     def contains(self, contig, start, end, strand=None):
         return (
-            self.can_overlap(contig, strand)
-            and
-            start >= self.start
-            and
+            self.can_overlap(contig, strand) and
+            start >= self.start and
             end <= self.end)
 
     def contains_locus(self, other_locus):
