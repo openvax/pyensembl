@@ -51,6 +51,7 @@ from __future__ import print_function, division, absolute_import
 import logging
 from os.path import exists
 
+from six.moves import intern
 from .locus import normalize_chromosome
 
 import numpy as np
@@ -96,7 +97,9 @@ def _read_gtf(filename):
         sep='\t',
         names=GTF_COLS,
         na_filter=False,
-        compression=compression)
+        compression=compression,
+        low_memory=True,
+        dtype={0: np.object_})
 
     df['seqname'] = df['seqname'].map(
         lambda seqname: normalize_chromosome(str(seqname)))
@@ -115,74 +118,52 @@ def _read_gtf(filename):
 
     return df
 
-def _attribute_dictionaries(df):
-    """
-    Given a DataFrame with attributes in semi-colon
-    separated string, split them apart into per-entry dictionaries
-    """
-    # this crazy triply-nested comprehensions
-    # is unfortunately the best way to parse
-    # ~2 million attribute strings while still using
-    # vaguely Pythonic code
-    attr_dicts = [
-        {
-            key: value.replace("\"", "").replace(";", "")
-            for (key, value) in (
-                pair_string.split(" ", 2)
-                for pair_string in attr_string.split("; ")
-            )
-        }
-        for attr_string in df.attribute
-    ]
-    return attr_dicts
-
 def _extend_with_attributes(df):
     n = len(df)
+
+    attribute_strings = df["attribute"]
+    # remove attribute strings from dataframe we're going to return
+    del df["attribute"]
+
     extra_columns = {}
     column_order = []
-    for i, attr_string in enumerate(df.attribute):
+
+    for i, attr_string in enumerate(attribute_strings):
         # TODO: tokenize attribute strings properly
         # for now, catch mistaken semicolons by replacing "xyz;" with "xyz"
         # Required to do this since the GTF for Ensembl 78 has
         # gene_name = "PRAMEF6;"
         # transcript_name = "PRAMEF6;-201"
-        attr_string = attr_string.replace(';\"', '\"').replace(";-", "-")
+        if ';\"' in attr_string:
+            attr_string.replace(';\"', '\"')
+        if ";-" in attr_string:
+            attr_string = attr_string.replace(";-", "-")
 
-        pairs = (
-            kv.strip().split(" ", 2)
-            for kv in attr_string.split(";")
-            # simplest entry must be at least three characters:
-            # (key name, space, value)
-            if len(kv) > 2
-        )
-
-        for pair in pairs:
-            if len(pair) < 2:
-                raise ValueError(
-                    "Expected all entries to key-value pairs, got: %s" % (
-                        pair,))
+        for kv in attr_string.split(";"):
+            kv = kv.strip()
+            if not kv or " " not in kv:
+                continue
+            # We're slicing the first two elements out of split() because
             # Ensembl release 79 added values like:
             #   transcript_support_level "1 (assigned to previous version 5)";
             # ...which gets mangled by splitting on spaces.
+            #
             # TODO: implement a proper parser!
-            k, v = pair[:2]
-            if k not in extra_columns:
-                extra_columns[k] = [""] * n
-                column_order.append(k)
-            extra_columns[k][i] = v
-
-    # make a copy of the DataFrame without attribute strings.
-    df = df.drop("attribute", axis=1)
-
-    logging.info("Adding attribute columns: %s", column_order)
-    for k in column_order:
-        assert k not in df, "Column '%s' appears in GTF twice" % k
-        df[k] = extra_columns[k]
-        # delete from dictionary since these objects are big
-        # and we might be runniung low on memory
-        del extra_columns[k]
-        # remove quotes around values
-        df[k] = df[k].str.replace("\"", "")
+            column_name, value = kv.split(" ", 2)[:2]
+            # interning keys such as "gene_name" since they reocccur
+            # millions of times
+            column_name = intern(column_name)
+            column = extra_columns.get(column_name)
+            if column is None:
+                column = [""] * n
+                extra_columns[column_name] = column
+                column_order.append(column_name)
+            if '\"'in value:
+                # remove quotes around values
+                value = value.replace('\"', "")
+            column[i] = value
+    for column_name in column_order:
+        df[column_name] = extra_columns[column_name]
     return df
 
 # In addition to the required 8 columns and IDs of genes & transcripts,
@@ -232,7 +213,7 @@ def _dataframe_from_groups(groups, feature):
     for conditional_column_name in conditional_column_names:
         if conditional_column_name in groups.first().columns:
             column = groups[conditional_column_name].first()
-            columns.append(column) 
+            columns.append(column)
 
     df = pd.concat(columns, axis=1).reset_index()
 
@@ -258,49 +239,6 @@ def reconstruct_transcript_rows(df):
         feature='transcript'
     )
     return pd.concat([df, transcripts_df], ignore_index=True)
-
-def can_reconstruct_exon_id_column(df):
-    return "transcript_id" in df and "exon_number" in df
-
-def reconstruct_exon_id_column(df, inplace=True):
-    """
-    Construct missing exon_id column for older GTFs by concatenating
-    transcript_id and exon_number
-
-        e.g. ENST00000400674.exon2
-
-    While not useful for joining against external data, these exon_ids are
-    needed for methods like ensembl_release.exon_ids_at_location.
-
-    Parameters
-    ----------
-
-    df : DataFrame
-        Must have columns 'transcript_id' and 'exon_number'
-
-    """
-
-    assert 'exon_id' not in df
-    assert 'transcript_id' in df
-    assert 'exon_number' in df
-
-    if not inplace:
-        df = df.copy()
-
-    # missing values in dataframes indicated by NaN
-    df['exon_id'] = np.nan
-
-    # assign exon IDs to any entry with an exon number
-    # this includes features = {'exon', 'CDS', 'start_codon', 'stop_codon'}
-    exon_id_mask = ~df.exon_number.isnull()
-
-    transcript_ids = df['transcript_id'][exon_id_mask]
-
-    # convert floating value to ints (to get rid of decimal) and then str
-    exon_numbers = df['exon_number'][exon_id_mask].astype(int).astype(str)
-
-    df['exon_id'][exon_id_mask] = transcript_ids + '.exon' + exon_numbers
-    return df
 
 def load_gtf_as_dataframe(filename):
     logging.info("Reading GTF %s into DataFrame", filename)
@@ -355,11 +293,4 @@ def load_gtf_as_dataframe(filename):
     if 'transcript' not in distinct_features:
         logging.info("Creating entries for feature='transcript'")
         df = reconstruct_transcript_rows(df)
-
-    if 'exon_id' not in df:
-        if can_reconstruct_exon_id_column(df):
-            logging.info("Creating 'exon_id' column")
-            df = reconstruct_exon_id_column(df)
-        else:
-            logging.info("Cannot create 'exon_id' column")
     return df

@@ -119,7 +119,7 @@ class GTF(object):
         csv_filename += extension
         return join(self.cache_directory_path, csv_filename)
 
-    def _load_full_dataframe(self):
+    def _load_full_dataframe_cached(self):
         """
         Loads full dataframe from cached CSV or constructs it from GTF
         """
@@ -138,7 +138,7 @@ class GTF(object):
             contig=None,
             feature=None,
             strand=None,
-            save_to_disk=True):
+            save_to_disk=False):
         """
         Load genome entries as a DataFrame, optionally restricted to
         particular contig or feature type.
@@ -156,7 +156,7 @@ class GTF(object):
 
         if key not in self._dataframes:
             def _construct_df():
-                full_df = self._load_full_dataframe()
+                full_df = self._load_full_dataframe_cached()
                 assert len(full_df) > 0, \
                     "Dataframe representation of genomic database empty!"
 
