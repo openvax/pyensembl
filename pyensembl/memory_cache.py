@@ -64,9 +64,9 @@ class MemoryCache(object):
             df['seqname'] = df['seqname'].map(str)
         return df
 
-    def _write_csv(self, df, csv_path):
+    def _write_csv(self, df, csv_path, chunksize=10**5):
         print("Saving DataFrame to %s" % csv_path)
-        df.to_csv(csv_path, index=False)
+        df.to_csv(csv_path, index=False, chunksize=chunksize)
 
     def cached_dataframe(self, csv_path, compute_fn):
         """
