@@ -161,7 +161,9 @@ def _extend_with_attributes(df):
             column_name, value = kv.split(" ", 2)[:2]
             # interning keys such as "gene_name" since they reocccur
             # millions of times
-            column_name = intern(column_name)
+            # Need to convert to `str` before calling intern
+            # because Py2 can't intern unicode objects
+            column_name = intern(str(column_name))
             column = extra_columns.get(column_name)
             if column is None:
                 column = [""] * n
@@ -170,7 +172,9 @@ def _extend_with_attributes(df):
             if '\"'in value:
                 # remove quotes around values
                 value = value.replace('\"', "")
-            value = intern(value)
+            # convert to `str` before calling intern because Py2
+            # can't intern unicode objects
+            value = intern(str(value))
             column[i] = value
 
     print("Extracted GTF attributes: %s" % column_order)
