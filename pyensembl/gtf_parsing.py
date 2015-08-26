@@ -146,6 +146,7 @@ def _extend_with_attributes(df):
 
     extra_columns = {}
     column_order = []
+
     for i, attr_strings in enumerate(attribute_strings):
         for kv in attr_strings.split(";"):
             kv = kv.strip()
@@ -169,6 +170,7 @@ def _extend_with_attributes(df):
             if '\"'in value:
                 # remove quotes around values
                 value = value.replace('\"', "")
+            value = intern(value)
             column[i] = value
 
     print("Extracted GTF attributes: %s" % column_order)
