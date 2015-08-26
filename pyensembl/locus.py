@@ -14,7 +14,6 @@
 
 from __future__ import print_function, division, absolute_import
 
-from typechecks import is_integer, require_string
 from six.moves import intern
 
 # Manually memoizing here, since our simple common.memoize function has
@@ -27,25 +26,23 @@ def normalize_chromosome(c):
     except KeyError:
         pass
 
-    result = c
-    if is_integer(result):
-        if result == 0:
-            raise ValueError("Contig cannot be 0")
-        result = str(result)
+    result = str(c)
+    if result == "0":
+        raise ValueError("Chromosome name cannot be 0")
+    elif result == "":
+        raise ValueError("Chromosome name cannot be empty")
+
+    # only strip off lowercase chr since some of the non-chromosomal
+    # contigs start with "CHR"
+    if result.startswith("chr"):
+        result = result[3:]
+
+    # standardize mitochondrial genome to be "MT"
+    if result == "M":
+        result = "MT"
     else:
-        require_string(result, "contig name", nonempty=True)
-
-        # only strip off lowercase chr since some of the non-chromosomal
-        # contigs start with "CHR"
-        if result.startswith("chr"):
-            result = result[3:]
-
-        # standardize mitochondrial genome to be "MT"
-        if result == "M":
-            result = "MT"
-        else:
-            # just in case someone is being lazy, capitalize "X" and "Y"
-            result = result.upper()
+        # just in case someone is being lazy, capitalize "X" and "Y"
+        result = result.upper()
     result = intern(result)
     NORMALIZE_CHROMOSOME_CACHE[c] = result
     return result
