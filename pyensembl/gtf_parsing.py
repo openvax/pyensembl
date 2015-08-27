@@ -15,13 +15,14 @@
 from __future__ import print_function, division, absolute_import
 import logging
 from os.path import exists
-
-
-from six.moves import intern
-from .locus import normalize_chromosome
+import resource
+import gzip
 
 import numpy as np
 import pandas as pd
+from six.moves import intern
+
+from .locus import normalize_chromosome
 
 
 """
@@ -84,6 +85,17 @@ def pandas_series_is_biotype(series):
     """
     return 'protein_coding' in series.values
 
+
+def memory_usage():
+    """
+    Returns number of megabytes of memory currently being used by this Python
+    process
+    """
+    resources = resource.getrusage(resource.RUSAGE_SELF)
+    resident_bytes = resources.ru_maxrss
+    return resident_bytes / (1024 * 1024)
+
+
 def _read_gtf(filename, chunksize=10**5):
     """
     Download GTF annotation data for given release (if not already present),
@@ -92,36 +104,64 @@ def _read_gtf(filename, chunksize=10**5):
     assert exists(filename)
     assert filename.endswith(".gtf") or filename.endswith(".gtf.gz"), \
         "Must be a GTF file (%s)" % filename
-    compression = "gzip" if filename.endswith(".gz") else None
-    pieces = []
-    for i, df_chunk in enumerate(pd.read_csv(
-            filename,
-            comment='#',
-            sep='\t',
-            names=GTF_COLS,
-            na_filter=False,
-            compression=compression,
-            engine="c",
-            dtype={
-                "seqname": np.object_,
-                "start": np.int64,
-                "end": np.int64,
-            },
-            converters={
-                "seqname": normalize_chromosome
-            },
-            encoding="ascii",
-            chunksize=chunksize)):
-        # TODO: tokenize attribute strings properly
-        # for now, catch mistaken semicolons by replacing "xyz;" with "xyz"
-        # Required to do this since the GTF for Ensembl 78 has
-        # gene_name = "PRAMEF6;"
-        # transcript_name = "PRAMEF6;-201"
-        df_chunk["attribute"] = df_chunk["attribute"].str.replace(';\"', '\"')
-        df_chunk["attribute"] = df_chunk["attribute"].str.replace(";-", "-")
-        pieces.append(df_chunk)
+    # compression = "gzip" if filename.endswith(".gz") else None
 
-    df = pd.concat(pieces)
+    logging.info("Memory usage before GTF parsing: %0.4f MB" % memory_usage())
+
+    if filename.endswith("gz") or filename.endswith("gzip"):
+        def open_gtf(filename):
+            return gzip.open(filename, mode="rt")
+    else:
+        def open_gtf(filename):
+            return open(filename, buffering=chunksize)
+
+    expected_number_fields = len(GTF_COLS)
+
+    seqname_values = []
+    second_column_values = []
+    feature_values = []
+    start_values = []
+    end_values = []
+    score_values = []
+    strand_values = []
+    frame_values = []
+    attribute_values = []
+
+    for i, line in enumerate(open_gtf(filename)):
+
+        if line.startswith("#"):
+            continue
+        fields = line.split("\t")
+        assert len(fields) == expected_number_fields, \
+            "Wrong number of fields %d in %s" % (len(fields, filename))
+        seq, second, feature, start, end, score, strand, frame, attr = fields
+        seqname_values.append(normalize_chromosome(seq))
+        second_column_values.append(intern(str(second)))
+        feature_values.append(intern(str(feature)))
+        start_values.append(int(start))
+        end_values.append(int(end))
+        if score == ".":
+            score_values.append(np.nan)
+        else:
+            score_values.append(np.float(score))
+        strand_values.append(intern(str(strand)))
+        frame_values.append(intern(str(frame)))
+        attribute_values.append(attr)
+
+    logging.info("Memory usage after GTF parsing: %0.4f MB" % memory_usage())
+
+    df = pd.DataFrame({})
+    df["seqname"] = np.array(seqname_values, dtype="S1")
+    df["second_column"] = second_column_values
+    df["feature"] = feature_values
+    df["start"] = np.array(start_values, dtype="int64")
+    df["end"] = np.array(end_values, dtype="int64")
+    df["score"] = np.array(score_values, dtype="float32")
+    df["strand"] = np.array(strand_values, dtype="S1")
+    df["frame"] = np.array(frame_values, dtype="S1")
+    df["attribute"] = attribute_values
+    logging.info("Memory usage after DataFrame construction: %0.4f MB" % (
+        memory_usage(),))
 
     # very old GTF files use the second column to store the gene biotype
     # others use it to store the transcript biotype and
@@ -134,10 +174,15 @@ def _read_gtf(filename, chunksize=10**5):
     else:
         column_name = 'source'
     df[column_name] = df["second_column"]
-    del df_chunk["second_column"]
+    del df["second_column"]
     return df
 
 def _extend_with_attributes(df):
+
+    logging.info(
+        "Memory usage before expanding GTF attributes: %0.4f MB" % (
+            memory_usage(),))
+
     n = len(df)
 
     attribute_strings = df["attribute"]
@@ -147,10 +192,22 @@ def _extend_with_attributes(df):
     extra_columns = {}
     column_order = []
 
-    for i, attr_strings in enumerate(attribute_strings):
-        for kv in attr_strings.split(";"):
-            kv = kv.strip()
-            if not kv or " " not in kv:
+    for i, attribute_string in enumerate(attribute_strings):
+
+        # Catch mistaken semicolons by replacing "xyz;" with "xyz"
+        # Required to do this since the GTF for Ensembl 78 has
+        # gene_name = "PRAMEF6;"
+        # transcript_name = "PRAMEF6;-201"
+        if ';\"' in attribute_string:
+            attribute_string = attribute_string.replace(';\"', '\"')
+        if ";-" in attribute_string:
+            attribute_string = attribute_string.replace(";-", "-")
+
+        # Split the semi-colon separated attributes in the last column of a GTF
+        # into a list of (key, value) pairs.
+        for kv in attribute_string.split(";"):
+            # need at least 3 chars for minimal entry like 'k v'
+            if len(kv) < 3 or " " not in kv:
                 continue
             # We're slicing the first two elements out of split() because
             # Ensembl release 79 added values like:
@@ -158,28 +215,33 @@ def _extend_with_attributes(df):
             # ...which gets mangled by splitting on spaces.
             #
             # TODO: implement a proper parser!
-            column_name, value = kv.split(" ", 2)[:2]
-            # interning keys such as "gene_name" since they reocccur
+            column_name, value = kv.strip().split(" ", 2)[:2]
+
+            # 1) interning keys such as "gene_name" since they reocccur
             # millions of times
-            # Need to convert to `str` before calling intern
-            # because Py2 can't intern unicode objects
+            # 2) remove quotes around values
+            if '\"' in value:
+                value = value.replace('\"', "")
             column_name = intern(str(column_name))
+            value = intern(str(value))
             column = extra_columns.get(column_name)
             if column is None:
                 column = [""] * n
                 extra_columns[column_name] = column
                 column_order.append(column_name)
-            if '\"'in value:
-                # remove quotes around values
-                value = value.replace('\"', "")
-            # convert to `str` before calling intern because Py2
-            # can't intern unicode objects
-            value = intern(str(value))
             column[i] = value
-
     print("Extracted GTF attributes: %s" % column_order)
     for column_name in column_order:
-        df[column_name] = extra_columns[column_name]
+        column = extra_columns[column_name]
+        # special case for single character strings, since these are
+        # commonly occurring values
+        df[column_name] = column
+        del extra_columns[column_name]
+    logging.info(
+        "Memory usage after expanding GTF attributes: %0.4f MB" % (
+            memory_usage(),))
+    print("DataFrame dtypes:")
+    print(df.dtypes)
     return df
 
 # In addition to the required 8 columns and IDs of genes & transcripts,

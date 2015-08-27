@@ -43,6 +43,9 @@ def normalize_chromosome(c):
     else:
         # just in case someone is being lazy, capitalize "X" and "Y"
         result = result.upper()
+    # interning strings since the chromosome names probably get constructed
+    # or parsed millions of times, can save memory in tight situations
+    # (such as parsing GTF files)
     result = intern(result)
     NORMALIZE_CHROMOSOME_CACHE[c] = result
     return result
