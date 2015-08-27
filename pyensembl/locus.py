@@ -15,6 +15,7 @@
 from __future__ import print_function, division, absolute_import
 
 from six.moves import intern
+from typechecks import is_string, is_integer
 
 # Manually memoizing here, since our simple common.memoize function has
 # noticable overhead in this instance.
@@ -26,7 +27,7 @@ def normalize_chromosome(c):
     except KeyError:
         pass
 
-    if not isinstance(c, (str, int)):
+    if not (is_string(c) or is_integer(c)):
         raise TypeError("Chromosome cannot be '%s' : %s" % (c, type(c)))
 
     result = str(c)
