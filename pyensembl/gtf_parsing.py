@@ -17,6 +17,7 @@ import logging
 from os.path import exists
 import resource
 import gzip
+import sys
 
 import numpy as np
 import pandas as pd
@@ -92,9 +93,12 @@ def memory_usage():
     process
     """
     resources = resource.getrusage(resource.RUSAGE_SELF)
-    resident_bytes = resources.ru_maxrss
-    return resident_bytes / (1024 * 1024)
-
+    if sys.platform == 'darwin':
+        resident_bytes = resources.ru_maxrss
+        resident_kilobytes = resident_bytes / 1024
+    else:
+        resident_kilobytes = resources.ru_maxrss
+    return resident_kilobytes / 1024
 
 def _read_gtf(filename, chunksize=10**5):
     """
