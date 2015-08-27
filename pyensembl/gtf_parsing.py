@@ -151,14 +151,14 @@ def _read_gtf(filename, chunksize=10**5):
     logging.info("Memory usage after GTF parsing: %0.4f MB" % memory_usage())
 
     df = pd.DataFrame({})
-    df["seqname"] = np.array(seqname_values, dtype="S1")
+    df["seqname"] = seqname_values
     df["second_column"] = second_column_values
     df["feature"] = feature_values
     df["start"] = np.array(start_values, dtype="int64")
     df["end"] = np.array(end_values, dtype="int64")
     df["score"] = np.array(score_values, dtype="float32")
-    df["strand"] = np.array(strand_values, dtype="S1")
-    df["frame"] = np.array(frame_values, dtype="S1")
+    df["strand"] = strand_values
+    df["frame"] = frame_values
     df["attribute"] = attribute_values
     logging.info("Memory usage after DataFrame construction: %0.4f MB" % (
         memory_usage(),))
@@ -205,18 +205,19 @@ def _extend_with_attributes(df):
 
         # Split the semi-colon separated attributes in the last column of a GTF
         # into a list of (key, value) pairs.
-        for kv in attribute_string.split(";"):
-            # need at least 3 chars for minimal entry like 'k v'
-            if len(kv) < 3 or " " not in kv:
-                continue
+        kv_generator = (
             # We're slicing the first two elements out of split() because
             # Ensembl release 79 added values like:
             #   transcript_support_level "1 (assigned to previous version 5)";
             # ...which gets mangled by splitting on spaces.
             #
             # TODO: implement a proper parser!
-            column_name, value = kv.strip().split(" ", 2)[:2]
-
+            kv.strip().split(" ", 2)[:2]
+            for kv in attribute_string.split(";")
+            # need at least 3 chars for minimal entry like 'k v'
+            if len(kv) > 2 and " " in kv
+        )
+        for column_name, value in kv_generator:
             # 1) interning keys such as "gene_name" since they reocccur
             # millions of times
             # 2) remove quotes around values
@@ -240,8 +241,6 @@ def _extend_with_attributes(df):
     logging.info(
         "Memory usage after expanding GTF attributes: %0.4f MB" % (
             memory_usage(),))
-    print("DataFrame dtypes:")
-    print(df.dtypes)
     return df
 
 # In addition to the required 8 columns and IDs of genes & transcripts,
