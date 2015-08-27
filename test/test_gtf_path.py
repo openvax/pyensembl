@@ -1,10 +1,11 @@
 from __future__ import absolute_import
-from tempfile import TemporaryDirectory
+
 from glob import glob
 from os.path import join
 from pyensembl import GTF
 
 from .data import data_path
+from .common import TemporaryDirectory
 
 gtf_path = data_path("mouse.ensembl.81.partial.ENSMUSG00000017167.gtf")
 

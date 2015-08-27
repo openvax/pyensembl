@@ -4,18 +4,19 @@ and that we're able to clear and regenrate its cached representation of
 a FASTA dictionary
 """
 from os.path import exists
-import tempfile
 
 from nose.tools import assert_raises
 from pyensembl import SequenceData
-
 from skbio import DNA
+
+from .common import TemporaryDirectory
 from .data import data_path
 
 FASTA_PATH = data_path("mouse.ensembl.81.partial.ENSMUSG00000017167.fa")
 
+
 def test_sequence_type():
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with TemporaryDirectory() as tmpdir:
         seqs_dna = SequenceData(
             FASTA_PATH,
             sequence_type=DNA,
@@ -23,7 +24,7 @@ def test_sequence_type():
         seq = seqs_dna.get("ENSMUST00000138942")
         assert isinstance(seq, DNA)
 
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with TemporaryDirectory() as tmpdir:
         seqs_str = SequenceData(
             FASTA_PATH,
             sequence_type=str,
@@ -32,7 +33,7 @@ def test_sequence_type():
         assert isinstance(seq, str)
 
 def test_check_ensembl_id():
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with TemporaryDirectory() as tmpdir:
         seqs = SequenceData(
             FASTA_PATH,
             require_ensembl_ids=True,
@@ -41,13 +42,13 @@ def test_check_ensembl_id():
             seqs.get("WeirdID")
 
 def test_missing_sequence():
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with TemporaryDirectory() as tmpdir:
         seqs = SequenceData(FASTA_PATH, cache_directory_path=tmpdir)
         seq = seqs.get("NotInFasta")
         assert seq is None, "Should get None back for missing sequence"
 
 def test_clear_cache():
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with TemporaryDirectory() as tmpdir:
         seqs = SequenceData(FASTA_PATH, cache_directory_path=tmpdir)
         assert not seqs._fasta_dictionary, \
             "Expected _fasta_dictionary to load lazily"
