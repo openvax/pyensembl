@@ -24,6 +24,8 @@ def test_ucsc_gencode_genome():
         reference_name="GRCh38",
         annotation_name="ucsc_test",
         gtf_path_or_url=UCSC_GENCODE_PATH)
+    genome.index()
+
     eq_(len(genome.genes()), 7)
     eq_(len(genome.transcripts()), 7)
 
@@ -58,6 +60,8 @@ def test_ucsc_refseq_genome():
         reference_name="GRCh38",
         annotation_name="ucsc_test",
         gtf_path_or_url=UCSC_REFSEQ_PATH)
+    genome.index()
+
     eq_(len(genome.genes()), 2)
     eq_(len(genome.transcripts()), 2)
 

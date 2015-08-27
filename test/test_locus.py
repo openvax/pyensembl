@@ -18,19 +18,19 @@ def test_normalize_chromosome():
     assert normalize_chromosome("M") == "MT"
     assert normalize_chromosome("MT") == "MT"
 
-    with assert_raises(TypeError, None):
+    with assert_raises(TypeError):
         normalize_chromosome({"a": "b"})
 
-    with assert_raises(TypeError, None):
+    with assert_raises(TypeError):
         normalize_chromosome([])
 
-    with assert_raises(TypeError, None):
+    with assert_raises(TypeError):
         normalize_chromosome(None)
 
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         normalize_chromosome("")
 
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         normalize_chromosome(0)
 
 def test_locus_overlaps():

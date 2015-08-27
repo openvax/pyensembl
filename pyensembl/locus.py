@@ -26,6 +26,9 @@ def normalize_chromosome(c):
     except KeyError:
         pass
 
+    if not isinstance(c, (str, int)):
+        raise TypeError("Chromosome cannot be '%s' : %s" % (c, type(c)))
+
     result = str(c)
     if result == "0":
         raise ValueError("Chromosome name cannot be 0")
