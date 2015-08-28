@@ -65,6 +65,17 @@ class MemoryCache(object):
         return df
 
     def _write_csv(self, df, csv_path, chunksize=10**5):
+        """
+        Parameters
+        ----------
+        df : pandas.DataFrame
+
+        csv_path : str
+
+        chunksize : int
+            Number of rows to write at a time. Helps to limit memory
+            consumption while writing a CSV.
+        """
         print("Saving DataFrame to %s" % csv_path)
         df.to_csv(csv_path, index=False, chunksize=chunksize)
 

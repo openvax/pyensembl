@@ -108,7 +108,6 @@ def _read_gtf(filename, chunksize=10**5):
     assert exists(filename)
     assert filename.endswith(".gtf") or filename.endswith(".gtf.gz"), \
         "Must be a GTF file (%s)" % filename
-    # compression = "gzip" if filename.endswith(".gz") else None
 
     logging.info("Memory usage before GTF parsing: %0.4f MB" % memory_usage())
 
@@ -182,11 +181,9 @@ def _read_gtf(filename, chunksize=10**5):
     return df
 
 def _extend_with_attributes(df):
-
     logging.info(
         "Memory usage before expanding GTF attributes: %0.4f MB" % (
             memory_usage(),))
-
     n = len(df)
 
     attribute_strings = df["attribute"]
@@ -236,10 +233,9 @@ def _extend_with_attributes(df):
                 column_order.append(column_name)
             column[i] = value
     print("Extracted GTF attributes: %s" % column_order)
+    # add columns to the DataFrame in the order they appeared
     for column_name in column_order:
         column = extra_columns[column_name]
-        # special case for single character strings, since these are
-        # commonly occurring values
         df[column_name] = column
         del extra_columns[column_name]
     logging.info(

@@ -91,19 +91,19 @@ def test_position_offset():
     assert negative_locus.offset(20) == 0
 
     # don't allow negative offsets
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         forward_locus.offset(9)
 
     # don't allow negative offsets
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         negative_locus.offset(9)
 
     # don't allow offset past the end of the locus
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         forward_locus.offset(21)
 
     # don't allow offset past the end of the locus
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         negative_locus.offset(21)
 
 
