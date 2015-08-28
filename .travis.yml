@@ -28,6 +28,6 @@ deploy:
   provider: pypi
   user: hammerlab
   password:
-    secure: gJSWl4PLXKtVc2ERwbzfd4qKk9Yy4T8dpfR7Q89VLVXTd7Tv1SsEknShJZUFaCPN85aYFcAWsoOI6vSlBSdXeTONU/pmPgcWOLfiErsgCqUs6qq7edOhrtOS307SREX4oF6AF2iyJduWAF4NPq+9IoJUROIiB4u5qeUtWfVu2Eo=
+    secure: "X4DhwpPp5OJDhejSLj3y+b/zjGgvKpaVh5DEo68HUoy6GKdTOmy2+QM1/tCQVt9fze5X2E849aNN9kfXUjHoeAd3OvFIzota3Bu6hOq+q2HKj6IB0mjB9p3b3kqDusBh9I/66MXApntrqZdN9ZOm/wjD0KHzGbBdvBz41hePsHw="
   on:
     tags: true
