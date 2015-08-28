@@ -93,7 +93,7 @@ def _read_gtf(filename, chunksize=10**5):
     assert filename.endswith(".gtf") or filename.endswith(".gtf.gz"), \
         "Must be a GTF file (%s)" % filename
 
-    logging.info("Memory usage before GTF parsing: %0.4f MB" % memory_usage())
+    logging.debug("Memory usage before GTF parsing: %0.4f MB" % memory_usage())
 
     if filename.endswith("gz") or filename.endswith("gzip"):
         def open_gtf(filename):
@@ -145,7 +145,7 @@ def _read_gtf(filename, chunksize=10**5):
         frame_values.append(intern(str(frame)))
         attribute_values.append(attr)
 
-    logging.info("Memory usage after GTF parsing: %0.4f MB" % memory_usage())
+    logging.debug("Memory usage after GTF parsing: %0.4f MB" % memory_usage())
 
     df = pd.DataFrame({})
     df["seqname"] = seqname_values
@@ -157,7 +157,7 @@ def _read_gtf(filename, chunksize=10**5):
     df["strand"] = strand_values
     df["frame"] = frame_values
     df["attribute"] = attribute_values
-    logging.info("Memory usage after DataFrame construction: %0.4f MB" % (
+    logging.debug("Memory usage after DataFrame construction: %0.4f MB" % (
         memory_usage(),))
 
     # very old GTF files use the second column to store the gene biotype
@@ -176,7 +176,7 @@ def _read_gtf(filename, chunksize=10**5):
 
 
 def _extend_with_attributes(df):
-    logging.info(
+    logging.debug(
         "Memory usage before expanding GTF attributes: %0.4f MB" % (
             memory_usage(),))
     n = len(df)
@@ -244,13 +244,13 @@ def _extend_with_attributes(df):
 
         column[i] = value
 
-    print("Extracted GTF attributes: %s" % column_order)
+    logging.info("Extracted GTF attributes: %s" % column_order)
     # add columns to the DataFrame in the order they appeared
     for column_name in column_order:
         column = extra_columns[column_name]
         df[column_name] = column
         del extra_columns[column_name]
-    logging.info(
+    logging.debug(
         "Memory usage after expanding GTF attributes: %0.4f MB" % (
             memory_usage(),))
     return df
