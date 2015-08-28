@@ -198,7 +198,7 @@ def _extend_with_attributes(df):
         #
         # TODO: implement a proper parser!
         (i, kv.strip().split(" ", 2)[:2])
-        for i, attribute_string in enumerate(attribute_strings)
+        for (i, attribute_string) in enumerate(attribute_strings)
         # Catch mistaken semicolons by replacing "xyz;" with "xyz"
         # Required to do this since the GTF for Ensembl 78 has
         # gene_name = "PRAMEF6;"

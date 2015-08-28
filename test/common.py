@@ -38,6 +38,7 @@ def test_ensembl_releases(*versions):
 
 # TemporaryDirectory only got added to Python in version 3.2
 try:
+    # pylint: disable=no-name-in-module
     from tempfile import TemporaryDirectory
 except ImportError:
     # only added in Python 3.2
