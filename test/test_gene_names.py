@@ -4,7 +4,8 @@ from some other type of name or ID.
 """
 from __future__ import absolute_import, print_function
 from pyensembl import ensembl_grch38
-from .test_common import test_ensembl_releases
+
+from .common import test_ensembl_releases
 
 # make sure that familia
 KNOWN_GENE_NAMES = [
