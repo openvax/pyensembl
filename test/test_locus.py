@@ -119,23 +119,23 @@ def test_range_offset():
     assert negative_locus.offset_range(20, 20) == (0, 0)
 
     # start shouldn't be larger than end
-    with assert_raises(AssertionError, None):
+    with assert_raises(AssertionError):
         forward_locus.offset_range(21, 20)
 
     # start shouldn't be larger than end
-    with assert_raises(AssertionError, None):
+    with assert_raises(AssertionError):
         negative_locus.offset_range(21, 20)
 
     # don't allow negative offsets
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         forward_locus.offset_range(9, 10)
 
     # don't allow negative offsets
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         forward_locus.offset_range(9, 10)
 
     # don't allow negative offsets
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         negative_locus.offset_range(9, 10)
 
 def test_locus_distance():

@@ -19,5 +19,5 @@ def test_gene_id_of_protein_id_release77():
     ok_('ENSG00000279634', gene_id)
 
 def test_gene_id_of_invalid_name():
-    with assert_raises(Exception, None):
+    with assert_raises(Exception):
         ensembl.gene_ids_of_gene_name("A wonderous pony sees through your soul")
