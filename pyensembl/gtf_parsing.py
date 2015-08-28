@@ -62,22 +62,6 @@ Columns of a GTF file:
 """
 
 
-GTF_COLS = [
-    'seqname',
-    # Different versions of GTF use this column as
-    # of: (1) gene biotype (2) transcript biotype or (3) the annotation source
-    #
-    # See: https://www.biostars.org/p/120306/#120321
-    'second_column',
-    'feature',
-    'start',
-    'end',
-    'score',
-    'strand',
-    'frame',
-    'attribute'
-]
-
 def pandas_series_is_biotype(series):
     """
     Hackishly infer whether a Pandas series is either from
@@ -118,8 +102,6 @@ def _read_gtf(filename, chunksize=10**5):
         def open_gtf(filename):
             return open(filename, buffering=chunksize)
 
-    expected_number_fields = len(GTF_COLS)
-
     seqname_values = []
     second_column_values = []
     feature_values = []
@@ -133,9 +115,25 @@ def _read_gtf(filename, chunksize=10**5):
     for i, line in enumerate(open_gtf(filename)):
         if line.startswith("#"):
             continue
-        fields = line.split("\t")
-        assert len(fields) == expected_number_fields, \
-            "Wrong number of fields %d in %s" % (len(fields, filename))
+        fields = line.split("\t", 9)
+        assert len(fields) == 9, \
+            "Wrong number of fields %d in %s" % (len(fields), filename)
+        # GTF columns:
+        # 1) seqname: str ("1", "X", &c)
+        # 2) second_column : str
+        #      Different versions of GTF use second column as of:
+        #      (a) gene biotype
+        #      (b) transcript biotype
+        #      (c) the annotation source
+        #      See: https://www.biostars.org/p/120306/#120321
+        # 3) feature : str ("gene", "transcript", &c)
+        # 4) start : int
+        # 5) end : int
+        # 6) score : float or "."
+        # 7) strand : "+", "-", or "."
+        # 8) frame : 0, 1, 2 or "."
+        # 9) attribute : key-value pairs separated by semicolons
+        # (see more complete description in docstring at top of file)
         seq, second, feature, start, end, score, strand, frame, attr = fields
         seqname_values.append(normalize_chromosome(seq))
         second_column_values.append(intern(str(second)))
@@ -176,6 +174,7 @@ def _read_gtf(filename, chunksize=10**5):
     del df["second_column"]
     return df
 
+
 def _extend_with_attributes(df):
     logging.info(
         "Memory usage before expanding GTF attributes: %0.4f MB" % (
@@ -189,45 +188,62 @@ def _extend_with_attributes(df):
     extra_columns = {}
     column_order = []
 
-    for i, attribute_string in enumerate(attribute_strings):
-
+    # Split the semi-colon separated attributes in the last column of a GTF
+    # into a list of (key, value) pairs.
+    kv_generator = (
+        # We're slicing the first two elements out of split() because
+        # Ensembl release 79 added values like:
+        #   transcript_support_level "1 (assigned to previous version 5)";
+        # ...which gets mangled by splitting on spaces.
+        #
+        # TODO: implement a proper parser!
+        (i, kv.strip().split(" ", 2)[:2])
+        for i, attribute_string in enumerate(attribute_strings)
         # Catch mistaken semicolons by replacing "xyz;" with "xyz"
         # Required to do this since the GTF for Ensembl 78 has
         # gene_name = "PRAMEF6;"
         # transcript_name = "PRAMEF6;-201"
-        if ';\"' in attribute_string:
-            attribute_string = attribute_string.replace(';\"', '\"')
-        if ";-" in attribute_string:
-            attribute_string = attribute_string.replace(";-", "-")
+        for kv in attribute_string.replace(';\"', '\"').replace(";-", "-").split(";")
+        # need at least 3 chars for minimal entry like 'k v'
+        if len(kv) > 2 and " " in kv
+    )
 
-        # Split the semi-colon separated attributes in the last column of a GTF
-        # into a list of (key, value) pairs.
-        kv_generator = (
-            # We're slicing the first two elements out of split() because
-            # Ensembl release 79 added values like:
-            #   transcript_support_level "1 (assigned to previous version 5)";
-            # ...which gets mangled by splitting on spaces.
-            #
-            # TODO: implement a proper parser!
-            kv.strip().split(" ", 2)[:2]
-            for kv in attribute_string.split(";")
-            # need at least 3 chars for minimal entry like 'k v'
-            if len(kv) > 2 and " " in kv
-        )
-        for column_name, value in kv_generator:
-            # 1) interning keys such as "gene_name" since they reocccur
-            # millions of times
-            # 2) remove quotes around values
-            if '\"' in value:
-                value = value.replace('\"', "")
+    #
+    # SOME NOTES ABOUT THE BIZARRE STRING INTERNING GOING ON BELOW
+    #
+    # While parsing millions of repeated strings (e.g. "gene_id" and "TP53"),
+    # we can save a lot of memory by making sure there's only one string
+    # object per unique string. The canonical way to do this is using
+    # the 'intern' function. One problem is that Py2 won't let you intern
+    # unicode objects, so to get around this we call intern(str(...)).
+    #
+    # It also turns out to be faster to check interned strings ourselves
+    # using a local dictionary, hence the two dictionaries below
+    # and pair of try/except blocks in the loop.
+    column_interned_strings = {}
+    value_interned_strings = {}
+
+    for i, (column_name, value) in kv_generator:
+        try:
+            column_name = column_interned_strings[column_name]
+            column = extra_columns[column_name]
+        except KeyError:
             column_name = intern(str(column_name))
+            column_interned_strings[column_name] = column_name
+            column = [""] * n
+            extra_columns[column_name] = column
+            column_order.append(column_name)
+
+        value = value.replace('\"', "") if '\"' in value else value
+
+        try:
+            value = value_interned_strings[value]
+        except KeyError:
             value = intern(str(value))
-            column = extra_columns.get(column_name)
-            if column is None:
-                column = [""] * n
-                extra_columns[column_name] = column
-                column_order.append(column_name)
-            column[i] = value
+            value_interned_strings[value] = value
+
+        column[i] = value
+
     print("Extracted GTF attributes: %s" % column_order)
     # add columns to the DataFrame in the order they appeared
     for column_name in column_order:
