@@ -7,7 +7,7 @@ TODO: Implement tests for EnsemblRelease.gene_ids
 from __future__ import absolute_import
 
 from nose.tools import assert_raises, ok_
-from pyensembl import ensembl_grch38
+from pyensembl import ensembl_grch38, ensembl77
 
 from .common import test_ensembl_releases
 
@@ -34,7 +34,7 @@ def test_gene_ids_of_gene_name_hla_grch38():
     assert 'ENSG00000204525' in hla_c_gene_ids, hla_c_gene_ids
 
 def test_gene_id_of_protein_id_release77():
-    gene_id = ensembl_grch38.gene_id_of_protein_id("ENSP00000485677")
+    gene_id = ensembl77.gene_id_of_protein_id("ENSP00000485677")
     ok_('ENSG00000279634', gene_id)
 
 def test_gene_id_of_invalid_name():

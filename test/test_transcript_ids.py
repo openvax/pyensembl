@@ -7,7 +7,7 @@ from __future__ import absolute_import
 from pyensembl import ensembl_grch38
 from nose.tools import eq_
 
-from .test_common import test_ensembl_releases
+from .common import test_ensembl_releases
 
 # subset of transcript IDs for HLA-A
 HLA_A_TRANSCRIPT_IDS = [

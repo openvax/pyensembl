@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 
-from pyensembl import Locus
+from pyensembl import Locus, ensembl_grch38
 from nose.tools import eq_, assert_not_equal, assert_greater
 
-from .test_common import ensembl_grch38, test_ensembl_releases
+from .common import test_ensembl_releases
 from .data import (
     FOXP3_001_transcript_id,
     CTNNBIP1_004_transcript_id,

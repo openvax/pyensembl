@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from .test_common import major_releases
+from .common import major_releases
 
 from nose.tools import nottest
 
