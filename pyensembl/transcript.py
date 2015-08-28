@@ -304,7 +304,7 @@ class Transcript(Locus):
         of nucleotides in start codon.
         """
         return [
-            self.position_offset(position)
+            self.offset(position)
             for position
             in self.start_codon_positions
         ]
@@ -316,7 +316,7 @@ class Transcript(Locus):
         of nucleotides in stop codon.
         """
         return [
-            self.position_offset(position)
+            self.offset(position)
             for position
             in self.stop_codon_positions
         ]

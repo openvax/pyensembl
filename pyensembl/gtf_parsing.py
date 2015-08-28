@@ -131,7 +131,6 @@ def _read_gtf(filename, chunksize=10**5):
     attribute_values = []
 
     for i, line in enumerate(open_gtf(filename)):
-
         if line.startswith("#"):
             continue
         fields = line.split("\t")
@@ -143,10 +142,7 @@ def _read_gtf(filename, chunksize=10**5):
         feature_values.append(intern(str(feature)))
         start_values.append(int(start))
         end_values.append(int(end))
-        if score == ".":
-            score_values.append(np.nan)
-        else:
-            score_values.append(np.float(score))
+        score_values.append(np.nan if score == "." else float(score))
         strand_values.append(intern(str(strand)))
         frame_values.append(intern(str(frame)))
         attribute_values.append(attr)

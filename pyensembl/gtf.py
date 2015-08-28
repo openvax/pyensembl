@@ -169,7 +169,7 @@ class GTF(object):
                         raise ValueError("Contig not found: %s" % (contig,))
 
                 if feature:
-                    df = df[df.feature == feature]
+                    df = df[df["feature"] == feature]
                     if len(df) == 0:
                         # check to make sure feature was somewhere in
                         # the full dataset before returning an empty dataframe
