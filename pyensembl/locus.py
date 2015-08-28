@@ -14,37 +14,43 @@
 
 from __future__ import print_function, division, absolute_import
 
-from typechecks import is_integer, require_string
+from six.moves import intern
+from typechecks import is_string, is_integer
 
 # Manually memoizing here, since our simple common.memoize function has
 # noticable overhead in this instance.
 NORMALIZE_CHROMOSOME_CACHE = {}
+
 def normalize_chromosome(c):
     try:
         return NORMALIZE_CHROMOSOME_CACHE[c]
     except KeyError:
         pass
 
-    result = c
-    if is_integer(result):
-        if result == 0:
-            raise ValueError("Contig cannot be 0")
-        result = str(result)
+    if not (is_string(c) or is_integer(c)):
+        raise TypeError("Chromosome cannot be '%s' : %s" % (c, type(c)))
+
+    result = str(c)
+    if result == "0":
+        raise ValueError("Chromosome name cannot be 0")
+    elif result == "":
+        raise ValueError("Chromosome name cannot be empty")
+
+    # only strip off lowercase chr since some of the non-chromosomal
+    # contigs start with "CHR"
+    if result.startswith("chr"):
+        result = result[3:]
+
+    # standardize mitochondrial genome to be "MT"
+    if result == "M":
+        result = "MT"
     else:
-        require_string(result, "contig name", nonempty=True)
-
-        # only strip off lowercase chr since some of the non-chromosomal
-        # contigs start with "CHR"
-        if result.startswith("chr"):
-            result = result[3:]
-
-        # standardize mitochondrial genome to be "MT"
-        if result == "M":
-            result = "MT"
-        else:
-            # just in case someone is being lazy, capitalize "X" and "Y"
-            result = result.upper()
-        
+        # just in case someone is being lazy, capitalize "X" and "Y"
+        result = result.upper()
+    # interning strings since the chromosome names probably get constructed
+    # or parsed millions of times, can save memory in tight situations
+    # (such as parsing GTF files)
+    result = intern(result)
     NORMALIZE_CHROMOSOME_CACHE[c] = result
     return result
 
@@ -228,8 +234,7 @@ class Locus(object):
         that e.g. chr1:10-10 overlaps with chr1:10-10
         """
         return (
-            self.can_overlap(contig, strand)
-            and
+            self.can_overlap(contig, strand) and
             self.distance_to_interval(start, end) == 0)
 
     def overlaps_locus(self, other_locus):
@@ -241,10 +246,8 @@ class Locus(object):
 
     def contains(self, contig, start, end, strand=None):
         return (
-            self.can_overlap(contig, strand)
-            and
-            start >= self.start
-            and
+            self.can_overlap(contig, strand) and
+            start >= self.start and
             end <= self.end)
 
     def contains_locus(self, other_locus):

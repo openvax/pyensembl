@@ -121,7 +121,7 @@ class DownloadCache(object):
             ('annotation_name', self.annotation_name),
             ('annotation_version', self.annotation_version),
             ('cache_directory_path', self.cache_directory_path),
-            ('decompress_on_download', self.decompress_on_download)
+            ('decompress_on_download', self.decompress_on_download),
             ('copy_local_files_to_cache', self.copy_local_files_to_cache)
         )
 

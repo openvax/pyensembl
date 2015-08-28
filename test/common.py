@@ -3,7 +3,6 @@ from __future__ import absolute_import
 import functools
 
 from pyensembl import (
-    EnsemblRelease,
     ensembl_grch37,
     ensembl_grch38,
     cached_release
@@ -35,3 +34,25 @@ def test_ensembl_releases(*versions):
                 test_fn(ensembl)
         return new_test_fn
     return decorator
+
+
+# TemporaryDirectory only got added to Python in version 3.2
+try:
+    # pylint: disable=no-name-in-module
+    from tempfile import TemporaryDirectory
+except ImportError:
+    # only added in Python 3.2
+    from tempfile import mkdtemp
+    from shutil import rmtree
+
+    class TemporaryDirectory(object):
+        def __init__(self):
+            self.name = mkdtemp()
+
+        def __enter__(self, *args, **kwargs):
+            return self.name
+
+        def __exit__(self, type, value, traceback):
+            rmtree(self.name)
+            # don't suppress exceptions
+            return False

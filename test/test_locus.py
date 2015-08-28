@@ -18,19 +18,19 @@ def test_normalize_chromosome():
     assert normalize_chromosome("M") == "MT"
     assert normalize_chromosome("MT") == "MT"
 
-    with assert_raises(TypeError, None):
+    with assert_raises(TypeError):
         normalize_chromosome({"a": "b"})
 
-    with assert_raises(TypeError, None):
+    with assert_raises(TypeError):
         normalize_chromosome([])
 
-    with assert_raises(TypeError, None):
+    with assert_raises(TypeError):
         normalize_chromosome(None)
 
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         normalize_chromosome("")
 
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         normalize_chromosome(0)
 
 def test_locus_overlaps():
@@ -91,19 +91,19 @@ def test_position_offset():
     assert negative_locus.offset(20) == 0
 
     # don't allow negative offsets
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         forward_locus.offset(9)
 
     # don't allow negative offsets
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         negative_locus.offset(9)
 
     # don't allow offset past the end of the locus
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         forward_locus.offset(21)
 
     # don't allow offset past the end of the locus
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         negative_locus.offset(21)
 
 
@@ -119,23 +119,23 @@ def test_range_offset():
     assert negative_locus.offset_range(20, 20) == (0, 0)
 
     # start shouldn't be larger than end
-    with assert_raises(AssertionError, None):
+    with assert_raises(AssertionError):
         forward_locus.offset_range(21, 20)
 
     # start shouldn't be larger than end
-    with assert_raises(AssertionError, None):
+    with assert_raises(AssertionError):
         negative_locus.offset_range(21, 20)
 
     # don't allow negative offsets
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         forward_locus.offset_range(9, 10)
 
     # don't allow negative offsets
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         forward_locus.offset_range(9, 10)
 
     # don't allow negative offsets
-    with assert_raises(ValueError, None):
+    with assert_raises(ValueError):
         negative_locus.offset_range(9, 10)
 
 def test_locus_distance():

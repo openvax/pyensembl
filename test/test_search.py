@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 
-from .test_common import test_ensembl_releases
 from pyensembl import find_nearest_locus
 from nose.tools import eq_
+from .common import test_ensembl_releases
 
 @test_ensembl_releases()
 def test_find_nearest_BRAF_exon(ensembl):

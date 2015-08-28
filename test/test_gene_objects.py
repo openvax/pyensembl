@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from .test_common import test_ensembl_releases
+from .common import test_ensembl_releases
 from .data import TP53_gene_id
 
 @test_ensembl_releases()

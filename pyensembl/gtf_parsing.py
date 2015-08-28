@@ -12,6 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from __future__ import print_function, division, absolute_import
+import logging
+from os.path import exists
+import resource
+import gzip
+import sys
+
+import numpy as np
+import pandas as pd
+from six.moves import intern
+
+from .locus import normalize_chromosome
+
+
 """
 Parse an Ensembl GTF file into a dataframe, expanding all of its attributes
 into their own columns,
@@ -47,31 +61,6 @@ Columns of a GTF file:
 (from ftp://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/README)
 """
 
-from __future__ import print_function, division, absolute_import
-import logging
-from os.path import exists
-
-from .locus import normalize_chromosome
-
-import numpy as np
-import pandas as pd
-
-
-GTF_COLS = [
-    'seqname',
-    # Different versions of GTF use this column as
-    # of: (1) gene biotype (2) transcript biotype or (3) the annotation source
-    #
-    # See: https://www.biostars.org/p/120306/#120321
-    'second_column',
-    'feature',
-    'start',
-    'end',
-    'score',
-    'strand',
-    'frame',
-    'attribute'
-]
 
 def pandas_series_is_biotype(series):
     """
@@ -81,7 +70,21 @@ def pandas_series_is_biotype(series):
     """
     return 'protein_coding' in series.values
 
-def _read_gtf(filename):
+
+def memory_usage():
+    """
+    Returns number of megabytes of memory currently being used by this Python
+    process
+    """
+    resources = resource.getrusage(resource.RUSAGE_SELF)
+    if sys.platform == 'darwin':
+        resident_bytes = resources.ru_maxrss
+        resident_kilobytes = resident_bytes / 1024
+    else:
+        resident_kilobytes = resources.ru_maxrss
+    return resident_kilobytes / 1024
+
+def _read_gtf(filename, chunksize=10**5):
     """
     Download GTF annotation data for given release (if not already present),
     parse it into a DataFrame, leave the attributes in a single string column
@@ -89,17 +92,73 @@ def _read_gtf(filename):
     assert exists(filename)
     assert filename.endswith(".gtf") or filename.endswith(".gtf.gz"), \
         "Must be a GTF file (%s)" % filename
-    compression = "gzip" if filename.endswith(".gz") else None
-    df = pd.read_csv(
-        filename,
-        comment='#',
-        sep='\t',
-        names=GTF_COLS,
-        na_filter=False,
-        compression=compression)
 
-    df['seqname'] = df['seqname'].map(
-        lambda seqname: normalize_chromosome(str(seqname)))
+    logging.debug("Memory usage before GTF parsing: %0.4f MB" % memory_usage())
+
+    if filename.endswith("gz") or filename.endswith("gzip"):
+        def open_gtf(filename):
+            return gzip.open(filename, mode="rt")
+    else:
+        def open_gtf(filename):
+            return open(filename, buffering=chunksize)
+
+    seqname_values = []
+    second_column_values = []
+    feature_values = []
+    start_values = []
+    end_values = []
+    score_values = []
+    strand_values = []
+    frame_values = []
+    attribute_values = []
+
+    for i, line in enumerate(open_gtf(filename)):
+        if line.startswith("#"):
+            continue
+        fields = line.split("\t", 9)
+        assert len(fields) == 9, \
+            "Wrong number of fields %d in %s" % (len(fields), filename)
+        # GTF columns:
+        # 1) seqname: str ("1", "X", &c)
+        # 2) second_column : str
+        #      Different versions of GTF use second column as of:
+        #      (a) gene biotype
+        #      (b) transcript biotype
+        #      (c) the annotation source
+        #      See: https://www.biostars.org/p/120306/#120321
+        # 3) feature : str ("gene", "transcript", &c)
+        # 4) start : int
+        # 5) end : int
+        # 6) score : float or "."
+        # 7) strand : "+", "-", or "."
+        # 8) frame : 0, 1, 2 or "."
+        # 9) attribute : key-value pairs separated by semicolons
+        # (see more complete description in docstring at top of file)
+        seq, second, feature, start, end, score, strand, frame, attr = fields
+        seqname_values.append(normalize_chromosome(seq))
+        second_column_values.append(intern(str(second)))
+        feature_values.append(intern(str(feature)))
+        start_values.append(int(start))
+        end_values.append(int(end))
+        score_values.append(np.nan if score == "." else float(score))
+        strand_values.append(intern(str(strand)))
+        frame_values.append(intern(str(frame)))
+        attribute_values.append(attr)
+
+    logging.debug("Memory usage after GTF parsing: %0.4f MB" % memory_usage())
+
+    df = pd.DataFrame({})
+    df["seqname"] = seqname_values
+    df["second_column"] = second_column_values
+    df["feature"] = feature_values
+    df["start"] = np.array(start_values, dtype="int64")
+    df["end"] = np.array(end_values, dtype="int64")
+    df["score"] = np.array(score_values, dtype="float32")
+    df["strand"] = strand_values
+    df["frame"] = frame_values
+    df["attribute"] = attribute_values
+    logging.debug("Memory usage after DataFrame construction: %0.4f MB" % (
+        memory_usage(),))
 
     # very old GTF files use the second column to store the gene biotype
     # others use it to store the transcript biotype and
@@ -111,78 +170,89 @@ def _read_gtf(filename):
         column_name = 'biotype'
     else:
         column_name = 'source'
-    df.rename(columns={'second_column': column_name}, inplace=True)
-
+    df[column_name] = df["second_column"]
+    del df["second_column"]
     return df
 
-def _attribute_dictionaries(df):
-    """
-    Given a DataFrame with attributes in semi-colon
-    separated string, split them apart into per-entry dictionaries
-    """
-    # this crazy triply-nested comprehensions
-    # is unfortunately the best way to parse
-    # ~2 million attribute strings while still using
-    # vaguely Pythonic code
-    attr_dicts = [
-        {
-            key: value.replace("\"", "").replace(";", "")
-            for (key, value) in (
-                pair_string.split(" ", 2)
-                for pair_string in attr_string.split("; ")
-            )
-        }
-        for attr_string in df.attribute
-    ]
-    return attr_dicts
 
 def _extend_with_attributes(df):
+    logging.debug(
+        "Memory usage before expanding GTF attributes: %0.4f MB" % (
+            memory_usage(),))
     n = len(df)
+
+    attribute_strings = df["attribute"]
+    # remove attribute strings from dataframe we're going to return
+    del df["attribute"]
+
     extra_columns = {}
     column_order = []
-    for i, attr_string in enumerate(df.attribute):
-        # TODO: tokenize attribute strings properly
-        # for now, catch mistaken semicolons by replacing "xyz;" with "xyz"
+
+    # Split the semi-colon separated attributes in the last column of a GTF
+    # into a list of (key, value) pairs.
+    kv_generator = (
+        # We're slicing the first two elements out of split() because
+        # Ensembl release 79 added values like:
+        #   transcript_support_level "1 (assigned to previous version 5)";
+        # ...which gets mangled by splitting on spaces.
+        #
+        # TODO: implement a proper parser!
+        (i, kv.strip().split(" ", 2)[:2])
+        for (i, attribute_string) in enumerate(attribute_strings)
+        # Catch mistaken semicolons by replacing "xyz;" with "xyz"
         # Required to do this since the GTF for Ensembl 78 has
         # gene_name = "PRAMEF6;"
         # transcript_name = "PRAMEF6;-201"
-        attr_string = attr_string.replace(';\"', '\"').replace(";-", "-")
+        for kv in attribute_string.replace(';\"', '\"').replace(";-", "-").split(";")
+        # need at least 3 chars for minimal entry like 'k v'
+        if len(kv) > 2 and " " in kv
+    )
 
-        pairs = (
-            kv.strip().split(" ", 2)
-            for kv in attr_string.split(";")
-            # simplest entry must be at least three characters:
-            # (key name, space, value)
-            if len(kv) > 2
-        )
+    #
+    # SOME NOTES ABOUT THE BIZARRE STRING INTERNING GOING ON BELOW
+    #
+    # While parsing millions of repeated strings (e.g. "gene_id" and "TP53"),
+    # we can save a lot of memory by making sure there's only one string
+    # object per unique string. The canonical way to do this is using
+    # the 'intern' function. One problem is that Py2 won't let you intern
+    # unicode objects, so to get around this we call intern(str(...)).
+    #
+    # It also turns out to be faster to check interned strings ourselves
+    # using a local dictionary, hence the two dictionaries below
+    # and pair of try/except blocks in the loop.
+    column_interned_strings = {}
+    value_interned_strings = {}
 
-        for pair in pairs:
-            if len(pair) < 2:
-                raise ValueError(
-                    "Expected all entries to key-value pairs, got: %s" % (
-                        pair,))
-            # Ensembl release 79 added values like:
-            #   transcript_support_level "1 (assigned to previous version 5)";
-            # ...which gets mangled by splitting on spaces.
-            # TODO: implement a proper parser!
-            k, v = pair[:2]
-            if k not in extra_columns:
-                extra_columns[k] = [""] * n
-                column_order.append(k)
-            extra_columns[k][i] = v
+    for i, (column_name, value) in kv_generator:
+        try:
+            column_name = column_interned_strings[column_name]
+            column = extra_columns[column_name]
+        except KeyError:
+            column_name = intern(str(column_name))
+            column_interned_strings[column_name] = column_name
+            column = [""] * n
+            extra_columns[column_name] = column
+            column_order.append(column_name)
 
-    # make a copy of the DataFrame without attribute strings.
-    df = df.drop("attribute", axis=1)
+        value = value.replace('\"', "") if '\"' in value else value
 
-    logging.info("Adding attribute columns: %s", column_order)
-    for k in column_order:
-        assert k not in df, "Column '%s' appears in GTF twice" % k
-        df[k] = extra_columns[k]
-        # delete from dictionary since these objects are big
-        # and we might be runniung low on memory
-        del extra_columns[k]
-        # remove quotes around values
-        df[k] = df[k].str.replace("\"", "")
+        try:
+            value = value_interned_strings[value]
+        except KeyError:
+            value = intern(str(value))
+            value_interned_strings[value] = value
+
+        column[i] = value
+
+    logging.info("Extracted GTF attributes: %s" % column_order)
+    # add columns to the DataFrame in the order they appeared
+    for column_name in column_order:
+        column = extra_columns[column_name]
+        df[column_name] = column
+        del extra_columns[column_name]
+    logging.debug(
+        "Memory usage after expanding GTF attributes: %0.4f MB" % (
+            memory_usage(),))
     return df
 
 # In addition to the required 8 columns and IDs of genes & transcripts,
@@ -232,11 +302,12 @@ def _dataframe_from_groups(groups, feature):
     for conditional_column_name in conditional_column_names:
         if conditional_column_name in groups.first().columns:
             column = groups[conditional_column_name].first()
-            columns.append(column) 
+            columns.append(column)
 
     df = pd.concat(columns, axis=1).reset_index()
 
-    # score seems to be always this value, not sure why it's in the GTFs
+    # score seems to be always '.' in Ensembl GTF files value,
+    # not sure why it's even given
     df['score'] = '.'
 
     # frame values only make sense for CDS entries, but need this column
@@ -258,49 +329,6 @@ def reconstruct_transcript_rows(df):
         feature='transcript'
     )
     return pd.concat([df, transcripts_df], ignore_index=True)
-
-def can_reconstruct_exon_id_column(df):
-    return "transcript_id" in df and "exon_number" in df
-
-def reconstruct_exon_id_column(df, inplace=True):
-    """
-    Construct missing exon_id column for older GTFs by concatenating
-    transcript_id and exon_number
-
-        e.g. ENST00000400674.exon2
-
-    While not useful for joining against external data, these exon_ids are
-    needed for methods like ensembl_release.exon_ids_at_location.
-
-    Parameters
-    ----------
-
-    df : DataFrame
-        Must have columns 'transcript_id' and 'exon_number'
-
-    """
-
-    assert 'exon_id' not in df
-    assert 'transcript_id' in df
-    assert 'exon_number' in df
-
-    if not inplace:
-        df = df.copy()
-
-    # missing values in dataframes indicated by NaN
-    df['exon_id'] = np.nan
-
-    # assign exon IDs to any entry with an exon number
-    # this includes features = {'exon', 'CDS', 'start_codon', 'stop_codon'}
-    exon_id_mask = ~df.exon_number.isnull()
-
-    transcript_ids = df['transcript_id'][exon_id_mask]
-
-    # convert floating value to ints (to get rid of decimal) and then str
-    exon_numbers = df['exon_number'][exon_id_mask].astype(int).astype(str)
-
-    df['exon_id'][exon_id_mask] = transcript_ids + '.exon' + exon_numbers
-    return df
 
 def load_gtf_as_dataframe(filename):
     logging.info("Reading GTF %s into DataFrame", filename)
@@ -355,11 +383,4 @@ def load_gtf_as_dataframe(filename):
     if 'transcript' not in distinct_features:
         logging.info("Creating entries for feature='transcript'")
         df = reconstruct_transcript_rows(df)
-
-    if 'exon_id' not in df:
-        if can_reconstruct_exon_id_column(df):
-            logging.info("Creating 'exon_id' column")
-            df = reconstruct_exon_id_column(df)
-        else:
-            logging.info("Cannot create 'exon_id' column")
     return df

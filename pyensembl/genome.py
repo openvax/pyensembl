@@ -1019,3 +1019,24 @@ class Genome(object):
     @memoize
     def exon_ids_of_transcript_id(self, transcript_id):
         return self._query_exon_ids("transcript_id", transcript_id)
+
+    ###################################################
+    #
+    #             Protein IDs
+    #
+    ###################################################
+
+    @memoize
+    def protein_ids(self, contig=None, strand=None):
+        """
+        What are all the protein IDs
+        (optionally restrict to a given chromosome and/or strand)
+        """
+        protein_ids = self.all_feature_values(
+            column="protein_id",
+            feature="CDS",
+            contig=contig,
+            strand=strand,
+            distinct=True)
+        # drop None values
+        return [protein_id for protein_id in protein_ids if protein_id]

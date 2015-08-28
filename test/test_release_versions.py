@@ -22,9 +22,9 @@ def test_version_is_none():
     EnsemblRelease(None)
 
 def test_int_version():
-    for version in range(54, 77):
+    for version in range(54, 81):
         EnsemblRelease(version)
 
 def test_str_version():
-    for version in range(54, 77):
+    for version in range(54, 81):
         EnsemblRelease(str(version))

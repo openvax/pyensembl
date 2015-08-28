@@ -5,7 +5,7 @@ from pyensembl import ensembl_grch37 as ensembl
 import pandas as pd
 from nose.tools import eq_
 
-from .test_common import test_ensembl_releases
+from .common import test_ensembl_releases
 
 @test_ensembl_releases()
 def gtf_path_endswith_gtf_gz(ensembl):

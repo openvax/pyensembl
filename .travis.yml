@@ -1,33 +1,33 @@
-
+sudo: false  # Use container-based infrastructure
 language: python
 python:
-- '2.7'
-- '3.4'
-# copied from nolearn
+  - "2.7"
+  - "3.4"
+# Setup anaconda; see https://gist.github.com/dan-blanchard/7045057
 before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq libatlas-dev libatlas-base-dev liblapack-dev gfortran
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
   - export PATH=/home/travis/miniconda/bin:$PATH
   - conda update --yes conda
-  - travis_retry conda install --yes python=$TRAVIS_PYTHON_VERSION pip numpy scipy
 install:
-- pip install -r requirements.txt
-- python setup.py develop
-# human releases
-- travis_wait pyensembl install --release 75 --species human
-- travis_wait pyensembl install --release 77 --species human
-- travis_wait pyensembl install --release 79 --species human
-- travis_wait pyensembl install --release 81 --species human
-# mouse releases
-- travis_wait pyensembl install --release 81 --species mouse
-script: nosetests test && ./lint.sh
+  - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy nose pandas matplotlib
+  - pip install -r requirements.txt
+  - pip install .
+  # human releases
+script:
+  # human releases
+  - pyensembl install --release 54 --species human
+  - pyensembl install --release 75 --species human
+  - pyensembl install --release 77 --species human
+  - pyensembl install --release 81 --species human
+  # mouse releases
+  - pyensembl install --release 81 --species mouse
+  - nosetests test && ./lint.sh
 deploy:
   provider: pypi
   user: hammerlab
   password:
-    secure: gJSWl4PLXKtVc2ERwbzfd4qKk9Yy4T8dpfR7Q89VLVXTd7Tv1SsEknShJZUFaCPN85aYFcAWsoOI6vSlBSdXeTONU/pmPgcWOLfiErsgCqUs6qq7edOhrtOS307SREX4oF6AF2iyJduWAF4NPq+9IoJUROIiB4u5qeUtWfVu2Eo=
+    secure: "X4DhwpPp5OJDhejSLj3y+b/zjGgvKpaVh5DEo68HUoy6GKdTOmy2+QM1/tCQVt9fze5X2E849aNN9kfXUjHoeAd3OvFIzota3Bu6hOq+q2HKj6IB0mjB9p3b3kqDusBh9I/66MXApntrqZdN9ZOm/wjD0KHzGbBdvBz41hePsHw="
   on:
     tags: true

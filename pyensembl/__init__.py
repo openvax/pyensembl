@@ -28,7 +28,9 @@ from .species import (
     find_species_by_name,
     find_species_by_reference,
     which_reference,
-    check_species_object
+    check_species_object,
+    normalize_reference_name,
+    normalize_species_name,
 )
 from .transcript import Transcript
 
@@ -48,6 +50,7 @@ def cached_release(version, species="human"):
     return _cache[key]
 
 def genome_for_reference_name(reference_name):
+    reference_name = normalize_reference_name(reference_name)
     species = find_species_by_reference(reference_name)
     (_, max_ensembl_release) = species.reference_assemblies[reference_name]
     return cached_release(max_ensembl_release, species=species)
