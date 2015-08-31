@@ -14,7 +14,7 @@ install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy nose pandas matplotlib
   - pip install -r requirements.txt
   - pip install .
-  # human releases
+  - pip install coveralls
 script:
   # human releases
   - pyensembl install --release 54 --species human
@@ -23,7 +23,9 @@ script:
   - pyensembl install --release 81 --species human
   # mouse releases
   - pyensembl install --release 81 --species mouse
-  - nosetests test && ./lint.sh
+  - nosetests test --with-coverage --cover-package=pyensembl  && ./lint.sh
+after_success:
+  coveralls
 deploy:
   provider: pypi
   user: hammerlab

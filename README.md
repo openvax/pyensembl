@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/hammerlab/pyensembl.svg?branch=master)](https://travis-ci.org/hammerlab/pyensembl)
+[![Build Status](https://travis-ci.org/hammerlab/pyensembl.svg?branch=master)](https://travis-ci.org/hammerlab/pyensembl) [![Coverage Status](https://coveralls.io/repos/hammerlab/pyensembl/badge.svg?branch=master&service=github)](https://coveralls.io/github/hammerlab/pyensembl?branch=master)
 
 PyEnsembl
 =======
