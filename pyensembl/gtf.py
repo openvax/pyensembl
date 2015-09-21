@@ -17,8 +17,8 @@ from os.path import split, abspath, join, exists, splitext
 import pandas as pd
 
 from typechecks import require_string
+from gtftools import read_gtf_as_dataframe
 
-from .gtf_parsing import load_gtf_as_dataframe
 from .locus import normalize_chromosome, normalize_strand
 from .memory_cache import MemoryCache
 
@@ -131,7 +131,14 @@ class GTF(object):
         """
         Parse this genome source's GTF file and load it as a Pandas DataFrame
         """
-        return load_gtf_as_dataframe(self.gtf_path)
+        df = read_gtf_as_dataframe(
+            self.gtf_path,
+            column_converters={
+                "seqname": normalize_chromosome,
+                "strand": normalize_strand,
+            })
+        print(df)
+        return df
 
     def dataframe(
             self,

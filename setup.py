@@ -68,7 +68,8 @@ if __name__ == '__main__':
             "scikit-bio>=0.4.0",
             "memoized-property>=1.0.2",
             "mock>=1.0.1",
-            "six>=1.9.0"
+            "six>=1.9.0",
+            "gtftools"
         ],
         long_description=readme,
         packages=['pyensembl'],
