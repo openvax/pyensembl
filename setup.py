@@ -69,7 +69,7 @@ if __name__ == '__main__':
             "memoized-property>=1.0.2",
             "mock>=1.0.1",
             "six>=1.9.0",
-            "gtftools"
+            "gtfparse>=0.0.1",
         ],
         long_description=readme,
         packages=['pyensembl'],

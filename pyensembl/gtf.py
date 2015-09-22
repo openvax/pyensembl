@@ -17,7 +17,7 @@ from os.path import split, abspath, join, exists, splitext
 import pandas as pd
 
 from typechecks import require_string
-from gtftools import read_gtf_as_dataframe
+from gtfparse import read_gtf_as_dataframe
 
 from .locus import normalize_chromosome, normalize_strand
 from .memory_cache import MemoryCache
@@ -137,7 +137,6 @@ class GTF(object):
                 "seqname": normalize_chromosome,
                 "strand": normalize_strand,
             })
-        print(df)
         return df
 
     def dataframe(
