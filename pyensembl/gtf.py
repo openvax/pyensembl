@@ -138,6 +138,9 @@ class GTF(object):
                 "strand": normalize_strand,
             },
             infer_biotype_column=True)
+
+        # older Ensembl releases don't have "gene" or "transcript"
+        # features, so fill in those rows if they're missing
         df = create_missing_features(
             dataframe=df,
             unique_keys={
@@ -154,7 +157,6 @@ class GTF(object):
                     "gene_name",
                     "gene_biotype",
                     "transcript_name",
-                    "transcript_id",
                     "transcript_biotype"
                 }
             })
