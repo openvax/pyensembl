@@ -17,7 +17,7 @@ from os.path import split, abspath, join, exists, splitext
 import pandas as pd
 
 from typechecks import require_string
-from gtfparse import read_gtf_as_dataframe
+from gtfparse import read_gtf_as_dataframe, create_missing_features
 
 from .locus import normalize_chromosome, normalize_strand
 from .memory_cache import MemoryCache
@@ -136,6 +136,27 @@ class GTF(object):
             column_converters={
                 "seqname": normalize_chromosome,
                 "strand": normalize_strand,
+            },
+            infer_biotype_column=True)
+        df = create_missing_features(
+            dataframe=df,
+            unique_keys={
+                "gene": "gene_id",
+                "transcript": "transcript_id"
+            },
+            extra_columns={
+                "gene": {
+                    "gene_name",
+                    "gene_biotype"
+                },
+                "transcript": {
+                    "gene_id",
+                    "gene_name",
+                    "gene_biotype",
+                    "transcript_name",
+                    "transcript_id",
+                    "transcript_biotype"
+                }
             })
         return df
 

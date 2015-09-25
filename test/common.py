@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import functools
 
 from pyensembl import (
+    ensembl_grch36,
     ensembl_grch37,
     ensembl_grch38,
     cached_release
