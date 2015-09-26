@@ -168,7 +168,8 @@ class GTF(object):
                         "gene_name",
                         "gene_biotype",
                         "transcript_name",
-                        "transcript_biotype"
+                        "transcript_biotype",
+                        "protein_id",
                     }.intersection(column_names)
                 })
         return df
