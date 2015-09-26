@@ -139,27 +139,38 @@ class GTF(object):
             },
             infer_biotype_column=True)
 
+        features = set(df["feature"])
+        column_names = set(df.keys())
+
         # older Ensembl releases don't have "gene" or "transcript"
         # features, so fill in those rows if they're missing
-        df = create_missing_features(
-            dataframe=df,
-            unique_keys={
-                "gene": "gene_id",
-                "transcript": "transcript_id"
-            },
-            extra_columns={
-                "gene": {
-                    "gene_name",
-                    "gene_biotype"
-                },
-                "transcript": {
-                    "gene_id",
-                    "gene_name",
-                    "gene_biotype",
-                    "transcript_name",
-                    "transcript_biotype"
-                }
-            })
+        if "gene" not in features:
+            # if we have to reconstruct gene feature rows then
+            # fill in values for 'gene_name' and 'gene_biotype'
+            # but only if they're actually present in the GTF
+            df = create_missing_features(
+                dataframe=df,
+                unique_keys={"gene": "gene_id"},
+                extra_columns={
+                    "gene": {
+                        "gene_name",
+                        "gene_biotype"
+                    }.intersection(column_names),
+                })
+
+        if "transcript" not in features:
+            df = create_missing_features(
+                dataframe=df,
+                unique_keys={"transcript": "transcript_id"},
+                extra_columns={
+                    "transcript": {
+                        "gene_id",
+                        "gene_name",
+                        "gene_biotype",
+                        "transcript_name",
+                        "transcript_biotype"
+                    }.intersection(column_names)
+                })
         return df
 
     def dataframe(
