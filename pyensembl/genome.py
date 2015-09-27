@@ -48,7 +48,8 @@ class Genome(object):
             protein_fasta_path_or_url=None,
             decompress_on_download=False,
             copy_local_files_to_cache=False,
-            require_ensembl_ids=True):
+            require_ensembl_ids=True,
+            cache_directory_path=None):
         """
         Parameters
         ----------
@@ -79,6 +80,11 @@ class Genome(object):
 
         require_ensembl_ids : bool
             Check gene/transcript/exon IDs to make sure they start with "ENS"
+
+        cache_directory_path : None
+            Where to place downloaded and cached files for this genome,
+            by default inferred from reference name, annotation name,
+            annotation version, and global cache dir for pyensembl.
         """
 
         self.reference_name = reference_name
@@ -96,7 +102,8 @@ class Genome(object):
             annotation_version=self.annotation_version,
             decompress_on_download=self.decompress_on_download,
             copy_local_files_to_cache=self.copy_local_files_to_cache,
-            install_string_function=self.install_string)
+            install_string_function=self.install_string,
+            cache_directory_path=cache_directory_path)
         self.cache_directory_path = self.download_cache.cache_directory_path
 
         self._gtf_path_or_url = gtf_path_or_url
@@ -234,12 +241,6 @@ class Genome(object):
             # and wraps them with methods like `query_one`
             self._db = Database(
                 gtf=self.gtf,
-                # TODO: change Database to use cache_directory_path instead
-                # Any use of subdirectories is because we're relying on
-                # datacache to figure out the global path for us, which is
-                # something we need to move away from to then cut the dependency
-                # on datacache (or make datacache smaller and more focused)
-                cache_subdirectory=self.download_cache.cache_subdirectory,
                 install_string=self.install_string())
         return self._db
 

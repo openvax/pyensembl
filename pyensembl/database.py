@@ -34,7 +34,7 @@ class Database(object):
     writing SQL queries directly.
     """
 
-    def __init__(self, gtf, cache_subdirectory, install_string):
+    def __init__(self, gtf, install_string):
         """
         Parameters
         ----------
@@ -42,17 +42,11 @@ class Database(object):
             Object which parses GTF annotation files and presents their
             contents as Pandas DataFrames
 
-        cache_subdirectory : str
-            This argument is a relic of our use of datacache, which constructs
-            full paths internally and can only be given subdirectories
-            relative to a dynamically decided root cache dir.
-
         install_string : str
             Message to tell user if database connection is requested before
             database is created.
         """
         self.gtf = gtf
-        self.cache_subdirectory = cache_subdirectory
         self.install_string = install_string
         self._connection = None
 
@@ -62,16 +56,13 @@ class Database(object):
     def __eq__(self, other):
         return (
             other.__class__ is Database and
-            self.gtf == other.gtf and
-            self.cache_subdirectory == other.cache_subdirectory)
+            self.gtf == other.gtf)
 
     def __str__(self):
-        return ("Database(gtf=%s, cache_subdirectory=%s)" % (
-            self.gtf,
-            self.cache_subdirectory))
+        return "Database(gtf=%s)" % (self.gtf,)
 
     def __hash__(self):
-        return hash((self.gtf, self.cache_subdirectory))
+        return hash((self.gtf))
 
     def local_db_filename(self):
         if not self.gtf:
@@ -194,10 +185,9 @@ class Database(object):
             raise ValueError("No GTF supplied to this Database: %s" %
                              str(self))
 
-        print("Creating database: %s" % self.local_db_path())
-        filename = self.local_db_filename()
+        db_path = self.local_db_path()
+        print("Creating database: %s" % (db_path,))
         df = self.gtf.dataframe()
-
         all_index_groups = self._all_possible_indices(df.columns)
 
         # split single DataFrame into dictionary mapping each unique
@@ -221,13 +211,11 @@ class Database(object):
                 all_index_groups,
                 primary_key,
                 df_subset)
-
-        self._connection = datacache.db_from_dataframes(
-            db_filename=filename,
-            dataframes=dataframes,
-            indices=indices_dict,
-            primary_keys=primary_keys,
-            subdir=self.cache_subdirectory,
+        self._connection = datacache.db_from_dataframes_with_absolute_path(
+            db_path=db_path,
+            table_names_to_dataframes=dataframes,
+            table_names_to_primary_keys=primary_keys,
+            table_names_to_indices=indices_dict,
             overwrite=overwrite,
             version=DATABASE_SCHEMA_VERSION)
         return self._connection

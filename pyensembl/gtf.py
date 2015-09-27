@@ -156,7 +156,8 @@ class GTF(object):
                         "gene_name",
                         "gene_biotype"
                     }.intersection(column_names),
-                })
+                },
+                missing_value="")
 
         if "transcript" not in features:
             df = create_missing_features(
@@ -171,7 +172,8 @@ class GTF(object):
                         "transcript_biotype",
                         "protein_id",
                     }.intersection(column_names)
-                })
+                },
+                missing_value="")
         return df
 
     def dataframe(
@@ -198,6 +200,7 @@ class GTF(object):
         if key not in self._dataframes:
             def _construct_df():
                 full_df = self._load_full_dataframe_cached()
+
                 assert len(full_df) > 0, \
                     "Dataframe representation of genomic database empty!"
 

@@ -41,6 +41,7 @@ def test_ensembl_releases(*versions):
 try:
     # pylint: disable=no-name-in-module
     from tempfile import TemporaryDirectory
+
 except ImportError:
     # only added in Python 3.2
     from tempfile import mkdtemp
