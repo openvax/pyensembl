@@ -163,9 +163,9 @@ class DownloadCache(object):
         the result of downloading to be a decompressed file)
         """
         for ext in [".gz", ".gzip", ".zip"]:
-            if local_filename.endswith(ext):
-                return local_filename[:-len(ext)]
-        return local_filename
+            if filename.endswith(ext):
+                return filename[:-len(ext)]
+        return filename
 
 
     def cached_path(self, path_or_url):
