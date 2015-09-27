@@ -26,10 +26,10 @@ To install particular Ensembl mouse release(s):
     %(prog)s install --release 75 77 --species mouse
 
 To delete all downloaded and cached data for a particular Ensembl release:
-    %(prog)s delete --release 75 --species human
+    %(prog)s delete-all-files --release 75 --species human
 
 To delete only cached data related to transcript and protein sequences:
-    %(prog)s delete-sequence-cache --release 75
+    %(prog)s delete-index-files --release 75
 
 To install any genome:
     %(prog)s install \

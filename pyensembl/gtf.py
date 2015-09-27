@@ -17,8 +17,8 @@ from os.path import split, abspath, join, exists, splitext
 import pandas as pd
 
 from typechecks import require_string
+from gtfparse import read_gtf_as_dataframe, create_missing_features
 
-from .gtf_parsing import load_gtf_as_dataframe
 from .locus import normalize_chromosome, normalize_strand
 from .memory_cache import MemoryCache
 
@@ -131,7 +131,50 @@ class GTF(object):
         """
         Parse this genome source's GTF file and load it as a Pandas DataFrame
         """
-        return load_gtf_as_dataframe(self.gtf_path)
+        df = read_gtf_as_dataframe(
+            self.gtf_path,
+            column_converters={
+                "seqname": normalize_chromosome,
+                "strand": normalize_strand,
+            },
+            infer_biotype_column=True)
+
+        features = set(df["feature"])
+        column_names = set(df.keys())
+
+        # older Ensembl releases don't have "gene" or "transcript"
+        # features, so fill in those rows if they're missing
+        if "gene" not in features:
+            # if we have to reconstruct gene feature rows then
+            # fill in values for 'gene_name' and 'gene_biotype'
+            # but only if they're actually present in the GTF
+            df = create_missing_features(
+                dataframe=df,
+                unique_keys={"gene": "gene_id"},
+                extra_columns={
+                    "gene": {
+                        "gene_name",
+                        "gene_biotype"
+                    }.intersection(column_names),
+                },
+                missing_value="")
+
+        if "transcript" not in features:
+            df = create_missing_features(
+                dataframe=df,
+                unique_keys={"transcript": "transcript_id"},
+                extra_columns={
+                    "transcript": {
+                        "gene_id",
+                        "gene_name",
+                        "gene_biotype",
+                        "transcript_name",
+                        "transcript_biotype",
+                        "protein_id",
+                    }.intersection(column_names)
+                },
+                missing_value="")
+        return df
 
     def dataframe(
             self,
@@ -157,6 +200,7 @@ class GTF(object):
         if key not in self._dataframes:
             def _construct_df():
                 full_df = self._load_full_dataframe_cached()
+
                 assert len(full_df) > 0, \
                     "Dataframe representation of genomic database empty!"
 

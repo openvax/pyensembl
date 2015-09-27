@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import functools
 
 from pyensembl import (
+    ensembl_grch36,
     ensembl_grch37,
     ensembl_grch38,
     cached_release
@@ -40,6 +41,7 @@ def test_ensembl_releases(*versions):
 try:
     # pylint: disable=no-name-in-module
     from tempfile import TemporaryDirectory
+
 except ImportError:
     # only added in Python 3.2
     from tempfile import mkdtemp

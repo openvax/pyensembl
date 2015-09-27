@@ -15,6 +15,7 @@
 from os import listdir, remove
 from os.path import join, exists, split, abspath
 from shutil import copy2, rmtree
+import logging
 
 import datacache
 
@@ -62,7 +63,8 @@ class DownloadCache(object):
             annotation_version=None,
             decompress_on_download=False,
             copy_local_files_to_cache=False,
-            install_string_function=None):
+            install_string_function=None,
+            cache_directory_path=None):
         """
         Parameters
         ----------
@@ -87,21 +89,30 @@ class DownloadCache(object):
             Function which returns an error message with
             install instructions. If not provided then the error tells the
             user what data is missing without install instructions.
+
+        cache_directory_path : str, optional
+            Where to place downloaded and temporary files, by default
+            inferred from reference name, annotation name, annotation version,
+            and the global cache directory determined by datacache.
         """
 
         self.reference_name = reference_name
         self.annotation_name = annotation_name
         self.annotation_version = annotation_version
 
-        self.cache_subdirectory = cache_subdirectory(
-            reference_name=reference_name,
-            annotation_name=annotation_name,
-            annotation_version=annotation_version)
-
-        # hidden since access to this variable is combined
+        # using hidden member variable _cache_directory path since access to
+        # to the visible cache_directory_path (no underscore!) is combined
         # with ensuring that the directpry actually exists
-        self._cache_directory_path = datacache.get_data_dir(
-            subdir=self.cache_subdirectory)
+        if cache_directory_path:
+            self._cache_directory_path = cache_directory_path
+        else:
+            self.cache_subdirectory = cache_subdirectory(
+                reference_name=reference_name,
+                annotation_name=annotation_name,
+                annotation_version=annotation_version)
+
+            self._cache_directory_path = datacache.get_data_dir(
+                subdir=self.cache_subdirectory)
 
         self.decompress_on_download = decompress_on_download
         self.copy_local_files_to_cache = copy_local_files_to_cache
@@ -145,35 +156,64 @@ class DownloadCache(object):
         assert path_or_url, "Expected non-empty string for path_or_url"
         return "://" in path_or_url
 
+    def _remove_compression_suffix_if_present(self, filename):
+        """
+        If the given filename ends in one of the compression suffixes that
+        datacache knows how to deal with, remove the suffix (since we expect
+        the result of downloading to be a decompressed file)
+        """
+        for ext in [".gz", ".gzip", ".zip"]:
+            if filename.endswith(ext):
+                return filename[:-len(ext)]
+        return filename
+
+
     def cached_path(self, path_or_url):
         """
         When downloading remote files, the default behavior is to name local
         files the same as their remote counterparts.
         """
         assert path_or_url, "Expected non-empty string for path_or_url"
-        cached_filename = split(path_or_url)[1]
-        if len(cached_filename) == 0:
+        remote_filename = split(path_or_url)[1]
+        if self.is_url_format(path_or_url):
+            # passing `decompress=False` since there is logic below
+            # for stripping decompression extensions for both local
+            # and remote files
+            local_filename = datacache.build_local_filename(
+                download_url=path_or_url,
+                filename=remote_filename,
+                decompress=False)
+        else:
+            local_filename = remote_filename
+
+        # if we expect the download function to decompress this file then
+        # we should use its name without the compression extension
+        if self.decompress_on_download:
+            local_filename = self._remove_compression_suffix_if_present(
+                local_filename)
+
+        if len(local_filename) == 0:
             raise ValueError("Can't determine local filename for %s" % (
                 path_or_url,))
-        return join(self.cache_directory_path, cached_filename)
+
+        return join(self.cache_directory_path, local_filename)
 
     def _download_if_necessary(self, url, download_if_missing, overwrite):
         """
         Return local cached path to a remote file, download it if necessary.
         """
         cached_path = self.cached_path(url)
-        if exists(cached_path) and not overwrite:
-            return cached_path
-        if download_if_missing:
-            cached_filename = split(cached_path)[1]
-            return datacache.fetch_file(
-                download_url=url,
-                filename=cached_filename,
-                decompress=self.decompress_on_download,
-                subdir=self.cache_subdirectory,
-                force=overwrite)
-        else:
+        missing = not exists(cached_path)
+        if (missing or overwrite) and download_if_missing:
+            logging.info("Fetching %s from URL %s", cached_path, url)
+            local_filename = split(cached_path)[1]
+            datacache.download._download(
+                filename=local_filename,
+                full_path=cached_path,
+                download_url=url)
+        elif missing:
             raise MissingRemoteFile(url)
+        return cached_path
 
     def _copy_if_necessary(self, local_path, overwrite):
         """
