@@ -15,6 +15,7 @@
 from os import listdir, remove
 from os.path import join, exists, split, abspath
 from shutil import copy2, rmtree
+import logging
 
 import datacache
 
