@@ -10,6 +10,10 @@ before_install:
   - ./miniconda.sh -b
   - export PATH=/home/travis/miniconda/bin:$PATH
   - conda update --yes conda
+addons:
+  apt:
+    packages:
+    - pandoc
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy nose pandas matplotlib
   - pip install -r requirements.txt
@@ -23,6 +27,7 @@ script:
   - pyensembl install --release 81 --species human
   # mouse releases
   - pyensembl install --release 81 --species mouse
+  # run tests
   - nosetests test --with-coverage --cover-package=pyensembl  && ./lint.sh
 after_success:
   coveralls

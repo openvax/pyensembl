@@ -47,9 +47,9 @@ if __name__ == '__main__':
         url="https://github.com/hammerlab/pyensembl",
         license="http://www.apache.org/licenses/LICENSE-2.0.html",
         entry_points={
-          'console_scripts': [
-              'pyensembl = pyensembl.shell:run'
-          ],
+            'console_scripts': [
+                'pyensembl = pyensembl.shell:run'
+            ],
         },
         classifiers=[
             'Development Status :: 3 - Alpha',
@@ -67,7 +67,6 @@ if __name__ == '__main__':
             "datacache>=0.4.16",
             "scikit-bio>=0.4.0",
             "memoized-property>=1.0.2",
-            "mock>=1.0.1",
             "six>=1.9.0",
             "gtfparse>=0.0.3",
         ],
