@@ -19,6 +19,8 @@ install:
   - pip install -r requirements.txt
   - pip install .
   - pip install coveralls
+  # required for generating reStructuredText README
+  - pip install pypandoc
 script:
   # human releases
   - pyensembl install --release 54 --species human
