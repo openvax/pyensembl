@@ -24,7 +24,7 @@ For example, the human chromosomal DNA sequences for release 78 are in:
 from __future__ import print_function, division, absolute_import
 from os.path import join
 
-from six.moves.urllib_parse import urljoin
+from six.moves import urllib_parse
 
 from .species import Species, find_species_by_name
 from .ensembl_release_versions import check_release_number
@@ -35,6 +35,7 @@ ENSEMBL_FTP_SERVER = "ftp://ftp.ensembl.org"
 # FASTA files: /pub/release-78/fasta/homo_sapiens/
 # GTF annotation files: /pub/release-78/gtf/homo_sapiens/
 SPECIES_SUBDIR_TEMPLATE = "/pub/release-%(release)d/%(filetype)s/%(species)s/"
+
 
 def _species_subdir(
         ensembl_release,
@@ -51,6 +52,7 @@ def _species_subdir(
         "species": species,
     }
 
+
 def _normalize_release_properties(ensembl_release, species):
     """
     Make sure a given release is valid, normalize it to be an integer,
@@ -65,6 +67,7 @@ def _normalize_release_properties(ensembl_release, species):
 # GTF annotation file example: Homo_sapiens.GTCh38.gtf.gz
 GTF_FILENAME_TEMPLATE = "%(Species)s.%(reference)s.%(release)d.gtf.gz"
 
+
 def make_gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
     """
     Returns a URL and a filename, which can be joined together.
@@ -78,7 +81,7 @@ def make_gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
         filetype="gtf",
         server=server)
 
-    url_subdir = urljoin(server, subdir)
+    url_subdir = urllib_parse.urljoin(server, subdir)
 
     filename = GTF_FILENAME_TEMPLATE % {
         "Species": species.capitalize(),
@@ -90,6 +93,7 @@ def make_gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
 # DNA fasta file example: Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz
 FASTA_DNA_CHROMOSOME_FILENAME_TEMPLATE = \
     "%(Species)s.%(reference)s.%(release)d.%(sequence_type)s.chromosome.%(contig)s.fa.gz"
+
 
 def make_fasta_dna_url(
         ensembl_release,
@@ -107,7 +111,7 @@ def make_fasta_dna_url(
         species=species,
         filetype="fasta",
         server=server,)
-    server_subdir = urljoin(server, subdir)
+    server_subdir = urllib_parse.urljoin(server, subdir)
 
     server_sequence_subdir = join(server_subdir, "dna")
     filename = FASTA_DNA_CHROMOSOME_FILENAME_TEMPLATE % {
@@ -130,6 +134,7 @@ OLD_FASTA_FILENAME_TEMPLATE = \
 NEW_FASTA_FILENAME_TEMPLATE = \
     "%(Species)s.%(reference)s.%(sequence_type)s.all.fa.gz"
 
+
 def make_fasta_url(
         ensembl_release,
         species,
@@ -150,7 +155,7 @@ def make_fasta_url(
         filetype="fasta",
         server=server)
 
-    server_subdir = urljoin(server, subdir)
+    server_subdir = urllib_parse.urljoin(server, subdir)
     server_sequence_subdir = join(server_subdir, sequence_type)
     if ensembl_release <= 75:
         filename = OLD_FASTA_FILENAME_TEMPLATE % {
