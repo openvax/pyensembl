@@ -63,4 +63,6 @@ ensembl78 = cached_release(78)
 ensembl79 = cached_release(79)
 ensembl80 = cached_release(80)
 ensembl81 = cached_release(81)
-ensembl_grch38 = ensembl81  # most recent for GRCh38
+ensembl82 = cached_release(82)
+ensembl83 = cached_release(83)
+ensembl_grch38 = ensembl83  # most recent for GRCh38
