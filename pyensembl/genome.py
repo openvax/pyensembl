@@ -148,10 +148,10 @@ class Genome(object):
 
     def _get_gtf_path(self, download_if_missing=False, overwrite=False):
         return self._get_cached_path(
-                field_name="gtf",
-                path_or_url=self._gtf_path_or_url,
-                download_if_missing=download_if_missing,
-                overwrite=overwrite)
+            field_name="gtf",
+            path_or_url=self._gtf_path_or_url,
+            download_if_missing=download_if_missing,
+            overwrite=overwrite)
 
     def _get_transcript_fasta_path(
             self,
@@ -465,12 +465,12 @@ class Genome(object):
 
     def gene_names_at_locus(self, contig, position, end=None, strand=None):
         return self.db.distinct_column_values_at_locus(
-             column="gene_name",
-             feature="gene",
-             contig=contig,
-             position=position,
-             end=end,
-             strand=strand)
+            column="gene_name",
+            feature="gene",
+            contig=contig,
+            position=position,
+            end=end,
+            strand=strand)
 
     def exon_ids_at_locus(self, contig, position, end=None, strand=None):
         return self.db.distinct_column_values_at_locus(

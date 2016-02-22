@@ -3,10 +3,10 @@ from __future__ import absolute_import
 import functools
 
 from pyensembl import (
-    ensembl_grch36,
     ensembl_grch37,
     ensembl_grch38,
-    cached_release
+    cached_release,
+    MAX_ENSEMBL_RELEASE,
 )
 from nose.tools import nottest
 
@@ -23,9 +23,12 @@ def test_ensembl_releases(*versions):
     Run a unit test which takes an EnsemblRelease as an argument
     for multiple releases (most recent for each reference genome)
     """
+
     if len(versions) == 0:
         ensembl_releases = major_releases
     else:
+        if any(version > MAX_ENSEMBL_RELEASE for version in versions):
+            raise ValueError("Invalid ensembl release numbers: %s" % (versions,))
         ensembl_releases = [cached_release(version) for version in versions]
 
     def decorator(test_fn):

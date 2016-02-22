@@ -7,19 +7,19 @@ from pyensembl import ensembl_grch38
 
 from .common import test_ensembl_releases
 
-# make sure that familia
 KNOWN_GENE_NAMES = [
     "TP53",
     "ERBB2",
     "SMAD4",
     "CTAG1A",
+    "HLA-A",
 ]
 
 @test_ensembl_releases()
 def test_all_gene_names(ensembl):
     """
     test_all_gene_names : Make sure some known gene names such as
-    SMAD4, HSP90AA1, TP53, ERBB2
+    SMAD4, TP53, ERBB2, &c
     """
     gene_names = ensembl.gene_names()
     print(type(gene_names))
@@ -46,3 +46,15 @@ def test_gene_names_on_contig(ensembl):
     assert "SMAD4" in gene_names_chr18, \
         "No SMAD4 in gene names on chr18 of %s, gene names: %s ... (%d)" % (
             ensembl, list(gene_names_chr18[:4]), len(gene_names_chr18))
+
+
+def test_gene_name_of_HLA_gene_id():
+    gene_ids = ensembl_grch38.gene_ids_of_gene_name("HLA-A")
+    gene_names = [
+        ensembl_grch38.gene_name_of_gene_id(gene_id)
+        for gene_id in gene_ids
+    ]
+    unique_gene_names = list(set(gene_names))
+    assert len(unique_gene_names) == 1, (len(unique_gene_names), unique_gene_names)
+    gene_name = unique_gene_names[0]
+    assert gene_name == "HLA-A", gene_name

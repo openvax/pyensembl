@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from pyensembl import Locus, ensembl_grch38
+from pyensembl import Locus, cached_release
 from nose.tools import eq_, assert_not_equal, assert_greater
 
 from .common import test_ensembl_releases
@@ -17,12 +17,14 @@ from .data import (
     TP53_gene_id,
 )
 
+ensembl77 = cached_release(77)
+
 def test_transcript_start_codon():
     """
     test_transcript_start_codon : Check that fields Transcript
     (for transcript named CTNNBIP1-004) matches known values.
     """
-    CTNNBIP1_004_transcript = ensembl_grch38.transcript_by_id(
+    CTNNBIP1_004_transcript = ensembl77.transcript_by_id(
         CTNNBIP1_004_transcript_id)
     assert Locus.__eq__(CTNNBIP1_004_locus, CTNNBIP1_004_transcript), \
         "Expected locus %s but got %s" % (
@@ -48,7 +50,7 @@ def test_transcript_exons():
     test_transcript_exons : Ensure that properties of CTTNBIP1-004's
     Exon objects match known values.
     """
-    transcript = ensembl_grch38.transcript_by_id(CTNNBIP1_004_transcript_id)
+    transcript = ensembl77.transcript_by_id(CTNNBIP1_004_transcript_id)
     exons = transcript.exons
     assert isinstance(exons, list), \
         "Expected list of Exon objects, got %s : %s" % (exons, type(exons))
@@ -119,7 +121,7 @@ def test_sequence_parts(ensembl):
             combined_string))
 
 def test_transcript_utr5_sequence_CTNNIP1_004():
-    transcript = ensembl_grch38.transcript_by_id(CTNNBIP1_004_transcript_id)
+    transcript = ensembl77.transcript_by_id(CTNNBIP1_004_transcript_id)
     utr5 = transcript.five_prime_utr_sequence
     expected_utr5_length = len(CTNNBIP1_004_UTR5)
     eq_(len(utr5),
@@ -129,7 +131,7 @@ def test_transcript_utr5_sequence_CTNNIP1_004():
     eq_(utr5, CTNNBIP1_004_UTR5)
 
 def test_transcript_utr3_sequence_CTNNIP1_004():
-    transcript = ensembl_grch38.transcript_by_id(CTNNBIP1_004_transcript_id)
+    transcript = ensembl77.transcript_by_id(CTNNBIP1_004_transcript_id)
     utr3 = transcript.three_prime_utr_sequence
     expected_utr3_length = len(CTNNBIP1_004_UTR3)
     eq_(len(utr3),
@@ -139,7 +141,7 @@ def test_transcript_utr3_sequence_CTNNIP1_004():
     eq_(utr3, CTNNBIP1_004_UTR3)
 
 def test_transcript_cds_CTNNIP1_004():
-    transcript = ensembl_grch38.transcript_by_id(CTNNBIP1_004_transcript_id)
+    transcript = ensembl77.transcript_by_id(CTNNBIP1_004_transcript_id)
     cds = transcript.coding_sequence
     expected_cds_length = len(CTNNBIP1_004_CDS)
     eq_(
@@ -163,14 +165,14 @@ def test_not_equal_transcripts(release):
     assert_not_equal(t1, t2)
 
 def test_protein_id():
-    transcript = ensembl_grch38.transcripts_by_name("EGFR-001")[0]
+    transcript = ensembl77.transcripts_by_name("EGFR-001")[0]
     eq_(transcript.protein_id, "ENSP00000275493")
 
 def test_protein_protein_sequence():
-    transcript = ensembl_grch38.transcripts_by_name("EGFR-001")[0]
+    transcript = ensembl77.transcripts_by_name("EGFR-001")[0]
     eq_(transcript.protein_sequence, EGFR_001_protein_sequence)
 
 def test_transcript_gene_should_match_parent_gene():
-    gene = ensembl_grch38.gene_by_id(TP53_gene_id)
+    gene = ensembl77.gene_by_id(TP53_gene_id)
     for transcript in gene.transcripts:
         eq_(transcript.gene, gene)

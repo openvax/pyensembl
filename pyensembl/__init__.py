@@ -18,6 +18,7 @@ from .memory_cache import MemoryCache
 from .download_cache import DownloadCache
 from .ensembl_release import EnsemblRelease
 from .ensembl_release_versions import check_release_number, MAX_ENSEMBL_RELEASE
+from .exon import Exon
 from .genome import Genome
 from .gene import Gene
 from .gtf import GTF
@@ -57,12 +58,31 @@ def genome_for_reference_name(reference_name):
 
 ensembl_grch36 = ensembl54 = cached_release(54)  # last release for GRCh36/hg18
 ensembl_grch37 = ensembl75 = cached_release(75)  # last release for GRCh37/hg19
+ensembl_grch38 = cached_release(MAX_ENSEMBL_RELEASE)  # most recent for GRCh38
 
-ensembl77 = cached_release(77)
-ensembl78 = cached_release(78)
-ensembl79 = cached_release(79)
-ensembl80 = cached_release(80)
-ensembl81 = cached_release(81)
-ensembl82 = cached_release(82)
-ensembl83 = cached_release(83)
-ensembl_grch38 = ensembl83  # most recent for GRCh38
+
+__all__ = [
+    "MemoryCache",
+    "DownloadCache",
+    "EnsemblRelease",
+    "MAX_ENSEMBL_RELEASE",
+    "cached_release",
+    "Gene",
+    "Transcript",
+    "Exon",
+    "SequenceData",
+    "find_nearest_locus",
+    "find_species_by_name",
+    "find_species_by_reference",
+    "which_reference",
+    "check_species_object",
+    "normalize_reference_name",
+    "normalize_species_name",
+    "Genome",
+    "GTF",
+    "Locus",
+    "Exon",
+    "ensembl_grch36",
+    "ensembl_grch37",
+    "ensembl_grch38",
+]

@@ -4,7 +4,9 @@ from the Ensembl website, make sure same IDs are found by pyensembl.
 """
 from __future__ import absolute_import
 
-from pyensembl import ensembl_grch38 as ensembl
+from pyensembl import cached_release
+
+ensembl = cached_release(77)
 
 # all exons associated with TP53 gene in Ensembl release 77
 TP53_EXON_IDS_RELEASE_77 = [
@@ -85,9 +87,8 @@ def test_exon_ids_of_transcript_name():
             len(TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77),
             len(exon_ids))
     assert all(
-            exon_id in TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77
-            for exon_id in exon_ids
-    )
+        exon_id in TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77
+        for exon_id in exon_ids)
 
 def exon_ids_of_transcript_id():
     """
@@ -101,5 +102,5 @@ def exon_ids_of_transcript_id():
             len(TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77),
             len(exon_ids))
     assert all(
-            exon_id in TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77
-            for exon_id in exon_ids)
+        exon_id in TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77
+        for exon_id in exon_ids)
