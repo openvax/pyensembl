@@ -103,7 +103,7 @@ def test_ucsc_refseq_genome():
         transcripts = genome.transcripts()
         for transcript in transcripts:
             assert transcript.id, \
-                 "Transcript with missing ID in %s" % (genome.gtf.dataframe(),)
+                "Transcript with missing ID in %s" % (genome.gtf.dataframe(),)
         assert len(transcripts) == 2, \
             "Expected 2 transcripts, got %d: %s" % (
                 len(transcripts), transcripts)

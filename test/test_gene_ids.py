@@ -7,10 +7,11 @@ TODO: Implement tests for EnsemblRelease.gene_ids
 from __future__ import absolute_import
 
 from nose.tools import assert_raises, ok_
-from pyensembl import ensembl_grch38, ensembl77
+from pyensembl import ensembl_grch38, cached_release
 
 from .common import test_ensembl_releases
 
+ensembl77 = cached_release(77, "human")
 
 def test_gene_ids_grch38_hla_a():
     # chr6:29,945,884  is a position for HLA-A

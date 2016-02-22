@@ -5,7 +5,9 @@ the expected gene ID and location.
 """
 from __future__ import absolute_import
 
-from pyensembl import ensembl_grch38 as ensembl
+from pyensembl import cached_release
+
+ensembl = cached_release(77)
 
 def test_exon_object_by_id():
     """
@@ -25,8 +27,8 @@ def test_exon_object_by_id():
 
 def test_exon_object_by_id_on_negative_strand():
     """
-    test_exon_object_by_id : check properties of exon 1 from CXCR3 when looked
-    up by ID in Ensembl 77.
+    test_exon_object_by_id_on_negative_strand : check properties of exon 1
+    from CXCR3 when looked up by ID in Ensembl 77.
     """
     exon = ensembl.exon_by_id("ENSE00001817013")
     assert exon.gene_name == "CXCR3", \
@@ -69,3 +71,22 @@ def test_exon_object_at_locus_on_negative_strand():
         assert exon.on_negative_strand
         assert exon.start <= 71618517, "Unexpected exon start: %s" % exon.start
         assert exon.end >= 71618517, "Unexpected exon end: %s" % exon.end
+
+def test_exon_basic_properties_str():
+    exon = ensembl.exon_by_id("ENSE00001817013")
+    assert isinstance(str(exon), str)
+    assert isinstance(repr(exon), str)
+    # for now we're assuming that __repr__ and __str__ do the same thing,
+    # if we later change that assumption we should do so explicitly and
+    # change this test
+    assert str(exon) == repr(exon), "%s != %s" % (str(exon), repr(exon))
+
+def test_exon_basic_properties_hash():
+    exon = ensembl.exon_by_id("ENSE00001817013")
+    assert isinstance(hash(exon), int), \
+        "Hash function returns %s instead of int" % (
+            type(hash(exon),))
+    assert hash(exon) == hash(exon), "Hash function is non-deterministic!"
+    other_exon = ensembl.exon_by_id("ENSE00003464041")
+    assert exon != other_exon
+    assert hash(exon) != hash(other_exon)
