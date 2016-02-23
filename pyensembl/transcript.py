@@ -62,14 +62,14 @@ class Transcript(Locus):
             " gene_name=%s,"
             " biotype=%s,"
             " location=%s:%d-%d)") % (
-                    self.id,
-                    self.name,
-                    self.gene.id,
-                    self.gene.name,
-                    self.biotype,
-                    self.contig,
-                    self.start,
-                    self.end)
+                self.id,
+                self.name,
+                self.gene.id,
+                self.gene.name,
+                self.biotype,
+                self.contig,
+                self.start,
+                self.end)
 
     def __repr__(self):
         return str(self)
@@ -411,8 +411,12 @@ class Transcript(Locus):
         cDNA coding sequence (from start codon to stop codon, without
         any introns)
         """
+        if self.sequence is None:
+            return None
+
         start = self.first_start_codon_spliced_offset
         end = self.last_stop_codon_spliced_offset
+
         # If start codon is the at nucleotide offsets [3,4,5] and
         # stop codon is at nucleotide offsets  [20,21,22]
         # then start = 3 and end = 22.
