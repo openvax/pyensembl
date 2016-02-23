@@ -282,6 +282,8 @@ long_noncoding = {
     'known_ncrna',
     # unspliced lncRNAs that are several kb in size.
     'macro_lncRNA',
+    # seems to have been added around Ensembl 81
+    'bidirectional_promoter_lncrna',
 }
 
 mitochondrial = {

@@ -82,7 +82,12 @@ class SequenceData(object):
         fasta_dictionary = {}
         sequence_type = self.sequence_type
         for seq_entry in read(self.fasta_path, format="fasta"):
-            seq_id = seq_entry.metadata["id"]
+            # annoyingly Ensembl83 reformatted the transcript IDs of its
+            # cDNA FASTA to include sequence version numbers
+            # .e.g.
+            # "ENST00000448914.1" instead of "ENST00000448914"
+            # So now we have to parse out the identifier
+            seq_id = seq_entry.metadata["id"].split(".")[0]
             fasta_dictionary[seq_id] = sequence_type(seq_entry)
         return fasta_dictionary
 
