@@ -40,7 +40,7 @@ except ImportError as e:
 if __name__ == '__main__':
     setup(
         name='pyensembl',
-        version="0.8.7",
+        version="0.8.8",
         description="Python interface to ensembl reference genome metadata",
         author="Alex Rubinsteyn",
         author_email="alex {dot} rubinsteyn {at} mssm {dot} edu",
