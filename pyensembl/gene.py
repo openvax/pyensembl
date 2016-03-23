@@ -73,6 +73,16 @@ class Gene(Locus):
     def __hash__(self):
         return hash(self.id)
 
+    def __getstate__(self):
+        fields = self.__dict__.copy()
+        # We can't pickle connections
+        del fields["db"]
+        return fields
+
+    def __setstate__(self, fields):
+        self.__dict__ = fields
+        self.db = self.genome.db
+
     @memoized_property
     def transcripts(self):
         """

@@ -90,12 +90,17 @@ class Genome(object):
         self.reference_name = reference_name
         self.annotation_name = annotation_name
         self.annotation_version = annotation_version
-
         self.decompress_on_download = decompress_on_download
         self.copy_local_files_to_cache = copy_local_files_to_cache
-
         self.require_ensembl_ids = require_ensembl_ids
+        self.cache_directory_path = cache_directory_path
+        self._gtf_path_or_url = gtf_path_or_url
+        self._transcript_fasta_path_or_url = transcript_fasta_path_or_url
+        self._protein_fasta_path_or_url = protein_fasta_path_or_url
 
+        self._init()
+
+    def _init(self):
         self.download_cache = DownloadCache(
             reference_name=self.reference_name,
             annotation_name=self.annotation_name,
@@ -103,21 +108,17 @@ class Genome(object):
             decompress_on_download=self.decompress_on_download,
             copy_local_files_to_cache=self.copy_local_files_to_cache,
             install_string_function=self.install_string,
-            cache_directory_path=cache_directory_path)
+            cache_directory_path=self.cache_directory_path)
         self.cache_directory_path = self.download_cache.cache_directory_path
 
-        self._gtf_path_or_url = gtf_path_or_url
-        self.has_gtf = gtf_path_or_url is not None
-
-        self._transcript_fasta_path_or_url = transcript_fasta_path_or_url
-        self.has_transcript_fasta = transcript_fasta_path_or_url is not None
-
-        self._protein_fasta_path_or_url = protein_fasta_path_or_url
-        self.has_protein_fasta = protein_fasta_path_or_url is not None
+        self.has_gtf = self._gtf_path_or_url is not None
+        self.has_transcript_fasta = self._transcript_fasta_path_or_url is not None
+        self.has_protein_fasta = self._protein_fasta_path_or_url is not None
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
         self.memory_cache = MemoryCache()
+
         self._init_lazy_fields()
 
     def _init_lazy_fields(self):
@@ -1041,3 +1042,25 @@ class Genome(object):
             distinct=True)
         # drop None values
         return [protein_id for protein_id in protein_ids if protein_id]
+
+    def __getstate__(self):
+        # Not the same as _fields(); these are useful for pickling/unpickling even if not necessary
+        # when checking for Genome equality.
+        field_list = [
+            "reference_name",
+            "annotation_name",
+            "annotation_version",
+            "_gtf_path_or_url",
+            "_transcript_fasta_path_or_url",
+            "_protein_fasta_path_or_url",
+            "decompress_on_download",
+            "copy_local_files_to_cache",
+            "require_ensembl_ids",
+            "cache_directory_path"]
+        fields = self.__dict__.copy()
+        fields = dict([(field, value) for (field, value) in fields.items() if field in field_list])
+        return fields
+
+    def __setstate__(self, fields):
+        self.__dict__ = fields
+        self._init()

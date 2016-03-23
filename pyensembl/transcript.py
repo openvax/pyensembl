@@ -93,6 +93,16 @@ class Transcript(Locus):
     def gene(self):
         return self.genome.gene_by_id(self.gene_id)
 
+    def __getstate__(self):
+        fields = self.__dict__.copy()
+        # We can't pickle connections
+        del fields["db"]
+        return fields
+
+    def __setstate__(self, fields):
+        self.__dict__ = fields
+        self.db = self.genome.db
+
     @memoized_property
     def exons(self):
         # need to look up exon_number alongside ID since each exon may
