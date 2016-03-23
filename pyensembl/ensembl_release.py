@@ -90,12 +90,9 @@ class EnsemblRelease(Genome):
         return hash((self.release, self.species))
 
     def __getstate__(self):
-        fields = Genome.__getstate__(self)
-        fields["release"] = self.release
-        fields["species"] = self.species
-        return fields
+        # Must be in order of __init__ arguments
+        return [self.release, self.species, self.server]
 
     def __setstate__(self, fields):
-        # Genome sets __dict__ equal to all fields, so the release and species
-        # fields are handled as a part of that.
-        Genome.__setstate__(self, fields)
+        self.__init__(*fields)
+
