@@ -90,11 +90,13 @@ class Genome(object):
         self.reference_name = reference_name
         self.annotation_name = annotation_name
         self.annotation_version = annotation_version
-
         self.decompress_on_download = decompress_on_download
         self.copy_local_files_to_cache = copy_local_files_to_cache
-
         self.require_ensembl_ids = require_ensembl_ids
+        self.cache_directory_path = cache_directory_path
+        self._gtf_path_or_url = gtf_path_or_url
+        self._transcript_fasta_path_or_url = transcript_fasta_path_or_url
+        self._protein_fasta_path_or_url = protein_fasta_path_or_url
 
         self.download_cache = DownloadCache(
             reference_name=self.reference_name,
@@ -103,22 +105,29 @@ class Genome(object):
             decompress_on_download=self.decompress_on_download,
             copy_local_files_to_cache=self.copy_local_files_to_cache,
             install_string_function=self.install_string,
-            cache_directory_path=cache_directory_path)
+            cache_directory_path=self.cache_directory_path)
         self.cache_directory_path = self.download_cache.cache_directory_path
 
-        self._gtf_path_or_url = gtf_path_or_url
-        self.has_gtf = gtf_path_or_url is not None
-
-        self._transcript_fasta_path_or_url = transcript_fasta_path_or_url
-        self.has_transcript_fasta = transcript_fasta_path_or_url is not None
-
-        self._protein_fasta_path_or_url = protein_fasta_path_or_url
-        self.has_protein_fasta = protein_fasta_path_or_url is not None
+        self.has_gtf = self._gtf_path_or_url is not None
+        self.has_transcript_fasta = self._transcript_fasta_path_or_url is not None
+        self.has_protein_fasta = self._protein_fasta_path_or_url is not None
 
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
         self.memory_cache = MemoryCache()
+
         self._init_lazy_fields()
+
+    def __getstate__(self):
+        # Must be in order of __init__ arguments
+        return [self.reference_name, self.annotation_name, self.annotation_version,
+                self._gtf_path_or_url, self._transcript_fasta_path_or_url,
+                self._protein_fasta_path_or_url, self.decompress_on_download,
+                self.copy_local_files_to_cache, self.require_ensembl_ids,
+                self.cache_directory_path]
+
+    def __setstate__(self, fields):
+        self.__init__(*fields)
 
     def _init_lazy_fields(self):
         """

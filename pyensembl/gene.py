@@ -46,6 +46,7 @@ class Gene(Locus):
 
         Locus.__init__(self, contig, start, end, strand)
 
+        self.require_valid_biotype = require_valid_biotype
         if require_valid_biotype and not is_valid_biotype(biotype):
             raise ValueError(
                 "Invalid gene_biotype %s for gene with ID = %s" % (
@@ -72,6 +73,14 @@ class Gene(Locus):
 
     def __hash__(self):
         return hash(self.id)
+
+    def __getstate__(self):
+        # Must be in order of __init__ arguments
+        return [self.id, self.name, self.contig, self.start, self.end, self.strand,
+                self.biotype, self.genome, self.require_valid_biotype]
+
+    def __setstate__(self, fields):
+        self.__init__(*fields)
 
     @memoized_property
     def transcripts(self):

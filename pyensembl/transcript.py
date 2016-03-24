@@ -41,6 +41,7 @@ class Transcript(Locus):
             gene_id,
             genome,
             require_valid_biotype=True):
+        self.require_valid_biotype = require_valid_biotype
         if require_valid_biotype and not is_valid_biotype(biotype):
             raise ValueError(
                 "Invalid biotype '%s' for transcript with ID=%s, name=%s" % (
@@ -92,6 +93,14 @@ class Transcript(Locus):
     @memoized_property
     def gene(self):
         return self.genome.gene_by_id(self.gene_id)
+
+    def __getstate__(self):
+        # Must be in order of __init__ arguments
+        return [self.id, self.name, self.contig, self.start, self.end, self.strand,
+                self.biotype, self.gene_id, self.genome, self.require_valid_biotype]
+
+    def __setstate__(self, fields):
+        self.__init__(*fields)
 
     @memoized_property
     def exons(self):

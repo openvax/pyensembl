@@ -88,3 +88,11 @@ class EnsemblRelease(Genome):
 
     def __hash__(self):
         return hash((self.release, self.species))
+
+    def __getstate__(self):
+        # Must be in order of __init__ arguments
+        return [self.release, self.species, self.server]
+
+    def __setstate__(self, fields):
+        self.__init__(*fields)
+

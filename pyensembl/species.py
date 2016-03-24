@@ -58,6 +58,18 @@ class Species(object):
     def __repr__(self):
         return str(self)
 
+    def __eq__(self, other):
+        return (
+            other.__class__ is Species and
+            self.latin_name == other.latin_name and
+            self.synonyms == other.synonyms and
+            self.reference_assemblies == other.reference_assemblies)
+
+    def __hash__(self):
+        return hash((self.latin_name,
+                     tuple(self.synonyms),
+                     frozenset(self.reference_assemblies.items())))
+
 _latin_names_to_species = {}
 _common_names_to_species = {}
 _reference_names_to_species = {}
