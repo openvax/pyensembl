@@ -14,6 +14,7 @@
 
 from __future__ import print_function
 import os
+import re
 
 from setuptools import setup
 
@@ -37,10 +38,17 @@ except ImportError as e:
     print("Failed to convert %s to reStructuredText", readme_filename)
     pass
 
+with open('pyensembl/__init__.py', 'r') as fd:
+    version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
+                        fd.read(), re.MULTILINE).group(1)
+
+if not version:
+    raise RuntimeError('Cannot find version information')
+
 if __name__ == '__main__':
     setup(
         name='pyensembl',
-        version="0.8.9",
+        version=version,
         description="Python interface to ensembl reference genome metadata",
         author="Alex Rubinsteyn",
         author_email="alex {dot} rubinsteyn {at} mssm {dot} edu",
