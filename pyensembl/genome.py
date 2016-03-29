@@ -562,6 +562,18 @@ class Genome(object):
 
     ###################################################
     #
+    #                  Contigs
+    #
+    ###################################################
+    @memoize
+    def contigs(self):
+      """
+      Returns all contigs ("seqname") for all genes
+      """
+      return self.db.query_feature_values("seqname", "gene")
+
+    ###################################################
+    #
     #             Gene Info Objects
     #
     ###################################################
