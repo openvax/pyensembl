@@ -78,10 +78,8 @@ def test_transcript_exons():
 # below
 @test_ensembl_releases(75, 77)
 def test_sequence_parts(ensembl):
-    """
-    test_sequence_parts : Ensure that the UTRs and coding sequence can be
-    combined to make the full transcript.
-    """
+    # Ensure that the UTRs and coding sequence can be
+    # combined to make the full transcript.
     transcript = ensembl.transcript_by_id(FOXP3_001_transcript_id)
 
     # The combined lengths of the upstream untranslated region,

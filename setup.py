@@ -38,9 +38,11 @@ except ImportError as e:
     print("Failed to convert %s to reStructuredText", readme_filename)
     pass
 
-with open('pyensembl/__init__.py', 'r') as fd:
-    version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
-                        fd.read(), re.MULTILINE).group(1)
+with open('pyensembl/__init__.py', 'r') as f:
+    version = re.search(
+        r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
+        f.read(),
+        re.MULTILINE).group(1)
 
 if not version:
     raise RuntimeError('Cannot find version information')
