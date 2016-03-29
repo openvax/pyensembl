@@ -41,7 +41,7 @@ def normalize_chromosome(c):
     if result.startswith("chr"):
         result = result[3:]
 
-    # just in case someone is being lazy, capitalize "X" and "Y"
+    # just in case someone is being lazy, capitalize "M", "MT", X", "Y"
     result = result.upper()
 
     # standardize mitochondrial genome to be "MT"
