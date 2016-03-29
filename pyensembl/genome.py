@@ -362,7 +362,7 @@ class Genome(object):
         if exists(db_path):
             remove(db_path)
 
-    def all_feature_values(
+    def _all_feature_values(
             self,
             column,
             feature,
@@ -565,12 +565,14 @@ class Genome(object):
     #                  Contigs
     #
     ###################################################
+
     @memoize
     def contigs(self):
-      """
-      Returns all contigs ("seqname") for all genes
-      """
-      return self.db.query_feature_values("seqname", "gene")
+        """
+        Returns all contig names for any gene in the genome
+        (field called "seqname" in Ensembl GTF files)
+        """
+        return self.db.query_feature_values("seqname", "gene")
 
     ###################################################
     #
@@ -687,7 +689,7 @@ class Genome(object):
         Return all genes in the database,
         optionally restrict to a chromosome and/or strand.
         """
-        return self.all_feature_values(
+        return self._all_feature_values(
             column="gene_name",
             feature="gene",
             contig=contig,
@@ -734,7 +736,7 @@ class Genome(object):
         What are all the gene IDs
         (optionally restrict to a given chromosome/contig and/or strand)
         """
-        return self.all_feature_values(
+        return self._all_feature_values(
             column="gene_id",
             feature="gene",
             contig=contig,
@@ -872,7 +874,7 @@ class Genome(object):
         What are all the transcript names in the database
         (optionally, restrict to a given chromosome and/or strand)
         """
-        return self.all_feature_values(
+        return self._all_feature_values(
             column="transcript_name",
             feature="transcript",
             contig=contig,
@@ -916,7 +918,7 @@ class Genome(object):
 
     @memoize
     def transcript_ids(self, contig=None, strand=None):
-        return self.all_feature_values(
+        return self._all_feature_values(
             column="transcript_id",
             feature="transcript",
             contig=contig,
@@ -1020,7 +1022,7 @@ class Genome(object):
 
     @memoize
     def exon_ids(self, contig=None, strand=None):
-        return self.all_feature_values(
+        return self._all_feature_values(
             column="exon_id",
             feature="exon",
             contig=contig,
@@ -1054,7 +1056,7 @@ class Genome(object):
         What are all the protein IDs
         (optionally restrict to a given chromosome and/or strand)
         """
-        protein_ids = self.all_feature_values(
+        protein_ids = self._all_feature_values(
             column="protein_id",
             feature="CDS",
             contig=contig,

@@ -15,7 +15,7 @@ major_releases = [
     ensembl_grch38
 ]
 
-contigs = list(range(1, 23)) + ["X", "Y", "M"]
+contigs = [str(c) for c in range(1, 23)] + ["X", "Y", "M"]
 
 @nottest
 def test_ensembl_releases(*versions):

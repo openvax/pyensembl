@@ -41,17 +41,20 @@ def normalize_chromosome(c):
     if result.startswith("chr"):
         result = result[3:]
 
+    # just in case someone is being lazy, capitalize "X" and "Y"
+    result = result.upper()
+
     # standardize mitochondrial genome to be "MT"
     if result == "M":
         result = "MT"
-    else:
-        # just in case someone is being lazy, capitalize "X" and "Y"
-        result = result.upper()
+
     # interning strings since the chromosome names probably get constructed
     # or parsed millions of times, can save memory in tight situations
     # (such as parsing GTF files)
     result = intern(result)
+
     NORMALIZE_CHROMOSOME_CACHE[c] = result
+
     return result
 
 def normalize_strand(strand):
@@ -61,7 +64,6 @@ def normalize_strand(strand):
         return "+"
     elif strand == -1:
         return "-"
-
     raise ValueError("Invalid strand: %s" % (strand,))
 
 class Locus(object):
@@ -200,10 +202,8 @@ class Locus(object):
         """
         Is this locus on the same contig and (optionally) on the same strand?
         """
-        return (
-            self.on_contig(contig)
-            and
-            (strand is None or self.on_strand(strand)))
+        return (self.on_contig(contig) and
+                (strand is None or self.on_strand(strand)))
 
     def distance_to_interval(self, start, end):
         """

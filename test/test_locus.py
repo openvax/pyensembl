@@ -17,6 +17,9 @@ def test_normalize_chromosome():
     assert normalize_chromosome("chrMT") == "MT"
     assert normalize_chromosome("M") == "MT"
     assert normalize_chromosome("MT") == "MT"
+    assert normalize_chromosome("m") == "MT"
+    assert normalize_chromosome("chrm") == "MT"
+    assert normalize_chromosome("mt") == "MT"
 
     with assert_raises(TypeError):
         normalize_chromosome({"a": "b"})
