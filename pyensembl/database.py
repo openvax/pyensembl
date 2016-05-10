@@ -1,4 +1,4 @@
-# Copyright (c) 2015. Mount Sinai School of Medicine
+# Copyright (c) 2015-2016. Mount Sinai School of Medicine
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -394,9 +394,12 @@ class Database(object):
         try:
             cursor = self.connection.execute(sql, query_params)
         except sqlite3.OperationalError as e:
+            error_message = e.message if hasattr(e, 'message') else str(e)
             logging.warn(
                 "Encountered error \"%s\" from query \"%s\" with parameters %s",
-                e.message, sql, query_params)
+                error_message,
+                sql,
+                query_params)
             raise
         results = cursor.fetchall()
         if required and not results:
@@ -564,4 +567,3 @@ class Database(object):
             raise ValueError("Too many loci for %s with %s = %s: %s" % (
                 feature, filter_column, filter_value, loci))
         return loci[0]
-
