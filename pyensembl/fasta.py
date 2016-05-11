@@ -73,17 +73,19 @@ class FastaParser(object):
             f = open(fasta_path, 'rb')
 
         for line in f:
-            line = line.strip()
+            line = line.rstrip()
+
             if len(line) == 0:
                 continue
-            # have to slice into a bytes object or else I get a single
-            # integer back
+
+            # have to slice into a bytes object or else I get a single integer
             first_char = line[0:1]
-            # treat hash and semicolon as comment characters
-            if first_char == b"#" or first_char == b";":
-                continue
-            elif first_char == b">":
+
+            if first_char == b">":
                 self._read_header(line)
+            elif first_char == b";":
+                # semicolon are comment characters
+                continue
             else:
                 self.current_lines.append(line)
         self._end_of_file()
@@ -126,7 +128,7 @@ def parse_fasta_dictionary(fasta_path, sequence_type=binary_type):
     sequence_type : type
         Default is str.
 
-    Returns dictionary from identifiers to sequences.
+    Returns dictionary from string identifiers to sequences of type bytes.
     """
     parser = FastaParser(sequence_type=sequence_type)
     return parser.read_file(fasta_path)
