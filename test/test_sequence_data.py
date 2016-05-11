@@ -7,10 +7,12 @@ from os.path import exists
 
 from nose.tools import assert_raises
 from pyensembl import SequenceData
-from skbio import DNA
+from six import text_type
+
 
 from .common import TemporaryDirectory
 from .data import data_path
+
 
 FASTA_PATH = data_path("mouse.ensembl.81.partial.ENSMUSG00000017167.fa")
 
@@ -19,18 +21,12 @@ def test_sequence_type():
     with TemporaryDirectory() as tmpdir:
         seqs_dna = SequenceData(
             FASTA_PATH,
-            sequence_type=DNA,
             cache_directory_path=tmpdir)
         seq = seqs_dna.get("ENSMUST00000138942")
-        assert isinstance(seq, DNA)
-
-    with TemporaryDirectory() as tmpdir:
-        seqs_str = SequenceData(
-            FASTA_PATH,
-            sequence_type=str,
-            cache_directory_path=tmpdir)
-        seq = seqs_str.get("ENSMUST00000138942")
-        assert isinstance(seq, str)
+        assert seq is not None, \
+            "Failed to find sequence for ENSMUST00000138942"
+        assert isinstance(seq, text_type), \
+            "Wrong sequence type, expected %s but got %s" % (text_type, type(seq))
 
 def test_check_ensembl_id():
     with TemporaryDirectory() as tmpdir:

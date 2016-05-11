@@ -18,9 +18,13 @@ from os.path import exists, abspath, split, join
 import logging
 
 from six.moves import cPickle as pickle
-from skbio import read
 
-from .common import require_ensembl_id, load_pickle, dump_pickle
+from .common import (
+    require_ensembl_id,
+    load_pickle,
+    dump_pickle,
+)
+from .fasta import parse_fasta_dictionary
 
 class SequenceData(object):
     """
@@ -30,7 +34,6 @@ class SequenceData(object):
             self,
             fasta_path,
             require_ensembl_ids=False,
-            sequence_type=str,
             cache_directory_path=None):
         self.fasta_path = abspath(fasta_path)
         self.fasta_directory_path, self.fasta_filename = split(self.fasta_path)
@@ -41,7 +44,6 @@ class SequenceData(object):
         if not exists(self.fasta_path):
             raise ValueError("Couldn't find FASTA file %s" % (self.fasta_path,))
         self.require_ensembl_ids = require_ensembl_ids
-        self.sequence_type = sequence_type
         self.fasta_dictionary_filename = self.fasta_filename + ".pickle"
         self.fasta_dictionary_pickle_path = join(
             self.cache_directory_path,
@@ -78,19 +80,6 @@ class SequenceData(object):
     def __hash__(self):
         return hash(self.fasta_path)
 
-    def _parse_fasta_dictionary(self):
-        fasta_dictionary = {}
-        sequence_type = self.sequence_type
-        for seq_entry in read(self.fasta_path, format="fasta"):
-            # annoyingly Ensembl83 reformatted the transcript IDs of its
-            # cDNA FASTA to include sequence version numbers
-            # .e.g.
-            # "ENST00000448914.1" instead of "ENST00000448914"
-            # So now we have to parse out the identifier
-            seq_id = seq_entry.metadata["id"].split(".")[0]
-            fasta_dictionary[seq_id] = sequence_type(seq_entry)
-        return fasta_dictionary
-
     def _load_or_create_fasta_dictionary_pickle(self):
         if exists(self.fasta_dictionary_pickle_path):
             # try loading the cached file
@@ -106,7 +95,7 @@ class SequenceData(object):
                 logging.warn(
                     "Failed to load %s, attempting to read FASTA directly" % (
                         self.fasta_dictionary_pickle_path,))
-        self._fasta_dictionary = self._parse_fasta_dictionary()
+        self._fasta_dictionary = parse_fasta_dictionary(self.fasta_path)
         dump_pickle(self._fasta_dictionary, self.fasta_dictionary_pickle_path)
 
     def index(self, overwrite=False):
