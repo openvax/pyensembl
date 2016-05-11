@@ -22,11 +22,17 @@ from __future__ import print_function, division, absolute_import
 from gzip import GzipFile
 import logging
 
+from six import binary_type
+
 def _parse_header_id(line):
     """
     Pull the transcript or protein identifier from the header line
     which starts with '>'
     """
+    if type(line) is not binary_type:
+        raise TypeError("Expected header line to be of type %s but got %s" % (
+            binary_type, type(line)))
+
     if len(line) <= 1:
         raise ValueError("No identifier on FASTA line")
 
@@ -46,14 +52,15 @@ def _parse_header_id(line):
     dot_index = identifier.find(b".")
     if dot_index >= 0:
         identifier = identifier[:dot_index]
-    return str(identifier)
+
+    return identifier.decode("ascii")
 
 class FastaParser(object):
     """
     FastaParser object consumes lines of a FASTA file incrementally
     while building up a dictionary mapping sequence identifiers to sequences.
     """
-    def __init__(self, sequence_type=str):
+    def __init__(self, sequence_type=binary_type):
         self.sequence_type = sequence_type
         self.current_id = None
         self.current_lines = []
@@ -61,18 +68,24 @@ class FastaParser(object):
 
     def read_file(self, fasta_path):
         if fasta_path.endswith("gz") or fasta_path.endswith("gzip"):
-            f = GzipFile(fasta_path, 'r')
+            f = GzipFile(fasta_path, 'rb')
         else:
-            f = open(fasta_path, 'r')
+            f = open(fasta_path, 'rb')
 
         for line in f:
-            # treat hash and semicolon as comment characters
-            if line.startswith(b"#") or line.startswith(b";"):
+            line = line.strip()
+            if len(line) == 0:
                 continue
-            elif line.startswith(b">"):
-                self._next_header(line)
+            # have to slice into a bytes object or else I get a single
+            # integer back
+            first_char = line[0:1]
+            # treat hash and semicolon as comment characters
+            if first_char == b"#" or first_char == b";":
+                continue
+            elif first_char == b">":
+                self._read_header(line)
             else:
-                self.current_lines.append(line.strip())
+                self.current_lines.append(line)
         self._end_of_file()
         return self.fasta_dictionary
 
@@ -87,9 +100,10 @@ class FastaParser(object):
                 logging.warn("No sequence data for '%s'" % self.current_id)
             else:
                 self.fasta_dictionary[
-                    self.current_id] = b"".join(self.current_lines)
+                    self.current_id] = self.sequence_type(
+                        b"".join(self.current_lines))
 
-    def _next_header(self, line):
+    def _read_header(self, line):
         self._add_current_sequence_to_dictionary()
 
         self.current_id = _parse_header_id(line)
@@ -99,7 +113,7 @@ class FastaParser(object):
 
         self.current_lines = []
 
-def parse_fasta_dictionary(fasta_path, sequence_type=str):
+def parse_fasta_dictionary(fasta_path, sequence_type=binary_type):
     """
     Given a path to a FASTA (or compressed FASTA) file, returns a dictionary
     mapping its sequence identifiers to sequences.

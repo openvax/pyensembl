@@ -22,7 +22,10 @@ def test_sequence_type():
             sequence_type=DNA,
             cache_directory_path=tmpdir)
         seq = seqs_dna.get("ENSMUST00000138942")
-        assert isinstance(seq, DNA)
+        assert seq is not None, \
+            "Failed to find sequence for ENSMUST00000138942"
+        assert isinstance(seq, DNA), \
+            "Wrong sequence type, expected DNA but got %s" % (type(seq))
 
     with TemporaryDirectory() as tmpdir:
         seqs_str = SequenceData(
@@ -30,7 +33,10 @@ def test_sequence_type():
             sequence_type=str,
             cache_directory_path=tmpdir)
         seq = seqs_str.get("ENSMUST00000138942")
-        assert isinstance(seq, str)
+        assert seq is not None, \
+            "Failed to find sequence ENSMUST00000138942"
+        assert isinstance(seq, str), \
+            "Wrong sequence type, expected str but got %s" % (type(seq))
 
 def test_check_ensembl_id():
     with TemporaryDirectory() as tmpdir:

@@ -18,6 +18,7 @@ from os.path import exists, abspath, split, join
 import logging
 
 from six.moves import cPickle as pickle
+from six import binary_type
 
 from .common import (
     require_ensembl_id,
@@ -34,7 +35,7 @@ class SequenceData(object):
             self,
             fasta_path,
             require_ensembl_ids=False,
-            sequence_type=str,
+            sequence_type=binary_type,
             cache_directory_path=None):
         self.fasta_path = abspath(fasta_path)
         self.fasta_directory_path, self.fasta_filename = split(self.fasta_path)
@@ -97,7 +98,9 @@ class SequenceData(object):
                 logging.warn(
                     "Failed to load %s, attempting to read FASTA directly" % (
                         self.fasta_dictionary_pickle_path,))
-        self._fasta_dictionary = parse_fasta_dictionary(self.fasta_path)
+        self._fasta_dictionary = parse_fasta_dictionary(
+            self.fasta_path,
+            sequence_type=self.sequence_type)
         dump_pickle(self._fasta_dictionary, self.fasta_dictionary_pickle_path)
 
     def index(self, overwrite=False):
