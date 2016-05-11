@@ -60,53 +60,70 @@ class FastaParser(object):
     FastaParser object consumes lines of a FASTA file incrementally
     while building up a dictionary mapping sequence identifiers to sequences.
     """
-    def __init__(self, sequence_type=binary_type):
-        self.sequence_type = sequence_type
+    def __init__(self):
         self.current_id = None
         self.current_lines = []
-        self.fasta_dictionary = {}
 
     def read_file(self, fasta_path):
+        """
+        Read the contents of a FASTA file into a dictionary
+        """
+        fasta_dictionary = {}
+        for (identifier, sequence) in self.iterate_over_file(fasta_path):
+            fasta_dictionary[identifier] = sequence
+        return fasta_dictionary
+
+    def iterate_over_file(self, fasta_path):
+        """
+        Generator that yields identifiers paired with sequences.
+        """
+        with self._open(fasta_path) as f:
+            for line in f:
+                line = line.rstrip()
+
+                if len(line) == 0:
+                    continue
+
+                # have to slice into a bytes object or else I get a single integer
+                first_char = line[0:1]
+
+                if first_char == b">":
+                    id_and_seq = self._read_header(line)
+                    if id_and_seq is not None:
+                        yield id_and_seq
+
+                elif first_char == b";":
+                    # semicolon are comment characters
+                    continue
+                else:
+                    self.current_lines.append(line)
+        # the last sequence is still in the lines buffer after we're done with
+        # the file so make sure to yield it
+        id_and_seq = self._current_entry()
+        if id_and_seq is not None:
+            yield id_and_seq
+
+    def _open(self, fasta_path):
+        """
+        Open either a text file or compressed gzip file as a stream of bytes.
+        """
         if fasta_path.endswith("gz") or fasta_path.endswith("gzip"):
-            f = GzipFile(fasta_path, 'rb')
+            return GzipFile(fasta_path, 'rb')
         else:
-            f = open(fasta_path, 'rb')
+            return open(fasta_path, 'rb')
 
-        for line in f:
-            line = line.rstrip()
-
-            if len(line) == 0:
-                continue
-
-            # have to slice into a bytes object or else I get a single integer
-            first_char = line[0:1]
-
-            if first_char == b">":
-                self._read_header(line)
-            elif first_char == b";":
-                # semicolon are comment characters
-                continue
-            else:
-                self.current_lines.append(line)
-        self._end_of_file()
-        return self.fasta_dictionary
-
-    def _end_of_file(self):
-        self._add_current_sequence_to_dictionary()
-
-    def _add_current_sequence_to_dictionary(self):
+    def _current_entry(self):
         # when we hit a new entry, if this isn't the first
         # entry of the file then put the last one in the dictionary
         if self.current_id:
             if len(self.current_lines) == 0:
                 logging.warn("No sequence data for '%s'" % self.current_id)
             else:
-                self.fasta_dictionary[
-                    self.current_id] = self.sequence_type(
-                        b"".join(self.current_lines))
+                sequence = (b"".join(self.current_lines)).decode("ascii")
+                return self.current_id, sequence
 
     def _read_header(self, line):
-        self._add_current_sequence_to_dictionary()
+        previous_entry = self._current_entry()
 
         self.current_id = _parse_header_id(line)
 
@@ -114,8 +131,9 @@ class FastaParser(object):
             logging.warn("Unable to parse ID from header line: %s" % line)
 
         self.current_lines = []
+        return previous_entry
 
-def parse_fasta_dictionary(fasta_path, sequence_type=binary_type):
+def parse_fasta_dictionary(fasta_path):
     """
     Given a path to a FASTA (or compressed FASTA) file, returns a dictionary
     mapping its sequence identifiers to sequences.
@@ -125,10 +143,7 @@ def parse_fasta_dictionary(fasta_path, sequence_type=binary_type):
     fasta_path : str
         Path to the FASTA file.
 
-    sequence_type : type
-        Default is str.
-
-    Returns dictionary from string identifiers to sequences of type bytes.
+    Returns dictionary from string identifiers to string sequences.
     """
-    parser = FastaParser(sequence_type=sequence_type)
+    parser = FastaParser()
     return parser.read_file(fasta_path)

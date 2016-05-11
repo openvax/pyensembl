@@ -75,7 +75,6 @@ if __name__ == '__main__':
             "numpy>=1.7",
             "pandas>=0.15",
             "datacache>=0.4.16",
-            "scikit-bio>=0.4.0",
             "memoized-property>=1.0.2",
             "six>=1.9.0",
             "gtfparse>=0.0.3",
