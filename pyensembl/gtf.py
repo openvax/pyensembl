@@ -131,6 +131,7 @@ class GTF(object):
         """
         Parse this genome source's GTF file and load it as a Pandas DataFrame
         """
+        print("Reading GTF from %s" % self.gtf_path)
         df = read_gtf_as_dataframe(
             self.gtf_path,
             column_converters={
