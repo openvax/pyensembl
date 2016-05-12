@@ -87,6 +87,8 @@ class SequenceData(object):
             try:
                 self._fasta_dictionary = load_pickle(
                     self.fasta_dictionary_pickle_path)
+                logging.info(
+                    "Loaded sequence dictionary from %s" % self.fasta_dictionary_pickle_path)
                 return
             except (pickle.UnpicklingError, AttributeError):
                 # catch either an UnpicklingError or an AttributeError
@@ -95,7 +97,9 @@ class SequenceData(object):
                 logging.warn(
                     "Failed to load %s, attempting to read FASTA directly" % (
                         self.fasta_dictionary_pickle_path,))
+        logging.info("Parsing sequences from FASTA file at %s" % self.fasta_path)
         self._fasta_dictionary = parse_fasta_dictionary(self.fasta_path)
+        logging.info("Saving sequence dictionary to %s" % self.fasta_dictionary_pickle_path)
         dump_pickle(self._fasta_dictionary, self.fasta_dictionary_pickle_path)
 
     def index(self, overwrite=False):
