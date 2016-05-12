@@ -47,7 +47,7 @@ script:
   # latest mouse release
   - pyensembl install --release 83 --species mouse
   # run tests
-  - nosetests test --with-coverage --cover-package=pyensembl  && ./lint.sh
+  - nosetests test --verbose --with-coverage --cover-package=pyensembl  && ./lint.sh
 after_success:
   coveralls
 deploy:
