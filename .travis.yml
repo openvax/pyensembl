@@ -43,7 +43,7 @@ script:
   # latest human release
   - pyensembl install --release 83 --species human
   # older mouse release (last one for NCBIM37)
-  - pyensembl install --release 67 --species mouse
+  # - pyensembl install --release 67 --species mouse
   # latest mouse release
   - pyensembl install --release 83 --species mouse
   # run tests
