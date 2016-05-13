@@ -7,8 +7,6 @@ from os.path import exists
 
 from nose.tools import assert_raises
 from pyensembl import SequenceData
-from six import text_type
-
 
 from .common import TemporaryDirectory
 from .data import data_path
@@ -25,8 +23,8 @@ def test_sequence_type():
         seq = seqs_dna.get("ENSMUST00000138942")
         assert seq is not None, \
             "Failed to find sequence for ENSMUST00000138942"
-        assert isinstance(seq, text_type), \
-            "Wrong sequence type, expected %s but got %s" % (text_type, type(seq))
+        assert isinstance(seq, str), \
+            "Wrong sequence type, expected %s but got %s" % (str, type(seq))
 
 def test_check_ensembl_id():
     with TemporaryDirectory() as tmpdir:
