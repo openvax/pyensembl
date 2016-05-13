@@ -22,7 +22,7 @@ from __future__ import print_function, division, absolute_import
 from gzip import GzipFile
 import logging
 
-from six import binary_type
+from six import binary_type, PY3
 
 def _parse_header_id(line):
     """
@@ -119,7 +119,13 @@ class FastaParser(object):
             if len(self.current_lines) == 0:
                 logging.warn("No sequence data for '%s'" % self.current_id)
             else:
-                sequence = (b"".join(self.current_lines)).decode("ascii")
+                sequence = b"".join(self.current_lines)
+                if PY3:
+                    # only decoding into an ASCII str for Python 3 since
+                    # the binary sequence type for Python 2 is already 'str'
+                    # and the unicode representation is inefficient
+                    # (using either 16 or 32 bits per character depends on build)
+                    sequence = sequence.decode("ascii")
                 return self.current_id, sequence
 
     def _read_header(self, line):
