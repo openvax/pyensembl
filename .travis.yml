@@ -52,6 +52,7 @@ after_success:
   coveralls
 deploy:
   provider: pypi
+  distributions: sdist
   user: hammerlab
   password:
     secure: "X4DhwpPp5OJDhejSLj3y+b/zjGgvKpaVh5DEo68HUoy6GKdTOmy2+QM1/tCQVt9fze5X2E849aNN9kfXUjHoeAd3OvFIzota3Bu6hOq+q2HKj6IB0mjB9p3b3kqDusBh9I/66MXApntrqZdN9ZOm/wjD0KHzGbBdvBz41hePsHw="
