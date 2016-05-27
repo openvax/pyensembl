@@ -217,13 +217,7 @@ non_immune_protein_coding = {
     'non_stop_decay',
     # ordinary protein coding transcript
     'protein_coding',
-    # usually a non-coding pseudogene but can be translated in some individuals
-    # depending on common genetic variation
-    'polymorphic_pseudogene',
-    # Otherwise viable coding region omitted from this alternatively spliced
-    # transcript because the splice variation affects a region coding for a
-    # protein domain.
-    'disrupted_domain',
+
     # Gene in a "Locus Reference Genomic" region known to have disease-related
     # sequence variations.
     'LRG_gene',
@@ -237,9 +231,6 @@ protein_coding = set.union(
 
 
 coding_pseudogenes = {
-    # TODO: why is disrupted_domain a pseudogene rather than
-    # a translated protein we expect to be dysfunctional?
-    'disrupted_domain',
     'IG_C_pseudogene',
     'IG_J_pseudogene',
     'IG_pseudogene',
@@ -263,6 +254,15 @@ coding_pseudogenes = {
     'translated_unprocessed_pseudogene',
     # pseudogene owing to a reverse transcribed and re-inserted sequence.
     "retrotransposed",
+    # usually a non-coding pseudogene but can be translated in some individuals
+    # depending on common genetic variation
+    'polymorphic_pseudogene',
+    # Otherwise viable coding region omitted from this alternatively spliced
+    # transcript because the splice variation affects a region coding for a
+    # protein domain.
+    # TODO: why is disrupted_domain a pseudogene rather than
+    # a translated protein we expect to be dysfunctional?
+    'disrupted_domain',
 }
 
 long_noncoding = {
