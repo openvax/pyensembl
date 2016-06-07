@@ -22,7 +22,6 @@ import logging
 from os import remove
 from os.path import exists
 
-from .common import memoize
 from .memory_cache import MemoryCache
 from .download_cache import DownloadCache
 from .database import Database
@@ -120,11 +119,18 @@ class Genome(object):
 
     def __getstate__(self):
         # Must be in order of __init__ arguments
-        return [self.reference_name, self.annotation_name, self.annotation_version,
-                self._gtf_path_or_url, self._transcript_fasta_path_or_url,
-                self._protein_fasta_path_or_url, self.decompress_on_download,
-                self.copy_local_files_to_cache, self.require_ensembl_ids,
-                self.cache_directory_path]
+        return [
+            self.reference_name,
+            self.annotation_name,
+            self.annotation_version,
+            self._gtf_path_or_url,
+            self._transcript_fasta_path_or_url,
+            self._protein_fasta_path_or_url,
+            self.decompress_on_download,
+            self.copy_local_files_to_cache,
+            self.require_ensembl_ids,
+            self.cache_directory_path
+        ]
 
     def __setstate__(self, fields):
         self.__init__(*fields)
@@ -136,6 +142,11 @@ class Genome(object):
         self._gtf = self._db = self.gtf_path = None
         self._protein_sequences = self.protein_fasta_path = None
         self._transcript_sequences = self.transcript_fasta_path = None
+
+        # only memoizing the Gene, Transcript, and Exon objects
+        self._genes = {}
+        self._transcripts = {}
+        self._exons = {}
 
     def _get_cached_path(
             self,
@@ -526,7 +537,6 @@ class Genome(object):
     #
     ###################################################
 
-    @memoize
     def locus_of_gene_id(self, gene_id):
         """
         Given a gene ID returns Locus with: chromosome, start, stop, strand
@@ -536,7 +546,6 @@ class Genome(object):
             filter_value=gene_id,
             feature="gene")
 
-    @memoize
     def loci_of_gene_names(self, gene_name):
         """
         Given a gene name returns list of Locus objects with fields:
@@ -546,14 +555,12 @@ class Genome(object):
         """
         return self.db.query_loci("gene_name", gene_name, "gene")
 
-    @memoize
     def locus_of_transcript_id(self, transcript_id):
         return self.db.query_locus(
             filter_column="transcript_id",
             filter_value=transcript_id,
             feature="transcript")
 
-    @memoize
     def locus_of_exon_id(self, exon_id):
         """
         Given an exon ID returns Locus
@@ -566,7 +573,6 @@ class Genome(object):
     #
     ###################################################
 
-    @memoize
     def contigs(self):
         """
         Returns all contig names for any gene in the genome
@@ -580,7 +586,6 @@ class Genome(object):
     #
     ###################################################
 
-    @memoize
     def genes(self, contig=None, strand=None):
         """
         Returns all Gene objects in the database. Can be restricted to a
@@ -597,57 +602,58 @@ class Genome(object):
         gene_ids = self.gene_ids(contig=contig, strand=strand)
         return [self.gene_by_id(gene_id) for gene_id in gene_ids]
 
-    @memoize
     def gene_by_id(self, gene_id):
         """
         Construct a Gene object for the given gene ID.
         """
-        field_names = [
-            "seqname",
-            "start",
-            "end",
-            "strand",
-        ]
-        optional_field_names = [
-            "gene_name",
-            "gene_biotype",
-        ]
-        # Do not look for gene_name and gene_biotype if they are
-        # not in the database.
-        field_names.extend([name for name in optional_field_names
-                            if self.db.column_exists("gene", name)])
-        result = self.db.query_one(
-            field_names,
-            filter_column="gene_id",
-            filter_value=gene_id,
-            feature="gene")
-        if not result:
-            raise ValueError("Gene not found: %s" % (gene_id,))
+        if gene_id not in self._genes:
+            field_names = [
+                "seqname",
+                "start",
+                "end",
+                "strand",
+            ]
+            optional_field_names = [
+                "gene_name",
+                "gene_biotype",
+            ]
+            # Do not look for gene_name and gene_biotype if they are
+            # not in the database.
+            field_names.extend([name for name in optional_field_names
+                                if self.db.column_exists("gene", name)])
+            result = self.db.query_one(
+                field_names,
+                filter_column="gene_id",
+                filter_value=gene_id,
+                feature="gene")
+            if not result:
+                raise ValueError("Gene not found: %s" % (gene_id,))
 
-        gene_name, gene_biotype = None, None
-        assert len(result) >= 4 and len(result) <= 6, \
-            "Result is not the expected length: %d" % len(result)
-        contig, start, end, strand = result[:4]
-        if len(result) == 5:
-            if "gene_name" in field_names:
-                gene_name = result[4]
-            else:
-                gene_biotype = result[4]
-        elif len(result) == 6:
-            gene_name, gene_biotype = result[4:]
+            gene_name, gene_biotype = None, None
+            assert len(result) >= 4 and len(result) <= 6, \
+                "Result is not the expected length: %d" % len(result)
+            contig, start, end, strand = result[:4]
+            if len(result) == 5:
+                if "gene_name" in field_names:
+                    gene_name = result[4]
+                else:
+                    gene_biotype = result[4]
+            elif len(result) == 6:
+                gene_name, gene_biotype = result[4:]
 
-        return Gene(
-            gene_id=gene_id,
-            gene_name=gene_name,
-            contig=contig,
-            start=start,
-            end=end,
-            strand=strand,
-            biotype=gene_biotype,
-            genome=self,
-            require_valid_biotype=("gene_biotype" in field_names))
+            self._genes[gene_id] = Gene(
+                gene_id=gene_id,
+                gene_name=gene_name,
+                contig=contig,
+                start=start,
+                end=end,
+                strand=strand,
+                biotype=gene_biotype,
+                genome=self,
+                require_valid_biotype=("gene_biotype" in field_names))
 
-    @memoize
+        return self._genes[gene_id]
+
     def genes_by_name(self, gene_name):
         """
         Get all the unqiue genes with the given name (there might be multiple
@@ -657,7 +663,6 @@ class Genome(object):
         gene_ids = self.gene_ids_of_gene_name(gene_name)
         return [self.gene_by_id(gene_id) for gene_id in gene_ids]
 
-    @memoize
     def gene_by_protein_id(self, protein_id):
         """
         Get the gene ID associated with the given protein ID,
@@ -672,7 +677,6 @@ class Genome(object):
     #
     ###################################################
 
-    @memoize
     def _query_gene_name(self, property_name, property_value, feature_type):
         results = self.db.query(
             select_column_names=["gene_name"],
@@ -683,7 +687,6 @@ class Genome(object):
             required=True)
         return str(results[0][0])
 
-    @memoize
     def gene_names(self, contig=None, strand=None):
         """
         Return all genes in the database,
@@ -695,21 +698,17 @@ class Genome(object):
             contig=contig,
             strand=strand)
 
-    @memoize
     def gene_name_of_gene_id(self, gene_id):
         return self._query_gene_name("gene_id", gene_id, "gene")
 
-    @memoize
     def gene_name_of_transcript_id(self, transcript_id):
         return self._query_gene_name(
             "transcript_id", transcript_id, "transcript")
 
-    @memoize
     def gene_name_of_transcript_name(self, transcript_name):
         return self._query_gene_name(
             "transcript_name", transcript_name, "transcript")
 
-    @memoize
     def gene_name_of_exon_id(self, exon_id):
         return self._query_gene_name("exon_id", exon_id, "exon")
 
@@ -719,7 +718,6 @@ class Genome(object):
     #
     ###################################################
 
-    @memoize
     def _query_gene_ids(self, property_name, value, feature="gene"):
         results = self.db.query(
             select_column_names=["gene_id"],
@@ -730,7 +728,6 @@ class Genome(object):
             required=True)
         return [str(result[0]) for result in results if result[0]]
 
-    @memoize
     def gene_ids(self, contig=None, strand=None):
         """
         What are all the gene IDs
@@ -742,7 +739,6 @@ class Genome(object):
             contig=contig,
             strand=strand)
 
-    @memoize
     def gene_ids_of_gene_name(self, gene_name):
         """
         What are the gene IDs associated with a given gene name?
@@ -753,7 +749,6 @@ class Genome(object):
             raise ValueError("Gene name not found: %s" % gene_name)
         return results
 
-    @memoize
     def gene_id_of_protein_id(self, protein_id):
         """
         What is the gene ID associated with a given protein ID?
@@ -773,7 +768,6 @@ class Genome(object):
     #
     ###################################################
 
-    @memoize
     def transcripts(self, contig=None, strand=None):
         """
         Construct Transcript object for every transcript entry in
@@ -786,59 +780,59 @@ class Genome(object):
             for transcript_id in transcript_ids
         ]
 
-    @memoize
     def transcript_by_id(self, transcript_id):
         """Construct Transcript object with given transcript ID"""
+        if transcript_id not in self._transcripts:
+            optional_field_names = [
+                "transcript_name",
+                "transcript_biotype",
+            ]
+            field_names = [
+                "seqname",
+                "start",
+                "end",
+                "strand",
+                "gene_id",
+            ]
+            # Do not look for transcript_name and transcript_biotype if
+            # they are not in the database.
+            field_names.extend([name for name in optional_field_names
+                                if self.db.column_exists("transcript", name)])
+            result = self.db.query_one(
+                select_column_names=field_names,
+                filter_column="transcript_id",
+                filter_value=transcript_id,
+                feature="transcript",
+                distinct=True)
+            if not result:
+                raise ValueError("Transcript not found: %s" % (transcript_id,))
 
-        optional_field_names = [
-            "transcript_name",
-            "transcript_biotype",
-        ]
-        field_names = [
-            "seqname",
-            "start",
-            "end",
-            "strand",
-            "gene_id",
-        ]
-        # Do not look for transcript_name and transcript_biotype if
-        # they are not in the database.
-        field_names.extend([name for name in optional_field_names
-                            if self.db.column_exists("transcript", name)])
-        result = self.db.query_one(
-            select_column_names=field_names,
-            filter_column="transcript_id",
-            filter_value=transcript_id,
-            feature="transcript",
-            distinct=True)
-        if not result:
-            raise ValueError("Transcript not found: %s" % (transcript_id,))
+            transcript_name, transcript_biotype = None, None
+            assert len(result) >= 5 and len(result) <= 7, \
+                "Result is not the expected length: %d" % len(result)
+            contig, start, end, strand, gene_id = result[:5]
+            if len(result) == 6:
+                if "transcript_name" in field_names:
+                    transcript_name = result[5]
+                else:
+                    transcript_biotype = result[5]
+            elif len(result) == 7:
+                transcript_name, transcript_biotype = result[5:]
 
-        transcript_name, transcript_biotype = None, None
-        assert len(result) >= 5 and len(result) <= 7, \
-            "Result is not the expected length: %d" % len(result)
-        contig, start, end, strand, gene_id = result[:5]
-        if len(result) == 6:
-            if "transcript_name" in field_names:
-                transcript_name = result[5]
-            else:
-                transcript_biotype = result[5]
-        elif len(result) == 7:
-            transcript_name, transcript_biotype = result[5:]
+            self._transcripts[transcript_id] = Transcript(
+                transcript_id=transcript_id,
+                transcript_name=transcript_name,
+                contig=contig,
+                start=start,
+                end=end,
+                strand=strand,
+                biotype=transcript_biotype,
+                gene_id=gene_id,
+                genome=self,
+                require_valid_biotype=("transcript_biotype" in field_names))
 
-        return Transcript(
-            transcript_id=transcript_id,
-            transcript_name=transcript_name,
-            contig=contig,
-            start=start,
-            end=end,
-            strand=strand,
-            biotype=transcript_biotype,
-            gene_id=gene_id,
-            genome=self,
-            require_valid_biotype=("transcript_biotype" in field_names))
+        return self._transcripts[transcript_id]
 
-    @memoize
     def transcripts_by_name(self, transcript_name):
         transcript_ids = self.transcript_ids_of_transcript_name(transcript_name)
         return [
@@ -846,7 +840,6 @@ class Genome(object):
             for transcript_id in transcript_ids
         ]
 
-    @memoize
     def transcript_by_protein_id(self, protein_id):
         transcript_id = self.transcript_id_of_protein_id(protein_id)
         return self.transcript_by_id(transcript_id)
@@ -857,7 +850,6 @@ class Genome(object):
     #
     ###################################################
 
-    @memoize
     def _query_transcript_names(self, property_name, value):
         results = self.db.query(
             select_column_names=["transcript_name"],
@@ -868,7 +860,6 @@ class Genome(object):
             required=True)
         return [result[0] for result in results]
 
-    @memoize
     def transcript_names(self, contig=None, strand=None):
         """
         What are all the transcript names in the database
@@ -880,11 +871,9 @@ class Genome(object):
             contig=contig,
             strand=strand)
 
-    @memoize
     def transcript_names_of_gene_name(self, gene_name):
         return self._query_transcript_names("gene_name", gene_name)
 
-    @memoize
     def transcript_name_of_transcript_id(self, transcript_id):
         transcript_names = self._query_transcript_names(
             "transcript_id", transcript_id)
@@ -901,7 +890,6 @@ class Genome(object):
     #
     ###################################################
 
-    @memoize
     def _query_transcript_ids(
             self,
             property_name,
@@ -916,7 +904,6 @@ class Genome(object):
             required=True)
         return [result[0] for result in results]
 
-    @memoize
     def transcript_ids(self, contig=None, strand=None):
         return self._all_feature_values(
             column="transcript_id",
@@ -924,29 +911,26 @@ class Genome(object):
             contig=contig,
             strand=strand)
 
-    @memoize
     def transcript_ids_of_gene_id(self, gene_id):
         return self._query_transcript_ids("gene_id", gene_id)
 
-    @memoize
     def transcript_ids_of_gene_name(self, gene_name):
         return self._query_transcript_ids("gene_name", gene_name)
 
-    @memoize
     def transcript_ids_of_transcript_name(self, transcript_name):
         return self._query_transcript_ids("transcript_name", transcript_name)
 
-    @memoize
     def transcript_ids_of_exon_id(self, exon_id):
         return self._query_transcript_ids("exon_id", exon_id)
 
-    @memoize
     def transcript_id_of_protein_id(self, protein_id):
         """
         What is the transcript ID associated with a given protein ID?
         """
-        results = self._query_transcript_ids("protein_id", protein_id,
-                                             feature="CDS")
+        results = self._query_transcript_ids(
+            "protein_id",
+            protein_id,
+            feature="CDS")
         if len(results) == 0:
             raise ValueError("Protein ID not found: %s" % protein_id)
         assert len(results) == 1, \
@@ -960,7 +944,6 @@ class Genome(object):
     #
     ###################################################
 
-    @memoize
     def exons(self, contig=None, strand=None):
         """
         Create exon object for all exons in the database, optionally
@@ -973,35 +956,37 @@ class Genome(object):
             for exon_id in exon_ids
         ]
 
-    @memoize
     def exon_by_id(self, exon_id):
         """Construct an Exon object from its ID by looking up the exon"s
         properties in the given Database.
         """
-        field_names = [
-            "seqname",
-            "start",
-            "end",
-            "strand",
-            "gene_name",
-            "gene_id",
-        ]
+        if exon_id not in self._exons:
+            field_names = [
+                "seqname",
+                "start",
+                "end",
+                "strand",
+                "gene_name",
+                "gene_id",
+            ]
 
-        contig, start, end, strand, gene_name, gene_id = self.db.query_one(
-            select_column_names=field_names,
-            filter_column="exon_id",
-            filter_value=exon_id,
-            feature="exon",
-            distinct=True)
+            contig, start, end, strand, gene_name, gene_id = self.db.query_one(
+                select_column_names=field_names,
+                filter_column="exon_id",
+                filter_value=exon_id,
+                feature="exon",
+                distinct=True)
 
-        return Exon(
-            exon_id=exon_id,
-            contig=contig,
-            start=start,
-            end=end,
-            strand=strand,
-            gene_name=gene_name,
-            gene_id=gene_id)
+            self._exons[exon_id] = Exon(
+                exon_id=exon_id,
+                contig=contig,
+                start=start,
+                end=end,
+                strand=strand,
+                gene_name=gene_name,
+                gene_id=gene_id)
+
+        return self._exons[exon_id]
 
     ###################################################
     #
@@ -1009,7 +994,6 @@ class Genome(object):
     #
     ###################################################
 
-    @memoize
     def _query_exon_ids(self, property_name, value):
         results = self.db.query(
             select_column_names=["exon_id"],
@@ -1020,7 +1004,6 @@ class Genome(object):
             required=True)
         return [result[0] for result in results]
 
-    @memoize
     def exon_ids(self, contig=None, strand=None):
         return self._all_feature_values(
             column="exon_id",
@@ -1028,19 +1011,15 @@ class Genome(object):
             contig=contig,
             strand=strand)
 
-    @memoize
     def exon_ids_of_gene_id(self, gene_id):
         return self._query_exon_ids("gene_id", gene_id)
 
-    @memoize
     def exon_ids_of_gene_name(self, gene_name):
         return self._query_exon_ids("gene_name", gene_name)
 
-    @memoize
     def exon_ids_of_transcript_name(self, transcript_name):
         return self._query_exon_ids("transcript_name", transcript_name)
 
-    @memoize
     def exon_ids_of_transcript_id(self, transcript_id):
         return self._query_exon_ids("transcript_id", transcript_id)
 
@@ -1050,7 +1029,6 @@ class Genome(object):
     #
     ###################################################
 
-    @memoize
     def protein_ids(self, contig=None, strand=None):
         """
         What are all the protein IDs

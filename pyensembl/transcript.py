@@ -90,7 +90,7 @@ class Transcript(Locus):
     def __hash__(self):
         return hash(self.id)
 
-    @memoized_property
+    @property
     def gene(self):
         return self.genome.gene_by_id(self.gene_id)
 
@@ -102,7 +102,7 @@ class Transcript(Locus):
     def __setstate__(self, fields):
         self.__init__(*fields)
 
-    @memoized_property
+    @property
     def exons(self):
         # need to look up exon_number alongside ID since each exon may
         # appear in multiple transcripts and have a different exon number
