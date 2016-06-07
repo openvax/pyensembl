@@ -434,7 +434,6 @@ class Database(object):
         return self.run_sql_query(
             sql, required=required, query_params=query_params)
 
-    @memoize
     def query_one(
             self,
             select_column_names,
@@ -495,7 +494,6 @@ class Database(object):
         rows = self.run_sql_query(query, query_params=query_params)
         return [row[0] for row in rows if row is not None]
 
-    @memoize
     def query_distinct_on_contig(self, column_name, feature, contig):
         return self.query_feature_values(
             column=column_name,
@@ -503,7 +501,6 @@ class Database(object):
             contig=contig,
             distinct=True)
 
-    @memoize
     def query_loci(self, filter_column, filter_value, feature):
         """
         Query for loci satisfying a given filter and feature type.
@@ -536,7 +533,6 @@ class Database(object):
             in result_tuples
         ]
 
-    @memoize
     def query_locus(self, filter_column, filter_value, feature):
         """
         Query for unique locus, raises error if missing or more than

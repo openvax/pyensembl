@@ -55,7 +55,7 @@ class GTF(object):
 
     def __eq__(self, other):
         return (
-            isinstance(other, GTF) and
+            (other.__class__ == GTF) and
             other.gtf_path == self.gtf_path)
 
     def __hash__(self):

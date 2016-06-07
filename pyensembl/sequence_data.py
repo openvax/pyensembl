@@ -74,7 +74,7 @@ class SequenceData(object):
 
     def __eq__(self, other):
         return (
-            isinstance(other, SequenceData) and
+            (other.__class__ is SequenceData) and
             self.fasta_path == other.fasta_path)
 
     def __hash__(self):
