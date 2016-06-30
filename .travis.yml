@@ -36,18 +36,19 @@ install:
   - pip install .
   - pip install coveralls
 script:
+  - ./lint.sh
   # older human releases
   - pyensembl install --release 54 --species human
   - pyensembl install --release 75 --species human
   - pyensembl install --release 77 --species human
   # latest human release
-  - pyensembl install --release 83 --species human
+  - pyensembl install --release 84 --species human
   # older mouse release (last one for NCBIM37)
   # - pyensembl install --release 67 --species mouse
   # latest mouse release
-  - pyensembl install --release 83 --species mouse
+  - pyensembl install --release 84 --species mouse
   # run tests
-  - nosetests test --verbose --with-coverage --cover-package=pyensembl  && ./lint.sh
+  - nosetests test --verbose --with-coverage --cover-package=pyensembl
 after_success:
   coveralls
 deploy:
