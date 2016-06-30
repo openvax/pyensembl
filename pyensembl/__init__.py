@@ -35,7 +35,7 @@ from .species import (
 )
 from .transcript import Transcript
 
-__version__ = '0.9.2'
+__version__ = '0.9.3'
 
 _cache = {}
 
