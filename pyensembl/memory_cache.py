@@ -33,6 +33,9 @@ import pandas as pd
 from .common import load_pickle, dump_pickle
 
 class MemoryCache(object):
+    """
+    In-memory and on-disk caching of long-running queries and computations.
+    """
     def __init__(self):
         self._memory_cache = {}
 
