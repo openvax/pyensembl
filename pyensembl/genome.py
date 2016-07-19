@@ -117,23 +117,35 @@ class Genome(object):
 
         self._init_lazy_fields()
 
-    def __getstate__(self):
-        # Must be in order of __init__ arguments
-        return [
-            self.reference_name,
-            self.annotation_name,
-            self.annotation_version,
-            self._gtf_path_or_url,
-            self._transcript_fasta_path_or_url,
-            self._protein_fasta_path_or_url,
-            self.decompress_on_download,
-            self.copy_local_files_to_cache,
-            self.require_ensembl_ids,
-            self.cache_directory_path
-        ]
+    def to_dict(self):
+        """
+        Returns a dictionary of the essential fields of this Genome.
+        """
+        return dict(
+            reference_name=self.reference_name,
+            annotation_name=self.annotation_name,
+            annotation_version=self.annotation_version,
+            gtf_path_or_url=self._gtf_path_or_url,
+            transcript_fasta_path_or_url=self._transcript_fasta_path_or_url,
+            protein_fasta_path_or_url=self._protein_fasta_path_or_url,
+            decompress_on_download=self.decompress_on_download,
+            copy_local_files_to_cache=self.copy_local_files_to_cache,
+            require_ensembl_ids=self.require_ensembl_ids,
+            cache_directory_path=self.cache_directory_path)
 
-    def __setstate__(self, fields):
-        self.__init__(*fields)
+    @classmethod
+    def from_dict(cls, state_dict):
+        """
+        Given a dictionary of flattened fields (result of calling to_dict()),
+        returns a Genome object.
+        """
+        return cls(**state_dict)
+
+    def __getstate__(self):
+        return self.to_dict()
+
+    def __setstate__(self, state_dict):
+        self.__init__(**state_dict)
 
     def _init_lazy_fields(self):
         """
