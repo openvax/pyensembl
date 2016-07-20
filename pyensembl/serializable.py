@@ -130,7 +130,7 @@ class Serializable(object):
         return cls.from_dict(state_dict)
 
     def _to_pairs(self):
-        return tuple(sorted(self.to_dict.items()))
+        return tuple(sorted(self.to_dict().items()))
 
     def __hash__(self):
         return hash(self._to_pairs())
