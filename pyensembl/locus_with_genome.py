@@ -33,6 +33,6 @@ class LocusWithGenome(Locus):
             genome=self.genome._object_to_primitive_types())
 
     @classmethod
-    def _prepare_state_for_object_initialization(cls, state_dict):
+    def _initialize_nested_objects_in_state_dict(cls, state_dict):
         state_dict["genome"] = cls._object_from_primitive_types(state_dict["genome"])
         return state_dict
