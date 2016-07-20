@@ -29,9 +29,10 @@ from .exon import Exon
 from .gene import Gene
 from .gtf import GTF
 from .sequence_data import SequenceData
+from .serializable import Serializable
 from .transcript import Transcript
 
-class Genome(object):
+class Genome(Serializable):
     """
     Bundles together the genomic annotation and sequence data associated with
     a particular genomic database source (e.g. a single Ensembl release) and
@@ -132,20 +133,6 @@ class Genome(object):
             copy_local_files_to_cache=self.copy_local_files_to_cache,
             require_ensembl_ids=self.require_ensembl_ids,
             cache_directory_path=self.cache_directory_path)
-
-    @classmethod
-    def from_dict(cls, state_dict):
-        """
-        Given a dictionary of flattened fields (result of calling to_dict()),
-        returns a Genome object.
-        """
-        return cls(**state_dict)
-
-    def __getstate__(self):
-        return self.to_dict()
-
-    def __setstate__(self, state_dict):
-        self.__init__(**state_dict)
 
     def _init_lazy_fields(self):
         """

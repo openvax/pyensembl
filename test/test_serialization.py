@@ -14,8 +14,8 @@
 
 from __future__ import absolute_import
 import pickle
-from nose.tools import eq_, ok_, with_setup
-from pyensembl import Genome
+from nose.tools import eq_, with_setup
+from pyensembl import Genome, Transcript, Gene, Exon
 
 from .common import test_ensembl_releases
 from .data import (
@@ -28,19 +28,45 @@ from .data import (
 @test_ensembl_releases()
 def test_pickle_ensembl_gene(ensembl_genome):
     gene = ensembl_genome.gene_by_id(TP53_gene_id)
-    gene_pickled = pickle.dumps(gene)
-    gene_new = pickle.loads(gene_pickled)
+    gene_new = pickle.loads(pickle.dumps(gene))
     eq_(gene, gene_new)
-    ok_(gene.db is not None)
 
 @test_ensembl_releases()
 def test_pickle_ensembl_transcript(ensembl_genome):
     gene = ensembl_genome.gene_by_id(TP53_gene_id)
     transcript = gene.transcripts[0]
-    transcript_pickled = pickle.dumps(transcript)
-    transcript_reconstructed = pickle.loads(transcript_pickled)
+    transcript_reconstructed = pickle.loads(pickle.dumps(transcript))
     eq_(transcript, transcript_reconstructed)
-    ok_(transcript.db is not None)
+
+
+@test_ensembl_releases()
+def test_pickle_ensembl_exon(ensembl_genome):
+    gene = ensembl_genome.gene_by_id(TP53_gene_id)
+    transcript = gene.transcripts[0]
+    exon = transcript.exons[0]
+    exon_reconstructed = pickle.loads(pickle.dumps(exon))
+    eq_(exon, exon_reconstructed)
+
+@test_ensembl_releases()
+def test_json_ensembl_gene(ensembl_genome):
+    gene = ensembl_genome.gene_by_id(TP53_gene_id)
+    gene_reconstructed = Gene.from_json(gene.to_json())
+    eq_(gene, gene_reconstructed)
+
+@test_ensembl_releases()
+def test_json_ensembl_transcript(ensembl_genome):
+    gene = ensembl_genome.gene_by_id(TP53_gene_id)
+    transcript = gene.transcripts[0]
+    transcript_reconstructed = Transcript.from_json(transcript.to_json())
+    eq_(transcript, transcript_reconstructed)
+
+@test_ensembl_releases()
+def test_json_ensembl_exon(ensembl_genome):
+    gene = ensembl_genome.gene_by_id(TP53_gene_id)
+    transcript = gene.transcripts[0]
+    exon = transcript.exons[0]
+    exon_reconstructed = Exon.from_json(exon.to_json())
+    eq_(exon, exon_reconstructed)
 
 @test_ensembl_releases()
 def test_pickle_ensembl_genome(ensembl_genome):
@@ -61,7 +87,8 @@ def test_ensembl_genome_to_dict(ensembl_genome):
 @test_ensembl_releases()
 def test_ensembl_genome_to_json(ensembl_genome):
     genome_json = ensembl_genome.to_json()
-    genome_reconstructed = ensembl_genome.__class__.from_json(genome_json)
+    genome_class = ensembl_genome.__class__
+    genome_reconstructed = genome_class.from_json(genome_json)
     eq_(ensembl_genome, genome_reconstructed)
 
 

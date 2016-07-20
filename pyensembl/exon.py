@@ -35,12 +35,6 @@ class Exon(Locus):
         return "Exon(exon_id=%s, gene_name=%s, contig=%s, start=%d, end=%s)" % (
             self.id, self.gene_name, self.contig, self.start, self.end)
 
-    def __repr__(self):
-        return str(self)
-
-    def __hash__(self):
-        return hash(self.id)
-
     def __eq__(self, other):
         return (
             other.__class__ is Exon and
@@ -49,3 +43,13 @@ class Exon(Locus):
             self.end == other.end and
             self.strand == other.strand and
             self.id == other.id)
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def to_dict(self):
+        state_dict = Locus.to_dict(self)
+        state_dict["exon_id"] = self.id
+        state_dict["gene_name"] = self.gene_name
+        state_dict["gene_id"] = self.gene_id
+        return state_dict

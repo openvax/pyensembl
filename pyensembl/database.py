@@ -22,7 +22,8 @@ import datacache
 from typechecks import require_integer, require_string
 
 from .common import memoize
-from .locus import normalize_chromosome, normalize_strand, Locus
+from .normalization import normalize_chromosome, normalize_strand
+from .locus import Locus
 
 # any time we update the database schema, increment this version number
 DATABASE_SCHEMA_VERSION = 2

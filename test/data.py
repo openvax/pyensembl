@@ -1,5 +1,5 @@
 import os
-from pyensembl import Locus
+from pyensembl import Locus, Genome
 
 def data_path(name):
     """
@@ -127,6 +127,6 @@ def setup_init_custom_mouse_genome():
     If a unit test needs to start from a cleared cache, add this to the test
     setup.
     """
-    global custom_mouse_genome
-    custom_mouse_genome.clear_cache()
-    custom_mouse_genome.index()
+    global custom_mouse_genome_grcm38_subset
+    custom_mouse_genome_grcm38_subset.clear_cache()
+    custom_mouse_genome_grcm38_subset.index()

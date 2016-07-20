@@ -19,7 +19,7 @@ to be specific to (a particular release of) Ensembl.
 
 from .genome import Genome
 from .ensembl_release_versions import check_release_number, MAX_ENSEMBL_RELEASE
-from .species import check_species_object, human
+from .species import check_species_object, human, Species
 
 from .ensembl_url_templates import (
     ENSEMBL_FTP_SERVER,
@@ -77,9 +77,6 @@ class EnsemblRelease(Genome):
             self.release,
             self.species.latin_name)
 
-    def __repr__(self):
-        return str(self)
-
     def __eq__(self, other):
         return (
             other.__class__ is EnsemblRelease and
@@ -89,10 +86,23 @@ class EnsemblRelease(Genome):
     def __hash__(self):
         return hash((self.release, self.species))
 
-    def __getstate__(self):
-        # Must be in order of __init__ arguments
-        return [self.release, self.species, self.server]
+    def to_dict(self):
+        return {
+            "release": self.release,
+            "species": self.species.to_dict(),
+            "server": self.server
+        }
 
-    def __setstate__(self, fields):
-        self.__init__(*fields)
+    @classmethod
+    def _state_dict_to_init_kwargs(cls, state_dict):
+        state_dict["species"] = Species.from_dict(state_dict["species"])
+        return state_dict
 
+    @classmethod
+    def from_dict(cls, state_dict):
+        state_dict = cls._state_dict_to_init_kwargs(state_dict)
+        return cls(**state_dict)
+
+    def __setstate__(self, state_dict):
+        state_dict = self._state_dict_to_init_kwargs(state_dict)
+        self.__init__(**state_dict)
