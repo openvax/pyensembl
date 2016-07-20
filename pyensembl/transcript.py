@@ -18,10 +18,10 @@ from memoized_property import memoized_property
 
 from .biotypes import is_valid_biotype
 from .common import memoize
-from .locus import Locus
+from .locus_with_genome import LocusWithGenome
 
 
-class Transcript(Locus):
+class Transcript(LocusWithGenome):
     """
     Transcript encompasses the locus, exons, and sequence of a transcript.
 
@@ -41,19 +41,16 @@ class Transcript(Locus):
             gene_id,
             genome,
             require_valid_biotype=True):
+        LocusWithGenome.__init__(self, contig, start, end, strand, genome)
+        self.id = transcript_id
+        self.name = transcript_name
+        self.biotype = biotype
+        self.gene_id = gene_id
         self.require_valid_biotype = require_valid_biotype
         if require_valid_biotype and not is_valid_biotype(biotype):
             raise ValueError(
                 "Invalid biotype '%s' for transcript with ID=%s, name=%s" % (
                     biotype, transcript_id, transcript_name))
-
-        Locus.__init__(self, contig, start, end, strand)
-        self.id = transcript_id
-        self.name = transcript_name
-        self.genome = genome
-        self.db = genome.db
-        self.biotype = biotype
-        self.gene_id = gene_id
 
     def __str__(self):
         return (
@@ -72,9 +69,6 @@ class Transcript(Locus):
                 self.start,
                 self.end)
 
-    def __repr__(self):
-        return str(self)
-
     def __len__(self):
         """
         Length of a transcript is the sum of its exon lengths
@@ -90,17 +84,18 @@ class Transcript(Locus):
     def __hash__(self):
         return hash(self.id)
 
+    def to_dict(self):
+        state_dict = LocusWithGenome.to_dict(self)
+        state_dict["transcript_id"] = self.id
+        state_dict["transcript_name"] = self.name
+        state_dict["biotype"] = self.biotype
+        state_dict["gene_id"] = self.gene_id
+        state_dict["require_valid_biotype"] = self.require_valid_biotype
+        return state_dict
+
     @property
     def gene(self):
         return self.genome.gene_by_id(self.gene_id)
-
-    def __getstate__(self):
-        # Must be in order of __init__ arguments
-        return [self.id, self.name, self.contig, self.start, self.end, self.strand,
-                self.biotype, self.gene_id, self.genome, self.require_valid_biotype]
-
-    def __setstate__(self, fields):
-        self.__init__(*fields)
 
     @property
     def exons(self):
