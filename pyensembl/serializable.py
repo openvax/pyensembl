@@ -99,7 +99,7 @@ class Serializable(object):
         return subclass.from_dict(state_dict)
 
     @classmethod
-    def _prepare_state_for_object_initialization(cls, state_dict):
+    def _initialize_nested_objects_in_state_dict(cls, state_dict):
         """
         Nested serializable objects will be represented as dictionaries so we
         allow manual reconstruction of those objects in this method.
@@ -112,7 +112,7 @@ class Serializable(object):
         Given a dictionary of flattened fields (result of calling to_dict()),
         returns an instance.
         """
-        state_dict = cls._prepare_state_for_object_initialization(state_dict)
+        state_dict = cls._initialize_nested_objects_in_state_dict(state_dict)
         return cls(**state_dict)
 
     def to_json(self):
@@ -139,5 +139,5 @@ class Serializable(object):
         return self.to_dict()
 
     def __setstate__(self, state_dict):
-        state_dict = self._prepare_state_for_object_initialization(state_dict)
+        state_dict = self._initialize_nested_objects_in_state_dict(state_dict)
         self.__init__(**state_dict)

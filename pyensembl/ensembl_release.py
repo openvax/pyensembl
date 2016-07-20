@@ -94,15 +94,6 @@ class EnsemblRelease(Genome):
         }
 
     @classmethod
-    def _state_dict_to_init_kwargs(cls, state_dict):
+    def _initialize_nested_objects_in_state_dict(cls, state_dict):
         state_dict["species"] = Species.from_dict(state_dict["species"])
         return state_dict
-
-    @classmethod
-    def from_dict(cls, state_dict):
-        state_dict = cls._state_dict_to_init_kwargs(state_dict)
-        return cls(**state_dict)
-
-    def __setstate__(self, state_dict):
-        state_dict = self._state_dict_to_init_kwargs(state_dict)
-        self.__init__(**state_dict)
