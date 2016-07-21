@@ -30,9 +30,10 @@ class LocusWithGenome(Locus):
             start=self.start,
             end=self.end,
             strand=self.strand,
-            genome=self.genome._object_to_primitive_types())
+            genome=self.genome._to_serializable_representation())
 
     @classmethod
-    def _initialize_nested_objects_in_state_dict(cls, state_dict):
-        state_dict["genome"] = cls._object_from_primitive_types(state_dict["genome"])
+    def _reconstruct_nested_objects(cls, state_dict):
+        state_dict["genome"] = cls._reconstruct_object_from_serializable_representation(
+            state_dict["genome"])
         return state_dict

@@ -103,14 +103,6 @@ class Species(Serializable):
     def from_dict(cls, state_dict):
         return cls._latin_names_to_species[state_dict["latin_name"]]
 
-    def __reduce__(self):
-        """
-        Normally unpickling Species would create two distinct objects for
-        the same latin name, so we have to specify a custom method
-        for pickling.
-        """
-        return self._latin_names_to_species.get, self.latin_name
-
     def __hash__(self):
         return hash((self.latin_name,
                      tuple(self.synonyms),

@@ -16,6 +16,7 @@ from __future__ import absolute_import
 import pickle
 from nose.tools import eq_, with_setup
 from pyensembl import Genome, Transcript, Gene, Exon
+from pyensembl.species import Species, human
 
 from .common import test_ensembl_releases
 from .data import (
@@ -102,3 +103,12 @@ def test_custom_genome_to_json():
 def test_custom_genome_to_dict():
     reconstructed = Genome.from_dict(custom_mouse_genome_grcm38_subset.to_dict())
     eq_(custom_mouse_genome_grcm38_subset, reconstructed)
+
+def test_species_to_dict():
+    eq_(human, Species.from_dict(human.to_dict()))
+
+def test_species_to_json():
+    eq_(human, Species.from_json(human.to_json()))
+
+def test_species_to_pickle():
+    eq_(human, pickle.loads(pickle.dumps(human)))
