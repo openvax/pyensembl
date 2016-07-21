@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from os import listdir, remove
+from os import listdir, remove, environ
 from os.path import join, exists, split, abspath
 from shutil import copy2, rmtree
 import logging
@@ -20,6 +20,7 @@ import logging
 import datacache
 
 CACHE_BASE_SUBDIR = "pyensembl"
+ENV_KEY = "PYENSEMBL_CACHE_DIR"
 
 def cache_subdirectory(
         reference_name=None,
@@ -111,8 +112,10 @@ class DownloadCache(object):
                 annotation_name=annotation_name,
                 annotation_version=annotation_version)
 
+            # If ENV_KEY is set, the cache will be saved there
             self._cache_directory_path = datacache.get_data_dir(
-                subdir=self.cache_subdirectory)
+                    subdir=self.cache_subdirectory,
+                    envkey=ENV_KEY)
 
         self.decompress_on_download = decompress_on_download
         self.copy_local_files_to_cache = copy_local_files_to_cache
