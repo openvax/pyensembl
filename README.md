@@ -45,6 +45,25 @@ human reference data from Ensembl releases 75 and 76.
 Alternatively, you can create the `EnsemblRelease` object from inside a Python
 process and call `ensembl_object.download()` followed by `ensembl_object.index()`.
 
+## Cache Location
+By default, PyEnsembl uses the platform-specific `Cache` folder
+and caches the files into the `pyensembl` sub-directory.
+You can override this default by setting the environment key `PYENSEMBL_CACHE_DIR`
+as your preferred location for caching:
+
+```sh
+export PYENSEMBL_CACHE_DIR=/custom/cache/dir
+```
+
+or
+
+```python
+import os
+
+os.environ['PYENSEMBL_CACHE_DIR'] = '/custom/cache/dir'
+# ... PyEnsembl API usage
+```
+
 # Non-Ensembl Data
 
 PyEnsembl also allows arbitrary genomes via the specification
