@@ -7,6 +7,11 @@ from pyensembl.download_cache import (
     MissingRemoteFile
 )
 
+import os
+import tempfile
+
+from .data import data_path
+
 download_cache = DownloadCache(
     reference_name="__test_reference",
     annotation_name="__test_annotation",
@@ -25,3 +30,13 @@ def test_download_cache_missing_remote_file():
     with assert_raises(MissingRemoteFile):
         download_cache.download_or_copy_if_necessary(
             path_or_url="ftp://NOTAURL.NOTAURL.NOTAURL")
+
+def test_download_cache_custom_location():
+    test_file = "refseq.ucsc.small.gtf"
+    tmp_dir = tempfile.gettempdir()
+    os.environ['PYENSEMBL_CACHE_DIR'] = tmp_dir
+    download_cache.delete_cache_directory()
+    download_cache.download_or_copy_if_necessary(
+        path_or_url=data_path(test_file))
+    os.path.exists(os.path.join(tmp_dir, test_file))
+    del os.environ['PYENSEMBL_CACHE_DIR']
