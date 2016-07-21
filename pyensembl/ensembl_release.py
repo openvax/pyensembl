@@ -94,6 +94,10 @@ class EnsemblRelease(Genome):
         }
 
     @classmethod
-    def _initialize_nested_objects_in_state_dict(cls, state_dict):
+    def _reconstruct_nested_objects(cls, state_dict):
+        """
+        Reconstruct a Species object from its primitive representation
+        in the state dictionary used for deserialization.
+        """
         state_dict["species"] = Species.from_dict(state_dict["species"])
         return state_dict

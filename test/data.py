@@ -127,6 +127,5 @@ def setup_init_custom_mouse_genome():
     If a unit test needs to start from a cleared cache, add this to the test
     setup.
     """
-    global custom_mouse_genome_grcm38_subset
     custom_mouse_genome_grcm38_subset.clear_cache()
     custom_mouse_genome_grcm38_subset.index()

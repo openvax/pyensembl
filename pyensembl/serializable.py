@@ -18,40 +18,35 @@ class Serializable(object):
     """
     Base class for all PyEnsembl objects which provides default
     methods such as to_json, from_json, __reduce__, and from_dict
-    and relies only on (1) a user-defined to_dict method and (2) that the
-    keys of to_dict match the arguments to __init__.
+
+    Relies on the following condition:
+         (1) a user-defined to_dict method
+         (2) the keys of to_dict() must match the arguments to __init__
     """
 
     def __str__(self):
-        fields_str = ", ".join(
-            "%s=%s" % (k, v) for (k, v) in sorted(self.to_dict().items()))
-        return "%s(%s)" % (self.__class__.__name__, fields_str)
+        return "%s(%s)" % (
+            self.__class__.__name__,
+            ", ".join("%s=%s" % (k, v) for (k, v) in self.to_dict().items()))
 
     def __repr__(self):
         return str(self)
 
     def __eq__(self, other):
-        if self.__class__ is not other.__class__:
-            return False
-        self_dict = self.to_dict()
-        other_dict = other.to_dict()
-        if len(self_dict) != other_dict(other_dict):
-            return False
-        self_keys = set(self_dict.keys())
-        other_keys = set(other_dict.keys())
-        if self_keys != other_keys:
-            return False
-        for key in self_keys:
-            if self_dict[key] != other_dict[key]:
-                return False
-        return True
+        return self.__class__ is other.__class__ and self.to_dict() == other.to_dict()
 
     def to_dict(self):
+        """
+        Derived classes must implement this method and return a dictionary
+        whose keys match the parameters to __init__. The values must be
+        primitive types (string, int, float, tuple, dict, list).
+        """
         raise NotImplementedError("Method to_dict() not implemented for %s" % (
             self.__class__.__name__,))
 
     @classmethod
-    def _tuple_to_class(cls, module_and_class_name):
+    def _reconstruct_class_from_serializable_representation(
+            cls, module_and_class_name):
         """
         Given the name of a module and a class it contains, imports that module
         and gets the class object from it.
@@ -61,7 +56,7 @@ class Serializable(object):
         return getattr(module, class_name)
 
     @classmethod
-    def _class_to_tuple(cls):
+    def _class_to_serializable_representation(cls):
         """
         Given an class, return two strings:
             - fully qualified import path for its module
@@ -72,18 +67,18 @@ class Serializable(object):
         """
         return cls.__module__, cls.__name__
 
-    def _object_to_primitive_types(self):
+    def _to_serializable_representation(self):
         """
         Given an instance of a Python object, returns a tuple whose
         first element is a primitive representation of the class and whose
         second element is a dictionary of instance data.
         """
-        class_representation = self._class_to_tuple()
+        class_representation = self._class_to_serializable_representation()
         state_dict = self.to_dict()
         return (class_representation, state_dict)
 
     @classmethod
-    def _object_from_primitive_types(cls, class_and_data_pair):
+    def _reconstruct_object_from_serializable_representation(cls, object_repr):
         """
         Given a primitive representation of some object, reconstructs
         the class from its module and class names and then instantiates. Returns
@@ -94,15 +89,17 @@ class Serializable(object):
             `subclass` is the dynamically constructed subclass which we're
             trying to deserialize (and is presumably a subclass of Serializable)
         """
-        class_representation, state_dict = class_and_data_pair
-        subclass = cls._tuple_to_class(class_representation)
+        class_repr, state_dict = object_repr
+        subclass = cls._reconstruct_class_from_serializable_representation(class_repr)
         return subclass.from_dict(state_dict)
 
     @classmethod
-    def _initialize_nested_objects_in_state_dict(cls, state_dict):
+    def _reconstruct_nested_objects(cls, state_dict):
         """
         Nested serializable objects will be represented as dictionaries so we
         allow manual reconstruction of those objects in this method.
+
+        By default just returns the state dictionary unmodified.
         """
         return state_dict
 
@@ -112,7 +109,7 @@ class Serializable(object):
         Given a dictionary of flattened fields (result of calling to_dict()),
         returns an instance.
         """
-        state_dict = cls._initialize_nested_objects_in_state_dict(state_dict)
+        state_dict = cls._reconstruct_nested_objects(state_dict)
         return cls(**state_dict)
 
     def to_json(self):
@@ -129,15 +126,8 @@ class Serializable(object):
         state_dict = json.loads(json_string)
         return cls.from_dict(state_dict)
 
-    def _to_pairs(self):
-        return tuple(sorted(self.to_dict().items()))
-
     def __hash__(self):
-        return hash(self._to_pairs())
+        return hash(tuple(sorted(self.to_dict().items())))
 
-    def __getstate__(self):
-        return self.to_dict()
-
-    def __setstate__(self, state_dict):
-        state_dict = self._initialize_nested_objects_in_state_dict(state_dict)
-        self.__init__(**state_dict)
+    def __reduce__(self):
+        return self.from_dict, (self.to_dict(),)
