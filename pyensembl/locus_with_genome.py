@@ -13,6 +13,10 @@
 # limitations under the License.
 
 from .locus import Locus
+from .serializable import (
+    object_to_serializable_representation,
+    object_from_serializable_representation,
+)
 
 class LocusWithGenome(Locus):
     """
@@ -30,10 +34,9 @@ class LocusWithGenome(Locus):
             start=self.start,
             end=self.end,
             strand=self.strand,
-            genome=self.genome._to_serializable_representation())
+            genome=object_to_serializable_representation(self.genome))
 
     @classmethod
     def _reconstruct_nested_objects(cls, state_dict):
-        state_dict["genome"] = cls._reconstruct_object_from_serializable_representation(
-            state_dict["genome"])
+        state_dict["genome"] = object_from_serializable_representation(state_dict["genome"])
         return state_dict
