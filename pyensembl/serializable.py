@@ -45,55 +45,6 @@ class Serializable(object):
             self.__class__.__name__,))
 
     @classmethod
-    def _reconstruct_class_from_serializable_representation(
-            cls, module_and_class_name):
-        """
-        Given the name of a module and a class it contains, imports that module
-        and gets the class object from it.
-        """
-        module_string, class_name = module_and_class_name
-        module = __import__(module_string)
-        return getattr(module, class_name)
-
-    @classmethod
-    def _class_to_serializable_representation(cls):
-        """
-        Given an class, return two strings:
-            - fully qualified import path for its module
-            - name of the class
-
-        The class can be reconstructed from these two strings by calling
-        _tuple_to_class.
-        """
-        return cls.__module__, cls.__name__
-
-    def _to_serializable_representation(self):
-        """
-        Given an instance of a Python object, returns a tuple whose
-        first element is a primitive representation of the class and whose
-        second element is a dictionary of instance data.
-        """
-        class_representation = self._class_to_serializable_representation()
-        state_dict = self.to_dict()
-        return (class_representation, state_dict)
-
-    @classmethod
-    def _reconstruct_object_from_serializable_representation(cls, object_repr):
-        """
-        Given a primitive representation of some object, reconstructs
-        the class from its module and class names and then instantiates. Returns
-        instance object.
-
-        It's confusing that there are *two* class variables here:
-            `cls` corresponds to Serializable
-            `subclass` is the dynamically constructed subclass which we're
-            trying to deserialize (and is presumably a subclass of Serializable)
-        """
-        class_repr, state_dict = object_repr
-        subclass = cls._reconstruct_class_from_serializable_representation(class_repr)
-        return subclass.from_dict(state_dict)
-
-    @classmethod
     def _reconstruct_nested_objects(cls, state_dict):
         """
         Nested serializable objects will be represented as dictionaries so we
@@ -126,8 +77,106 @@ class Serializable(object):
         state_dict = json.loads(json_string)
         return cls.from_dict(state_dict)
 
+    def write_json_file(self, path):
+        """
+        Serialize this VariantCollection to a JSON representation and write it
+        out to a text file.
+        """
+        with open(path, "w") as f:
+            f.write(self.to_json())
+
+    @classmethod
+    def read_json_file(cls, path):
+        """
+        Construct a VariantCollection from a JSON file.
+        """
+        with open(path, 'r') as f:
+            json_string = f.read()
+        return cls.from_json(json_string)
+
     def __hash__(self):
         return hash(tuple(sorted(self.to_dict().items())))
 
     def __reduce__(self):
         return self.from_dict, (self.to_dict(),)
+
+def class_from_serializable_representation(class_repr):
+    """
+    Given the name of a module and a class it contains, imports that module
+    and gets the class object from it.
+    """
+    module_string, class_name = class_repr
+    module = __import__(module_string)
+    return getattr(module, class_name)
+
+def class_to_serializable_representation(cls):
+    """
+    Given a class, return two strings:
+        - fully qualified import path for its module
+        - name of the class
+
+    The class can be reconstructed from these two strings by calling
+    class_from_serializable_representation.
+    """
+    return (cls.__module__, cls.__name__)
+
+def function_from_serializable_representation(fn_repr):
+    """
+    Given the name of a module and a function it contains, imports that module
+    and gets the class object from it.
+    """
+    if fn_repr is None:
+        return None
+
+    module_string, class_name = fn_repr
+    module = __import__(module_string)
+    return getattr(module, class_name)
+
+
+def function_to_serializable_representation(fn):
+    """
+    Given a function, return two strings:
+        - fully qualified import path for its module
+        - name of the class
+
+    The original function can be reconstructed from these two strings by
+    calling class_from_serializable_representation. Function with closure
+    variables will not work. If fn is None then None is returned as its
+    representation.
+    """
+    if fn is None:
+        return None
+
+    if fn.__closure__ is not None:
+        raise ValueError("No serializable representation for closure %s" % (fn,))
+    return (fn.__module__, fn.__name__)
+
+def object_to_serializable_representation(obj):
+    """
+    Given an instance of a Python object, returns a tuple whose
+    first element is a primitive representation of the class and whose
+    second element is a dictionary of instance data.
+    """
+    if obj is None:
+        return None
+
+    if not hasattr(obj, 'to_dict'):
+        raise ValueError("Expected %s to have method to_dict()" % (obj,))
+
+    state_dict = obj.to_dict()
+    class_representation = class_to_serializable_representation(obj.__class__)
+    return (class_representation, state_dict)
+
+
+def object_from_serializable_representation(obj_repr):
+    """
+    Given a primitive representation of some object, reconstructs
+    the class from its module and class names and then instantiates. Returns
+    instance object.
+    """
+    if obj_repr is None:
+        return None
+
+    class_repr, state_dict = obj_repr
+    subclass = class_from_serializable_representation(class_repr)
+    return subclass.from_dict(state_dict)
