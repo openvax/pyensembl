@@ -98,7 +98,22 @@ class Serializable(object):
         return hash(tuple(sorted(self.to_dict().items())))
 
     def __reduce__(self):
-        return self.from_dict, (self.to_dict(),)
+        """
+        Overriding this method directs the default pickler to reconstruct
+        this object using our from_dict method.
+        """
+
+        # Due to differences between Python 2.7 and Python 3.x I have to go
+        # through some acrobatics to return a pickle-able function
+        return _global_from_dict, (self.__class__, self.to_dict(),)
+
+def _global_from_dict(cls, state_dict):
+    """
+    Annoyingly, Python2 won't accept the classmethod from_dict as a
+    callable returned by __reduce__ so have to work indirectly through
+    this globally defined function.
+    """
+    return cls.from_dict(state_dict)
 
 def class_from_serializable_representation(class_repr):
     """
