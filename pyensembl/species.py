@@ -14,8 +14,9 @@
 
 from __future__ import print_function, absolute_import, division
 
+from serializable import Serializable
+
 from .ensembl_release_versions import MAX_ENSEMBL_RELEASE
-from .serializable import Serializable
 
 class Species(Serializable):
     """

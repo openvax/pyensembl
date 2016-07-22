@@ -78,6 +78,7 @@ if __name__ == '__main__':
             "memoized-property>=1.0.2",
             "six>=1.9.0",
             "gtfparse>=0.0.3",
+            "serializable",
         ],
         long_description=readme,
         packages=['pyensembl'],

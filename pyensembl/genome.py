@@ -22,6 +22,8 @@ import logging
 from os import remove
 from os.path import exists
 
+from serializable import Serializable
+
 from .memory_cache import MemoryCache
 from .download_cache import DownloadCache
 from .database import Database
@@ -29,7 +31,6 @@ from .exon import Exon
 from .gene import Gene
 from .gtf import GTF
 from .sequence_data import SequenceData
-from .serializable import Serializable
 from .transcript import Transcript
 
 class Genome(Serializable):

@@ -12,11 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .locus import Locus
-from .serializable import (
+from serializable import (
     object_to_serializable_representation,
     object_from_serializable_representation,
 )
+
+from .locus import Locus
 
 class LocusWithGenome(Locus):
     """

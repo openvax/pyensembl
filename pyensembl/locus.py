@@ -14,7 +14,8 @@
 
 from __future__ import print_function, division, absolute_import
 
-from .serializable import Serializable
+from serializable import Serializable
+
 from .normalization import normalize_chromosome, normalize_strand
 
 class Locus(Serializable):
