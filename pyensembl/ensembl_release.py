@@ -19,7 +19,7 @@ to be specific to (a particular release of) Ensembl.
 
 from .genome import Genome
 from .ensembl_release_versions import check_release_number, MAX_ENSEMBL_RELEASE
-from .species import check_species_object, human, Species
+from .species import check_species_object, human
 
 from .ensembl_url_templates import (
     ENSEMBL_FTP_SERVER,
@@ -89,15 +89,6 @@ class EnsemblRelease(Genome):
     def to_dict(self):
         return {
             "release": self.release,
-            "species": self.species.to_dict(),
+            "species": self.species,
             "server": self.server
         }
-
-    @classmethod
-    def _reconstruct_nested_objects(cls, state_dict):
-        """
-        Reconstruct a Species object from its primitive representation
-        in the state dictionary used for deserialization.
-        """
-        state_dict["species"] = Species.from_dict(state_dict["species"])
-        return state_dict
