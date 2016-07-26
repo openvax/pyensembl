@@ -22,6 +22,8 @@ import logging
 from os import remove
 from os.path import exists
 
+from serializable import Serializable
+
 from .memory_cache import MemoryCache
 from .download_cache import DownloadCache
 from .database import Database
@@ -31,7 +33,7 @@ from .gtf import GTF
 from .sequence_data import SequenceData
 from .transcript import Transcript
 
-class Genome(object):
+class Genome(Serializable):
     """
     Bundles together the genomic annotation and sequence data associated with
     a particular genomic database source (e.g. a single Ensembl release) and
@@ -117,23 +119,21 @@ class Genome(object):
 
         self._init_lazy_fields()
 
-    def __getstate__(self):
-        # Must be in order of __init__ arguments
-        return [
-            self.reference_name,
-            self.annotation_name,
-            self.annotation_version,
-            self._gtf_path_or_url,
-            self._transcript_fasta_path_or_url,
-            self._protein_fasta_path_or_url,
-            self.decompress_on_download,
-            self.copy_local_files_to_cache,
-            self.require_ensembl_ids,
-            self.cache_directory_path
-        ]
-
-    def __setstate__(self, fields):
-        self.__init__(*fields)
+    def to_dict(self):
+        """
+        Returns a dictionary of the essential fields of this Genome.
+        """
+        return dict(
+            reference_name=self.reference_name,
+            annotation_name=self.annotation_name,
+            annotation_version=self.annotation_version,
+            gtf_path_or_url=self._gtf_path_or_url,
+            transcript_fasta_path_or_url=self._transcript_fasta_path_or_url,
+            protein_fasta_path_or_url=self._protein_fasta_path_or_url,
+            decompress_on_download=self.decompress_on_download,
+            copy_local_files_to_cache=self.copy_local_files_to_cache,
+            require_ensembl_ids=self.require_ensembl_ids,
+            cache_directory_path=self.cache_directory_path)
 
     def _init_lazy_fields(self):
         """

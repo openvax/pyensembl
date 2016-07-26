@@ -19,7 +19,7 @@ import pandas as pd
 from typechecks import require_string
 from gtfparse import read_gtf_as_dataframe, create_missing_features
 
-from .locus import normalize_chromosome, normalize_strand
+from .normalization import normalize_chromosome, normalize_strand
 from .memory_cache import MemoryCache
 
 class GTF(object):

@@ -1,4 +1,4 @@
-# Copyright (c) 2015. Mount Sinai School of Medicine
+# Copyright (c) 2015-2016. Mount Sinai School of Medicine
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,59 +14,11 @@
 
 from __future__ import print_function, division, absolute_import
 
-from six.moves import intern
-from typechecks import is_string, is_integer
+from serializable import Serializable
 
-# Manually memoizing here, since our simple common.memoize function has
-# noticable overhead in this instance.
-NORMALIZE_CHROMOSOME_CACHE = {}
+from .normalization import normalize_chromosome, normalize_strand
 
-def normalize_chromosome(c):
-    try:
-        return NORMALIZE_CHROMOSOME_CACHE[c]
-    except KeyError:
-        pass
-
-    if not (is_string(c) or is_integer(c)):
-        raise TypeError("Chromosome cannot be '%s' : %s" % (c, type(c)))
-
-    result = str(c)
-    if result == "0":
-        raise ValueError("Chromosome name cannot be 0")
-    elif result == "":
-        raise ValueError("Chromosome name cannot be empty")
-
-    # only strip off lowercase chr since some of the non-chromosomal
-    # contigs start with "CHR"
-    if result.startswith("chr"):
-        result = result[3:]
-
-    # just in case someone is being lazy, capitalize "M", "MT", X", "Y"
-    result = result.upper()
-
-    # standardize mitochondrial genome to be "MT"
-    if result == "M":
-        result = "MT"
-
-    # interning strings since the chromosome names probably get constructed
-    # or parsed millions of times, can save memory in tight situations
-    # (such as parsing GTF files)
-    result = intern(result)
-
-    NORMALIZE_CHROMOSOME_CACHE[c] = result
-
-    return result
-
-def normalize_strand(strand):
-    if strand == "+" or strand == "-":
-        return strand
-    elif strand == 1:
-        return "+"
-    elif strand == -1:
-        return "-"
-    raise ValueError("Invalid strand: %s" % (strand,))
-
-class Locus(object):
+class Locus(Serializable):
     """
     Base class for any entity which can be localized at a range of positions
     on a particular strand of a chromosome/contig.
@@ -114,9 +66,6 @@ class Locus(object):
         return "Locus(contig=%s, start=%s, end=%s, strand=%s)" % (
             self.contig, self.start, self.end, self.strand)
 
-    def __repr__(self):
-        return str(self)
-
     def __len__(self):
         return self.end - self.start + 1
 
@@ -129,8 +78,13 @@ class Locus(object):
             self.strand == other.strand
         )
 
-    def __hash__(self):
-        return hash(str(self))
+    def to_dict(self):
+        return {
+            "contig": self.contig,
+            "start": self.start,
+            "end": self.end,
+            "strand": self.strand
+        }
 
     @property
     def length(self):

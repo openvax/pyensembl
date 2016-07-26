@@ -1,5 +1,5 @@
 import os
-from pyensembl import Locus
+from pyensembl import Locus, Genome
 
 def data_path(name):
     """
@@ -90,3 +90,42 @@ EGFR_001_protein_sequence = "".join([
     "RDPHYQDPHSTAVGNPEYLNTVQPTCVNSTFDSPAHWAQKGSHQISLDNPDYQQDFFPKEAKPNGIFKGS"
     "TAENAEYLRVAPQSSEFIGA"
 ])
+
+
+# GTF cropped from ftp://ftp.ensembl.org/pub/release-81/gtf/mus_musculus/
+# Mus_musculus.GRCm38.81.gtf.gz via:
+# grep "ENSMUSG00000017167" Mus_musculus.GRCm38.81.gtf
+
+# Transcript FASTA cropped from ftp://ftp.ensembl.org/pub/release-81/
+# fasta/mus_musculus/cdna/Mus_musculus.GRCm38.cdna.all.fa.gz via:
+# grep "ENSMUSG00000017167" Mus_musculus.GRCm38.cdna.all.fa -A 50
+
+# Protein FASTA cropped from ftp://ftp.ensembl.org/pub/release-81/fasta/
+# mus_musculus/pep/Mus_musculus.GRCm38.pep.all.fa.gz via:
+# grep "ENSMUSG00000017167" Mus_musculus.GRCm38.pep.all.fa -A 50
+
+# Tested against:
+# http://useast.ensembl.org/Mus_musculus/Gene/Summary?db=core;g=ENSMUSG00000017167
+
+MOUSE_ENSMUSG00000017167_PATH = data_path(
+    "mouse.ensembl.81.partial.ENSMUSG00000017167.gtf")
+MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH = data_path(
+    "mouse.ensembl.81.partial.ENSMUSG00000017167.fa")
+MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH = data_path(
+    "mouse.ensembl.81.partial.ENSMUSG00000017167.pep")
+
+
+custom_mouse_genome_grcm38_subset = Genome(
+    reference_name="GRCm38",
+    annotation_name="_test_mouse_ensembl81_subset",
+    gtf_path_or_url=MOUSE_ENSMUSG00000017167_PATH,
+    transcript_fasta_path_or_url=MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH,
+    protein_fasta_path_or_url=MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH)
+
+def setup_init_custom_mouse_genome():
+    """
+    If a unit test needs to start from a cleared cache, add this to the test
+    setup.
+    """
+    custom_mouse_genome_grcm38_subset.clear_cache()
+    custom_mouse_genome_grcm38_subset.index()

@@ -77,9 +77,6 @@ class EnsemblRelease(Genome):
             self.release,
             self.species.latin_name)
 
-    def __repr__(self):
-        return str(self)
-
     def __eq__(self, other):
         return (
             other.__class__ is EnsemblRelease and
@@ -89,10 +86,9 @@ class EnsemblRelease(Genome):
     def __hash__(self):
         return hash((self.release, self.species))
 
-    def __getstate__(self):
-        # Must be in order of __init__ arguments
-        return [self.release, self.species, self.server]
-
-    def __setstate__(self, fields):
-        self.__init__(*fields)
-
+    def to_dict(self):
+        return {
+            "release": self.release,
+            "species": self.species,
+            "server": self.server
+        }
