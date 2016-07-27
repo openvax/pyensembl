@@ -5,7 +5,7 @@ services:
 before_install:
   - docker pull armish/pyensembl:0.9.4
 script:
-  - docker build -f ./docker/Dockerfile.test -t "ensembl-test" .
+  - docker build -f ./Dockerfile -t "ensembl-test" .
 deploy:
   provider: pypi
   distributions: sdist

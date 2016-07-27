@@ -1,10 +1,27 @@
 FROM armish/pyensembl:0.9.4
 
-ENV testdir /test
-WORKDIR ${testdir}
-ADD . ${testdir}
+# Copy latest source code into the image
+WORKDIR /test
+WORKDIR pyensembl
+ADD . .
 
-RUN export PATH="$HOME/miniconda/bin:$PATH" && \
+# System setup
+RUN apt-get update
+# wget, to be able to download Conda script
+RUN apt-get install -y wget
+# bzip2, so that Conda can unbundle stuff
+RUN apt-get install -y bzip2
+# because http://stackoverflow.com/a/25423366
+RUN mv /bin/sh /tmp/sh && ln -s /bin/bash /bin/sh
+
+### Conda Setup ###
+WORKDIR ../programs
+RUN wget -q https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+RUN bash miniconda.sh -b -f -p ./miniconda
+
+## pyensemble setup and tests
+WORKDIR ../pyensembl
+RUN export PATH="`pwd`/../programs/miniconda/bin:$PATH" && \
     # Create our Conda environment and activate it
     conda create -y -n pyensembl-test python=3 && \
     . activate pyensembl-test && \
@@ -26,12 +43,17 @@ RUN export PATH="$HOME/miniconda/bin:$PATH" && \
     pyensembl install --release 83 --species human && \
     pyensembl install --release 84 --species human && \
     pyensembl install --release 67 --species mouse && \
-    pyensembl install --release 84 --species mouse
+    pyensembl install --release 84 --species mouse && \
 
     # test it
     ./lint.sh && \
     nosetests test --verbose --with-coverage --cover-package=pyensembl && \
     coveralls
 
-RUN echo "All done!"
+# Clean up to reduce the image size
+RUN rm -rf /test
+RUN apt-get remove -y wget bzip2
+RUN mv /tmp/sh /bin/sh
+
 ## All done!
+RUN echo "Latest version of pyensembl successfully built and tested"
