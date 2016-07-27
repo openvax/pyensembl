@@ -1,5 +1,9 @@
 FROM armish/pyensembl:0.9.4
 
+ARG TRAVIS=true
+ARG TRAVIS_JOB_ID
+ARG PYTHON_VERSION=3
+
 # Copy latest source code into the image
 WORKDIR /test
 WORKDIR pyensembl
@@ -23,7 +27,7 @@ RUN bash miniconda.sh -b -f -p ./miniconda
 WORKDIR ../pyensembl
 RUN export PATH="`pwd`/../programs/miniconda/bin:$PATH" && \
     # Create our Conda environment and activate it
-    conda create -y -n pyensembl-test python=3 && \
+    conda create -y -n pyensembl-test python=${PYTHON_VERSION} && \
     . activate pyensembl-test && \
 
     # Install some packages up-front
