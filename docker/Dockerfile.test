@@ -13,7 +13,6 @@ RUN export PATH="$HOME/miniconda/bin:$PATH" && \
     conda install -y numpy scipy nose pandas matplotlib biopython && \
 
     # and install requirements
-    pip install pypandoc && \
     pip install coveralls && \
     pip install -r requirements.txt && \
 
