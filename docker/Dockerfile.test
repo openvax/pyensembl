@@ -1,0 +1,38 @@
+FROM armish/pyensembl:0.9.4
+
+ENV testdir /test
+WORKDIR ${testdir}
+ADD . ${testdir}
+
+RUN export PATH="$HOME/miniconda/bin:$PATH" && \
+    # Create our Conda environment and activate it
+    conda create -y -n pyensembl-test python=3 && \
+    . activate pyensembl-test && \
+
+    # Install some packages up-front
+    conda install -y numpy scipy nose pandas matplotlib biopython && \
+
+    # and install requirements
+    pip install pypandoc && \
+    pip install coveralls && \
+    pip install -r requirements.txt && \
+
+    # and install pyensembl
+    pip install . && \
+
+    # Cache all the genomes!
+    pyensembl install --release 54 --species human && \
+    pyensembl install --release 75 --species human && \
+    pyensembl install --release 77 --species human && \
+    pyensembl install --release 83 --species human && \
+    pyensembl install --release 84 --species human && \
+    pyensembl install --release 67 --species mouse && \
+    pyensembl install --release 84 --species mouse
+
+    # test it
+    ./lint.sh && \
+    nosetests test --verbose --with-coverage --cover-package=pyensembl && \
+    coveralls
+
+RUN echo "All done!"
+## All done!

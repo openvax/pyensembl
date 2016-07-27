@@ -1,57 +1,11 @@
-sudo: false  # Use container-based infrastructure
+sudo: required
 language: python
-python:
-  - "2.7"
-  - "3.4"
+services:
+  - docker
 before_install:
-  # Commands below copied from: http://conda.pydata.org/docs/travis.html
-  # We do this conditionally because it saves us some downloading if the
-  # version is the same.
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
-    else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-    fi
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  # reset the shell's lookup table for program name to path mappings
-  - hash -r
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
-  # Useful for debugging any issues with conda
-  - conda info -a
-addons:
-  apt:
-    packages:
-    # install pandoc for use with pypandoc for converting the README
-    # from markdown to RST
-    - pandoc
-install:
-  - >
-      conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
-      numpy scipy nose pandas matplotlib
-  - source activate test-environment
-  - pip install pypandoc
-  - pip install -r requirements.txt
-  - pip install .
-  - pip install coveralls
+  - docker pull armish/pyensembl:0.9.4
 script:
-  - ./lint.sh
-  # older human releases
-  - pyensembl install --release 54 --species human
-  - pyensembl install --release 75 --species human
-  - pyensembl install --release 77 --species human
-  # latest human release
-  - pyensembl install --release 83 --species human
-  - pyensembl install --release 84 --species human
-  # older mouse release (last one for NCBIM37)
-  # - pyensembl install --release 67 --species mouse
-  # latest mouse release
-  - pyensembl install --release 84 --species mouse
-  # run tests
-  - nosetests test --verbose --with-coverage --cover-package=pyensembl
-after_success:
-  coveralls
+  - docker build -f ./docker/Dockerfile.test -t "ensembl-test" .
 deploy:
   provider: pypi
   distributions: sdist
