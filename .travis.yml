@@ -1,12 +1,15 @@
 sudo: required
 language: python
 services:
-    - docker
+  - docker
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install docker-engine
 script:
-    - docker -help
-    - docker version
-    - env
-    - echo $TRAVIS_JOB_ID
+  - docker version
+  - env
+  - echo $TRAVIS_JOB_ID
+  - docker build --build-arg TRAVIS_JOB_ID=$TRAVIS_JOB_ID --build-arg PYTHON_VERSION=3 -t "ensembl-test3" .
 deploy:
   provider: pypi
   distributions: sdist
