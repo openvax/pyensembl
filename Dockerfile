@@ -1,13 +1,14 @@
 FROM ubuntu
 
 ARG TRAVIS=true
-ARG TRAVIS_JOB_ID
+ARG TRAVIS_JOB_ID=0
 ARG PYTHON_VERSION=3
 
 # Copy latest source code into the image
 WORKDIR /test
 WORKDIR pyensembl
 ADD . .
+
 
 # System setup
 RUN apt-get update
@@ -17,6 +18,7 @@ RUN apt-get install -y wget
 RUN apt-get install -y bzip2
 # because http://stackoverflow.com/a/25423366
 RUN mv /bin/sh /tmp/sh && ln -s /bin/bash /bin/sh
+
 
 ### Conda Setup ###
 WORKDIR ../programs
@@ -62,8 +64,8 @@ RUN apt-get remove -y wget bzip2
 RUN rm -rf ~/.cache/pip
 # Empty optional/downloaded genome files
 RUN export CACHE=~/.cache/pyensembl && \
-    find ~/.cache/pyensembl -name '*.csv' -exec sh -c > {}" \; && \
-    find ~/.cache/pyensembl -name '*.fa.gz' -exec sh -c > {}" \;
+    find $CACHE -name '*.csv' -exec sh -c > {}" \; && \
+    find $CACHE -name '*.fa.gz' -exec sh -c > {}" \;
 # Put the standard sh back in
 RUN mv -f /tmp/sh /bin/sh
 
