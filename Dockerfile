@@ -1,7 +1,7 @@
 FROM ubuntu
 
 ARG TRAVIS=true
-ARG TRAVIS_JOB_ID=0
+ARG TRAVIS_JOB_ID
 ARG PYTHON_VERSION=3
 
 # Copy latest source code into the image
@@ -52,12 +52,20 @@ RUN export PATH="`pwd`/../programs/miniconda/bin:$PATH" && \
     # test it
     ./lint.sh && \
     nosetests test --verbose --with-coverage --cover-package=pyensembl && \
-    coveralls
+    if [ "$TRAVIS" == "true" ]; then coveralls; fi
 
-# Clean up to reduce the image size
+## Clean up to reduce the image size
+# Empty test folders
 RUN rm -rf /test
+# Remove additional software
 RUN apt-get remove -y wget bzip2
-RUN mv /tmp/sh /bin/sh
+RUN rm -rf ~/.cache/pip
+# Empty optional/downloaded genome files
+RUN export CACHE=~/.cache/pyensembl && \
+    find ~/.cache/pyensembl -name '*.csv' -exec sh -c > {}" \; && \
+    find ~/.cache/pyensembl -name '*.fa.gz' -exec sh -c > {}" \;
+# Put the standard sh back in
+RUN mv -f /tmp/sh /bin/sh
 
 ## All done!
-RUN echo "Latest version of pyensembl successfully built and tested"
+RUN echo "Latest version of pyensembl successfully built and tested on Python ${PYTHON_VERSION}.x"
