@@ -2,8 +2,6 @@ sudo: required
 language: python
 services:
     - docker
-before_install:
-    - docker pull armish/pyensembl:0.9.4
 script:
     - env
     - echo $TRAVIS_JOB_ID

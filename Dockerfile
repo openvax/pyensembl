@@ -1,4 +1,4 @@
-FROM armish/pyensembl:0.9.4
+FROM ubuntu
 
 ARG TRAVIS=true
 ARG TRAVIS_JOB_ID
