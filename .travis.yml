@@ -3,6 +3,8 @@ language: python
 services:
     - docker
 script:
+    - docker -help
+    - dcker -v
     - env
     - echo $TRAVIS_JOB_ID
     - docker build --build-arg TRAVIS_JOB_ID=$TRAVIS_JOB_ID --build-arg PYTHON_VERSION=3 -t "ensembl-test3" .
