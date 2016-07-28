@@ -5,6 +5,8 @@ services:
 before_install:
     - docker pull armish/pyensembl:0.9.4
 script:
+    - env
+    - echo $TRAVIS_JOB_ID
     - docker build --build-arg TRAVIS_JOB_ID=$TRAVIS_JOB_ID --build-arg PYTHON_VERSION=2 -t "ensembl-test2" .
     - docker build --build-arg TRAVIS_JOB_ID=$TRAVIS_JOB_ID --build-arg PYTHON_VERSION=3 -t "ensembl-test3" .
 deploy:
