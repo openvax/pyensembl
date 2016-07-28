@@ -1,11 +1,14 @@
 sudo: required
 language: python
+python:
+  - "2.7"
+  - "3.4"
 services:
   - docker
 before_install:
   - sudo apt-get update
   - sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-engine
-  - docker pull hammerlab/pyensembl:latest
+  - docker pull armish/pyensembl:latest
 script:
   - export PV=$(echo $TRAVIS_PYTHON_VERSION |head -c 1)
   - docker build --build-arg TRAVIS_JOB_ID=$TRAVIS_JOB_ID --build-arg PYTHON_VERSION=$PV -t "ensembl-test" .
