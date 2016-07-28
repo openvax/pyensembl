@@ -1,7 +1,7 @@
 FROM ubuntu
 
 ARG TRAVIS=true
-ARG TRAVIS_JOB_ID
+ARG TRAVIS_JOB_ID=0
 ARG PYTHON_VERSION=3
 
 # Copy latest source code into the image
