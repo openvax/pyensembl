@@ -11,14 +11,14 @@ from .common import test_ensembl_releases
 
 # subset of transcript IDs for HLA-A
 HLA_A_TRANSCRIPT_IDS = [
-        'ENST00000396634',
-        'ENST00000376809',
-        'ENST00000376806',
-        'ENST00000376802',
-        'ENST00000496081',
-        'ENST00000495183',
-        'ENST00000461903',
-        'ENST00000479320',
+    'ENST00000396634',
+    'ENST00000376809',
+    'ENST00000376806',
+    'ENST00000376802',
+    'ENST00000496081',
+    'ENST00000495183',
+    'ENST00000461903',
+    'ENST00000479320',
 ]
 
 def test_transcript_ids_ensembl_grch38_hla_a():
@@ -47,7 +47,9 @@ def test_all_transcript_ids(ensembl):
         assert transcript_id in transcript_ids, \
             "Missing transcript ID %s from %s" % (transcript_id, ensembl)
 
-def test_transcript_id_of_protein_id():
+def test_transcript_id_of_protein_id_CCR2():
+    # looked up CCR2-201 transcript ID ENST00000292301 mapping to protein ID
+    # ENSP00000292301 on Sept. 14th 2016 from GRCh38 Ensembl release 85
     transcript_id = ensembl_grch38.transcript_id_of_protein_id(
-        "ENSP00000485678")
-    eq_("ENST00000623976", transcript_id)
+        "ENSP00000292301")
+    eq_("ENST00000292301", transcript_id)
