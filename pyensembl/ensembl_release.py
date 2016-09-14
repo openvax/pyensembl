@@ -44,6 +44,10 @@ class EnsemblRelease(Genome):
         species = check_species_object(species)
         return (release, species, server)
 
+    # Using a WeakValueDictionary instead of an ordinary dict to prevent a
+    # memory leak in cases where we test many different releases in sequence.
+    # When all the references to a particular EnsemblRelease die then that
+    # genome should also be removed from this cache.
     _genome_cache = WeakValueDictionary()
 
     @classmethod
