@@ -35,7 +35,7 @@ from .species import (
 )
 from .transcript import Transcript
 
-__version__ = '0.9.6'
+__version__ = '0.9.7'
 
 def cached_release(release, species="human"):
     """
