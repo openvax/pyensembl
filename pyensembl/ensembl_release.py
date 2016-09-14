@@ -74,13 +74,12 @@ class EnsemblRelease(Genome):
             server=ENSEMBL_FTP_SERVER):
         self.release, self.species, self.server = self.normalize_init_values(
             release=release, species=species, server=server)
-        self.species = species
-        self.server = server
 
         self.gtf_url = make_gtf_url(
             ensembl_release=self.release,
-            species=species,
-            server=server)
+            species=self.species,
+            server=self.server)
+
         self.transcript_fasta_url = make_fasta_url(
             ensembl_release=self.release,
             species=self.species.latin_name,
@@ -90,7 +89,7 @@ class EnsemblRelease(Genome):
             ensembl_release=self.release,
             species=self.species.latin_name,
             sequence_type="pep",
-            server=server)
+            server=self.server)
 
         self.reference_name = self.species.which_reference(self.release)
 
