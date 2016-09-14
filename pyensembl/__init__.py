@@ -17,7 +17,7 @@ from __future__ import print_function, division, absolute_import
 from .memory_cache import MemoryCache
 from .download_cache import DownloadCache
 from .ensembl_release import EnsemblRelease
-from .ensembl_release_versions import check_release_number, MAX_ENSEMBL_RELEASE
+from .ensembl_release_versions import MAX_ENSEMBL_RELEASE
 from .exon import Exon
 from .genome import Genome
 from .gene import Gene
@@ -37,26 +37,21 @@ from .transcript import Transcript
 
 __version__ = '0.9.6'
 
-_cache = {}
-
-def cached_release(version, species="human"):
-    """Cached construction of EnsemblRelease objects. It's desirable to reuse
-    the same EnsemblRelease object since each one will store a lot of cached
-    annotation data in-memory.
+def cached_release(release, species="human"):
     """
-    version = check_release_number(version)
-    species = check_species_object(species)
-    key = (version, species)
-    if key not in _cache:
-        ensembl = EnsemblRelease(version, species=species)
-        _cache[key] = ensembl
-    return _cache[key]
+    Create an EnsemblRelease instance only if it's hasn't already been made,
+    otherwise returns the old instance.
+
+    Keeping this function for backwards compatibility but this functionality
+    has been moving onto the EnsemblRelease object itself by overriding __new__.
+    """
+    return EnsemblRelease.cached(release=release, species=species)
 
 def genome_for_reference_name(reference_name):
     reference_name = normalize_reference_name(reference_name)
     species = find_species_by_reference(reference_name)
     (_, max_ensembl_release) = species.reference_assemblies[reference_name]
-    return cached_release(max_ensembl_release, species=species)
+    return cached_release(release=max_ensembl_release, species=species)
 
 ensembl_grch36 = ensembl54 = cached_release(54)  # last release for GRCh36/hg18
 ensembl_grch37 = ensembl75 = cached_release(75)  # last release for GRCh37/hg19

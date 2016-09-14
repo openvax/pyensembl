@@ -16,6 +16,7 @@
 Contains the EnsemblRelease class, which extends the Genome class
 to be specific to (a particular release of) Ensembl.
 """
+from weakref import WeakValueDictionary
 
 from .genome import Genome
 from .ensembl_release_versions import check_release_number, MAX_ENSEMBL_RELEASE
@@ -32,12 +33,44 @@ class EnsemblRelease(Genome):
     Bundles together the genomic annotation and sequence data associated with
     a particular release of the Ensembl database.
     """
-    def __init__(self,
-                 release=MAX_ENSEMBL_RELEASE,
-                 species=human,
-                 server=ENSEMBL_FTP_SERVER):
-        self.release = check_release_number(release)
-        self.species = check_species_object(species)
+
+    @classmethod
+    def normalize_init_values(cls, release, species, server):
+        """
+        Normalizes the arguments which uniquely specify an EnsemblRelease
+        genome.
+        """
+        release = check_release_number(release)
+        species = check_species_object(species)
+        return (release, species, server)
+
+    _genome_cache = WeakValueDictionary()
+
+    @classmethod
+    def cached(
+            cls,
+            release=MAX_ENSEMBL_RELEASE,
+            species=human,
+            server=ENSEMBL_FTP_SERVER):
+        """
+        Construct EnsemblRelease if it's never been made before, otherwise
+        return an old instance.
+        """
+        init_args_tuple = cls.normalize_init_values(release, species, server)
+        if init_args_tuple in cls._genome_cache:
+            genome = cls._genome_cache[init_args_tuple]
+        else:
+            genome = cls._genome_cache[init_args_tuple] = cls(*init_args_tuple)
+        return genome
+
+    def __init__(
+            self,
+            release=MAX_ENSEMBL_RELEASE,
+            species=human,
+            server=ENSEMBL_FTP_SERVER):
+        self.release, self.species, self.server = self.normalize_init_values(
+            release=release, species=species, server=server)
+        self.species = species
         self.server = server
 
         self.gtf_url = make_gtf_url(
@@ -92,3 +125,10 @@ class EnsemblRelease(Genome):
             "species": self.species,
             "server": self.server
         }
+
+    @classmethod
+    def from_dict(cls, state_dict):
+        """
+        Deserialize EnsemblRelease without creating duplicate instances.
+        """
+        return cls.cached(**state_dict)
