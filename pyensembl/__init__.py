@@ -43,7 +43,7 @@ def cached_release(release, species="human"):
     otherwise returns the old instance.
 
     Keeping this function for backwards compatibility but this functionality
-    has been moving onto the EnsemblRelease object itself by overriding __new__.
+    has been moving into the cached method of EnsemblRelease.
     """
     return EnsemblRelease.cached(release=release, species=species)
 
