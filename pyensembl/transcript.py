@@ -16,7 +16,6 @@ from __future__ import print_function, division, absolute_import
 
 from memoized_property import memoized_property
 
-from .biotypes import is_valid_biotype
 from .common import memoize
 from .locus_with_genome import LocusWithGenome
 
@@ -39,18 +38,12 @@ class Transcript(LocusWithGenome):
             strand,
             biotype,
             gene_id,
-            genome,
-            require_valid_biotype=True):
+            genome):
         LocusWithGenome.__init__(self, contig, start, end, strand, genome)
         self.id = transcript_id
         self.name = transcript_name
         self.biotype = biotype
         self.gene_id = gene_id
-        self.require_valid_biotype = require_valid_biotype
-        if require_valid_biotype and not is_valid_biotype(biotype):
-            raise ValueError(
-                "Invalid biotype '%s' for transcript with ID=%s, name=%s" % (
-                    biotype, transcript_id, transcript_name))
 
     def __str__(self):
         return (
@@ -90,7 +83,6 @@ class Transcript(LocusWithGenome):
         state_dict["transcript_name"] = self.name
         state_dict["biotype"] = self.biotype
         state_dict["gene_id"] = self.gene_id
-        state_dict["require_valid_biotype"] = self.require_valid_biotype
         return state_dict
 
     @property

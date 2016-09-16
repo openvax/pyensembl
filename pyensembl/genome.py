@@ -649,8 +649,7 @@ class Genome(Serializable):
                 end=end,
                 strand=strand,
                 biotype=gene_biotype,
-                genome=self,
-                require_valid_biotype=("gene_biotype" in field_names))
+                genome=self)
 
         return self._genes[gene_id]
 
@@ -828,8 +827,7 @@ class Genome(Serializable):
                 strand=strand,
                 biotype=transcript_biotype,
                 gene_id=gene_id,
-                genome=self,
-                require_valid_biotype=("transcript_biotype" in field_names))
+                genome=self)
 
         return self._transcripts[transcript_id]
 
