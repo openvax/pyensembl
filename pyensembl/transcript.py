@@ -48,7 +48,7 @@ class Transcript(LocusWithGenome):
             biotype=biotype,
             genome=genome)
         self.transcript_id = transcript_id
-        self.name = transcript_name
+        self.transcript_name = transcript_name
         self.gene_id = gene_id
 
     @property
