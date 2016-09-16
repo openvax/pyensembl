@@ -39,21 +39,42 @@ class Transcript(LocusWithGenome):
             biotype,
             gene_id,
             genome):
-        LocusWithGenome.__init__(self, contig, start, end, strand, genome)
-        self.id = transcript_id
+        LocusWithGenome.__init__(
+            self,
+            contig=contig,
+            start=start,
+            end=end,
+            strand=strand,
+            biotype=biotype,
+            genome=genome)
+        self.transcript_id = transcript_id
         self.name = transcript_name
-        self.biotype = biotype
         self.gene_id = gene_id
+
+    @property
+    def id(self):
+        """
+        Alias for transcript_id necessary for backward compatibility.
+        """
+        return self.transcript_id
+
+    @property
+    def name(self):
+        """
+        Alias for transcript_name necessary for backward compatibility.
+        """
+        return self.transcript_name
 
     def __str__(self):
         return (
-            "Transcript(id=%s,"
+            "Transcript("
+            " transcript_id=%s,"
             " name=%s,"
             " gene_id=%s,"
             " gene_name=%s,"
             " biotype=%s,"
             " location=%s:%d-%d)") % (
-                self.id,
+                self.transcript_id,
                 self.name,
                 self.gene.id,
                 self.gene.name,
@@ -79,9 +100,8 @@ class Transcript(LocusWithGenome):
 
     def to_dict(self):
         state_dict = LocusWithGenome.to_dict(self)
-        state_dict["transcript_id"] = self.id
+        state_dict["transcript_id"] = self.transcript_id
         state_dict["transcript_name"] = self.name
-        state_dict["biotype"] = self.biotype
         state_dict["gene_id"] = self.gene_id
         return state_dict
 
