@@ -16,7 +16,6 @@ from __future__ import print_function, division, absolute_import
 
 from memoized_property import memoized_property
 
-from .biotypes import is_valid_biotype
 from .common import memoize
 from .locus_with_genome import LocusWithGenome
 
@@ -39,28 +38,42 @@ class Transcript(LocusWithGenome):
             strand,
             biotype,
             gene_id,
-            genome,
-            require_valid_biotype=True):
-        LocusWithGenome.__init__(self, contig, start, end, strand, genome)
-        self.id = transcript_id
-        self.name = transcript_name
-        self.biotype = biotype
+            genome):
+        LocusWithGenome.__init__(
+            self,
+            contig=contig,
+            start=start,
+            end=end,
+            strand=strand,
+            biotype=biotype,
+            genome=genome)
+        self.transcript_id = transcript_id
+        self.transcript_name = transcript_name
         self.gene_id = gene_id
-        self.require_valid_biotype = require_valid_biotype
-        if require_valid_biotype and not is_valid_biotype(biotype):
-            raise ValueError(
-                "Invalid biotype '%s' for transcript with ID=%s, name=%s" % (
-                    biotype, transcript_id, transcript_name))
+
+    @property
+    def id(self):
+        """
+        Alias for transcript_id necessary for backward compatibility.
+        """
+        return self.transcript_id
+
+    @property
+    def name(self):
+        """
+        Alias for transcript_name necessary for backward compatibility.
+        """
+        return self.transcript_name
 
     def __str__(self):
         return (
-            "Transcript(id=%s,"
+            "Transcript(transcript_id=%s,"
             " name=%s,"
             " gene_id=%s,"
             " gene_name=%s,"
             " biotype=%s,"
             " location=%s:%d-%d)") % (
-                self.id,
+                self.transcript_id,
                 self.name,
                 self.gene.id,
                 self.gene.name,
@@ -86,11 +99,9 @@ class Transcript(LocusWithGenome):
 
     def to_dict(self):
         state_dict = LocusWithGenome.to_dict(self)
-        state_dict["transcript_id"] = self.id
+        state_dict["transcript_id"] = self.transcript_id
         state_dict["transcript_name"] = self.name
-        state_dict["biotype"] = self.biotype
         state_dict["gene_id"] = self.gene_id
-        state_dict["require_valid_biotype"] = self.require_valid_biotype
         return state_dict
 
     @property

@@ -16,7 +16,6 @@ from __future__ import print_function, division, absolute_import
 
 from memoized_property import memoized_property
 
-from .biotypes import is_valid_biotype
 from .locus_with_genome import LocusWithGenome
 
 class Gene(LocusWithGenome):
@@ -30,22 +29,36 @@ class Gene(LocusWithGenome):
             end,
             strand,
             biotype,
-            genome,
-            require_valid_biotype=True):
-        LocusWithGenome.__init__(self, contig, start, end, strand, genome)
-        self.id = gene_id
-        self.name = gene_name
-        self.biotype = biotype
-        self.require_valid_biotype = require_valid_biotype
-        if require_valid_biotype and not is_valid_biotype(biotype):
-            raise ValueError(
-                "Invalid gene_biotype %s for gene with ID = %s" % (
-                    biotype, gene_id))
+            genome):
+        LocusWithGenome.__init__(
+            self,
+            contig=contig,
+            start=start,
+            end=end,
+            strand=strand,
+            biotype=biotype,
+            genome=genome)
+        self.gene_id = gene_id
+        self.gene_name = gene_name
+
+    @property
+    def id(self):
+        """
+        Alias for gene_id necessary for backwards compatibility.
+        """
+        return self.gene_id
+
+    @property
+    def name(self):
+        """
+        Alias for gene_name necessary for backwards compatibility.
+        """
+        return self.gene_name
 
     def __str__(self):
-        return "Gene(id=%s, name=%s, biotype=%s, location=%s:%d-%d)" % (
-            self.id,
-            self.name,
+        return "Gene(gene_id=%s, gene_name=%s, biotype=%s, location=%s:%d-%d)" % (
+            self.gene_id,
+            self.gene_name,
             self.biotype,
             self.contig,
             self.start,
@@ -62,10 +75,8 @@ class Gene(LocusWithGenome):
 
     def to_dict(self):
         state_dict = LocusWithGenome.to_dict(self)
-        state_dict["gene_id"] = self.id
-        state_dict["gene_name"] = self.name
-        state_dict["biotype"] = self.biotype
-        state_dict["require_valid_biotype"] = self.require_valid_biotype
+        state_dict["gene_id"] = self.gene_id
+        state_dict["gene_name"] = self.gene_name
         return state_dict
 
     @memoized_property

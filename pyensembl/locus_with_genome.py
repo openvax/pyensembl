@@ -19,10 +19,11 @@ class LocusWithGenome(Locus):
     Common base class for Gene and Transcript to avoid copying
     their shared logic.
     """
-    def __init__(self, contig, start, end, strand, genome):
+    def __init__(self, contig, start, end, strand, biotype, genome):
         Locus.__init__(self, contig, start, end, strand)
         self.genome = genome
         self.db = self.genome.db
+        self.biotype = biotype
 
     def to_dict(self):
         return dict(
@@ -30,4 +31,22 @@ class LocusWithGenome(Locus):
             start=self.start,
             end=self.end,
             strand=self.strand,
+            biotype=self.biotype,
             genome=self.genome)
+
+    @property
+    def is_protein_coding(self):
+        """
+        We're not counting immunoglobulin-like genes from the T-cell receptor or
+        or antibodies since they occur in fragments that must be recombined.
+        It might be worth consider counting non-sense mediated decay and
+        non-stop decay since variants in these could potentially make a
+        functional protein. To read more about the biotypes used in Ensembl:
+            http://vega.sanger.ac.uk/info/about/gene_and_transcript_types.html
+            http://www.gencodegenes.org/gencode_biotypes.html
+
+        For now let's stick with the simple category of 'protein_coding', which
+        means that there is an open reading frame in this gene/transcript
+        whose successful transcription has been observed.
+        """
+        return self.biotype == "protein_coding"
