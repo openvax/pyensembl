@@ -67,8 +67,7 @@ class Transcript(LocusWithGenome):
 
     def __str__(self):
         return (
-            "Transcript("
-            " transcript_id=%s,"
+            "Transcript(transcript_id=%s,"
             " name=%s,"
             " gene_id=%s,"
             " gene_name=%s,"
