@@ -77,10 +77,10 @@ def test_transcript_exons():
 # TODO: Add gene_id patching to gtf_parsing, add ensembl54 to the list
 # below
 @test_ensembl_releases(75, 77)
-def test_sequence_parts(ensembl):
+def test_sequence_parts(genome):
     # Ensure that the UTRs and coding sequence can be
     # combined to make the full transcript.
-    transcript = ensembl.transcript_by_id(FOXP3_001_transcript_id)
+    transcript = genome.transcript_by_id(FOXP3_001_transcript_id)
 
     # The combined lengths of the upstream untranslated region,
     # coding sequence, and downstream untranslated region
@@ -149,17 +149,17 @@ def test_transcript_cds_CTNNIP1_004():
     eq_(cds, CTNNBIP1_004_CDS)
 
 @test_ensembl_releases()
-def test_equal_transcripts(ensembl):
-    t1 = ensembl.transcripts_by_name("TP53-001")[0]
+def test_equal_transcripts(genome):
+    t1 = genome.transcripts_by_name("TP53-001")[0]
     # get an identical gene
-    t2 = ensembl.transcript_by_id(t1.id)
+    t2 = genome.transcript_by_id(t1.id)
     eq_(t1, t2)
     eq_(hash(t1), hash(t2))
 
 @test_ensembl_releases()
-def test_not_equal_transcripts(release):
-    t1 = release.transcripts_by_name("MUC1-001")[0]
-    t2 = release.transcripts_by_name("BRCA1-001")[0]
+def test_not_equal_transcripts(genome):
+    t1 = genome.transcripts_by_name("MUC1-001")[0]
+    t2 = genome.transcripts_by_name("BRCA1-001")[0]
     assert_not_equal(t1, t2)
 
 def test_protein_id():
@@ -174,3 +174,9 @@ def test_transcript_gene_should_match_parent_gene():
     gene = ensembl77.gene_by_id(TP53_gene_id)
     for transcript in gene.transcripts:
         eq_(transcript.gene, gene)
+
+@test_ensembl_releases()
+def test_BRCA1_001_has_protein_coding_biotype(genome):
+    transcript = genome.transcripts_by_name("BRCA1-001")[0]
+    assert transcript.is_protein_coding
+    eq_(transcript.biotype, "protein_coding")
