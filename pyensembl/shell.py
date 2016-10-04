@@ -43,9 +43,16 @@ To install any genome:
 
 from __future__ import absolute_import
 import argparse
+import logging
+import logging.config
 
 from .ensembl_release import EnsemblRelease
 from .genome import Genome
+
+
+logging.config.fileConfig('pyensembl/logging.conf')
+logger = logging.getLogger(__name__)
+
 
 def run():
     parser = argparse.ArgumentParser(usage=__doc__)
@@ -134,11 +141,11 @@ def run():
                 EnsemblRelease(version, species=args.species))
 
     if len(genomes) == 0:
-        print("ERROR: No genomes selected!\n")
+        logger.error("ERROR: No genomes selected!")
         parser.print_help()
 
     for genome in genomes:
-        print("-- Running '%s' for %s" % (args.action, genome))
+        logger.info("Running '%s' for %s", args.action, genome)
         if args.action == "delete-all-files":
             genome.download_cache.delete_cache_directory()
         elif args.action == "delete-index-files":

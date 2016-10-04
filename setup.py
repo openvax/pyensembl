@@ -79,7 +79,9 @@ if __name__ == '__main__':
             "six>=1.9.0",
             "gtfparse>=0.0.3",
             "serializable",
+            "tinytimer",
         ],
         long_description=readme,
         packages=['pyensembl'],
+        package_data={'pyensembl': ['logging.conf']},
     )
