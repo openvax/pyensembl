@@ -19,6 +19,9 @@ import logging
 
 import datacache
 
+
+logger = logging.getLogger(__name__)
+
 CACHE_BASE_SUBDIR = "pyensembl"
 CACHE_DIR_ENV_KEY = "PYENSEMBL_CACHE_DIR"
 
@@ -208,7 +211,7 @@ class DownloadCache(object):
         cached_path = self.cached_path(url)
         missing = not exists(cached_path)
         if (missing or overwrite) and download_if_missing:
-            logging.info("Fetching %s from URL %s", cached_path, url)
+            logger.info("Fetching %s from URL %s", cached_path, url)
             local_filename = split(cached_path)[1]
             datacache.download._download(
                 filename=local_filename,
@@ -304,7 +307,7 @@ class DownloadCache(object):
                 any(filename.startswith(pre) for pre in prefixes))
             if delete:
                 path = join(self.cache_directory_path, filename)
-                print("Deleting %s" % path)
+                logger.info("Deleting %s", path)
                 remove(path)
 
     def delete_cache_directory(self):

@@ -24,6 +24,10 @@ import logging
 
 from six import binary_type, PY3
 
+
+logger = logging.getLogger(__name__)
+
+
 def _parse_header_id(line):
     """
     Pull the transcript or protein identifier from the header line
@@ -117,7 +121,7 @@ class FastaParser(object):
         # entry of the file then put the last one in the dictionary
         if self.current_id:
             if len(self.current_lines) == 0:
-                logging.warn("No sequence data for '%s'" % self.current_id)
+                logger.warn("No sequence data for '%s'", self.current_id)
             else:
                 sequence = b"".join(self.current_lines)
                 if PY3:
@@ -134,7 +138,7 @@ class FastaParser(object):
         self.current_id = _parse_header_id(line)
 
         if len(self.current_id) == 0:
-            logging.warn("Unable to parse ID from header line: %s" % line)
+            logger.warn("Unable to parse ID from header line: %s", line)
 
         self.current_lines = []
         return previous_entry

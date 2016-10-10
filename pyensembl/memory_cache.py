@@ -32,6 +32,10 @@ import pandas as pd
 
 from .common import load_pickle, dump_pickle
 
+
+logger = logging.getLogger(__name__)
+
+
 class MemoryCache(object):
     """
     In-memory and on-disk caching of long-running queries and computations.
@@ -44,7 +48,7 @@ class MemoryCache(object):
 
     def delete_file(self, path):
         if exists(path):
-            logging.info("Deleting cached file %s" % path)
+            logger.info("Deleting cached file %s", path)
             remove(path)
 
     def remove_from_cache(self, key):
@@ -58,7 +62,7 @@ class MemoryCache(object):
         self._memory_cache.clear()
 
     def _read_csv(self, csv_path):
-        print("Reading Dataframe from %s" % csv_path)
+        logger.info("Reading Dataframe from %s", csv_path)
         df = pd.read_csv(csv_path)
         if 'seqname' in df:
             # by default, Pandas will infer the type as int,
@@ -79,7 +83,7 @@ class MemoryCache(object):
             Number of rows to write at a time. Helps to limit memory
             consumption while writing a CSV.
         """
-        print("Saving DataFrame to %s" % csv_path)
+        logger.info("Saving DataFrame to %s", csv_path)
         df.to_csv(csv_path, index=False, chunksize=chunksize)
 
     def cached_dataframe(self, csv_path, compute_fn):

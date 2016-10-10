@@ -18,7 +18,6 @@ around an arbitrary genomic database.
 """
 
 from __future__ import print_function, division, absolute_import
-import logging
 from os import remove
 from os.path import exists
 
@@ -112,9 +111,6 @@ class Genome(Serializable):
         self.has_gtf = self._gtf_path_or_url is not None
         self.has_transcript_fasta = self._transcript_fasta_path_or_url is not None
         self.has_protein_fasta = self._protein_fasta_path_or_url is not None
-
-        self.logger = logging.getLogger()
-        self.logger.setLevel(logging.INFO)
         self.memory_cache = MemoryCache()
 
         self._init_lazy_fields()

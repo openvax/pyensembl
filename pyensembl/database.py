@@ -28,6 +28,10 @@ from .locus import Locus
 # any time we update the database schema, increment this version number
 DATABASE_SCHEMA_VERSION = 2
 
+
+logger = logging.getLogger(__name__)
+
+
 class Database(object):
     """
     Wrapper around sqlite3 database so that the rest of the
@@ -50,9 +54,6 @@ class Database(object):
         self.gtf = gtf
         self.install_string = install_string
         self._connection = None
-
-        self.logger = logging.getLogger()
-        self.logger.setLevel(logging.INFO)
 
     def __eq__(self, other):
         return (
@@ -114,7 +115,7 @@ class Database(object):
                 # are not available in all releases of Ensembl (or
                 # other GTFs)
                 if column_name not in column_set:
-                    logging.info(
+                    logger.info(
                         "Skipping database index for {%s}",
                         ", ".join(column_group))
                     skip = True
@@ -187,7 +188,7 @@ class Database(object):
                              str(self))
 
         db_path = self.local_db_path()
-        print("Creating database: %s" % (db_path,))
+        logger.info("Creating database: %s", db_path)
         df = self.gtf.dataframe()
         all_index_groups = self._all_possible_indices(df.columns)
 
@@ -396,7 +397,7 @@ class Database(object):
             cursor = self.connection.execute(sql, query_params)
         except sqlite3.OperationalError as e:
             error_message = e.message if hasattr(e, 'message') else str(e)
-            logging.warn(
+            logger.warn(
                 "Encountered error \"%s\" from query \"%s\" with parameters %s",
                 error_message,
                 sql,

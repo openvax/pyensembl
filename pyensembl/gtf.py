@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from __future__ import print_function, division, absolute_import
+import logging
 from os.path import split, abspath, join, exists, splitext
 import pandas as pd
 
@@ -21,6 +22,10 @@ from gtfparse import read_gtf_as_dataframe, create_missing_features
 
 from .normalization import normalize_chromosome, normalize_strand
 from .memory_cache import MemoryCache
+
+
+logger = logging.getLogger(__name__)
+
 
 class GTF(object):
     """
@@ -131,7 +136,7 @@ class GTF(object):
         """
         Parse this genome source's GTF file and load it as a Pandas DataFrame
         """
-        print("Reading GTF from %s" % self.gtf_path)
+        logger.info("Reading GTF from %s", self.gtf_path)
         df = read_gtf_as_dataframe(
             self.gtf_path,
             column_converters={
@@ -149,6 +154,7 @@ class GTF(object):
             # if we have to reconstruct gene feature rows then
             # fill in values for 'gene_name' and 'gene_biotype'
             # but only if they're actually present in the GTF
+            logger.info("Creating missing gene features...")
             df = create_missing_features(
                 dataframe=df,
                 unique_keys={"gene": "gene_id"},
@@ -159,8 +165,10 @@ class GTF(object):
                     }.intersection(column_names),
                 },
                 missing_value="")
+            logger.info("Done.")
 
         if "transcript" not in features:
+            logger.info("Creating missing transcript features...")
             df = create_missing_features(
                 dataframe=df,
                 unique_keys={"transcript": "transcript_id"},
@@ -175,6 +183,8 @@ class GTF(object):
                     }.intersection(column_names)
                 },
                 missing_value="")
+            logger.info("Done.")
+
         return df
 
     def dataframe(

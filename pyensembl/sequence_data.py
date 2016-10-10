@@ -26,6 +26,10 @@ from .common import (
 )
 from .fasta import parse_fasta_dictionary
 
+
+logger = logging.getLogger(__name__)
+
+
 class SequenceData(object):
     """
     Container for reference nucleotide and amino acid sequenes.
@@ -87,19 +91,19 @@ class SequenceData(object):
             try:
                 self._fasta_dictionary = load_pickle(
                     self.fasta_dictionary_pickle_path)
-                logging.info(
-                    "Loaded sequence dictionary from %s" % self.fasta_dictionary_pickle_path)
+                logger.info(
+                    "Loaded sequence dictionary from %s", self.fasta_dictionary_pickle_path)
                 return
             except (pickle.UnpicklingError, AttributeError):
                 # catch either an UnpicklingError or an AttributeError
                 # resulting from pickled objects refering to classes
                 # that no longer exists
-                logging.warn(
-                    "Failed to load %s, attempting to read FASTA directly" % (
-                        self.fasta_dictionary_pickle_path,))
-        logging.info("Parsing sequences from FASTA file at %s" % self.fasta_path)
+                logger.warn(
+                    "Failed to load %s, attempting to read FASTA directly",
+                        self.fasta_dictionary_pickle_path)
+        logger.info("Parsing sequences from FASTA file at %s", self.fasta_path)
         self._fasta_dictionary = parse_fasta_dictionary(self.fasta_path)
-        logging.info("Saving sequence dictionary to %s" % self.fasta_dictionary_pickle_path)
+        logger.info("Saving sequence dictionary to %s", self.fasta_dictionary_pickle_path)
         dump_pickle(self._fasta_dictionary, self.fasta_dictionary_pickle_path)
 
     def index(self, overwrite=False):
