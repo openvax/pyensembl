@@ -45,12 +45,13 @@ from __future__ import absolute_import
 import argparse
 import logging
 import logging.config
+import pkg_resources
 
 from .ensembl_release import EnsemblRelease
 from .genome import Genome
 
 
-logging.config.fileConfig('pyensembl/logging.conf')
+logging.config.fileConfig(pkg_resources.resource_filename(__name__, "logging.conf"))
 logger = logging.getLogger(__name__)
 
 
