@@ -33,7 +33,7 @@ To delete only cached data related to transcript and protein sequences:
 
 To install any genome:
     %(prog)s install \
- --reference_name "GRCh38" \
+ --reference-name "GRCh38" \
  --gtf URL_OR_PATH \
  --transcript-fasta URL_OR_PATH \
  --protein-fasta URL_OR_PATH
