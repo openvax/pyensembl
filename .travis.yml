@@ -26,6 +26,12 @@ addons:
     # install pandoc for use with pypandoc for converting the README
     # from markdown to RST
     - pandoc
+cache:
+  pip: true
+  # cache directory used for Ensembl downloads of GTF and FASTA files
+  # along with the indexed db of intervals and ID mappings and pickles
+  # of sequence dictionaries
+  directories: /home/travis/.cache/pyensembl/
 install:
   - >
       conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
