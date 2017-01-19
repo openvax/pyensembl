@@ -200,3 +200,12 @@ chicken = Species.register(
     reference_assemblies={
         "Galgal4": (75, 85),
         "Gallus_gallus-5.0": (86, MAX_ENSEMBL_RELEASE)})
+
+# Does the black rat (Rattus Rattus) get used for research too?
+brown_rat = Species.register(
+    latin_name="rattus_norvegicus",
+    synonyms=["brown rat", "lab rat", "rat"],
+    reference_assemblies={
+        "Rnor_5.0": (75, 79),
+        "Rnor_6.0": (80, MAX_ENSEMBL_RELEASE),
+    })
