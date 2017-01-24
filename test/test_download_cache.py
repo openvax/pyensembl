@@ -33,18 +33,34 @@ def test_download_cache_missing_remote_file():
 
 def test_download_cache_custom_location():
     test_file = "refseq.ucsc.small.gtf"
-    tmp_dir = os.path.join(tempfile.gettempdir(), "pyensembl")
+    tmp_dir = tempfile.gettempdir()
+
+    print("DIR: %s" % tmp_dir)
+    assert tmp_dir is not None
+
     os.environ['PYENSEMBL_CACHE_DIR'] = tmp_dir
+
     # We need another instance of DownloadCache
     # that copies files over to cache folder
     download_cache = DownloadCache(
-        reference_name="test",
-        annotation_name="test",
+        reference_name="test_reference",
+        annotation_name="test_annotation",
         copy_local_files_to_cache=True)
+
     # clean up
     download_cache.delete_cache_directory()
     download_cache.download_or_copy_if_necessary(
         download_if_missing=True,
         path_or_url=data_path(test_file))
-    ok_(os.path.exists(os.path.join(tmp_dir, test_file)))
+
+    full_path = os.path.join(
+        tmp_dir,
+        "pyensembl",
+        "test_reference",
+        "test_annotation",
+        test_file)
+    print("FULL PATH: %s" % full_path)
+    assert len(full_path) > 0
+
+    ok_(os.path.exists(full_path))
     del os.environ['PYENSEMBL_CACHE_DIR']

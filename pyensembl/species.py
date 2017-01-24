@@ -183,3 +183,29 @@ mouse = Species.register(
         "GRCm38": (68, MAX_ENSEMBL_RELEASE),
 
     })
+
+dog = Species.register(
+    latin_name="canis_familiaris",
+    synonyms=["dog"],
+    reference_assemblies={"CanFam3.1": (75, MAX_ENSEMBL_RELEASE)})
+
+cat = Species.register(
+    latin_name="felis_catus",
+    synonyms=["cat"],
+    reference_assemblies={"Felis_catus_6.2": (75, MAX_ENSEMBL_RELEASE)})
+
+chicken = Species.register(
+    latin_name="gallus_gallus",
+    synonyms=["chicken"],
+    reference_assemblies={
+        "Galgal4": (75, 85),
+        "Gallus_gallus-5.0": (86, MAX_ENSEMBL_RELEASE)})
+
+# Does the black rat (Rattus Rattus) get used for research too?
+brown_rat = Species.register(
+    latin_name="rattus_norvegicus",
+    synonyms=["brown rat", "lab rat", "rat"],
+    reference_assemblies={
+        "Rnor_5.0": (75, 79),
+        "Rnor_6.0": (80, MAX_ENSEMBL_RELEASE),
+    })
