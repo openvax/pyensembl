@@ -400,7 +400,7 @@ class Transcript(LocusWithGenome):
         Spliced cDNA sequence of transcript
         (includes 5" UTR, coding sequence, and 3" UTR)
         """
-        if self.biotype=='snRNA':
+        if self.id in self.genome.ncrna_sequences:
             return self.genome.ncrna_sequences.get(self.id)
         else:
             return self.genome.transcript_sequences.get(self.id)
