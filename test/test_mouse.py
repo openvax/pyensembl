@@ -18,6 +18,10 @@ def test_mouse_ENSMUSG00000017167():
     fasta/mus_musculus/cdna/Mus_musculus.GRCm38.cdna.all.fa.gz via:
     grep "ENSMUSG00000017167" Mus_musculus.GRCm38.cdna.all.fa -A 50
 
+    ncRNA FASTA cropped from ftp://ftp.ensembl.org/pub/release-81/
+    fasta/mus_musculus/cdna/Mus_musculus.GRCm38.ncrna.fa.gz via:
+    grep "ENSMUSG00000088969" Mus_musculus.GRCm38.ncrna.fa -A 2
+
     Protein FASTA cropped from ftp://ftp.ensembl.org/pub/release-81/fasta/
     mus_musculus/pep/Mus_musculus.GRCm38.pep.all.fa.gz via:
     grep "ENSMUSG00000017167" Mus_musculus.GRCm38.pep.all.fa -A 50

@@ -9,6 +9,8 @@ MOUSE_ENSMUSG00000017167_PATH = data_path(
     "mouse.ensembl.81.partial.ENSMUSG00000017167.gtf")
 MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH = data_path(
     "mouse.ensembl.81.partial.ENSMUSG00000017167.fa")
+MOUSE_ENSMUSG00000088969_NCRNA_FASTA_PATH = data_path(
+    "mouse.ensembl.81.partial.ncrna.ENSMUSG00000017167.fa")
 MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH = data_path(
     "mouse.ensembl.81.partial.ENSMUSG00000017167.pep")
 
