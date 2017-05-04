@@ -90,6 +90,11 @@ class EnsemblRelease(Genome):
             species=self.species.latin_name,
             sequence_type="pep",
             server=self.server)
+        self.ncrna_fasta_url = make_fasta_url(
+            ensembl_release=self.release,
+            species=self.species.latin_name,
+            sequence_type="ncrna",
+            server=server)
 
         self.reference_name = self.species.which_reference(self.release)
 
@@ -101,6 +106,7 @@ class EnsemblRelease(Genome):
             gtf_path_or_url=self.gtf_url,
             transcript_fasta_path_or_url=self.transcript_fasta_url,
             protein_fasta_path_or_url=self.protein_fasta_url,
+            ncrna_fasta_path_or_url=self.ncrna_fasta_url,
             require_ensembl_ids=True)
 
     def install_string(self):

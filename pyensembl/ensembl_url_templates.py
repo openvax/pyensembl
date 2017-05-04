@@ -129,10 +129,22 @@ def make_fasta_dna_url(
 OLD_FASTA_FILENAME_TEMPLATE = \
     "%(Species)s.%(reference)s.%(release)d.%(sequence_type)s.all.fa.gz"
 
+# ncRNA FASTA file for releases before (and including) Ensembl 75
+# example: Homo_sapiens.NCBI36.54.ncrna.fa.gz
+
+OLD_FASTA_FILENAME_TEMPLATE_NCRNA = \
+    "%(Species)s.%(reference)s.%(release)d.ncrna.fa.gz"
+
 # cDNA & protein FASTA file for releases after Ensembl 75
 # example: Homo_sapiens.GRCh37.cdna.all.fa.gz
 NEW_FASTA_FILENAME_TEMPLATE = \
     "%(Species)s.%(reference)s.%(sequence_type)s.all.fa.gz"
+
+# ncRNA FASTA file for releases after Ensembl 75
+# example: Homo_sapiens.GRCh37.ncrna.fa.gz
+
+NEW_FASTA_FILENAME_TEMPLATE_NCRNA = \
+    "%(Species)s.%(reference)s.ncrna.fa.gz"
 
 
 def make_fasta_url(
@@ -158,16 +170,29 @@ def make_fasta_url(
     server_subdir = urllib_parse.urljoin(server, subdir)
     server_sequence_subdir = join(server_subdir, sequence_type)
     if ensembl_release <= 75:
-        filename = OLD_FASTA_FILENAME_TEMPLATE % {
-            "Species": species.capitalize(),
-            "reference": reference_name,
-            "release": ensembl_release,
-            "sequence_type": sequence_type,
-        }
+        if sequence_type == 'ncrna':
+            filename = OLD_FASTA_FILENAME_TEMPLATE_NCRNA % {
+                "Species": species.capitalize(),
+                "reference": reference_name,
+                "release": ensembl_release
+            }
+        else:
+            filename = OLD_FASTA_FILENAME_TEMPLATE % {
+                "Species": species.capitalize(),
+                "reference": reference_name,
+                "release": ensembl_release,
+                "sequence_type": sequence_type,
+            }
     else:
-        filename = NEW_FASTA_FILENAME_TEMPLATE % {
-            "Species": species.capitalize(),
-            "reference": reference_name,
-            "sequence_type": sequence_type,
-        }
+        if sequence_type == 'ncrna':
+            filename = NEW_FASTA_FILENAME_TEMPLATE_NCRNA % {
+                "Species": species.capitalize(),
+                "reference": reference_name
+            }
+        else:
+            filename = NEW_FASTA_FILENAME_TEMPLATE % {
+                "Species": species.capitalize(),
+                "reference": reference_name,
+                "sequence_type": sequence_type,
+            }
     return join(server_sequence_subdir, filename)

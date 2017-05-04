@@ -400,7 +400,10 @@ class Transcript(LocusWithGenome):
         Spliced cDNA sequence of transcript
         (includes 5" UTR, coding sequence, and 3" UTR)
         """
-        return self.genome.transcript_sequences.get(self.id)
+        if self.biotype=='snRNA':
+            return self.genome.ncrna_sequences.get(self.id)
+        else:
+            return self.genome.transcript_sequences.get(self.id)
 
     @memoized_property
     def first_start_codon_spliced_offset(self):
