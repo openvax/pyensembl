@@ -98,11 +98,13 @@ def run():
         default=None,
         help="URL or local path to a GTF file containing annotations.")
     path_group.add_argument(
-        "--transcript-fastas",
+        "--transcript-fasta",
         type=str,
         action='append',
         default=None,
-        help="Space-delimited list of one or more URLs or local paths to a FASTA files containing the transcript data.")
+        help="URL or local path to a FASTA files containing the transcript "
+        "data. This option can be specified multiple times for multiple "
+        "FASTA files.")
     path_group.add_argument(
         "--protein-fasta",
         type=str,
@@ -121,7 +123,7 @@ def run():
 
     genomes = []
     # If specific genome source URLs are provided, use those
-    if args.gtf or args.transcript_fastas or args.protein_fasta:
+    if args.gtf or args.transcript_fasta or args.protein_fasta:
         if args.release:
             raise ValueError(
                 "An Ensembl release cannot be specified if "
@@ -135,7 +137,7 @@ def run():
             reference_name=args.reference_name,
             annotation_name=args.annotation_name,
             gtf_path_or_url=args.gtf,
-            transcript_fasta_paths_or_urls=args.transcript_fastas,
+            transcript_fasta_paths_or_urls=args.transcript_fasta,
             protein_fasta_path_or_url=args.protein_fasta))
     else:
         # Otherwise, use Ensembl release information
