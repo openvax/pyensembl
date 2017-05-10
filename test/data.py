@@ -125,8 +125,7 @@ custom_mouse_genome_grcm38_subset = Genome(
     reference_name="GRCm38",
     annotation_name="_test_mouse_ensembl81_subset",
     gtf_path_or_url=MOUSE_ENSMUSG00000017167_PATH,
-    transcript_fasta_path_or_url=MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH,
-    ncrna_fasta_path_or_url=MOUSE_ENSMUSG00000088969_NCRNA_FASTA_PATH,
+    transcript_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH],
     protein_fasta_path_or_url=MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH)
 
 def setup_init_custom_mouse_genome():

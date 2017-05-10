@@ -80,21 +80,24 @@ class EnsemblRelease(Genome):
             species=self.species,
             server=self.server)
 
-        self.transcript_fasta_url = make_fasta_url(
-            ensembl_release=self.release,
-            species=self.species.latin_name,
-            sequence_type="cdna",
-            server=server)
+        self.transcript_fasta_urls = [
+            make_fasta_url(
+                ensembl_release=self.release,
+                species=self.species.latin_name,
+                sequence_type="cdna",
+                server=server),
+            make_fasta_url(
+                ensembl_release=self.release,
+                species=self.species.latin_name,
+                sequence_type="ncrna",
+                server=server)
+        ]
+
         self.protein_fasta_url = make_fasta_url(
             ensembl_release=self.release,
             species=self.species.latin_name,
             sequence_type="pep",
             server=self.server)
-        self.ncrna_fasta_url = make_fasta_url(
-            ensembl_release=self.release,
-            species=self.species.latin_name,
-            sequence_type="ncrna",
-            server=server)
 
         self.reference_name = self.species.which_reference(self.release)
 
@@ -104,9 +107,8 @@ class EnsemblRelease(Genome):
             annotation_name="ensembl",
             annotation_version=self.release,
             gtf_path_or_url=self.gtf_url,
-            transcript_fasta_path_or_url=self.transcript_fasta_url,
+            transcript_fasta_paths_or_urls=self.transcript_fasta_urls,
             protein_fasta_path_or_url=self.protein_fasta_url,
-            ncrna_fasta_path_or_url=self.ncrna_fasta_url,
             require_ensembl_ids=True)
 
     def install_string(self):

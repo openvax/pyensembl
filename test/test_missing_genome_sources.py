@@ -9,8 +9,8 @@ MOUSE_ENSMUSG00000017167_PATH = data_path(
     "mouse.ensembl.81.partial.ENSMUSG00000017167.gtf")
 MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH = data_path(
     "mouse.ensembl.81.partial.ENSMUSG00000017167.fa")
-MOUSE_ENSMUSG00000088969_NCRNA_FASTA_PATH = data_path(
-    "mouse.ensembl.81.partial.ncrna.ENSMUSG00000017167.fa")
+#MOUSE_ENSMUSG00000088969_NCRNA_FASTA_PATH = data_path(
+#    "mouse.ensembl.81.partial.ncrna.ENSMUSG00000017167.fa")
 MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH = data_path(
     "mouse.ensembl.81.partial.ENSMUSG00000017167.pep")
 
@@ -27,10 +27,10 @@ def test_transcript_fasta_only():
     genome = Genome(
         reference_name="GRCm38",
         annotation_name="_test_mouse_ensembl81_subset",
-        transcript_fasta_path_or_url=MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH)
+        transcript_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH])
     genome.index()
 
-    eq_(2, len(genome.transcript_sequences.fasta_dictionary))
+    eq_(2, len(genome.transcript_sequences[0].fasta_dictionary))
 
     with assert_raises(ValueError) as cm:
         genome.genes()
@@ -89,7 +89,7 @@ def test_gtf_transcript_only():
         reference_name="GRCm38",
         annotation_name="_test_mouse_ensembl81_subset",
         gtf_path_or_url=MOUSE_ENSMUSG00000017167_PATH,
-        transcript_fasta_path_or_url=MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH)
+        transcript_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH])
     genome.index()
 
     eq_(1, len(genome.genes()))
