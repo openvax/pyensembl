@@ -30,7 +30,7 @@ def test_transcript_fasta_only():
         transcript_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH])
     genome.index()
 
-    eq_(2, len(genome.transcript_sequences[0].fasta_dictionary))
+    eq_(2, len(genome.transcript_sequences.fasta_dictionary))
 
     with assert_raises(ValueError) as cm:
         genome.genes()

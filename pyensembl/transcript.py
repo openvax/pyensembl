@@ -400,9 +400,9 @@ class Transcript(LocusWithGenome):
         Spliced cDNA sequence of transcript
         (includes 5" UTR, coding sequence, and 3" UTR)
         """
-        for transcript_sequences in self.genome.transcript_sequences:
-            if self.id in transcript_sequences:
-                return transcript_sequences.get(self.id)
+
+        if self.id in self.genome.transcript_sequences:
+            return self.genome.transcript_sequences.get(self.id)
         return None
 
     @memoized_property

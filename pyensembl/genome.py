@@ -66,7 +66,7 @@ class Genome(Serializable):
         gtf_path_or_url : str
             Path or URL of GTF file
 
-        transcript_fasta_paths_or_urls : str
+        transcript_fasta_paths_or_urls : list
             Path or URL of FASTA file(s) containing transcript sequences
 
         protein_fasta_path_or_url : str
@@ -180,8 +180,8 @@ class Genome(Serializable):
                 field_name="transcript-fasta",
                 path_or_url=path,
                 download_if_missing=download_if_missing,
-                overwrite=overwrite
-            ) for path in self._transcript_fasta_paths_or_urls]
+                overwrite=overwrite)
+            for path in self._transcript_fasta_paths_or_urls]
 
     def _get_protein_fasta_path(
             self,
@@ -231,8 +231,7 @@ class Genome(Serializable):
         if self.has_gtf:
             self.db.connect_or_create(overwrite=overwrite)
         if self.has_transcript_fasta:
-            for seq in self.transcript_sequences:
-                seq.index(overwrite=overwrite)
+            self.transcript_sequences.index(overwrite=overwrite)
         if self.has_protein_fasta:
             self.protein_sequences.index(overwrite=overwrite)
 
@@ -274,7 +273,7 @@ class Genome(Serializable):
             self._set_local_paths()
             assert self.protein_fasta_path is not None
             self._protein_sequences = SequenceData(
-                fasta_path=self.protein_fasta_path,
+                fasta_paths=[self.protein_fasta_path],
                 require_ensembl_ids=self.require_ensembl_ids,
                 cache_directory_path=self.cache_directory_path)
         return self._protein_sequences
@@ -289,12 +288,10 @@ class Genome(Serializable):
             # and populate self.protein_fasta_path
             self._set_local_paths()
             assert self.transcript_fasta_paths is not None
-            self._transcript_sequences = [
-                SequenceData(
-                    fasta_path=path,
+            self._transcript_sequences = SequenceData(
+                    fasta_paths=self.transcript_fasta_paths,
                     require_ensembl_ids=self.require_ensembl_ids,
-                    cache_directory_path=self.cache_directory_path
-                ) for path in self.transcript_fasta_paths]
+                    cache_directory_path=self.cache_directory_path)
         return self._transcript_sequences
 
     def install_string(self):
@@ -442,11 +439,7 @@ class Genome(Serializable):
         if self.transcript_sequences is None:
             raise ValueError(
                 "No transcript FASTA supplied to this Genome: %s" % self)
-        sequence = [x for x in map(lambda x: x.get(transcript_id), self.transcript_sequences) if x is not None]
-        #self.transcript_sequences.get(transcript_id)
-        assert len(sequence) <= 1, "More than on sequence found for %s!" % transcript_id
-
-        return None if len(sequence[0])==0 else sequence[0]
+        return self.transcript_sequences.get(transcript_id)
 
     def protein_sequence(self, protein_id):
         """Return cDNA nucleotide sequence of transcript, or None if
