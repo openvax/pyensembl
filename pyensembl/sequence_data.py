@@ -123,7 +123,7 @@ class SequenceData(object):
             fasta_dictionary_tmp = parse_fasta_dictionary(fasta_path)
             self._add_to_fasta_dictionary(fasta_dictionary_tmp)
             logger.info("Saving sequence dictionary to %s", pickle_path)
-            dump_pickle(self._fasta_dictionary, pickle_path)
+            dump_pickle(fasta_dictionary_tmp, pickle_path)
 
     def index(self, overwrite=False):
         if overwrite:
