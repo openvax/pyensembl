@@ -140,49 +140,52 @@ distinct ID.
 
 ## Transcripts
 
-`transcripts(contig=None, strand=None)`
-: returns list of Transcript objects for all transcript entries in the
-Ensembl database, optionally restricted to a particular contig or strand.
+<dl>
+<dt>`transcripts(contig=None, strand=None)`</dt>
+<dd>Returns a list of Transcript objects for all transcript entries in the
+Ensembl database, optionally restricted to a particular contig or strand.</dd>
 
-`transcript_by_id(transcript_id)`
-: construct Transcript object for given Ensembl transcript ID (e.g. "ENST00000369985")
+<dt>`transcript_by_id(transcript_id)`</dt>
+<dd>Construct a Transcript object for given Ensembl transcript ID (e.g. "ENST00000369985")</dd>
 
-`transcripts_by_name(transcript_name)`
-: returns list of Transcript objects for every transcript matching the given name.
+<dt>`transcripts_by_name(transcript_name)`</dt>
+<dd>Returns a list of Transcript objects for every transcript matching the given name.</dd>
 
-`transcript_names(contig=None, strand=None)`
-: all transcript names in the annotation database
+<dt>`transcript_names(contig=None, strand=None)`</dt>
+<dd>Returns all transcript names in the annotation database.</dd>
 
-`transcript_ids(contig=None, strand=None)`
-: returns all transcript IDs in the annotation database
+<dt>`transcript_ids(contig=None, strand=None)`</dt>
+<dd>Returns all transcript IDs in the annotation database.</dd>
 
-`transcript_ids_of_gene_id(gene_id)`
-: return IDs of all transcripts associated with given gene ID
+<dt>`transcript_ids_of_gene_id(gene_id)`</dt>
+<dd>Return IDs of all transcripts associated with given gene ID.</dd>
 
-`transcript_ids_of_gene_name(gene_name)`
-: return IDs of all transcripts associated with given gene name
+<dt>`transcript_ids_of_gene_name(gene_name)`</dt>
+<dd>Return IDs of all transcripts associated with given gene name.</dd>
 
-`transcript_ids_of_transcript_name(transcript_name)`
-: find all Ensembl transcript IDs with the given name
+<dt>`transcript_ids_of_transcript_name(transcript_name)`</dt>
+<dd>Find all Ensembl transcript IDs with the given name.</dd>
 
-`transcript_ids_of_exon_id(exon_id)`
-: return IDs of all transcripts associatd with given exon ID
-
+<dt>`transcript_ids_of_exon_id(exon_id)`</dt>
+<dd>Return IDs of all transcripts associatd with given exon ID.</dd>
+</d>
 
 ## Exons
 
-`exon_ids(contig=None, strand=None)`
-: returns list of exons IDs in the annotation database, optionally restricted
-by the given chromosome and strand
+<dl>
+<dt>`exon_ids(contig=None, strand=None)`</dt>
+<dd>Returns a list of exons IDs in the annotation database, optionally restricted
+by the given chromosome and strand.</dd>
 
-`exon_ids_of_gene_id(gene_id)`
-: returns list of exon IDs associated with a given gene ID
+<dt>`exon_ids_of_gene_id(gene_id)`</dt>
+<dd>Returns a list of exon IDs associated with a given gene ID.</dd>
 
-`exon_ids_of_gene_name(gene_name)`
-: returns list of exon IDs associated with a given gene name
+<dt>`exon_ids_of_gene_name(gene_name)`</dt>
+<dd>Returns a list of exon IDs associated with a given gene name.</dd>
 
-`exon_ids_of_transcript_id(transcript_id)`
-: returns list of exon IDs associated with a given transcript ID
+<dt>`exon_ids_of_transcript_id(transcript_id)`</dt>
+<dd>Returns a list of exon IDs associated with a given transcript ID.</dd>
 
-`exon_ids_of_transcript_name(transcript_name)`
-: returns list of exon IDs associated with a given transcript name
+<dt>`exon_ids_of_transcript_name(transcript_name)`</dt>
+<dd>Returns a list of exon IDs associated with a given transcript name.</dd>
+</dl>
