@@ -3,7 +3,6 @@
 
 PyEnsembl
 =======
-
 Python interface to Ensembl reference genome metadata (exons, transcripts, &c)
 
 # Example Usage
@@ -73,7 +72,7 @@ non-Ensembl data is still very much in development.)
 
 For example:
 
-```
+```python
 data = Genome
     reference_name='GRCh38',
     annotation_name='my_genome_features',
