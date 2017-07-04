@@ -19,6 +19,7 @@ import logging
 from collections import Counter
 
 from six.moves import cPickle as pickle
+from six import string_types
 
 from .common import (
     require_ensembl_id,
@@ -40,11 +41,15 @@ class SequenceData(object):
             fasta_paths,
             require_ensembl_ids=False,
             cache_directory_path=None):
+
+        if isinstance(fasta_paths, string_types):
+            fasta_paths = [fasta_paths]
+
         self.fasta_paths = [abspath(path) for path in fasta_paths]
         self.fasta_directory_paths = [split(path)[0] for path in self.fasta_paths]
         self.fasta_filenames = [split(path)[1] for path in self.fasta_paths]
         if cache_directory_path:
-            self.cache_directory_path = cache_directory_path
+            self.cache_directory_paths = [cache_directory_path]*len(self.fasta_paths)
         else:
             self.cache_directory_paths = self.fasta_directory_paths
         for path in self.fasta_paths:
@@ -53,8 +58,9 @@ class SequenceData(object):
         self.require_ensembl_ids = require_ensembl_ids
         self.fasta_dictionary_filenames = [
             filename + ".pickle" for filename in self.fasta_filenames]
-        self.fasta_dictionary_pickle_paths = [join(
-            self.cache_directory_path,filename) for filename in self.fasta_dictionary_filenames]
+        self.fasta_dictionary_pickle_paths = [
+            join(cache_path,filename) for cache_path, filename in
+            zip(self.cache_directory_paths,self.fasta_dictionary_filenames)]
         self._init_lazy_fields()
 
     def _init_lazy_fields(self):

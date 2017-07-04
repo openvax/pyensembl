@@ -56,7 +56,7 @@ def test_protein_fasta_only():
     genome = Genome(
         reference_name="GRCm38",
         annotation_name="_test_mouse_ensembl81_subset",
-        protein_fasta_path_or_url=MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH)
+        protein_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH])
     genome.index()
 
     eq_(4, len(genome.protein_sequences.fasta_dictionary))
@@ -106,7 +106,7 @@ def test_gtf_protein_only():
         reference_name="GRCm38",
         annotation_name="_test_mouse_ensembl81_subset",
         gtf_path_or_url=MOUSE_ENSMUSG00000017167_PATH,
-        protein_fasta_path_or_url=MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH)
+        protein_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH])
     genome.index()
 
     eq_(1, len(genome.genes()))

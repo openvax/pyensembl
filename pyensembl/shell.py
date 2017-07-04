@@ -138,7 +138,7 @@ def run():
             annotation_name=args.annotation_name,
             gtf_path_or_url=args.gtf,
             transcript_fasta_paths_or_urls=args.transcript_fasta,
-            protein_fasta_path_or_url=args.protein_fasta))
+            protein_fasta_paths_or_urls=args.protein_fasta))
     else:
         # Otherwise, use Ensembl release information
         for version in args.release:
