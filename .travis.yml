@@ -2,7 +2,7 @@ sudo: false  # Use container-based infrastructure
 language: python
 python:
   - "2.7"
-  - "3.4"
+  - "3.5"
 before_install:
   # Commands below copied from: http://conda.pydata.org/docs/travis.html
   # We do this conditionally because it saves us some downloading if the
