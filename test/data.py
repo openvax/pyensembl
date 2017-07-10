@@ -100,6 +100,10 @@ EGFR_001_protein_sequence = "".join([
 # fasta/mus_musculus/cdna/Mus_musculus.GRCm38.cdna.all.fa.gz via:
 # grep "ENSMUSG00000017167" Mus_musculus.GRCm38.cdna.all.fa -A 50
 
+# ncRNA FASTA cropped from ftp://ftp.ensembl.org/pub/release-81/
+# fasta/mus_musculus/cdna/Mus_musculus.GRCm38.ncrna.fa.gz via:
+# grep "ENSMUSG00000088969" Mus_musculus.GRCm38.ncrna.fa -A 2
+
 # Protein FASTA cropped from ftp://ftp.ensembl.org/pub/release-81/fasta/
 # mus_musculus/pep/Mus_musculus.GRCm38.pep.all.fa.gz via:
 # grep "ENSMUSG00000017167" Mus_musculus.GRCm38.pep.all.fa -A 50
@@ -111,6 +115,8 @@ MOUSE_ENSMUSG00000017167_PATH = data_path(
     "mouse.ensembl.81.partial.ENSMUSG00000017167.gtf")
 MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH = data_path(
     "mouse.ensembl.81.partial.ENSMUSG00000017167.fa")
+MOUSE_ENSMUSG00000088969_NCRNA_FASTA_PATH = data_path(
+    "mouse.ensembl.81.partial.ncrna.ENSMUSG00000017167.fa")
 MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH = data_path(
     "mouse.ensembl.81.partial.ENSMUSG00000017167.pep")
 
@@ -119,8 +125,8 @@ custom_mouse_genome_grcm38_subset = Genome(
     reference_name="GRCm38",
     annotation_name="_test_mouse_ensembl81_subset",
     gtf_path_or_url=MOUSE_ENSMUSG00000017167_PATH,
-    transcript_fasta_path_or_url=MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH,
-    protein_fasta_path_or_url=MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH)
+    transcript_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH],
+    protein_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH])
 
 def setup_init_custom_mouse_genome():
     """

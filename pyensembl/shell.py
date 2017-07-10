@@ -100,8 +100,11 @@ def run():
     path_group.add_argument(
         "--transcript-fasta",
         type=str,
+        action='append',
         default=None,
-        help="URL or local path to a FASTA file containing transcript data.")
+        help="URL or local path to a FASTA files containing the transcript "
+        "data. This option can be specified multiple times for multiple "
+        "FASTA files.")
     path_group.add_argument(
         "--protein-fasta",
         type=str,
@@ -129,12 +132,13 @@ def run():
             raise ValueError("Must specify a reference name")
         if not args.annotation_name:
             raise ValueError("Must specify the name of the annotation source")
+
         genomes.append(Genome(
             reference_name=args.reference_name,
             annotation_name=args.annotation_name,
             gtf_path_or_url=args.gtf,
-            transcript_fasta_path_or_url=args.transcript_fasta,
-            protein_fasta_path_or_url=args.protein_fasta))
+            transcript_fasta_paths_or_urls=args.transcript_fasta,
+            protein_fasta_paths_or_urls=args.protein_fasta))
     else:
         # Otherwise, use Ensembl release information
         for version in args.release:
