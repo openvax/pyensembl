@@ -49,7 +49,7 @@ class SequenceData(object):
         self.fasta_directory_paths = [split(path)[0] for path in self.fasta_paths]
         self.fasta_filenames = [split(path)[1] for path in self.fasta_paths]
         if cache_directory_path:
-            self.cache_directory_paths = [cache_directory_path]*len(self.fasta_paths)
+            self.cache_directory_paths = [cache_directory_path] * len(self.fasta_paths)
         else:
             self.cache_directory_paths = self.fasta_directory_paths
         for path in self.fasta_paths:
@@ -59,8 +59,8 @@ class SequenceData(object):
         self.fasta_dictionary_filenames = [
             filename + ".pickle" for filename in self.fasta_filenames]
         self.fasta_dictionary_pickle_paths = [
-            join(cache_path,filename) for cache_path, filename in
-            zip(self.cache_directory_paths,self.fasta_dictionary_filenames)]
+            join(cache_path, filename) for cache_path, filename in
+            zip(self.cache_directory_paths, self.fasta_dictionary_filenames)]
         self._init_lazy_fields()
 
     def _init_lazy_fields(self):
