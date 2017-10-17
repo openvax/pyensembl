@@ -23,47 +23,30 @@ from .genome import Genome
 from .gene import Gene
 from .gtf import GTF
 from .locus import Locus
+from .reference_name import (
+    ensembl_grch36,
+    ensembl_grch37,
+    ensembl_grch38,
+    normalize_reference_name,
+    find_species_by_reference,
+    which_reference,
+)
 from .search import find_nearest_locus
 from .sequence_data import SequenceData
 from .species import (
     find_species_by_name,
-    find_species_by_reference,
-    which_reference,
     check_species_object,
-    normalize_reference_name,
     normalize_species_name,
 )
 from .transcript import Transcript
 
-__version__ = '1.1.0'
-
-def cached_release(release, species="human"):
-    """
-    Create an EnsemblRelease instance only if it's hasn't already been made,
-    otherwise returns the old instance.
-
-    Keeping this function for backwards compatibility but this functionality
-    has been moving into the cached method of EnsemblRelease.
-    """
-    return EnsemblRelease.cached(release=release, species=species)
-
-def genome_for_reference_name(reference_name):
-    reference_name = normalize_reference_name(reference_name)
-    species = find_species_by_reference(reference_name)
-    (_, max_ensembl_release) = species.reference_assemblies[reference_name]
-    return cached_release(release=max_ensembl_release, species=species)
-
-ensembl_grch36 = ensembl54 = cached_release(54)  # last release for GRCh36/hg18
-ensembl_grch37 = ensembl75 = cached_release(75)  # last release for GRCh37/hg19
-ensembl_grch38 = cached_release(MAX_ENSEMBL_RELEASE)  # most recent for GRCh38
-
+__version__ = '1.2.0'
 
 __all__ = [
     "MemoryCache",
     "DownloadCache",
     "EnsemblRelease",
     "MAX_ENSEMBL_RELEASE",
-    "cached_release",
     "Gene",
     "Transcript",
     "Exon",
