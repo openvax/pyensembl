@@ -124,35 +124,11 @@ def normalize_species_name(name):
 
     return lower_name.replace(" ", "_")
 
-def normalize_reference_name(name):
-    """
-    Search the dictionary of species-specific references to find a reference
-    name that matches aside from capitalization.
-
-    If no matching reference is found, raise an exception.
-    """
-    lower_name = name.strip().lower()
-    for reference in Species._reference_names_to_species.keys():
-        if reference.lower() == lower_name:
-            return reference
-    raise ValueError("Reference genome '%s' not found" % name)
-
 def find_species_by_name(species_name):
     latin_name = normalize_species_name(species_name)
     if latin_name not in Species._latin_names_to_species:
         raise ValueError("Species not found: %s" % species_name)
     return Species._latin_names_to_species[latin_name]
-
-def find_species_by_reference(reference_name):
-    return Species._reference_names_to_species[normalize_reference_name(reference_name)]
-
-def which_reference(species_name, ensembl_release):
-    return find_species_by_name(species_name).which_reference(ensembl_release)
-
-def max_ensembl_release(reference_name):
-    species = find_species_by_reference(reference_name)
-    (_, max_release) = species.reference_assemblies[reference_name]
-    return max_release
 
 def check_species_object(species_name_or_object):
     """

@@ -87,11 +87,14 @@ class Genome(Serializable):
             by default inferred from reference name, annotation name,
             annotation version, and global cache dir for pyensembl.
         """
-
-        if isinstance(transcript_fasta_paths_or_urls, string_types):
+        if transcript_fasta_paths_or_urls is None:
+            transcript_fasta_paths_or_urls = []
+        elif isinstance(transcript_fasta_paths_or_urls, string_types):
             transcript_fasta_paths_or_urls = [transcript_fasta_paths_or_urls]
 
-        if isinstance(protein_fasta_paths_or_urls, string_types):
+        if protein_fasta_paths_or_urls is None:
+            protein_fasta_paths_or_urls = []
+        elif isinstance(protein_fasta_paths_or_urls, string_types):
             protein_fasta_paths_or_urls = [protein_fasta_paths_or_urls]
 
         self.reference_name = reference_name
@@ -112,15 +115,21 @@ class Genome(Serializable):
             decompress_on_download=self.decompress_on_download,
             copy_local_files_to_cache=self.copy_local_files_to_cache,
             install_string_function=self.install_string,
-            cache_directory_path=self.cache_directory_path)
-        self.cache_directory_path = self.download_cache.cache_directory_path
-
-        self.has_gtf = self._gtf_path_or_url is not None
-        self.has_transcript_fasta = self._transcript_fasta_paths_or_urls is not None
-        self.has_protein_fasta = self._protein_fasta_paths_or_urls is not None
+            cache_directory_path=cache_directory_path)
         self.memory_cache = MemoryCache()
-
         self._init_lazy_fields()
+
+    @property
+    def has_gtf(self):
+        return self._gtf_path_or_url is not None
+
+    @property
+    def has_transcript_fasta(self):
+        return self._transcript_fasta_paths_or_urls is not None
+
+    @property
+    def has_protein_fasta(self):
+        return self._protein_fasta_paths_or_urls is not None
 
     def to_dict(self):
         """
@@ -164,8 +173,10 @@ class Genome(Serializable):
         Get the local path for a possibly remote file, invoking either
         a download or install error message if it's missing.
         """
-        assert field_name, "Expected non-empty field name"
-        assert path_or_url, "Expected non-empty path_or_url"
+        if len(field_name) == 0:
+            raise ValueError("Expected non-empty field name")
+        if len(path_or_url) == 0:
+            raise ValueError("Expected non-empty path_or_url")
         return self.download_cache.local_path_or_install_error(
             field_name=field_name,
             path_or_url=path_or_url,
@@ -343,6 +354,15 @@ class Genome(Serializable):
         return "pyensembl install %s" % " ".join(args)
 
     def __str__(self):
+        transcript_fasta_paths_or_urls = (
+            ','.join(self._transcript_fasta_paths_or_urls)
+            if self._transcript_fasta_paths_or_urls is not None
+            else None
+        )
+        protein_fasta_paths_or_urls = (
+            ','.join(self._protein_fasta_paths_or_urls)
+            if self._protein_fasta_paths_or_urls is not None else None
+        )
         return ("Genome(reference_name=%s, "
                 "annotation_name=%s, "
                 "annotation_version=%s, "
@@ -353,12 +373,8 @@ class Genome(Serializable):
                     self.annotation_name,
                     self.annotation_version,
                     self._gtf_path_or_url,
-                    ','.join(self._transcript_fasta_paths_or_urls)
-                    if self._transcript_fasta_paths_or_urls is not None
-                    else None,
-                    ','.join(self._protein_fasta_paths_or_urls)
-                    if self._protein_fasta_paths_or_urls is not None
-                    else None))
+                    transcript_fasta_paths_or_urls,
+                    protein_fasta_paths_or_urls))
 
     def __repr__(self):
         return str(self)

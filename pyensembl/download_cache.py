@@ -1,5 +1,3 @@
-# Copyright (c) 2015. Mount Sinai School of Medicine
-#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -302,8 +300,8 @@ class DownloadCache(object):
         """
         for filename in listdir(self.cache_directory_path):
             delete = (
-                any(filename.endswith(ext) for ext in suffixes) or
-                any(filename.startswith(pre) for pre in prefixes))
+                any([filename.endswith(ext) for ext in suffixes]) or
+                any([filename.startswith(pre) for pre in prefixes]))
             if delete:
                 path = join(self.cache_directory_path, filename)
                 logger.info("Deleting %s", path)
