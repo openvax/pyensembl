@@ -33,7 +33,6 @@ class EnsemblRelease(Genome):
     Bundles together the genomic annotation and sequence data associated with
     a particular release of the Ensembl database.
     """
-
     @classmethod
     def normalize_init_values(cls, release, species, server):
         """
@@ -144,3 +143,12 @@ class EnsemblRelease(Genome):
         Deserialize EnsemblRelease without creating duplicate instances.
         """
         return cls.cached(**state_dict)
+
+def cached_release(release, species="human"):
+    """
+    Create an EnsemblRelease instance only if it's hasn't already been made,
+    otherwise returns the old instance.
+    Keeping this function for backwards compatibility but this functionality
+    has been moving into the cached method of EnsemblRelease.
+    """
+    return EnsemblRelease.cached(release=release, species=species)

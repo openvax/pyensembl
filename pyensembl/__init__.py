@@ -16,7 +16,7 @@ from __future__ import print_function, division, absolute_import
 
 from .memory_cache import MemoryCache
 from .download_cache import DownloadCache
-from .ensembl_release import EnsemblRelease
+from .ensembl_release import EnsemblRelease, cached_release
 from .ensembl_release_versions import MAX_ENSEMBL_RELEASE
 from .exon import Exon
 from .genome import Genome
@@ -46,6 +46,7 @@ __all__ = [
     "MemoryCache",
     "DownloadCache",
     "EnsemblRelease",
+    "cached_release",
     "MAX_ENSEMBL_RELEASE",
     "Gene",
     "Transcript",
