@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/hammerlab/pyensembl.svg?branch=master)](https://travis-ci.org/hammerlab/pyensembl) [![Coverage Status](https://coveralls.io/repos/hammerlab/pyensembl/badge.svg?branch=master&service=github)](https://coveralls.io/github/hammerlab/pyensembl?branch=master) [![DOI](https://zenodo.org/badge/18834/hammerlab/pyensembl.svg)](https://zenodo.org/badge/latestdoi/18834/hammerlab/pyensembl)
+[![Build Status](https://travis-ci.org/openvax/pyensembl.svg?branch=master)](https://travis-ci.org/openvax/pyensembl) [![Coverage Status](https://coveralls.io/repos/openvax/pyensembl/badge.svg?branch=master&service=github)](https://coveralls.io/github/openvax/pyensembl?branch=master) [![DOI](https://zenodo.org/badge/18834/openvax/pyensembl.svg)](https://zenodo.org/badge/latestdoi/18834/openvax/pyensembl)
 
 
 PyEnsembl
@@ -28,7 +28,7 @@ You can install PyEnsembl using [pip](https://pip.pypa.io/en/latest/quickstart.h
 pip install pyensembl
 ```
 
-This should also install any required packages, such as [datacache](https://github.com/hammerlab/datacache) and
+This should also install any required packages, such as [datacache](https://github.com/openvax/datacache) and
 [BioPython](http://biopython.org/).
 
 Before using PyEnsembl, run the following command to download and install
@@ -137,7 +137,7 @@ distinct ID.</dd>
 
 <dt>gene_ids(contig=None, strand=None)
 </dt>
-<dd>Return all gene IDs in the annotation database, optionally restricted by 
+<dd>Return all gene IDs in the annotation database, optionally restricted by
 chromosome name or strand.</dd>
 
 <dt>gene_ids_of_gene_name(gene_name)

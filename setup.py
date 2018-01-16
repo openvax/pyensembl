@@ -54,7 +54,7 @@ if __name__ == '__main__':
         description="Python interface to ensembl reference genome metadata",
         author="Alex Rubinsteyn",
         author_email="alex {dot} rubinsteyn {at} mssm {dot} edu",
-        url="https://github.com/hammerlab/pyensembl",
+        url="https://github.com/openvax/pyensembl",
         license="http://www.apache.org/licenses/LICENSE-2.0.html",
         entry_points={
             'console_scripts': [
