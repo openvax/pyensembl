@@ -43,14 +43,21 @@ install:
   - pip install coveralls
 script:
   - ./lint.sh
+  - echo "Before installing Ensembl releases" && df
   # older human releases
   - pyensembl install --release 54 --species human
+  - echo "Installed Ensembl 54" && df
   - pyensembl install --release 75 --species human
+  - echo "Installed Ensembl 75" && df
   - pyensembl install --release 77 --species human
+  - echo "Installed Ensembl 77" && df
   - pyensembl install --release 83 --species human
+  - echo "Installed Ensembl 83" && df
   - pyensembl install --release 87 --species human
+  - echo "Installed Ensembl 87" && df
   # latest mouse release
   - pyensembl install --release 87 --species mouse
+  - echo "Installed Ensembl 87" && df
   # run tests
   - nosetests test --verbose --with-coverage --cover-package=pyensembl
 after_success:
