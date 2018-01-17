@@ -299,9 +299,9 @@ class Genome(Serializable):
             self._set_local_paths()
             assert self.transcript_fasta_paths is not None
             self._transcript_sequences = SequenceData(
-                    fasta_paths=self.transcript_fasta_paths,
-                    require_ensembl_ids=self.require_ensembl_ids,
-                    cache_directory_path=self.cache_directory_path)
+                fasta_paths=self.transcript_fasta_paths,
+                require_ensembl_ids=self.require_ensembl_ids,
+                cache_directory_path=self.cache_directory_path)
         return self._transcript_sequences
 
     def install_string(self):
@@ -338,8 +338,12 @@ class Genome(Serializable):
                     self.annotation_name,
                     self.annotation_version,
                     self._gtf_path_or_url,
-                    ','.join(self._transcript_fasta_paths_or_urls) if self._transcript_fasta_paths_or_urls is not None else None,
-                    ','.join(self._protein_fasta_paths_or_urls) if self._protein_fasta_paths_or_urls is not None else None))
+                    ','.join(self._transcript_fasta_paths_or_urls)
+                    if self._transcript_fasta_paths_or_urls is not None
+                    else None,
+                    ','.join(self._protein_fasta_paths_or_urls)
+                    if self._protein_fasta_paths_or_urls is not None
+                    else None))
 
     def __repr__(self):
         return str(self)
@@ -373,6 +377,18 @@ class Genome(Serializable):
             # GTF and SequenceData objects
             if hasattr(maybe_fn, "clear_cache"):
                 maybe_fn.clear_cache()
+
+    def delete_source_files(self):
+        if self.has_gtf and exists(self.gtf_path):
+            remove(self.gtf_path)
+        if self.has_transcript_fasta:
+            for fasta_path in self.transcript_fasta_paths:
+                if exists(fasta_path):
+                    remove(fasta_path)
+        if self.has_protein_fasta:
+            for fasta_path in self.protein_fasta_paths:
+                if exists(fasta_path):
+                    remove(fasta_path)
 
     def delete_index_files(self):
         """
