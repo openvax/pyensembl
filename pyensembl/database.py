@@ -15,11 +15,13 @@
 from __future__ import print_function, division, absolute_import
 
 import logging
-from os.path import join, exists
+from os.path import split, join, exists, splitext
 import sqlite3
 
 import datacache
 from typechecks import require_integer, require_string
+
+from gtfparse import read_gtf_as_dataframe, create_missing_features
 
 from .common import memoize
 from .normalization import normalize_chromosome, normalize_strand
@@ -39,19 +41,33 @@ class Database(object):
     writing SQL queries directly.
     """
 
-    def __init__(self, gtf, install_string):
+    def __init__(self, gtf_path, install_string, cache_directory_path=None):
         """
         Parameters
         ----------
-        gtf : pyensembl.GTF instance
-            Object which parses GTF annotation files and presents their
-            contents as Pandas DataFrames
+        gtf_path : str
+            Path to GTF annotation file
 
         install_string : str
             Message to tell user if database connection is requested before
             database is created.
+
+        cache_directory_path : str
+            Path to directory where database should be written. If omitted
+            then use path of GTF file.
         """
-        self.gtf = gtf
+        self.gtf_path = gtf_path
+
+        self.gtf_directory_path, self.gtf_filename = split(self.gtf_path)
+        self.gtf_base_filename = splitext(self.gtf_filename)[0]
+
+        # if cache directory isn't given then put cached files
+        # alongside the GTF
+        if cache_directory_path:
+            self.cache_directory_path = cache_directory_path
+        else:
+            self.cache_directory_path = self.gtf_directory_path
+
         self.install_string = install_string
         self._connection = None
 
@@ -66,20 +82,13 @@ class Database(object):
     def __hash__(self):
         return hash((self.gtf))
 
-    def local_db_filename(self):
-        if not self.gtf:
-            raise ValueError("No GTF supplied to this Database: %s" %
-                             str(self))
-        base = self.gtf.gtf_base_filename
-        return base + ".db"
+    @property
+    def database_filename(self):
+        return self.gtf_base_filename + ".db"
 
-    def local_db_path(self):
-        if not self.gtf:
-            raise ValueError("No GTF supplied to this Database: %s" %
-                             str(self))
-        dirpath = self.gtf.cache_directory_path
-        filename = self.local_db_filename()
-        return join(dirpath, filename)
+    @property
+    def database_path(self):
+        return join(self.cache_directory_path, self.database_filename)
 
     def _all_possible_indices(self, column_names):
         """
@@ -183,13 +192,8 @@ class Database(object):
 
         Returns a connection to the database.
         """
-        if not self.gtf:
-            raise ValueError("No GTF supplied to this Database: %s" %
-                             str(self))
-
-        db_path = self.local_db_path()
-        logger.info("Creating database: %s", db_path)
-        df = self.gtf.dataframe()
+        logger.info("Creating database: %s", self.database_path)
+        df = self._load_gtf_as_dataframe()
         all_index_groups = self._all_possible_indices(df.columns)
 
         # split single DataFrame into dictionary mapping each unique
@@ -213,8 +217,9 @@ class Database(object):
                 all_index_groups,
                 primary_key,
                 df_subset)
+
         self._connection = datacache.db_from_dataframes_with_absolute_path(
-            db_path=db_path,
+            db_path=self.database_path,
             table_names_to_dataframes=dataframes,
             table_names_to_primary_keys=primary_keys,
             table_names_to_indices=indices_dict,
@@ -224,7 +229,7 @@ class Database(object):
 
     def _get_connection(self):
         if self._connection is None:
-            db_path = self.local_db_path()
+            db_path = self.database_path
             if exists(db_path):
                 # since version metadata is filled in last in datacache,
                 # checking for a version also implicitly checks for
@@ -565,3 +570,58 @@ class Database(object):
             raise ValueError("Too many loci for %s with %s = %s: %s" % (
                 feature, filter_column, filter_value, loci))
         return loci[0]
+
+    def _load_gtf_as_dataframe(self):
+        """
+        Parse this genome source's GTF file and load it as a Pandas DataFrame
+        """
+        logger.info("Reading GTF from %s", self.gtf_path)
+        df = read_gtf_as_dataframe(
+            self.gtf_path,
+            column_converters={
+                "seqname": normalize_chromosome,
+                "strand": normalize_strand,
+            },
+            infer_biotype_column=True)
+
+        features = set(df["feature"])
+        column_names = set(df.keys())
+
+        # older Ensembl releases don't have "gene" or "transcript"
+        # features, so fill in those rows if they're missing
+        if "gene" not in features:
+            # if we have to reconstruct gene feature rows then
+            # fill in values for 'gene_name' and 'gene_biotype'
+            # but only if they're actually present in the GTF
+            logger.info("Creating missing gene features...")
+            df = create_missing_features(
+                dataframe=df,
+                unique_keys={"gene": "gene_id"},
+                extra_columns={
+                    "gene": {
+                        "gene_name",
+                        "gene_biotype"
+                    }.intersection(column_names),
+                },
+                missing_value="")
+            logger.info("Done.")
+
+        if "transcript" not in features:
+            logger.info("Creating missing transcript features...")
+            df = create_missing_features(
+                dataframe=df,
+                unique_keys={"transcript": "transcript_id"},
+                extra_columns={
+                    "transcript": {
+                        "gene_id",
+                        "gene_name",
+                        "gene_biotype",
+                        "transcript_name",
+                        "transcript_biotype",
+                        "protein_id",
+                    }.intersection(column_names)
+                },
+                missing_value="")
+            logger.info("Done.")
+
+        return df

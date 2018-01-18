@@ -30,7 +30,6 @@ from .download_cache import DownloadCache
 from .database import Database
 from .exon import Exon
 from .gene import Gene
-from .gtf import GTF
 from .sequence_data import SequenceData
 from .transcript import Transcript
 
@@ -246,30 +245,21 @@ class Genome(Serializable):
             self.protein_sequences.index(overwrite=overwrite)
 
     @property
-    def gtf(self):
-        if self._gtf is None:
-            if not self.has_gtf:
-                raise ValueError("Missing GTF source for %s" % self)
+    def db(self):
+        if not self.has_gtf:
+            raise ValueError("Missing GTF source for %s" % self)
+        if self._db is None:
             # make sure GTF file exists locally
             # and populate self.gtf_path
             self._set_local_paths()
             assert self.gtf_path is not None
-            # GTF object wraps the source GTF file from which we get
-            # genome annotations. Presents access to each feature
-            # annotations as a pandas.DataFrame.
-            self._gtf = GTF(
-                gtf_path=self.gtf_path,
-                cache_directory_path=self.cache_directory_path)
-        return self._gtf
 
-    @property
-    def db(self):
-        if self._db is None:
             # Database object turns the GTF dataframes into sqlite3 tables
             # and wraps them with methods like `query_one`
             self._db = Database(
-                gtf=self.gtf,
-                install_string=self.install_string())
+                gtf_path=self.gtf_path,
+                install_string=self.install_string(),
+                cache_directory_path=self.cache_directory_path)
         return self._db
 
     @property
@@ -432,35 +422,12 @@ class Genome(Serializable):
 
         Returns a list constructed from query results.
         """
-        if not self.gtf:
-            raise ValueError("No GTF supplied to this Genome: %s" %
-                             str(self))
-
-        # since we're constructing a list, rather than a DataFrame,
-        # we're going to store it using pickling rather than the Pandas
-        # CSV serializer. Change the default extension from ".csv" to ".pickle"
-        pickle_path = self.gtf.data_subset_path(
-            feature=feature,
+        return self.db.query_feature_values(
             column=column,
-            contig=contig,
-            strand=strand,
+            feature=feature,
             distinct=distinct,
-            extension=".pickle")
-
-        def run_query():
-            results = self.db.query_feature_values(
-                column=column,
-                feature=feature,
-                distinct=distinct,
-                contig=contig,
-                strand=strand)
-            assert isinstance(results, list), \
-                "Expected list from Database.query_feature_values, got %s" % (
-                    type(results))
-            return results
-
-        return self.memory_cache.cached_object(
-            pickle_path, compute_fn=run_query)
+            contig=contig,
+            strand=strand)
 
     def transcript_sequence(self, transcript_id):
         """Return cDNA nucleotide sequence of transcript, or None if
