@@ -41,7 +41,7 @@ class Database(object):
     writing SQL queries directly.
     """
 
-    def __init__(self, gtf_path, install_string, cache_directory_path=None):
+    def __init__(self, gtf_path, install_string=None, cache_directory_path=None):
         """
         Parameters
         ----------
@@ -253,9 +253,10 @@ class Database(object):
         if connection:
             return connection
         else:
-            raise ValueError(
-                "GTF database needs to be created, run: %s" % (
-                    self.install_string,))
+            message = "GTF database needs to be created"
+            if self.install_string:
+                message += ", run: %s" % self.install_string
+            raise ValueError(message)
 
     def connect_or_create(self, overwrite=False):
         """
