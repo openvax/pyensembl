@@ -106,7 +106,6 @@ class Database(object):
         """
         candidate_column_groups = [
             ['seqname', 'start', 'end'],
-            ['seqname', 'start', 'end', 'strand'],
             ['gene_name'],
             ['gene_id'],
             ['transcript_id'],
@@ -169,7 +168,7 @@ class Database(object):
             return primary_key
 
     def _feature_indices(self, all_index_groups, primary_key, feature_df):
-        """Choose subset ofindex group tuples from `all_index_groups` which are
+        """Choose subset of index group tuples from `all_index_groups` which are
         applicable to a particular feature (not same as its primary key, have
         non-null values).
         """
