@@ -13,22 +13,6 @@ def gtf_path_endswith_gtf_gz(ensembl):
     assert exists(path)
     assert path.endswith(".gtf.gz")
 
-def test_dataframe_column_at_locus():
-    series = ensembl.gtf.dataframe_column_at_locus(
-        column_name='gene_id',
-        contig='1',
-        start=11869)
-    assert series is not None
-    assert len(series) > 0
-    eq_('ENSG00000223972', series.unique()[0])
-
-def test_dataframe_at_locus():
-    df = ensembl.gtf.dataframe_at_locus(contig='1',
-                                        start=11869)
-    assert df is not None
-    assert len(df) > 0
-    eq_('ENSG00000223972', df['gene_id'].unique()[0])
-
 def test_slice_column():
     column_name_series = pd.Series(["a", "b", "c"])
     start_series = pd.Series([1000, 2000, 3000])

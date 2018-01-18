@@ -251,34 +251,6 @@ class GTF(object):
 
         return self._dataframes[key]
 
-    def dataframe_column_at_locus(
-            self,
-            column_name,
-            contig,
-            start,
-            end=None,
-            offset=None,
-            strand=None):
-        """
-        Subset of entries which overlap an inclusive range of loci
-        """
-        if end is None and offset is None:
-            end = start
-        elif offset is None:
-            end = start + offset - 1
-
-        df_contig = self.dataframe(contig=contig, strand=strand)
-
-        assert column_name in df_contig, \
-            "Unknown genome property: %s" % column_name
-
-        return self._slice_column(
-            df_contig[column_name],
-            df_contig.start,
-            df_contig.end,
-            start,
-            end)
-
     @staticmethod
     def _slice_column(column_name_series, start_series, end_series,
                       start, end):
