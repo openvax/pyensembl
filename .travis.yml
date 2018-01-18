@@ -35,7 +35,7 @@ cache:
 install:
   - >
       conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
-      numpy scipy nose pandas matplotlib
+      numpy nose pandas
   - source activate test-environment
   - pip install pypandoc
   - pip install -r requirements.txt
@@ -46,15 +46,15 @@ script:
   - echo "Before installing Ensembl releases" && df
   # older human releases
   - pyensembl install --release 54 --species human
-  - echo "Installed Ensembl 54" && df
+  - echo "Installed Ensembl 54" && df -h
   - pyensembl install --release 75 --species human
-  - echo "Installed Ensembl 75" && df
+  - echo "Installed Ensembl 75" && df -h
   - pyensembl install --release 77 --species human
-  - echo "Installed Ensembl 77" && df
+  - echo "Installed Ensembl 77" && df -h
   - pyensembl install --release 83 --species human
-  - echo "Installed Ensembl 83" && df
+  - echo "Installed Ensembl 83" && df -h
   - pyensembl install --release 87 --species human
-  - echo "Installed Ensembl 87" && df
+  - echo "Installed Ensembl 87" && df -h
   # latest mouse release
   - pyensembl install --release 87 --species mouse
   - echo "Installed Ensembl 87" && df
