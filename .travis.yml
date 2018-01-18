@@ -43,13 +43,7 @@ install:
   - pip install coveralls
 script:
   - ./lint.sh
-  - echo "Before installing Ensembl releases" && df
-  # older human releases
-  # Ensembl 54
-  - pyensembl install --release 54 --species human
-  - echo "Installed Ensembl 54" && df -h
-  - pyensembl delete-source-files --release 54 --species human
-  - echo "Deleted source files for Ensembl 54" && df -h
+  - echo "Before installing Ensembl releases" && df -h
   # Ensembl 75
   - pyensembl install --release 75 --species human
   - echo "Installed Ensembl 75" && df -h
