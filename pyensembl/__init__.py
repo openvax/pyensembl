@@ -21,7 +21,6 @@ from .ensembl_release_versions import MAX_ENSEMBL_RELEASE
 from .exon import Exon
 from .genome import Genome
 from .gene import Gene
-from .gtf import GTF
 from .locus import Locus
 from .search import find_nearest_locus
 from .sequence_data import SequenceData
@@ -76,7 +75,6 @@ __all__ = [
     "normalize_reference_name",
     "normalize_species_name",
     "Genome",
-    "GTF",
     "Locus",
     "Exon",
     "ensembl_grch36",
