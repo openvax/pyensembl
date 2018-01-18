@@ -142,9 +142,12 @@ class Genome(Serializable):
         """
         Member data that gets loaded or constructed on demand
         """
-        self._gtf = self._db = self.gtf_path = None
-        self._protein_sequences = self.protein_fasta_paths = None
-        self._transcript_sequences = self.transcript_fasta_paths = None
+        self.gtf_path = None
+        self._protein_sequences = None
+        self._transcript_sequences = None
+        self._db = None
+        self.protein_fasta_paths = None
+        self.transcript_fasta_paths = None
 
         # only memoizing the Gene, Transcript, and Exon objects
         self._genes = {}
@@ -370,13 +373,13 @@ class Genome(Serializable):
 
     def delete_source_files(self):
         self._set_local_paths(download_if_missing=False)
-        if self.has_gtf and exists(self.gtf_path):
+        if self.gtf_path is not None and exists(self.gtf_path):
             remove(self.gtf_path)
-        if self.has_transcript_fasta:
+        if self.transcript_fasta_paths is not None:
             for fasta_path in self.transcript_fasta_paths:
                 if exists(fasta_path):
                     remove(fasta_path)
-        if self.has_protein_fasta:
+        if self.protein_fasta_paths is not None:
             for fasta_path in self.protein_fasta_paths:
                 if exists(fasta_path):
                     remove(fasta_path)

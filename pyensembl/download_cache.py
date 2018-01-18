@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from os import listdir, remove, environ
+from os import listdir, remove
 from os.path import join, exists, split, abspath
 from shutil import copy2, rmtree
 import logging
@@ -172,7 +172,6 @@ class DownloadCache(object):
             if filename.endswith(ext):
                 return filename[:-len(ext)]
         return filename
-
 
     def cached_path(self, path_or_url):
         """
