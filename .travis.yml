@@ -46,19 +46,38 @@ script:
   - ./lint.sh
   - echo "Before installing Ensembl releases" && df
   # older human releases
+  # Ensembl 54
   - pyensembl install --release 54 --species human
   - echo "Installed Ensembl 54" && df -h
+  - pyensembl delete-source-files --release 54 --species human
+  - echo "Deleted source files for Ensembl 54" && df -h
+  # Ensembl 75
   - pyensembl install --release 75 --species human
   - echo "Installed Ensembl 75" && df -h
+  - pyensembl delete-source-files --release 75 --species human
+  - echo "Deleted source files for Ensembl 75" && df -h
+  # Ensembl 77
   - pyensembl install --release 77 --species human
   - echo "Installed Ensembl 77" && df -h
+  - pyensembl delete-source-files --release 77 --species human
+  - echo "Deleted source files for Ensembl 77" && df -h
+  # Ensembl 83
   - pyensembl install --release 83 --species human
   - echo "Installed Ensembl 83" && df -h
+  - pyensembl delete-source-files --release 83 --species human
+  - echo "Deleted source files for Ensembl 83" && df -h
+  # Ensembl 87
   - pyensembl install --release 87 --species human
   - echo "Installed Ensembl 87" && df -h
+  - pyensembl delete-source-files --release 87 --species human
+  - echo "Deleted source files for Ensembl 87" && df -h
+
   # latest mouse release
   - pyensembl install --release 87 --species mouse
-  - echo "Installed Ensembl 87" && df
+  - echo "Installed Ensembl 87 for mice" && df
+  - pyensembl delete-source-files --release 87 --species mouse
+  - echo "Deleted source files for Ensembl 87 (mice)" && df -h
+
   # run tests
   - nosetests test --verbose --with-coverage --cover-package=pyensembl
 after_success:

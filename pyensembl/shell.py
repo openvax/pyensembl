@@ -55,72 +55,81 @@ logging.config.fileConfig(pkg_resources.resource_filename(__name__, "logging.con
 logger = logging.getLogger(__name__)
 
 
-def run():
-    parser = argparse.ArgumentParser(usage=__doc__)
-    parser.add_argument(
-        "--overwrite",
-        default=False,
-        action="store_true",
-        help="Force download and indexing even if files already exist locally")
+parser = argparse.ArgumentParser(usage=__doc__)
+parser.add_argument(
+    "--overwrite",
+    default=False,
+    action="store_true",
+    help="Force download and indexing even if files already exist locally")
 
-    root_group = parser.add_mutually_exclusive_group()
 
-    release_group = root_group.add_argument_group()
-    release_group.add_argument(
-        "--release",
-        type=int,
-        nargs="+",
-        default=[],
-        help="Ensembl release version, multiple releases may be specified.")
+root_group = parser.add_mutually_exclusive_group()
 
-    release_group.add_argument(
-        "--species",
-        default="human",
-        help="Which species to download Ensembl data for (default=%(default)s.")
+release_group = root_group.add_argument_group()
+release_group.add_argument(
+    "--release",
+    type=int,
+    nargs="+",
+    default=[],
+    help="Ensembl release version, multiple releases may be specified.")
 
-    path_group = root_group.add_argument_group()
-    path_group.add_argument(
-        "--reference-name",
-        type=str,
-        default=None,
-        help="Name of the reference, e.g. GRCh38")
-    path_group.add_argument(
-        "--annotation-name",
-        default=None,
-        help="Name of annotation source (e.g. refseq)")
-    path_group.add_argument(
-        "--annotation-version",
-        default=None,
-        help="Version of annotation database")
-    path_group.add_argument(
-        "--gtf",
-        type=str,
-        default=None,
-        help="URL or local path to a GTF file containing annotations.")
-    path_group.add_argument(
-        "--transcript-fasta",
-        type=str,
-        action='append',
-        default=None,
-        help="URL or local path to a FASTA files containing the transcript "
-        "data. This option can be specified multiple times for multiple "
-        "FASTA files.")
-    path_group.add_argument(
-        "--protein-fasta",
-        type=str,
-        default=None,
-        help="URL or local path to a FASTA file containing protein data.")
+release_group.add_argument(
+    "--species",
+    default="human",
+    help="Which species to download Ensembl data for (default=%(default)s.")
 
-    parser.add_argument("action",
-        type=lambda arg: arg.lower().strip(),
-        choices=("install", "delete-all-files", "delete-index-files"),
-        help="\"install\" will download and index any data that is  not "
+path_group = root_group.add_argument_group()
+path_group.add_argument(
+    "--reference-name",
+    type=str,
+    default=None,
+    help="Name of the reference, e.g. GRCh38")
+path_group.add_argument(
+    "--annotation-name",
+    default=None,
+    help="Name of annotation source (e.g. refseq)")
+path_group.add_argument(
+    "--annotation-version",
+    default=None,
+    help="Version of annotation database")
+path_group.add_argument(
+    "--gtf",
+    type=str,
+    default=None,
+    help="URL or local path to a GTF file containing annotations.")
+path_group.add_argument(
+    "--transcript-fasta",
+    type=str,
+    action='append',
+    default=None,
+    help="URL or local path to a FASTA files containing the transcript "
+    "data. This option can be specified multiple times for multiple "
+    "FASTA files.")
+path_group.add_argument(
+    "--protein-fasta",
+    type=str,
+    default=None,
+    help="URL or local path to a FASTA file containing protein data.")
+
+parser.add_argument(
+    "action",
+    type=lambda arg: arg.lower().strip(),
+    choices=(
+        "install",
+        "delete-source-files",
+        "delete-all-files",
+        "delete-index-files"
+    ),
+    help=(
+        "\"install\" will download and index any data that is  not "
         "currently downloaded or indexed. \"delete-all-files\" will delete all data "
-        "associated with a genome annotation. \"delete-index-files\" deletes"
-        " all files other than the original GTF and FASTA files for a genome.")
+        "associated with a genome annotation. \"delete-index-files\" deletes "
+        "all files other than the original GTF and FASTA files for a genome. "
+        "\"delete-source-files\" will delete GTF and FASTA files but leave their "
+        "indexed data in place."))
 
+def run():
     args = parser.parse_args()
-
     genomes = []
     # If specific genome source URLs are provided, use those
     if args.gtf or args.transcript_fasta or args.protein_fasta:
@@ -155,6 +164,8 @@ def run():
             genome.download_cache.delete_cache_directory()
         elif args.action == "delete-index-files":
             genome.delete_index_files()
+        elif args.action == "delete-source-files":
+            genome.delete_source_files()
         elif args.action == "install":
             genome.download(overwrite=args.overwrite)
             genome.index(overwrite=args.overwrite)
