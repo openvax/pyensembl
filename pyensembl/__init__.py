@@ -15,6 +15,7 @@
 from __future__ import print_function, division, absolute_import
 
 from .memory_cache import MemoryCache
+from .database import Database
 from .download_cache import DownloadCache
 from .ensembl_release import EnsemblRelease
 from .ensembl_release_versions import MAX_ENSEMBL_RELEASE
@@ -60,6 +61,7 @@ ensembl_grch38 = cached_release(MAX_ENSEMBL_RELEASE)  # most recent for GRCh38
 __all__ = [
     "MemoryCache",
     "DownloadCache",
+    "Database",
     "EnsemblRelease",
     "MAX_ENSEMBL_RELEASE",
     "cached_release",
