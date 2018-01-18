@@ -96,7 +96,7 @@ class SequenceData(object):
     def __hash__(self):
         return hash(self.fasta_paths)
 
-    def _add_to_fasta_dictionary(self,fasta_dictionary_tmp):
+    def _add_to_fasta_dictionary(self, fasta_dictionary_tmp):
         for identifier, sequence in fasta_dictionary_tmp.items():
             if identifier in self._fasta_dictionary:
                 logger.warn(
@@ -106,7 +106,7 @@ class SequenceData(object):
 
     def _load_or_create_fasta_dictionary_pickle(self):
         self._fasta_dictionary = dict()
-        for fasta_path, pickle_path in zip(self.fasta_paths,self.fasta_dictionary_pickle_paths):
+        for fasta_path, pickle_path in zip(self.fasta_paths, self.fasta_dictionary_pickle_paths):
             if exists(pickle_path):
                 # try loading the cached file
                 # but we'll fall back on recreating it if loading fails
@@ -123,7 +123,7 @@ class SequenceData(object):
                     # that no longer exists
                     logger.warn(
                         "Failed to load %s, attempting to read FASTA directly",
-                            pickle_path)
+                        pickle_path)
             logger.info("Parsing sequences from FASTA file at %s", fasta_path)
 
             fasta_dictionary_tmp = parse_fasta_dictionary(fasta_path)

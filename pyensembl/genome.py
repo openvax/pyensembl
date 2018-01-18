@@ -250,7 +250,7 @@ class Genome(Serializable):
         if self._gtf is None:
             if not self.has_gtf:
                 raise ValueError("Missing GTF source for %s" % self)
-            # make sure GTF  file exists locally
+            # make sure GTF file exists locally
             # and populate self.gtf_path
             self._set_local_paths()
             assert self.gtf_path is not None
@@ -379,6 +379,7 @@ class Genome(Serializable):
                 maybe_fn.clear_cache()
 
     def delete_source_files(self):
+        self._set_local_paths(download_if_missing=False)
         if self.has_gtf and exists(self.gtf_path):
             remove(self.gtf_path)
         if self.has_transcript_fasta:
