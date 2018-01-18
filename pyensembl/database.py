@@ -70,17 +70,20 @@ class Database(object):
 
         self.install_string = install_string
         self._connection = None
+        # dictionary mapping table names to sets of columns
+        self._columns = {}
+        self._query_cache = {}
 
     def __eq__(self, other):
         return (
             other.__class__ is Database and
-            self.gtf == other.gtf)
+            self.gtf_path == other.gtf_path)
 
     def __str__(self):
-        return "Database(gtf=%s)" % (self.gtf,)
+        return "Database(gtf_path=%s)" % (self.gtf_path,)
 
     def __hash__(self):
-        return hash((self.gtf))
+        return hash((self.gtf_path))
 
     @property
     def database_filename(self):
@@ -265,13 +268,14 @@ class Database(object):
         else:
             return self.create(overwrite=overwrite)
 
-    @memoize
     def columns(self, table_name):
-        sql = "PRAGMA table_info(%s)" % table_name
-        table_info = self.connection.execute(sql).fetchall()
-        return [info[1] for info in table_info]
+        if self._columns.get(table_name) is None:
+            sql = "PRAGMA table_info(%s)" % table_name
+            table_info = self.connection.execute(sql).fetchall()
+            column_set = set([info[1] for info in table_info])
+            self._columns[table_name] = column_set
+        return self._columns[table_name]
 
-    @memoize
     def column_exists(self, table_name, column_name):
         return column_name in self.columns(table_name)
 
