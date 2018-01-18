@@ -1,6 +1,5 @@
 sudo: false  # Use container-based infrastructure
 language: minimal
-dist: precise
 python:
   - "2.7"
   - "3.5"
