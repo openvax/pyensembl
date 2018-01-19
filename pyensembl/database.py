@@ -86,12 +86,12 @@ class Database(object):
         return hash((self.gtf_path))
 
     @property
-    def database_filename(self):
+    def local_db_filename(self):
         return self.gtf_base_filename + ".db"
 
     @property
-    def database_path(self):
-        return join(self.cache_directory_path, self.database_filename)
+    def local_db_path(self):
+        return join(self.cache_directory_path, self.local_db_filename)
 
     def _all_possible_indices(self, column_names):
         """
@@ -194,7 +194,7 @@ class Database(object):
 
         Returns a connection to the database.
         """
-        logger.info("Creating database: %s", self.database_path)
+        logger.info("Creating database: %s", self.local_db_path)
         df = self._load_gtf_as_dataframe()
         all_index_groups = self._all_possible_indices(df.columns)
 
@@ -231,8 +231,7 @@ class Database(object):
 
     def _get_connection(self):
         if self._connection is None:
-            db_path = self.database_path
-            if exists(db_path):
+            if exists(self.local_db_path):
                 # since version metadata is filled in last in datacache,
                 # checking for a version also implicitly checks for
                 # having finishing fill in all the tables/rows.
@@ -240,7 +239,8 @@ class Database(object):
                 # TODO: expose this more explicitly in datacache
                 #
                 self._connection = datacache.connect_if_correct_version(
-                    db_path, DATABASE_SCHEMA_VERSION)
+                    self.local_db_path,
+                    DATABASE_SCHEMA_VERSION)
         return self._connection
 
     @property
