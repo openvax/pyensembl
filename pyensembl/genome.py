@@ -1,4 +1,4 @@
-# Copyright (c) 2015. Mount Sinai School of Medicine
+# Copyright (c) 2015-2017. Mount Sinai School of Medicine
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -370,19 +370,6 @@ class Genome(Serializable):
             # GTF and SequenceData objects
             if hasattr(maybe_fn, "clear_cache"):
                 maybe_fn.clear_cache()
-
-    def delete_source_files(self):
-        self._set_local_paths(download_if_missing=False)
-        if self.gtf_path is not None and exists(self.gtf_path):
-            remove(self.gtf_path)
-        if self.transcript_fasta_paths is not None:
-            for fasta_path in self.transcript_fasta_paths:
-                if exists(fasta_path):
-                    remove(fasta_path)
-        if self.protein_fasta_paths is not None:
-            for fasta_path in self.protein_fasta_paths:
-                if exists(fasta_path):
-                    remove(fasta_path)
 
     def delete_index_files(self):
         """

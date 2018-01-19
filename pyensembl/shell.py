@@ -88,15 +88,18 @@ path_group.add_argument(
     "--annotation-name",
     default=None,
     help="Name of annotation source (e.g. refseq)")
+
 path_group.add_argument(
     "--annotation-version",
     default=None,
     help="Version of annotation database")
+
 path_group.add_argument(
     "--gtf",
     type=str,
     default=None,
     help="URL or local path to a GTF file containing annotations.")
+
 path_group.add_argument(
     "--transcript-fasta",
     type=str,
@@ -105,6 +108,7 @@ path_group.add_argument(
     help="URL or local path to a FASTA files containing the transcript "
     "data. This option can be specified multiple times for multiple "
     "FASTA files.")
+
 path_group.add_argument(
     "--protein-fasta",
     type=str,
@@ -116,7 +120,6 @@ parser.add_argument(
     type=lambda arg: arg.lower().strip(),
     choices=(
         "install",
-        "delete-source-files",
         "delete-all-files",
         "delete-index-files"
     ),
@@ -124,9 +127,7 @@ parser.add_argument(
         "\"install\" will download and index any data that is  not "
         "currently downloaded or indexed. \"delete-all-files\" will delete all data "
         "associated with a genome annotation. \"delete-index-files\" deletes "
-        "all files other than the original GTF and FASTA files for a genome. "
-        "\"delete-source-files\" will delete GTF and FASTA files but leave their "
-        "indexed data in place."))
+        "all files other than the original GTF and FASTA files for a genome. "))
 
 def run():
     args = parser.parse_args()
@@ -164,8 +165,6 @@ def run():
             genome.download_cache.delete_cache_directory()
         elif args.action == "delete-index-files":
             genome.delete_index_files()
-        elif args.action == "delete-source-files":
-            genome.delete_source_files()
         elif args.action == "install":
             genome.download(overwrite=args.overwrite)
             genome.index(overwrite=args.overwrite)
