@@ -221,7 +221,7 @@ class Database(object):
                 df_subset)
 
         self._connection = datacache.db_from_dataframes_with_absolute_path(
-            db_path=self.database_path,
+            db_path=self.local_db_path,
             table_names_to_dataframes=dataframes,
             table_names_to_primary_keys=primary_keys,
             table_names_to_indices=indices_dict,
