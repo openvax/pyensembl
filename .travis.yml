@@ -55,7 +55,7 @@ script:
   - echo "Installed Ensembl 87" && df -h
   # latest mouse release
   - pyensembl install --release 87 --species mouse
-  - echo "Installed Ensembl 87 for mice" && df
+  - echo "Installed Ensembl 87 for mice" && df -h
   # run tests
   - nosetests test --verbose --with-coverage --cover-package=pyensembl
 after_success:
