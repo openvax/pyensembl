@@ -15,13 +15,13 @@
 from __future__ import print_function, division, absolute_import
 
 from .memory_cache import MemoryCache
+from .database import Database
 from .download_cache import DownloadCache
 from .ensembl_release import EnsemblRelease
 from .ensembl_release_versions import MAX_ENSEMBL_RELEASE
 from .exon import Exon
 from .genome import Genome
 from .gene import Gene
-from .gtf import GTF
 from .locus import Locus
 from .search import find_nearest_locus
 from .sequence_data import SequenceData
@@ -35,7 +35,7 @@ from .species import (
 )
 from .transcript import Transcript
 
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 
 def cached_release(release, species="human"):
     """
@@ -61,6 +61,7 @@ ensembl_grch38 = cached_release(MAX_ENSEMBL_RELEASE)  # most recent for GRCh38
 __all__ = [
     "MemoryCache",
     "DownloadCache",
+    "Database",
     "EnsemblRelease",
     "MAX_ENSEMBL_RELEASE",
     "cached_release",
@@ -76,7 +77,6 @@ __all__ = [
     "normalize_reference_name",
     "normalize_species_name",
     "Genome",
-    "GTF",
     "Locus",
     "Exon",
     "ensembl_grch36",

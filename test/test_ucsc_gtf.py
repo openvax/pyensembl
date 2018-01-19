@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from pyensembl import Genome, GTF
+from pyensembl import Genome, Database
 from nose.tools import eq_
 
 from .common import TemporaryDirectory
@@ -11,17 +11,14 @@ UCSC_REFSEQ_PATH = data_path("refseq.ucsc.small.gtf")
 
 def test_ucsc_gencode_gtf():
     with TemporaryDirectory() as tmpdir:
-        gtf = GTF(
+        db = Database(
             UCSC_GENCODE_PATH,
             cache_directory_path=tmpdir)
-        df = gtf.dataframe(save_to_disk=False)
+        df = db._load_gtf_as_dataframe()
         exons = df[df["feature"] == "exon"]
         # expect 12 exons from the dataframe
         assert len(exons) == 12, \
             "Expected 12 exons, got %d: %s" % (len(exons), exons)
-        df2 = gtf.dataframe(save_to_disk=True)
-        assert len(df) == len(df2), "Got different length DataFrame"
-        assert list(df.columns) == list(df2.columns)
 
 
 def test_ucsc_gencode_genome():
@@ -68,18 +65,16 @@ def test_ucsc_refseq_gtf():
     http://genome.ucsc.edu/cgi-bin/hgTables
     """
     with TemporaryDirectory() as tmpdir:
-        gtf = GTF(
+        db = Database(
             UCSC_REFSEQ_PATH,
             cache_directory_path=tmpdir)
-        df = gtf.dataframe(save_to_disk=False)
+        df = db._load_gtf_as_dataframe()
         exons = df[df["feature"] == "exon"]
         # expect 16 exons from the GTF
         assert len(exons) == 16, \
             "Expected 16 exons, got %d: %s" % (
                 len(exons), exons)
-        df2 = gtf.dataframe(save_to_disk=True)
-        assert len(df) == len(df2), "Got different length DataFrame"
-        assert list(df.columns) == list(df2.columns)
+
 
 def test_ucsc_refseq_genome():
     """
@@ -96,14 +91,14 @@ def test_ucsc_refseq_genome():
         genes = genome.genes()
         for gene in genes:
             assert gene.id, \
-                "Gene with missing ID in %s" % (genome.gtf.dataframe(),)
+                "Gene with missing ID in %s" % (genome.db._load_gtf_as_dataframe(),)
         assert len(genes) == 2, \
             "Expected 2 genes, got %d: %s" % (
                 len(genes), genes)
         transcripts = genome.transcripts()
         for transcript in transcripts:
             assert transcript.id, \
-                "Transcript with missing ID in %s" % (genome.gtf.dataframe(),)
+                "Transcript with missing ID in %s" % (genome.db._load_gtf_as_dataframe(),)
         assert len(transcripts) == 2, \
             "Expected 2 transcripts, got %d: %s" % (
                 len(transcripts), transcripts)

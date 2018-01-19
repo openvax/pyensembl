@@ -1,5 +1,5 @@
 sudo: false  # Use container-based infrastructure
-language: python
+language: minimal
 python:
   - "2.7"
   - "3.5"
@@ -35,7 +35,7 @@ cache:
 install:
   - >
       conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
-      numpy scipy nose pandas matplotlib
+      numpy nose pandas
   - source activate test-environment
   - pip install pypandoc
   - pip install -r requirements.txt
@@ -43,14 +43,19 @@ install:
   - pip install coveralls
 script:
   - ./lint.sh
-  # older human releases
-  - pyensembl install --release 54 --species human
+  - echo "Before installing Ensembl releases" && df -h
+  # Ensembl 75
   - pyensembl install --release 75 --species human
+  - echo "Installed Ensembl 75" && df -h
+  # Ensembl 77
   - pyensembl install --release 77 --species human
-  - pyensembl install --release 83 --species human
+  - echo "Installed Ensembl 77" && df -h
+  # Ensembl 87
   - pyensembl install --release 87 --species human
+  - echo "Installed Ensembl 87" && df -h
   # latest mouse release
   - pyensembl install --release 87 --species mouse
+  - echo "Installed Ensembl 87 for mice" && df -h
   # run tests
   - nosetests test --verbose --with-coverage --cover-package=pyensembl
 after_success:
