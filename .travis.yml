@@ -82,7 +82,7 @@ script:
   - echo "Installed Ensembl 87 for mice" && df -h
   # run tests
   # -a '!skip' lets us skip certain tests on travis (relevant for vaxrank)
-  # this command runs both mhctools and vaxrank tests. Sometimes they don't print output for a long
+  # this command runs both pyensembl and vaxrank tests. Sometimes they don't print output for a long
   # time; travis_wait extends the time allowed with no output.
   - travis_wait nosetests -sv test --with-coverage --cover-package=pyensembl -a '!skip' $PWD/vaxrank
 after_success:
