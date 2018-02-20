@@ -1,8 +1,9 @@
+dist: precise
 sudo: false  # Use container-based infrastructure
 language: minimal
 python:
   - "2.7"
-  - "3.5"
+  - "3.6"
 before_install:
   # Commands below copied from: http://conda.pydata.org/docs/travis.html
   # We do this conditionally because it saves us some downloading if the
@@ -44,12 +45,12 @@ env:
     # MHC_BUNDLE_PASS
     - secure: "B2bLOYhDD1mSH6nBmUVoyoVzO8CsZ/qeduoQ/gq1UqPXyBa5cj8x1hYeYEXMVGH04dq6p5FHKIZoZOOmgtKoemje5enSV8IL2lttASqNvzsiyvy6I4C3r5Ve2H9HMLneDxkarfVVVhG2ZJyO7Y/vGN8STZWX6N3FJfCJ1B5kV5Q="
 cache:
-  pip: true
   # cache directory used for Ensembl downloads of GTF and FASTA files
   # along with the indexed db of intervals and ID mappings and pickles
-  # of sequence dictionaries
+  # of sequence dictionaries. Also, pip
   directories:
       - /home/travis/.cache/pyensembl/
+      - /home/travis/.cache/pip/
 install:
   - >
       conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
