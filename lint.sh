@@ -7,7 +7,7 @@ set -o errexit
 # - https://bitbucket.org/logilab/pylint/issues/701/false-positives-with-not-an-iterable-and
 # - https://bitbucket.org/logilab/pylint/issues/58
 
-find . -name '*.py' \
+find pyensembl -name '*.py' \
   | xargs pylint \
   --errors-only \
   --disable=print-statement,unsubscriptable-object,not-an-iterable,no-member
