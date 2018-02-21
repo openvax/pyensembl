@@ -1,4 +1,4 @@
-# Copyright (c) 2014. Mount Sinai School of Medicine
+# Copyright (c) 2014-2018. Mount Sinai School of Medicine
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,17 +22,19 @@ current_directory = os.path.dirname(__file__)
 readme_filename = 'README.md'
 readme_path = os.path.join(current_directory, readme_filename)
 
-readme = ""
 try:
     with open(readme_path, 'r') as f:
-        readme = f.read()
+        readme_markdown = f.read()
 except IOError as e:
     print(e)
     print("Failed to open %s" % readme_path)
+    readme_markdown = ""
 
 try:
     import pypandoc
-    readme = pypandoc.convert(readme, to='rst', format='md')
+    readme_restructured = pypandoc.convert(readme_markdown, to='rst', format='md')
+    with open(readme_path.replace(".md", ".rst"), "w") as f:
+        f.write(readme_restructured)
 except ImportError as e:
     print(e)
     print("Failed to convert %s to reStructuredText", readme_filename)
@@ -53,7 +55,7 @@ if __name__ == '__main__':
         version=version,
         description="Python interface to ensembl reference genome metadata",
         author="Alex Rubinsteyn",
-        author_email="alex {dot} rubinsteyn {at} mssm {dot} edu",
+        author_email="alex.rubinsteyn@mssm.edu",
         url="https://github.com/openvax/pyensembl",
         license="http://www.apache.org/licenses/LICENSE-2.0.html",
         entry_points={
@@ -81,7 +83,7 @@ if __name__ == '__main__':
             "serializable",
             "tinytimer",
         ],
-        long_description=readme,
+        long_description=readme_restructured,
         packages=['pyensembl'],
         package_data={'pyensembl': ['logging.conf']},
     )

@@ -37,9 +37,6 @@ addons:
     packages:
       # Needed for NetMHC
       - tcsh
-      # install pandoc for use with pypandoc for converting the README
-      # from markdown to RST
-      - pandoc
 env:
   global:
     # MHC_BUNDLE_PASS
