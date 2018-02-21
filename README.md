@@ -1,7 +1,13 @@
-[![Build Status](https://travis-ci.org/openvax/pyensembl.svg?branch=master)](https://travis-ci.org/openvax/pyensembl) [![Coverage Status](https://coveralls.io/repos/openvax/pyensembl/badge.svg?branch=master&service=github)](https://coveralls.io/github/openvax/pyensembl?branch=master) 
+<a href="https://travis-ci.org/openvax/pyensembl">
+    <img src="https://travis-ci.org/openvax/pyensembl.svg?branch=master" alt="Build Status" />
+</a>
+<a href="https://coveralls.io/github/openvax/pyensembl?branch=master">
+    <img src="https://coveralls.io/repos/openvax/pyensembl/badge.svg?branch=master&service=github" alt="Coverage Status" />
+</a>
+<a href="https://pypi.python.org/pypi/pyensembl/">
+    <img src="https://img.shields.io/pypi/v/pyensembl.svg?maxAge=1000" alt="PyPI" />
+</a>
 
-<!-- [![DOI](https://zenodo.org/badge/18834/openvax/pyensembl.svg)](https://zenodo.org/badge/latestdoi/18834/openvax/pyensembl)
--->
 
 PyEnsembl
 =======
