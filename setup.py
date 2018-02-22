@@ -36,6 +36,7 @@ try:
     with open(readme_path.replace(".md", ".rst"), "w") as f:
         f.write(readme_restructured)
 except ImportError as e:
+    readme_restructured = readme_markdown
     print(e)
     print("Failed to convert %s to reStructuredText", readme_filename)
     pass
