@@ -28,7 +28,7 @@ from .normalization import normalize_chromosome, normalize_strand
 from .locus import Locus
 
 # any time we update the database schema, increment this version number
-DATABASE_SCHEMA_VERSION = 2
+DATABASE_SCHEMA_VERSION = 3
 
 
 logger = logging.getLogger(__name__)
@@ -186,7 +186,31 @@ class Database(object):
             result.append(index_group)
         return result
 
-    def create(self, overwrite=False):
+    def create(
+            self,
+            overwrite=False,
+            restrict_gtf_columns={
+                "seqname",
+                "source",
+                "feature",
+                "start",
+                "end",
+                "strand",
+                "gene_id",
+                "gene_version",
+                "gene_name",
+                "gene_biotype",
+                "transcript_id",
+                "transcript_version",
+                "transcript_name",
+                "transcript_biotype",
+                "transcript_support_level",
+                "exon_number",
+                "exon_id",
+                "exon_version",
+                "ccds_id",
+                "protein_id",
+                "protein_version"}):
         """
         Create the local database (including indexing) if it's not
         already set up. If `overwrite` is True, always re-create
@@ -195,7 +219,8 @@ class Database(object):
         Returns a connection to the database.
         """
         logger.info("Creating database: %s", self.local_db_path)
-        df = self._load_gtf_as_dataframe()
+        df = self._load_gtf_as_dataframe(
+            restrict_gtf_columns=restrict_gtf_columns)
         all_index_groups = self._all_possible_indices(df.columns)
 
         # split single DataFrame into dictionary mapping each unique
@@ -575,7 +600,7 @@ class Database(object):
                 feature, filter_column, filter_value, loci))
         return loci[0]
 
-    def _load_gtf_as_dataframe(self):
+    def _load_gtf_as_dataframe(self, restrict_gtf_columns=None):
         """
         Parse this genome source's GTF file and load it as a Pandas DataFrame
         """
@@ -586,7 +611,8 @@ class Database(object):
                 "seqname": normalize_chromosome,
                 "strand": normalize_strand,
             },
-            infer_biotype_column=True)
+            infer_biotype_column=True,
+            usecols=restrict_gtf_columns)
 
         features = set(df["feature"])
         column_names = set(df.keys())
