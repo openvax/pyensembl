@@ -4,17 +4,39 @@ language: minimal
 python:
   - "2.7"
   - "3.6"
+cache:
+  # cache directory used for Ensembl downloads of GTF and FASTA files
+  # along with the indexed db of intervals and ID mappings and pickles
+  # of sequence dictionaries. Also, pip
+  directories:
+    - $HOME/.cache/pyensembl/
+    - $HOME/.cache/pip/
+    - $HOME/miniconda
+env:
+  global:
+    # MHC_BUNDLE_PASS
+    - secure: "B2bLOYhDD1mSH6nBmUVoyoVzO8CsZ/qeduoQ/gq1UqPXyBa5cj8x1hYeYEXMVGH04dq6p5FHKIZoZOOmgtKoemje5enSV8IL2lttASqNvzsiyvy6I4C3r5Ve2H9HMLneDxkarfVVVhG2ZJyO7Y/vGN8STZWX6N3FJfCJ1B5kV5Q="
+addons:
+  apt:
+    packages:
+      # Needed for NetMHC
+      - tcsh
 before_install:
-  # Commands below copied from: http://conda.pydata.org/docs/travis.html
-  # We do this conditionally because it saves us some downloading if the
-  # version is the same.
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
+  # install mini-conda if it's not already present
+  - |
+    if [ -f  $HOME/miniconda/bin]
+      then
+      echo "miniconda already installed"
     else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+      rm -rf $HOME/miniconda
+      if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+        wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
+      else
+        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+      fi
+      bash miniconda.sh -b -p $HOME/miniconda
+      export PATH="$HOME/miniconda/bin:$PATH"
     fi
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
   # reset the shell's lookup table for program name to path mappings
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
@@ -32,27 +54,12 @@ before_install:
   # we want to include vaxrank unit tests as a general integration test to make sure the stack
   # isn't broken in an obvious way
   - git clone https://github.com/openvax/vaxrank.git
-addons:
-  apt:
-    packages:
-      # Needed for NetMHC
-      - tcsh
-env:
-  global:
-    # MHC_BUNDLE_PASS
-    - secure: "B2bLOYhDD1mSH6nBmUVoyoVzO8CsZ/qeduoQ/gq1UqPXyBa5cj8x1hYeYEXMVGH04dq6p5FHKIZoZOOmgtKoemje5enSV8IL2lttASqNvzsiyvy6I4C3r5Ve2H9HMLneDxkarfVVVhG2ZJyO7Y/vGN8STZWX6N3FJfCJ1B5kV5Q="
-cache:
-  # cache directory used for Ensembl downloads of GTF and FASTA files
-  # along with the indexed db of intervals and ID mappings and pickles
-  # of sequence dictionaries. Also, pip
-  directories:
-      - /home/travis/.cache/pyensembl/
-      - /home/travis/.cache/pip/
 install:
   - >
       conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
       numpy nose pandas pandoc
   - source activate test-environment
+  - python --version #  make sure we're running the Python version we expect
   - pip install pypandoc
   - pip install -r requirements.txt
   - pip install .
@@ -88,3 +95,5 @@ deploy:
     secure: "jr1jd8CbCoXaFLF9sxv1qwbxj6WxqA90K98fFj2IXTqWtNSnGL4xdGC7+pSuKdDSN2yxzs6As7sfo0GUAhSfwFGC8pd7W6ckoxq+G6JmYSfxQ5HTOtK4L/7a8gYqEi01arWu4rR9tHu/yv6dCeK8an7hl9vlREYHfAKgJDYAB0I="
   on:
     branch: master
+    condition: $TRAVIS_PYTHON_VERSION = "2.7"
+
