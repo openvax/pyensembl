@@ -41,7 +41,13 @@ class Database(object):
     writing SQL queries directly.
     """
 
-    def __init__(self, gtf_path, install_string=None, cache_directory_path=None):
+    def __init__(
+            self,
+            gtf_path,
+            install_string=None,
+            cache_directory_path=None,
+            restrict_gtf_columns=None,
+            restrict_gtf_features=None):
         """
         Parameters
         ----------
@@ -55,9 +61,18 @@ class Database(object):
         cache_directory_path : str
             Path to directory where database should be written. If omitted
             then use path of GTF file.
+
+        restrict_gtf_columns : list/set of str or None
+            If provided then extract only these columns before creating
+            a database.
+
+        restrict_gtf_features : list/set of str or None
+            If provided then only create tables for these features.
+
         """
         self.gtf_path = gtf_path
-
+        self.restrict_gtf_columns = restrict_gtf_columns
+        self.restrict_gtf_features = restrict_gtf_features
         self.gtf_directory_path, self.gtf_filename = split(self.gtf_path)
         self.gtf_base_filename = splitext(self.gtf_filename)[0]
 
@@ -188,29 +203,7 @@ class Database(object):
 
     def create(
             self,
-            overwrite=False,
-            restrict_gtf_columns={
-                "seqname",
-                "source",
-                "feature",
-                "start",
-                "end",
-                "strand",
-                "gene_id",
-                "gene_version",
-                "gene_name",
-                "gene_biotype",
-                "transcript_id",
-                "transcript_version",
-                "transcript_name",
-                "transcript_biotype",
-                "transcript_support_level",
-                "exon_number",
-                "exon_id",
-                "exon_version",
-                "ccds_id",
-                "protein_id",
-                "protein_version"}):
+            overwrite=False):
         """
         Create the local database (including indexing) if it's not
         already set up. If `overwrite` is True, always re-create
@@ -220,12 +213,15 @@ class Database(object):
         """
         logger.info("Creating database: %s", self.local_db_path)
         df = self._load_gtf_as_dataframe(
-            restrict_gtf_columns=restrict_gtf_columns)
+            restrict_gtf_columns=self.restrict_gtf_columns)
         all_index_groups = self._all_possible_indices(df.columns)
 
-        # split single DataFrame into dictionary mapping each unique
-        # feature name onto that subset of the data
-        feature_names = df['feature'].unique()
+        if self.restrict_gtf_features:
+            feature_names = self.restrict_gtf_features
+        else:
+            # split single DataFrame into dictionary mapping each unique
+            # feature name onto that subset of the data
+            feature_names = df['feature'].unique()
         dataframes = {}
         # every table gets the same set of indices
         indices_dict = {}
@@ -234,6 +230,8 @@ class Database(object):
 
         for feature in feature_names:
             df_subset = df[df.feature == feature]
+            if len(df_subset) == 0:
+                continue
             dataframes[feature] = df_subset
 
             primary_key = self._get_primary_key(feature, df_subset)
