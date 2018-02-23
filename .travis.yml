@@ -24,7 +24,7 @@ addons:
 before_install:
   # install mini-conda if it's not already present
   - |
-    if [ -f  $HOME/miniconda/bin]
+    if [ -f  $HOME/miniconda/bin ];
       then
       echo "miniconda already installed"
     else
