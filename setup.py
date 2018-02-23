@@ -33,12 +33,10 @@ except IOError as e:
 try:
     import pypandoc
     readme_restructured = pypandoc.convert(readme_markdown, to='rst', format='md')
-    with open(readme_path.replace(".md", ".rst"), "w") as f:
-        f.write(readme_restructured)
 except ImportError as e:
     readme_restructured = readme_markdown
     print(e)
-    print("Failed to convert %s to reStructuredText", readme_filename)
+    print("Failed to convert %s to reStructuredText" % readme_filename)
     pass
 
 with open('pyensembl/__init__.py', 'r') as f:
