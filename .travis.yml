@@ -87,7 +87,9 @@ script:
   # -a '!skip' lets us skip certain tests on travis (relevant for vaxrank)
   # this command runs both pyensembl and vaxrank tests. Sometimes they don't print output for a long
   # time; travis_wait extends the time allowed with no output.
-  - travis_wait nosetests -sv test --with-coverage --cover-package=pyensembl -a '!skip' $PWD/vaxrank
+  - >
+      nosetests -sv test --with-coverage --cover-package=pyensembl  &&
+      travis_wait nosetests -sv $PWD/vaxrank -a '!skip'
 after_success:
   coveralls
 deploy:
