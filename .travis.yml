@@ -4,6 +4,12 @@ language: python
 python:
   - "2.7"
   - "3.6"
+git:
+  # don't need the default depth of 50
+  # but don't want to use a depth of 1 since that affects
+  # whether jobs run when you have multiple commits queued
+  # https://github.com/travis-ci/travis-ci/issues/4575
+  depth: 10
 cache:
   pip: true
   # cache directory used for Ensembl downloads of GTF and FASTA files
