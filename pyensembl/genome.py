@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2017. Mount Sinai School of Medicine
+# Copyright (c) 2015-2018. Mount Sinai School of Medicine
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -262,7 +262,29 @@ class Genome(Serializable):
             self._db = Database(
                 gtf_path=self.gtf_path,
                 install_string=self.install_string(),
-                cache_directory_path=self.cache_directory_path)
+                cache_directory_path=self.cache_directory_path,
+                restrict_gtf_columns={
+                    "seqname",
+                    "source",
+                    "feature",
+                    "start",
+                    "end",
+                    "strand",
+                    "gene_id",
+                    "gene_version",
+                    "gene_name",
+                    "gene_biotype",
+                    "transcript_id",
+                    "transcript_version",
+                    "transcript_name",
+                    "transcript_biotype",
+                    "transcript_support_level",
+                    "exon_number",
+                    "exon_id",
+                    "exon_version",
+                    "ccds_id",
+                    "protein_id",
+                    "protein_version"})
         return self._db
 
     @property

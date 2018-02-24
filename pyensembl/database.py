@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2016. Mount Sinai School of Medicine
+# Copyright (c) 2015-2018. Mount Sinai School of Medicine
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,14 +21,14 @@ import sqlite3
 import datacache
 from typechecks import require_integer, require_string
 
-from gtfparse import read_gtf_as_dataframe, create_missing_features
+from gtfparse import read_gtf, create_missing_features
 
 from .common import memoize
 from .normalization import normalize_chromosome, normalize_strand
 from .locus import Locus
 
 # any time we update the database schema, increment this version number
-DATABASE_SCHEMA_VERSION = 2
+DATABASE_SCHEMA_VERSION = 3
 
 
 logger = logging.getLogger(__name__)
@@ -41,7 +41,13 @@ class Database(object):
     writing SQL queries directly.
     """
 
-    def __init__(self, gtf_path, install_string=None, cache_directory_path=None):
+    def __init__(
+            self,
+            gtf_path,
+            install_string=None,
+            cache_directory_path=None,
+            restrict_gtf_columns=None,
+            restrict_gtf_features=None):
         """
         Parameters
         ----------
@@ -55,9 +61,18 @@ class Database(object):
         cache_directory_path : str
             Path to directory where database should be written. If omitted
             then use path of GTF file.
+
+        restrict_gtf_columns : list/set of str or None
+            If provided then extract only these columns before creating
+            a database.
+
+        restrict_gtf_features : list/set of str or None
+            If provided then only create tables for these features.
+
         """
         self.gtf_path = gtf_path
-
+        self.restrict_gtf_columns = restrict_gtf_columns
+        self.restrict_gtf_features = restrict_gtf_features
         self.gtf_directory_path, self.gtf_filename = split(self.gtf_path)
         self.gtf_base_filename = splitext(self.gtf_filename)[0]
 
@@ -186,7 +201,9 @@ class Database(object):
             result.append(index_group)
         return result
 
-    def create(self, overwrite=False):
+    def create(
+            self,
+            overwrite=False):
         """
         Create the local database (including indexing) if it's not
         already set up. If `overwrite` is True, always re-create
@@ -195,12 +212,16 @@ class Database(object):
         Returns a connection to the database.
         """
         logger.info("Creating database: %s", self.local_db_path)
-        df = self._load_gtf_as_dataframe()
+        df = self._load_gtf_as_dataframe(
+            restrict_gtf_columns=self.restrict_gtf_columns)
         all_index_groups = self._all_possible_indices(df.columns)
 
-        # split single DataFrame into dictionary mapping each unique
-        # feature name onto that subset of the data
-        feature_names = df['feature'].unique()
+        if self.restrict_gtf_features:
+            feature_names = self.restrict_gtf_features
+        else:
+            # split single DataFrame into dictionary mapping each unique
+            # feature name onto that subset of the data
+            feature_names = df['feature'].unique()
         dataframes = {}
         # every table gets the same set of indices
         indices_dict = {}
@@ -209,6 +230,8 @@ class Database(object):
 
         for feature in feature_names:
             df_subset = df[df.feature == feature]
+            if len(df_subset) == 0:
+                continue
             dataframes[feature] = df_subset
 
             primary_key = self._get_primary_key(feature, df_subset)
@@ -575,18 +598,19 @@ class Database(object):
                 feature, filter_column, filter_value, loci))
         return loci[0]
 
-    def _load_gtf_as_dataframe(self):
+    def _load_gtf_as_dataframe(self, restrict_gtf_columns=None):
         """
         Parse this genome source's GTF file and load it as a Pandas DataFrame
         """
         logger.info("Reading GTF from %s", self.gtf_path)
-        df = read_gtf_as_dataframe(
+        df = read_gtf(
             self.gtf_path,
             column_converters={
                 "seqname": normalize_chromosome,
                 "strand": normalize_strand,
             },
-            infer_biotype_column=True)
+            infer_biotype_column=True,
+            usecols=restrict_gtf_columns)
 
         features = set(df["feature"])
         column_names = set(df.keys())

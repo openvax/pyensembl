@@ -178,5 +178,7 @@ def test_transcript_gene_should_match_parent_gene():
 @test_ensembl_releases()
 def test_BRCA1_001_has_protein_coding_biotype(genome):
     transcript = genome.transcripts_by_name("BRCA1-001")[0]
-    assert transcript.is_protein_coding
+    assert transcript.is_protein_coding, \
+        "Expected BRCA1-001 transcript %s to have a protein coding biotype in %s" % (
+            transcript, genome)
     eq_(transcript.biotype, "protein_coding")
