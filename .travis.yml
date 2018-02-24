@@ -1,16 +1,19 @@
 dist: precise
 sudo: false  # Use container-based infrastructure
-language: minimal
+language: python
 python:
   - "2.7"
   - "3.6"
 cache:
+  pip: true
   # cache directory used for Ensembl downloads of GTF and FASTA files
   # along with the indexed db of intervals and ID mappings and pickles
   # of sequence dictionaries. Also, pip
   directories:
     - $HOME/.cache/pyensembl/
-    - $HOME/.cache/pip/
+    - $HOME/.cache/pyensembl/GRCh37/ensembl75/
+    - $HOME/.cache/pyensembl/GRCh38/ensembl77/
+    - $HOME/.cache/pyensembl/GRCh38/ensembl87/
     - $HOME/miniconda
 env:
   global:
