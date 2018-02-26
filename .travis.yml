@@ -17,14 +17,12 @@ cache:
   # of sequence dictionaries. Also, pip
   directories:
     - $HOME/.cache/pyensembl/
-    - $HOME/.cache/pyensembl/GRCh37/ensembl75/
-    - $HOME/.cache/pyensembl/GRCh38/ensembl77/
-    - $HOME/.cache/pyensembl/GRCh38/ensembl87/
     - $HOME/miniconda
 env:
   global:
     # MHC_BUNDLE_PASS
     - secure: "B2bLOYhDD1mSH6nBmUVoyoVzO8CsZ/qeduoQ/gq1UqPXyBa5cj8x1hYeYEXMVGH04dq6p5FHKIZoZOOmgtKoemje5enSV8IL2lttASqNvzsiyvy6I4C3r5Ve2H9HMLneDxkarfVVVhG2ZJyO7Y/vGN8STZWX6N3FJfCJ1B5kV5Q="
+    - CONDA_ENV="test-environment-$TRAVIS_PYTHON_VERSION"
 addons:
   apt:
     packages:
@@ -65,9 +63,9 @@ before_install:
   - git clone https://github.com/openvax/vaxrank.git
 install:
   - >
-      conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
+      conda create -q -n $CONDA_ENV python=$TRAVIS_PYTHON_VERSION
       numpy nose pandas pandoc
-  - source activate test-environment
+  - source activate $CONDA_ENV
   - python --version #  make sure we're running the Python version we expect
   - pip install pypandoc
   - pip install -r requirements.txt
@@ -98,6 +96,9 @@ script:
       travis_wait nosetests -sv $PWD/vaxrank -a '!skip'
 after_success:
   coveralls
+before_cache:
+  # remove conda environments used for testing
+  - rm -rf $HOME/miniconda/envs
 deploy:
   provider: pypi
   distributions: sdist
