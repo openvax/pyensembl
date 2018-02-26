@@ -17,7 +17,6 @@ cache:
   # of sequence dictionaries. Also, pip
   directories:
     - $HOME/.cache/pyensembl/
-    - $HOME/miniconda
 env:
   global:
     # MHC_BUNDLE_PASS
@@ -29,20 +28,14 @@ addons:
       # Needed for NetMHC
       - tcsh
 before_install:
-  # install mini-conda if it's not already present
+  # download different versions of mini-conda for py2 vs. py3
   - |
-    if [ -d  $HOME/miniconda/bin ];
-      then
-      echo "miniconda already installed"
+    if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
     else
-      rm -rf $HOME/miniconda
-      if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-        wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
-      else
-        wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-      fi
-      bash miniconda.sh -b -p $HOME/miniconda
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
     fi
+  - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
   # reset the shell's lookup table for program name to path mappings
   - hash -r
@@ -96,9 +89,6 @@ script:
       travis_wait nosetests -sv $PWD/vaxrank -a '!skip'
 after_success:
   coveralls
-before_cache:
-  # remove conda environments used for testing
-  - rm -rf $HOME/miniconda/envs
 deploy:
   provider: pypi
   distributions: sdist
