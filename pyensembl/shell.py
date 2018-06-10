@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-
-# Copyright (c) 2015. Mount Sinai School of Medicine
+# Copyright (c) 2015-2018. Mount Sinai School of Medicine
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -41,7 +39,8 @@ To install any genome:
 
 """
 
-from __future__ import absolute_import
+from __future__ import print_function, division, absolute_import
+
 import argparse
 import logging
 import logging.config
@@ -79,11 +78,13 @@ release_group.add_argument(
     help="Which species to download Ensembl data for (default=%(default)s.")
 
 path_group = root_group.add_argument_group()
+
 path_group.add_argument(
     "--reference-name",
     type=str,
     default=None,
     help="Name of the reference, e.g. GRCh38")
+
 path_group.add_argument(
     "--annotation-name",
     default=None,
@@ -170,6 +171,3 @@ def run():
             genome.index(overwrite=args.overwrite)
         else:
             raise ValueError("Invalid action: %s" % args.action)
-
-if __name__ == "__main__":
-    run()

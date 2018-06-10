@@ -1,4 +1,4 @@
-# Copyright (c) 2015. Mount Sinai School of Medicine
+# Copyright (c) 2015-2018. Mount Sinai School of Medicine
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,21 +37,11 @@ from .sequence_data import SequenceData
 from .species import (
     find_species_by_name,
     check_species_object,
-    normalize_species_name,
+    normalize_species_name
 )
 from .transcript import Transcript
 
 __version__ = '1.3.0'
-
-def cached_release(release, species="human"):
-    """
-    Create an EnsemblRelease instance only if it's hasn't already been made,
-    otherwise returns the old instance.
-
-    Keeping this function for backwards compatibility but this functionality
-    has been moving into the cached method of EnsemblRelease.
-    """
-    return EnsemblRelease.cached(release=release, species=species)
 
 __all__ = [
     "MemoryCache",

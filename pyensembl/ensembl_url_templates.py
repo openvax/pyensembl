@@ -22,6 +22,7 @@ For example, the human chromosomal DNA sequences for release 78 are in:
 
 """
 from __future__ import print_function, division, absolute_import
+
 from os.path import join
 
 from six.moves import urllib_parse

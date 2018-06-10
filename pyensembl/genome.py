@@ -18,8 +18,9 @@ around an arbitrary genomic database.
 """
 
 from __future__ import print_function, division, absolute_import
+
 from os import remove
-from os.path import exists
+from os.path import exists, getsize
 
 from six import string_types
 
@@ -234,6 +235,29 @@ class Genome(Serializable):
                 download_if_missing=download_if_missing,
                 overwrite=overwrite)
 
+    def required_local_files(self):
+        paths = []
+        if self._gtf_path_or_url:
+            paths.append(self.download_cache.cached_path(self._gtf_path_or_url))
+        if self._transcript_fasta_paths_or_urls:
+            paths.extend([
+                self.download_cache.cached_path(path_or_url)
+                for path_or_url in self._transcript_fasta_paths_or_urls])
+        if self._protein_fasta_paths_or_urls:
+            paths.extend([
+                self.download_cache.cached_path(path_or_url)
+                for path_or_url in self._protein_fasta_paths_or_urls])
+        return paths
+
+    def required_local_files_exist(self, empty_files_ok=False):
+        for path in self.required_local_files():
+            if not exists(path):
+                return False
+            if not empty_files_ok:
+                if getsize(path) == 0:
+                    return False
+        return True
+
     def download(self, overwrite=False):
         """
         Download data files needed by this Genome instance.
@@ -265,7 +289,7 @@ class Genome(Serializable):
         if self._db is None:
             # make sure GTF file exists locally
             # and populate self.gtf_path
-            self._set_local_paths()
+            self._set_local_paths(download_if_missing=False, overwrite=False)
             assert self.gtf_path is not None
 
             # Database object turns the GTF dataframes into sqlite3 tables
@@ -306,7 +330,7 @@ class Genome(Serializable):
                     "Missing protein FASTA source for %s" % self)
             # make sure protein FASTA file exists locally
             # and populate self.protein_fasta_paths
-            self._set_local_paths()
+            self._set_local_paths(download_if_missing=False, overwrite=False)
             assert self.protein_fasta_paths is not None
             self._protein_sequences = SequenceData(
                 fasta_paths=self.protein_fasta_paths,
@@ -322,7 +346,7 @@ class Genome(Serializable):
                     "Missing transcript FASTA source for %s" % self)
             # make sure transcript FASTA file exists locally
             # and populate self.transcript_fasta_paths
-            self._set_local_paths()
+            self._set_local_paths(download_if_missing=False, overwrite=False)
             assert self.transcript_fasta_paths is not None
             self._transcript_sequences = SequenceData(
                 fasta_paths=self.transcript_fasta_paths,

@@ -1,3 +1,19 @@
+# Copyright (c) 2018. Mount Sinai School of Medicine
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+from __future__ import print_function, division, absolute_import
+
 from .ensembl_release import EnsemblRelease
 from .species import Species, find_species_by_name
 
@@ -47,7 +63,9 @@ def genome_for_reference_name(
         # go through candidate releases in descending order
         for release in reversed(range(min_ensembl_release, max_ensembl_release + 1)):
             # check if release has been locally downloaded
-            pass
+            candidate = EnsemblRelease.cached(release=release, species=species)
+            if candidate.required_local_files_exist():
+                return candidate
         # see if any of the releases between [max, min] are already locally
         # available
     return EnsemblRelease.cached(release=max_ensembl_release, species=species)

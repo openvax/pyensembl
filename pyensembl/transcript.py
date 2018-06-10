@@ -19,7 +19,6 @@ from memoized_property import memoized_property
 from .common import memoize
 from .locus_with_genome import LocusWithGenome
 
-
 class Transcript(LocusWithGenome):
     """
     Transcript encompasses the locus, exons, and sequence of a transcript.

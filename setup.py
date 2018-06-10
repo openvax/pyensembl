@@ -18,9 +18,11 @@ import re
 
 from setuptools import setup
 
+package_name = "pyensembl"
 current_directory = os.path.dirname(__file__)
 readme_filename = 'README.md'
 readme_path = os.path.join(current_directory, readme_filename)
+github_url = "https://github.com/openvax/%s" % package_name
 
 try:
     with open(readme_path, 'r') as f:
@@ -39,7 +41,7 @@ except ImportError as e:
     print("Failed to convert %s to reStructuredText" % readme_filename)
     pass
 
-with open('pyensembl/__init__.py', 'r') as f:
+with open('%s/__init__.py' % package_name, 'r') as f:
     version = re.search(
         r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
         f.read(),
@@ -50,16 +52,16 @@ if not version:
 
 if __name__ == '__main__':
     setup(
-        name='pyensembl',
+        name=package_name,
         version=version,
         description="Python interface to ensembl reference genome metadata",
         author="Alex Rubinsteyn",
         author_email="alex.rubinsteyn@mssm.edu",
-        url="https://github.com/openvax/pyensembl",
+        url=github_url,
         license="http://www.apache.org/licenses/LICENSE-2.0.html",
         entry_points={
             'console_scripts': [
-                'pyensembl = pyensembl.shell:run'
+                'pyensembl = %s.shell:run' % package_name
             ],
         },
         classifiers=[
@@ -83,6 +85,6 @@ if __name__ == '__main__':
             "tinytimer",
         ],
         long_description=readme_restructured,
-        packages=['pyensembl'],
-        package_data={'pyensembl': ['logging.conf']},
+        packages=[package_name],
+        package_data={package_name: ['logging.conf']},
     )
