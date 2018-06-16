@@ -59,6 +59,9 @@ install:
       conda create -q -n $CONDA_ENV python=$TRAVIS_PYTHON_VERSION
       numpy nose pandas pandoc
   - source activate $CONDA_ENV
+  # install pysam from conda because I'm having trouble installing Cython
+  # for Python 3 on Travis
+  - conda install -c bioconda pysam=0.9.0
   - python --version #  make sure we're running the Python version we expect
   - pip install pypandoc
   - pip install -r requirements.txt
