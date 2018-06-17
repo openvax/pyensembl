@@ -77,7 +77,7 @@ if __name__ == '__main__':
             "typechecks>=0.0.2",
             "numpy>=1.7",
             "pandas>=0.15",
-            "datacache>=0.4.19",
+            "datacache>=1.0.0",
             "memoized-property>=1.0.2",
             "six>=1.9.0",
             "gtfparse>=0.0.3",
