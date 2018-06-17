@@ -212,11 +212,10 @@ class DownloadCache(object):
         missing = not exists(cached_path)
         if (missing or overwrite) and download_if_missing:
             logger.info("Fetching %s from URL %s", cached_path, url)
-            local_filename = split(cached_path)[1]
-            datacache.download._download(
-                filename=local_filename,
+            datacache.download._download_and_decompress_if_necessary(
                 full_path=cached_path,
-                download_url=url)
+                download_url=url,
+                timeout=3600)
         elif missing:
             raise MissingRemoteFile(url)
         return cached_path
