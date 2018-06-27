@@ -33,8 +33,8 @@ def test_find_nearest_BRAF_exon(ensembl):
 
 @test_ensembl_releases()
 def test_find_nearest_BRAF_transcript(ensembl):
-    braf_transcript = ensembl.transcripts_by_name("BRAF-001")[0]
-    egfr_transcript = ensembl.transcripts_by_name("EGFR-001")[0]
+    braf_transcript = ensembl.genes_by_name("BRAF")[0].transcripts[0]
+    egfr_transcript = ensembl.genes_by_name("EGFR")[0].transcripts[0]
     transcripts = [braf_transcript, egfr_transcript]
     for transcript in transcripts:
         # immediately before transcript

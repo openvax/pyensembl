@@ -150,7 +150,7 @@ def test_transcript_cds_CTNNIP1_004():
 
 @test_ensembl_releases()
 def test_equal_transcripts(genome):
-    t1 = genome.transcripts_by_name("TP53-001")[0]
+    t1 = genome.genes_by_name("TP53")[0].transcripts[0]
     # get an identical gene
     t2 = genome.transcript_by_id(t1.id)
     eq_(t1, t2)
@@ -158,8 +158,8 @@ def test_equal_transcripts(genome):
 
 @test_ensembl_releases()
 def test_not_equal_transcripts(genome):
-    t1 = genome.transcripts_by_name("MUC1-001")[0]
-    t2 = genome.transcripts_by_name("BRCA1-001")[0]
+    t1 = genome.genes_by_name("MUC1")[0].transcripts[0]
+    t2 = genome.genes_by_name("BRCA1")[0].transcripts[0]
     assert_not_equal(t1, t2)
 
 def test_protein_id():
@@ -177,8 +177,8 @@ def test_transcript_gene_should_match_parent_gene():
 
 @test_ensembl_releases()
 def test_BRCA1_001_has_protein_coding_biotype(genome):
-    transcript = genome.transcripts_by_name("BRCA1-001")[0]
+    transcript = genome.transcripts_by_name("BRCA1-201")[0]
     assert transcript.is_protein_coding, \
-        "Expected BRCA1-001 transcript %s to have a protein coding biotype in %s" % (
+        "Expected BRCA1-201 transcript %s to have a protein coding biotype in %s" % (
             transcript, genome)
     eq_(transcript.biotype, "protein_coding")
