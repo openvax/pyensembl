@@ -1,6 +1,6 @@
-dist: precise
-sudo: true  # Use container-based infrastructure
-language: python
+dist: trusty
+sudo: false  # false = use container-based infrastructure
+language: minimal
 python:
   - "2.7"
   - "3.6"
