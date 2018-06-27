@@ -1,6 +1,6 @@
-dist: precise
-sudo: false  # Use container-based infrastructure
-language: python
+dist: trusty
+sudo: false  # false = use container-based infrastructure
+language: minimal
 python:
   - "2.7"
   - "3.6"
@@ -59,6 +59,9 @@ install:
       conda create -q -n $CONDA_ENV python=$TRAVIS_PYTHON_VERSION
       numpy nose pandas pandoc
   - source activate $CONDA_ENV
+  # install pysam from conda because I'm having trouble installing Cython
+  # for Python 3 on Travis
+  - conda install -c bioconda pysam=0.9.0
   - python --version #  make sure we're running the Python version we expect
   - pip install pypandoc
   - pip install -r requirements.txt
@@ -67,6 +70,7 @@ install:
   - pip install --upgrade -r $PWD/vaxrank/requirements.txt
 script:
   - ./lint.sh
+  - echo "Testing network connectivity" && ping -c 5 -q ftp.ensembl.org
   - echo "Before installing Ensembl releases" && df -h
   # Ensembl 75
   - pyensembl install --release 75 --species human

@@ -19,6 +19,7 @@ Ensembl FTP server that no proper FASTA parser lets you skip over.
 """
 
 from __future__ import print_function, division, absolute_import
+
 from gzip import GzipFile
 import logging
 

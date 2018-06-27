@@ -1,5 +1,4 @@
-# Copyright (c) 2015. Mount Sinai School of Medicine
-#
+# Copyright (c) 2015-2018. Mount Sinai School of Medicine
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -11,6 +10,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+from __future__ import print_function, division, absolute_import
 
 from os import listdir, remove
 from os.path import join, exists, split, abspath
@@ -211,11 +212,10 @@ class DownloadCache(object):
         missing = not exists(cached_path)
         if (missing or overwrite) and download_if_missing:
             logger.info("Fetching %s from URL %s", cached_path, url)
-            local_filename = split(cached_path)[1]
-            datacache.download._download(
-                filename=local_filename,
+            datacache.download._download_and_decompress_if_necessary(
                 full_path=cached_path,
-                download_url=url)
+                download_url=url,
+                timeout=3600)
         elif missing:
             raise MissingRemoteFile(url)
         return cached_path
@@ -302,8 +302,8 @@ class DownloadCache(object):
         """
         for filename in listdir(self.cache_directory_path):
             delete = (
-                any(filename.endswith(ext) for ext in suffixes) or
-                any(filename.startswith(pre) for pre in prefixes))
+                any([filename.endswith(ext) for ext in suffixes]) or
+                any([filename.startswith(pre) for pre in prefixes]))
             if delete:
                 path = join(self.cache_directory_path, filename)
                 logger.info("Deleting %s", path)

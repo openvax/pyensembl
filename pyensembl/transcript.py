@@ -19,7 +19,6 @@ from memoized_property import memoized_property
 from .common import memoize
 from .locus_with_genome import LocusWithGenome
 
-
 class Transcript(LocusWithGenome):
     """
     Transcript encompasses the locus, exons, and sequence of a transcript.
@@ -400,10 +399,7 @@ class Transcript(LocusWithGenome):
         Spliced cDNA sequence of transcript
         (includes 5" UTR, coding sequence, and 3" UTR)
         """
-
-        if self.id in self.genome.transcript_sequences:
-            return self.genome.transcript_sequences.get(self.id)
-        return None
+        return self.genome.transcript_sequences.get(self.id)
 
     @memoized_property
     def first_start_codon_spliced_offset(self):

@@ -18,8 +18,9 @@ around an arbitrary genomic database.
 """
 
 from __future__ import print_function, division, absolute_import
+
 from os import remove
-from os.path import exists
+from os.path import exists, getsize
 
 from six import string_types
 
@@ -49,7 +50,7 @@ class Genome(Serializable):
             protein_fasta_paths_or_urls=None,
             decompress_on_download=False,
             copy_local_files_to_cache=False,
-            require_ensembl_ids=True,
+            require_ensembl_ids=False,
             cache_directory_path=None):
         """
         Parameters
@@ -87,11 +88,14 @@ class Genome(Serializable):
             by default inferred from reference name, annotation name,
             annotation version, and global cache dir for pyensembl.
         """
-
-        if isinstance(transcript_fasta_paths_or_urls, string_types):
+        if transcript_fasta_paths_or_urls is None:
+            transcript_fasta_paths_or_urls = []
+        elif isinstance(transcript_fasta_paths_or_urls, string_types):
             transcript_fasta_paths_or_urls = [transcript_fasta_paths_or_urls]
 
-        if isinstance(protein_fasta_paths_or_urls, string_types):
+        if protein_fasta_paths_or_urls is None:
+            protein_fasta_paths_or_urls = []
+        elif isinstance(protein_fasta_paths_or_urls, string_types):
             protein_fasta_paths_or_urls = [protein_fasta_paths_or_urls]
 
         self.reference_name = reference_name
@@ -112,15 +116,27 @@ class Genome(Serializable):
             decompress_on_download=self.decompress_on_download,
             copy_local_files_to_cache=self.copy_local_files_to_cache,
             install_string_function=self.install_string,
-            cache_directory_path=self.cache_directory_path)
-        self.cache_directory_path = self.download_cache.cache_directory_path
-
-        self.has_gtf = self._gtf_path_or_url is not None
-        self.has_transcript_fasta = self._transcript_fasta_paths_or_urls is not None
-        self.has_protein_fasta = self._protein_fasta_paths_or_urls is not None
+            cache_directory_path=cache_directory_path)
         self.memory_cache = MemoryCache()
-
         self._init_lazy_fields()
+
+    @property
+    def requires_gtf(self):
+        return self._gtf_path_or_url is not None
+
+    @property
+    def requires_transcript_fasta(self):
+        return (
+            self._transcript_fasta_paths_or_urls is not None and
+            len(self._transcript_fasta_paths_or_urls) > 0
+        )
+
+    @property
+    def requires_protein_fasta(self):
+        return (
+            self._protein_fasta_paths_or_urls is not None and
+            len(self._protein_fasta_paths_or_urls) > 0
+        )
 
     def to_dict(self):
         """
@@ -164,8 +180,10 @@ class Genome(Serializable):
         Get the local path for a possibly remote file, invoking either
         a download or install error message if it's missing.
         """
-        assert field_name, "Expected non-empty field name"
-        assert path_or_url, "Expected non-empty path_or_url"
+        if len(field_name) == 0:
+            raise ValueError("Expected non-empty field name")
+        if len(path_or_url) == 0:
+            raise ValueError("Expected non-empty path_or_url")
         return self.download_cache.local_path_or_install_error(
             field_name=field_name,
             path_or_url=path_or_url,
@@ -183,7 +201,7 @@ class Genome(Serializable):
             self,
             download_if_missing=False,
             overwrite=False):
-        if not self.has_transcript_fasta:
+        if not self.requires_transcript_fasta:
             raise ValueError("No transcript FASTA source for %s" % self)
         return [
             self._get_cached_path(
@@ -199,7 +217,7 @@ class Genome(Serializable):
             overwrite=False):
         # get the path for peptide FASTA files containing
         # this genome's protein sequences
-        if not self.has_protein_fasta:
+        if not self.requires_protein_fasta:
             raise ValueError("No protein FASTA source for %s" % self)
         return [
             self._get_cached_path(
@@ -210,18 +228,41 @@ class Genome(Serializable):
             for path in self._protein_fasta_paths_or_urls]
 
     def _set_local_paths(self, download_if_missing=False, overwrite=False):
-        if self.has_gtf:
+        if self.requires_gtf:
             self.gtf_path = self._get_gtf_path(
                 download_if_missing=download_if_missing,
                 overwrite=overwrite)
-        if self.has_transcript_fasta:
+        if self.requires_transcript_fasta:
             self.transcript_fasta_paths = self._get_transcript_fasta_paths(
                 download_if_missing=download_if_missing,
                 overwrite=overwrite)
-        if self.has_protein_fasta:
+        if self.requires_protein_fasta:
             self.protein_fasta_paths = self._get_protein_fasta_paths(
                 download_if_missing=download_if_missing,
                 overwrite=overwrite)
+
+    def required_local_files(self):
+        paths = []
+        if self._gtf_path_or_url:
+            paths.append(self.download_cache.cached_path(self._gtf_path_or_url))
+        if self._transcript_fasta_paths_or_urls:
+            paths.extend([
+                self.download_cache.cached_path(path_or_url)
+                for path_or_url in self._transcript_fasta_paths_or_urls])
+        if self._protein_fasta_paths_or_urls:
+            paths.extend([
+                self.download_cache.cached_path(path_or_url)
+                for path_or_url in self._protein_fasta_paths_or_urls])
+        return paths
+
+    def required_local_files_exist(self, empty_files_ok=False):
+        for path in self.required_local_files():
+            if not exists(path):
+                return False
+            if not empty_files_ok:
+                if getsize(path) == 0:
+                    return False
+        return True
 
     def download(self, overwrite=False):
         """
@@ -240,21 +281,21 @@ class Genome(Serializable):
         generate the GTF database and save efficient representation of
         FASTA sequence files.
         """
-        if self.has_gtf:
+        if self.requires_gtf:
             self.db.connect_or_create(overwrite=overwrite)
-        if self.has_transcript_fasta:
+        if self.requires_transcript_fasta:
             self.transcript_sequences.index(overwrite=overwrite)
-        if self.has_protein_fasta:
+        if self.requires_protein_fasta:
             self.protein_sequences.index(overwrite=overwrite)
 
     @property
     def db(self):
-        if not self.has_gtf:
+        if not self.requires_gtf:
             raise ValueError("Missing GTF source for %s" % self)
         if self._db is None:
             # make sure GTF file exists locally
             # and populate self.gtf_path
-            self._set_local_paths()
+            self._set_local_paths(download_if_missing=False, overwrite=False)
             assert self.gtf_path is not None
 
             # Database object turns the GTF dataframes into sqlite3 tables
@@ -290,12 +331,12 @@ class Genome(Serializable):
     @property
     def protein_sequences(self):
         if self._protein_sequences is None:
-            if not self.has_protein_fasta:
+            if not self.requires_protein_fasta:
                 raise ValueError(
                     "Missing protein FASTA source for %s" % self)
             # make sure protein FASTA file exists locally
             # and populate self.protein_fasta_paths
-            self._set_local_paths()
+            self._set_local_paths(download_if_missing=False, overwrite=False)
             assert self.protein_fasta_paths is not None
             self._protein_sequences = SequenceData(
                 fasta_paths=self.protein_fasta_paths,
@@ -306,12 +347,12 @@ class Genome(Serializable):
     @property
     def transcript_sequences(self):
         if self._transcript_sequences is None:
-            if not self.has_transcript_fasta:
+            if not self.requires_transcript_fasta:
                 raise ValueError(
                     "Missing transcript FASTA source for %s" % self)
             # make sure transcript FASTA file exists locally
             # and populate self.transcript_fasta_paths
-            self._set_local_paths()
+            self._set_local_paths(download_if_missing=False, overwrite=False)
             assert self.transcript_fasta_paths is not None
             self._transcript_sequences = SequenceData(
                 fasta_paths=self.transcript_fasta_paths,
@@ -329,20 +370,29 @@ class Genome(Serializable):
             "--annotation-name", self.annotation_name]
         if self.annotation_version:
             args.extend(["--annotation-version", str(self.annotation_version)])
-        if self.has_gtf:
+        if self.requires_gtf:
             args.append("--gtf")
             args.append("\"%s\"" % self._gtf_path_or_url)
-        if self.has_protein_fasta:
+        if self.requires_protein_fasta:
             args += [
                 "--protein-fasta \"%s\"" %
                 path for path in self._protein_fasta_paths_or_urls]
-        if self.has_transcript_fasta:
+        if self.requires_transcript_fasta:
             args += [
                 "--transcript-fasta \"%s\"" %
                 path for path in self._transcript_fasta_paths_or_urls]
         return "pyensembl install %s" % " ".join(args)
 
     def __str__(self):
+        transcript_fasta_paths_or_urls = (
+            ','.join(self._transcript_fasta_paths_or_urls)
+            if self._transcript_fasta_paths_or_urls is not None
+            else None
+        )
+        protein_fasta_paths_or_urls = (
+            ','.join(self._protein_fasta_paths_or_urls)
+            if self._protein_fasta_paths_or_urls is not None else None
+        )
         return ("Genome(reference_name=%s, "
                 "annotation_name=%s, "
                 "annotation_version=%s, "
@@ -353,12 +403,8 @@ class Genome(Serializable):
                     self.annotation_name,
                     self.annotation_version,
                     self._gtf_path_or_url,
-                    ','.join(self._transcript_fasta_paths_or_urls)
-                    if self._transcript_fasta_paths_or_urls is not None
-                    else None,
-                    ','.join(self._protein_fasta_paths_or_urls)
-                    if self._protein_fasta_paths_or_urls is not None
-                    else None))
+                    transcript_fasta_paths_or_urls,
+                    protein_fasta_paths_or_urls))
 
     def __repr__(self):
         return str(self)
