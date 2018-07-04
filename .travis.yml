@@ -71,6 +71,7 @@ install:
 script:
   - ./lint.sh
   - echo "Testing network connectivity" && ping -c 5 -q ftp.ensembl.org
+  - echo "Testing download from ftp.ensembl.org" &&  wget ftp.ensembl.org/pub/current_README
   - echo "Before installing Ensembl releases" && df -h
   # Ensembl 75
   - pyensembl install --release 75 --species human
