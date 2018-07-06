@@ -18,6 +18,7 @@ from serializable import Serializable
 
 from .ensembl_release_versions import MAX_ENSEMBL_RELEASE
 
+
 class Species(Serializable):
     """
     Container for combined information about a species name, its synonyn names
@@ -56,6 +57,25 @@ class Species(Serializable):
                     cls._reference_names_to_species[reference_name]))
             cls._reference_names_to_species[reference_name] = species
         return species
+
+    @classmethod
+    def all_registered_latin_names(cls):
+        """
+        Returns latin name of every registered species.
+        """
+        return list(cls._latin_names_to_species.keys())
+
+    @classmethod
+    def all_species_release_pairs(cls):
+        """
+        Generator which yields (species, release) pairs
+        for all possible combinations.
+        """
+        for species_name in cls.all_registered_latin_names():
+            species = cls._latin_names_to_species[species_name]
+            for _, release_range in species.reference_assemblies.items():
+                for release in range(release_range[0], release_range[1] + 1):
+                    yield species_name, release
 
     def __init__(self, latin_name, synonyms=[], reference_assemblies={}):
         """
@@ -124,11 +144,13 @@ def normalize_species_name(name):
 
     return lower_name.replace(" ", "_")
 
+
 def find_species_by_name(species_name):
     latin_name = normalize_species_name(species_name)
     if latin_name not in Species._latin_names_to_species:
         raise ValueError("Species not found: %s" % species_name)
     return Species._latin_names_to_species[latin_name]
+
 
 def check_species_object(species_name_or_object):
     """

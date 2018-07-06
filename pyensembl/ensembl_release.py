@@ -28,6 +28,7 @@ from .ensembl_url_templates import (
     make_fasta_url
 )
 
+
 class EnsemblRelease(Genome):
     """
     Bundles together the genomic annotation and sequence data associated with
@@ -143,6 +144,7 @@ class EnsemblRelease(Genome):
         Deserialize EnsemblRelease without creating duplicate instances.
         """
         return cls.cached(**state_dict)
+
 
 def cached_release(release, species="human"):
     """

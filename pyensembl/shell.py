@@ -29,7 +29,10 @@ To delete all downloaded and cached data for a particular Ensembl release:
 To delete only cached data related to transcript and protein sequences:
     %(prog)s delete-index-files --release 75
 
-To install any genome:
+To list all installed genomes:
+    %(prog)s list
+
+To install a genome from source files:
     %(prog)s install \
  --reference-name "GRCh38" \
  --gtf URL_OR_PATH \
@@ -48,7 +51,7 @@ import pkg_resources
 
 from .ensembl_release import EnsemblRelease
 from .genome import Genome
-
+from .species import Species
 
 logging.config.fileConfig(pkg_resources.resource_filename(__name__, "logging.conf"))
 logger = logging.getLogger(__name__)
@@ -122,16 +125,27 @@ parser.add_argument(
     choices=(
         "install",
         "delete-all-files",
-        "delete-index-files"
+        "delete-index-files",
+        "list",
     ),
     help=(
         "\"install\" will download and index any data that is  not "
         "currently downloaded or indexed. \"delete-all-files\" will delete all data "
         "associated with a genome annotation. \"delete-index-files\" deletes "
-        "all files other than the original GTF and FASTA files for a genome. "))
+        "all files other than the original GTF and FASTA files for a genome. "
+        "\"list\" will show you all installed Ensembl genomes."))
 
-def run():
-    args = parser.parse_args()
+
+def collect_all_install_ensembl_releases():
+    genomes = []
+    for (species, release) in Species.all_species_release_pairs():
+        genome = EnsemblRelease(release, species=species)
+        if genome.required_local_files_exist():
+            genomes.append(genome)
+    return sorted(genomes, key=lambda g: (g.species.latin_name, g.release))
+
+
+def collect_selected_genomes(args):
     genomes = []
     # If specific genome source URLs are provided, use those
     if args.gtf or args.transcript_fasta or args.protein_fasta:
@@ -155,19 +169,30 @@ def run():
         for version in args.release:
             genomes.append(
                 EnsemblRelease(version, species=args.species))
+    return genomes
 
-    if len(genomes) == 0:
-        logger.error("ERROR: No genomes selected!")
-        parser.print_help()
 
-    for genome in genomes:
-        logger.info("Running '%s' for %s", args.action, genome)
-        if args.action == "delete-all-files":
-            genome.download_cache.delete_cache_directory()
-        elif args.action == "delete-index-files":
-            genome.delete_index_files()
-        elif args.action == "install":
-            genome.download(overwrite=args.overwrite)
-            genome.index(overwrite=args.overwrite)
-        else:
-            raise ValueError("Invalid action: %s" % args.action)
+def run():
+    args = parser.parse_args()
+    if args.action == "list":
+        genomes = collect_all_install_ensembl_releases()
+        for genome in genomes:
+            print("-- %s" % genome)
+    else:
+        genomes = collect_selected_genomes(args)
+
+        if len(genomes) == 0:
+            logger.error("ERROR: No genomes selected!")
+            parser.print_help()
+
+        for genome in genomes:
+            logger.info("Running '%s' for %s", args.action, genome)
+            if args.action == "delete-all-files":
+                genome.download_cache.delete_cache_directory()
+            elif args.action == "delete-index-files":
+                genome.delete_index_files()
+            elif args.action == "install":
+                genome.download(overwrite=args.overwrite)
+                genome.index(overwrite=args.overwrite)
+            else:
+                raise ValueError("Invalid action: %s" % args.action)

@@ -17,6 +17,7 @@ from __future__ import print_function, division, absolute_import
 from .ensembl_release import EnsemblRelease
 from .species import Species, find_species_by_name
 
+
 def normalize_reference_name(name):
     """
     Search the dictionary of species-specific references to find a reference
@@ -30,16 +31,20 @@ def normalize_reference_name(name):
             return reference
     raise ValueError("Reference genome '%s' not found" % name)
 
+
 def find_species_by_reference(reference_name):
     return Species._reference_names_to_species[normalize_reference_name(reference_name)]
 
+
 def which_reference(species_name, ensembl_release):
     return find_species_by_name(species_name).which_reference(ensembl_release)
+
 
 def max_ensembl_release(reference_name):
     species = find_species_by_reference(reference_name)
     (_, max_release) = species.reference_assemblies[reference_name]
     return max_release
+
 
 def genome_for_reference_name(
         reference_name,
