@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 CACHE_BASE_SUBDIR = "pyensembl"
 CACHE_DIR_ENV_KEY = "PYENSEMBL_CACHE_DIR"
 
+
 def cache_subdirectory(
         reference_name=None,
         annotation_name=None,
@@ -45,9 +46,11 @@ def cache_subdirectory(
     annotation_dir = "%s%s" % (annotation_name, annotation_version)
     return join(reference_dir, annotation_dir)
 
+
 class MissingRemoteFile(Exception):
     def __init__(self, url):
         self.url = url
+
 
 class MissingLocalFile(Exception):
     def __init__(self, path):
@@ -55,6 +58,7 @@ class MissingLocalFile(Exception):
 
     def __str__(self):
         return("MissingFile(%s)" % self.path)
+
 
 class DownloadCache(object):
     """
