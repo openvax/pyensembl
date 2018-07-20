@@ -1,4 +1,7 @@
-sudo: false  # false = use container-based infrastructure
+# sudo: false = use container-based infrastructure
+# sudo: required = virtual machine
+dist: trusty
+sudo: required
 language: minimal
 python:
   - "2.7"
