@@ -1,6 +1,8 @@
+# sudo: false = use container-based infrastructure
+# sudo: required = virtual machine
 dist: trusty
-sudo: false  # false = use container-based infrastructure
-language: minimal
+sudo: false
+language: python
 python:
   - "2.7"
   - "3.6"
@@ -28,6 +30,8 @@ addons:
       # Needed for NetMHC
       - tcsh
 before_install:
+  - echo "TRAVIS_PYTHON_VERSION=$TRAVIS_PYTHON_VERSION"
+  - echo "CONDA_ENV=$CONDA_ENV"
   # download different versions of mini-conda for py2 vs. py3
   - |
     if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
