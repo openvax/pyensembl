@@ -1,6 +1,6 @@
 # sudo: false = use container-based infrastructure
 # sudo: required = virtual machine
-dist: trusty
+dist: precise
 sudo: false
 language: python
 python:
@@ -74,7 +74,9 @@ install:
   - pip install --upgrade -r $PWD/vaxrank/requirements.txt
 script:
   - ./lint.sh
-  - echo "Testing network connectivity" && ping -c 5 -q ftp.ensembl.org
+  - >
+    echo "Testing network connectivity" &&
+    ping -c 5 -q ftp.ensembl.org
   - >
     echo "Testing download from ftp.ensembl.org" &&
     wget ftp.ensembl.org/pub/current_README &&
