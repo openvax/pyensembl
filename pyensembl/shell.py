@@ -48,6 +48,7 @@ import argparse
 import logging
 import logging.config
 import pkg_resources
+import os
 
 from .ensembl_release import EnsemblRelease
 from .genome import Genome
@@ -177,7 +178,11 @@ def run():
     if args.action == "list":
         genomes = collect_all_install_ensembl_releases()
         for genome in genomes:
-            print("-- %s" % genome)
+            # print every directory in which downloaded files are located
+            # in most case this will be only one directory
+            filepaths = genome.required_local_files()
+            directories = {os.path.split(path)[0] for path in filepaths}
+            print("-- %s: %s" % (genome, ", ".join(directories)))
     else:
         genomes = collect_selected_genomes(args)
 
