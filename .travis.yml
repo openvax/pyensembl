@@ -83,16 +83,48 @@ script:
     head current_README
   - echo "Before installing Ensembl releases" && df -h
   # Ensembl 75
-  - pyensembl install --release 75 --species human
+  - >
+    pyensembl install
+      --reference-name GRCh37
+      --annotation-name ensembl
+      --annotation-version 75
+      --gtf https://github.com/openvax/ensembl-data/releases/download/GRCh37.75/Homo_sapiens.GRCh37.75.gtf.gz
+      --transcript-fasta https://github.com/openvax/ensembl-data/releases/download/GRCh37.75/Homo_sapiens.GRCh37.cdna.all.fa.gz
+      --transcript-fasta https://github.com/openvax/ensembl-data/releases/download/GRCh37.75/Homo_sapiens.GRCh37.ncrna.fa.gz
+      --protein-fasta https://github.com/openvax/ensembl-data/releases/download/GRCh37.75/Homo_sapiens.GRCh37.pep.all.fa.gz
   - echo "Installed Ensembl 75" && df -h
   # Ensembl 77
-  - pyensembl install --release 77 --species human
+  - >
+    pyensembl install
+      --reference-name GRCh38
+      --annotation-name ensembl
+      --annotation-version 77
+      --gtf https://github.com/openvax/ensembl-data/releases/download/GRCh37.75/Homo_sapiens.GRCh37.75.gtf.gz
+      --transcript-fasta https://github.com/openvax/ensembl-data/releases/download/GRCh37.75/Homo_sapiens.GRCh37.cdna.all.fa.gz
+      --transcript-fasta https://github.com/openvax/ensembl-data/releases/download/GRCh37.75/Homo_sapiens.GRCh37.ncrna.fa.gz
+      --protein-fasta https://github.com/openvax/ensembl-data/releases/download/GRCh37.75/Homo_sapiens.GRCh37.pep.all.fa.gz
   - echo "Installed Ensembl 77" && df -h
   # Ensembl 87
-  - pyensembl install --release 87 --species human
+- >
+    pyensembl install
+      --reference-name GRCh38
+      --annotation-name ensembl
+      --annotation-version 87
+      --gtf https://github.com/openvax/ensembl-data/releases/download/GRCh38.87/Homo_sapiens.GRCh38.87.gtf.gz
+      --transcript-fasta https://github.com/openvax/ensembl-data/releases/download/GRCh38.87/Homo_sapiens.GRCh38.cdna.all.fa.gz
+      --transcript-fasta https://github.com/openvax/ensembl-data/releases/download/GRCh38.87/Homo_sapiens.GRCh38.ncrna.fa.gz
+      --protein-fasta https://github.com/openvax/ensembl-data/releases/download/GRCh38.87/Homo_sapiens.GRCh38.pep.all.fa.gz
   - echo "Installed Ensembl 87" && df -h
   # latest mouse release
-  - pyensembl install --release 87 --species mouse
+  - >
+    pyensembl install
+      --reference-name GRCm38
+      --annotation-name ensembl
+      --annotation-version 87
+      --gtf https://github.com/openvax/ensembl-data/releases/download/GRCh38.87/Mus_musculus.GRCh38.87.gtf.gz
+      --transcript-fasta https://github.com/openvax/ensembl-data/releases/download/GRCm38.87/Mus_musculus.GRCm38.cdna.all.fa.gz
+      --transcript-fasta https://github.com/openvax/ensembl-data/releases/download/GRCm38.87/Mus_musculus.GRCm38.ncrna.fa.gz
+      --protein-fasta https://github.com/openvax/ensembl-data/releases/download/GRCm38.87/Mus_musculus.GRCm38.pep.all.fa.gz
   - echo "Installed Ensembl 87 for mice" && df -h
   # run tests
   # -a '!skip' lets us skip certain tests on travis (relevant for vaxrank)
