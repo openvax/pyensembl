@@ -38,8 +38,6 @@ To install a genome from source files:
  --gtf URL_OR_PATH \
  --transcript-fasta URL_OR_PATH \
  --protein-fasta URL_OR_PATH
-
-
 """
 
 from __future__ import print_function, division, absolute_import
@@ -121,6 +119,11 @@ path_group.add_argument(
     action="append",
     help="URL or local path to a FASTA file containing protein data.")
 
+path_group.add_argument(
+    "--shared-prefix",
+    default="",
+    help="Add this prefix to URLs or paths specified by --gtf, --transcript-fasta, --protein-fasta")
+
 parser.add_argument(
     "action",
     type=lambda arg: arg.lower().strip(),
@@ -163,9 +166,13 @@ def collect_selected_genomes(args):
         genomes.append(Genome(
             reference_name=args.reference_name,
             annotation_name=args.annotation_name,
-            gtf_path_or_url=args.gtf,
-            transcript_fasta_paths_or_urls=args.transcript_fasta,
-            protein_fasta_paths_or_urls=args.protein_fasta))
+            gtf_path_or_url=os.path.join(args.shared_prefix, args.gtf),
+            transcript_fasta_paths_or_urls=[
+                os.path.join(args.shared_prefix, transcript_fasta)
+                for transcript_fasta in args.transcript_fasta],
+            protein_fasta_paths_or_urls=[
+                os.path.join(args.shared_prefix, protein_fasta)
+                for protein_fasta in args.protein_fasta]))
     else:
         # Otherwise, use Ensembl release information
         for version in args.release:
