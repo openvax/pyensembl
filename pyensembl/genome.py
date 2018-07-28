@@ -325,7 +325,13 @@ class Genome(Serializable):
                     "exon_version",
                     "ccds_id",
                     "protein_id",
-                    "protein_version"})
+                    "protein_version"},
+                restrict_gtf_features={
+                    "gene",
+                    "transcript",
+                    "exon",
+                    "CDS",
+                })
         return self._db
 
     @property
@@ -804,8 +810,10 @@ class Genome(Serializable):
         """
         What is the gene ID associated with a given protein ID?
         """
-        results = self._query_gene_ids("protein_id", protein_id,
-                                       feature="CDS")
+        results = self._query_gene_ids(
+            "protein_id",
+            protein_id,
+            feature="CDS")
         if len(results) == 0:
             raise ValueError("Protein ID not found: %s" % protein_id)
         assert len(results) == 1, \
