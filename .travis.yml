@@ -84,9 +84,9 @@ script:
       --annotation-version 75
       --shared-prefix https://github.com/openvax/ensembl-data/releases/download/GRCh37.75/
       --gtf Homo_sapiens.GRCh37.75.gtf.gz
-      --transcript-fasta Homo_sapiens.GRCh37.cdna.all.fa.gz
-      --transcript-fasta Homo_sapiens.GRCh37.ncrna.fa.gz
-      --protein-fasta Homo_sapiens.GRCh37.pep.all.fa.gz
+      --transcript-fasta Homo_sapiens.GRCh37.75.cdna.all.fa.gz
+      --transcript-fasta Homo_sapiens.GRCh37.75.ncrna.fa.gz
+      --protein-fasta Homo_sapiens.GRCh37.75.pep.all.fa.gz
   - echo "Installed Ensembl 75" && df -h
   # Ensembl 77
   - >
