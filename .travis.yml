@@ -118,8 +118,8 @@ script:
       --reference-name GRCm38
       --annotation-name ensembl
       --annotation-version 87
-      --shared-prefix https://github.com/openvax/ensembl-data/releases/download/GRCh38.87/
-      --gtf Mus_musculus.GRCh38.87.gtf.gz
+      --shared-prefix https://github.com/openvax/ensembl-data/releases/download/GRCm38.87/
+      --gtf Mus_musculus.GRCm38.87.gtf.gz
       --transcript-fasta Mus_musculus.GRCm38.cdna.all.fa.gz
       --transcript-fasta Mus_musculus.GRCm38.ncrna.fa.gz
       --protein-fasta Mus_musculus.GRCm38.pep.all.fa.gz
