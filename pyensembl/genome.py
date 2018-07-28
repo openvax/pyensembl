@@ -326,11 +326,15 @@ class Genome(Serializable):
                     "ccds_id",
                     "protein_id",
                     "protein_version"},
+                # excluding 'UTR' and 'Selenocysteine'
                 restrict_gtf_features={
                     "gene",
                     "transcript",
                     "exon",
                     "CDS",
+                    "start_codon",
+                    "stop_codon",
+
                 })
         return self._db
 
