@@ -3,17 +3,16 @@ from __future__ import absolute_import
 import functools
 
 from pyensembl import (
-    ensembl_grch37,
-    ensembl_grch38,
+    genome_for_reference_name,
     cached_release,
     MAX_ENSEMBL_RELEASE,
 )
 from nose.tools import nottest
 
-major_releases = [
-    ensembl_grch37,
-    ensembl_grch38
-]
+grch37 = genome_for_reference_name("GRCh37")
+grch38 = genome_for_reference_name("GRCh38")
+
+major_releases = [grch37, grch38]
 
 contigs = [str(c) for c in range(1, 23)] + ["X", "Y", "M"]
 

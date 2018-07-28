@@ -3,9 +3,11 @@ Test all methods which return collections of gene names that aren't converting
 from some other type of name or ID.
 """
 from __future__ import absolute_import, print_function
-from pyensembl import ensembl_grch38
+from pyensembl import genome_for_reference_name
 
 from .common import test_ensembl_releases
+
+grch38 = genome_for_reference_name("GRCh38")
 
 KNOWN_GENE_NAMES = [
     "TP53",
@@ -32,7 +34,7 @@ def test_gene_names_at_locus_grch38_hla_a():
     # based on:
     # http://useast.ensembl.org/Homo_sapiens/Gene/
     # Summary?db=core;g=ENSG00000206503;r=6:29941260-29945884
-    names = ensembl_grch38.gene_names_at_locus(6, 29945884)
+    names = grch38.gene_names_at_locus(6, 29945884)
     assert names == ["HLA-A"], "Expected gene name HLA-A, got: %s" % (names,)
 
 @test_ensembl_releases()
@@ -49,9 +51,9 @@ def test_gene_names_on_contig(ensembl):
 
 
 def test_gene_name_of_HLA_gene_id():
-    gene_ids = ensembl_grch38.gene_ids_of_gene_name("HLA-A")
+    gene_ids = grch38.gene_ids_of_gene_name("HLA-A")
     gene_names = [
-        ensembl_grch38.gene_name_of_gene_id(gene_id)
+        grch38.gene_name_of_gene_id(gene_id)
         for gene_id in gene_ids
     ]
     unique_gene_names = list(set(gene_names))

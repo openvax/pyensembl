@@ -4,10 +4,12 @@ converting from some type of name or ID.
 """
 from __future__ import absolute_import
 
-from pyensembl import ensembl_grch38
+from pyensembl import genome_for_reference_name
 from nose.tools import eq_
 
 from .common import test_ensembl_releases
+
+grch38 = genome_for_reference_name("GRCh38")
 
 # subset of transcript IDs for HLA-A
 HLA_A_TRANSCRIPT_IDS = [
@@ -26,7 +28,7 @@ def test_transcript_ids_ensembl_grch38_hla_a():
     # based on:
     # http://useast.ensembl.org/Homo_sapiens/Gene/
     # Summary?db=core;g=ENSG00000206503;r=6:29941260-29945884
-    transcript_ids = ensembl_grch38.transcript_ids_at_locus(
+    transcript_ids = grch38.transcript_ids_at_locus(
         6, 29941260, 29945884)
     for transcript_id in HLA_A_TRANSCRIPT_IDS:
         assert transcript_id in transcript_ids, \
@@ -40,7 +42,7 @@ KNOWN_TRANSCRIPT_IDS = HLA_A_TRANSCRIPT_IDS + [
 
 # TODO: add release 54 after transcript IDs for older GTFs are filled in
 # See https://github.com/hammerlab/pyensembl/issues/20
-@test_ensembl_releases(75, ensembl_grch38.release)
+@test_ensembl_releases(75, grch38.release)
 def test_all_transcript_ids(ensembl):
     transcript_ids = set(ensembl.transcript_ids())
     for transcript_id in KNOWN_TRANSCRIPT_IDS:
@@ -50,6 +52,6 @@ def test_all_transcript_ids(ensembl):
 def test_transcript_id_of_protein_id_CCR2():
     # looked up CCR2-201 transcript ID ENST00000292301 mapping to protein ID
     # ENSP00000292301 on Sept. 14th 2016 from GRCh38 Ensembl release 85
-    transcript_id = ensembl_grch38.transcript_id_of_protein_id(
+    transcript_id = grch38.transcript_id_of_protein_id(
         "ENSP00000292301")
     eq_("ENST00000292301", transcript_id)

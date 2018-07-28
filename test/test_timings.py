@@ -1,9 +1,10 @@
 from __future__ import print_function, absolute_import
 
-from pyensembl import ensembl_grch38 as ensembl
+from pyensembl import genome_for_reference_name
 
 from tinytimer import benchmark
 
+ensembl = genome_for_reference_name("GRCh38")
 contigs = [str(i + 1) for i in range(22)] + ["X", "Y"]
 
 def make_repeat_lookup_fn(lookup_fn, n_positions):
