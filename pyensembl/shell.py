@@ -109,7 +109,7 @@ path_group.add_argument(
     "--transcript-fasta",
     type=str,
     action='append',
-    default=None,
+    default=[],
     help="URL or local path to a FASTA files containing the transcript "
     "data. This option can be specified multiple times for multiple "
     "FASTA files.")
@@ -117,7 +117,8 @@ path_group.add_argument(
 path_group.add_argument(
     "--protein-fasta",
     type=str,
-    default=None,
+    default=[],
+    action="append",
     help="URL or local path to a FASTA file containing protein data.")
 
 parser.add_argument(
@@ -137,7 +138,7 @@ parser.add_argument(
         "\"list\" will show you all installed Ensembl genomes."))
 
 
-def collect_all_install_ensembl_releases():
+def collect_all_installed_ensembl_releases():
     genomes = []
     for (species, release) in Species.all_species_release_pairs():
         genome = EnsemblRelease(release, species=species)
@@ -176,7 +177,9 @@ def collect_selected_genomes(args):
 def run():
     args = parser.parse_args()
     if args.action == "list":
-        genomes = collect_all_install_ensembl_releases()
+        # TODO: how do we also identify which non-Ensembl genomes are
+        # installed?
+        genomes = collect_all_installed_ensembl_releases()
         for genome in genomes:
             # print every directory in which downloaded files are located
             # in most case this will be only one directory
