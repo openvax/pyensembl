@@ -100,30 +100,30 @@ script:
       --transcript-fasta Homo_sapiens.GRCh38.ncrna.fa.gz
       --protein-fasta Homo_sapiens.GRCh38.pep.all.fa.gz
   - echo "Installed Ensembl 77" && df -h
-  # Ensembl 87
+  # Ensembl 93
   - >
       pyensembl install
       --reference-name GRCh38
       --annotation-name ensembl
-      --annotation-version 87
-      --shared-prefix https://github.com/openvax/ensembl-data/releases/download/GRCh38.87/
-      --gtf Homo_sapiens.GRCh38.87.gtf.gz
+      --annotation-version 93
+      --shared-prefix https://github.com/openvax/ensembl-data/releases/download/GRCh38.93/
+      --gtf Homo_sapiens.GRCh38.93.gtf.gz
       --transcript-fasta Homo_sapiens.GRCh38.cdna.all.fa.gz
       --transcript-fasta Homo_sapiens.GRCh38.ncrna.fa.gz
       --protein-fasta Homo_sapiens.GRCh38.pep.all.fa.gz
-  - echo "Installed Ensembl 87" && df -h
+  - echo "Installed Ensembl 93 for humans" && df -h
   # latest mouse release
   - >
       pyensembl install
       --reference-name GRCm38
       --annotation-name ensembl
-      --annotation-version 87
-      --shared-prefix https://github.com/openvax/ensembl-data/releases/download/GRCm38.87/
-      --gtf Mus_musculus.GRCm38.87.gtf.gz
+      --annotation-version 93
+      --shared-prefix https://github.com/openvax/ensembl-data/releases/download/GRCm38.93/
+      --gtf Mus_musculus.GRCm38.93.gtf.gz
       --transcript-fasta Mus_musculus.GRCm38.cdna.all.fa.gz
       --transcript-fasta Mus_musculus.GRCm38.ncrna.fa.gz
       --protein-fasta Mus_musculus.GRCm38.pep.all.fa.gz
-  - echo "Installed Ensembl 87 for mice" && df -h
+  - echo "Installed Ensembl 93 for mice" && df -h
   # run tests
   # -a '!skip' lets us skip certain tests on travis (relevant for vaxrank)
   # this command runs both pyensembl and vaxrank tests. Sometimes they don't print output for a long
