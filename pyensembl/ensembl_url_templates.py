@@ -54,7 +54,7 @@ def _species_subdir(
     }
 
 
-def _normalize_release_properties(ensembl_release, species):
+def normalize_release_properties(ensembl_release, species):
     """
     Make sure a given release is valid, normalize it to be an integer,
     normalize the species name, and get its associated reference.
@@ -69,32 +69,51 @@ def _normalize_release_properties(ensembl_release, species):
 GTF_FILENAME_TEMPLATE = "%(Species)s.%(reference)s.%(release)d.gtf.gz"
 
 
+def make_gtf_filename(ensembl_release, species):
+    """
+    Return GTF filename expect on Ensembl FTP server for a specific
+    species/release combination
+    """
+    ensembl_release, species, reference_name = normalize_release_properties(
+        ensembl_release, species)
+    return GTF_FILENAME_TEMPLATE % {
+        "Species": species.capitalize(),
+        "reference": reference_name,
+        "release": ensembl_release,
+    }
+
 def make_gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
     """
     Returns a URL and a filename, which can be joined together.
     """
-    ensembl_release, species, reference_name = _normalize_release_properties(
-        ensembl_release, species)
-
+    ensembl_release, species, _ = \
+        normalize_release_properties(ensembl_release, species)
     subdir = _species_subdir(
         ensembl_release,
         species=species,
         filetype="gtf",
         server=server)
-
     url_subdir = urllib_parse.urljoin(server, subdir)
-
-    filename = GTF_FILENAME_TEMPLATE % {
-        "Species": species.capitalize(),
-        "reference": reference_name,
-        "release": ensembl_release,
-    }
+    filename = make_gtf_filename(
+        ensembl_release=ensembl_release,
+        species=species)
     return join(url_subdir, filename)
 
 # DNA fasta file example: Homo_sapiens.GRCh38.dna.chromosome.1.fa.gz
 FASTA_DNA_CHROMOSOME_FILENAME_TEMPLATE = \
     "%(Species)s.%(reference)s.%(release)d.%(sequence_type)s.chromosome.%(contig)s.fa.gz"
 
+
+def make_fasta_dna_filename(ensembl_release, species, contig):
+    ensembl_release, species, reference_name = \
+        normalize_release_properties(ensembl_release, species)
+    return FASTA_DNA_CHROMOSOME_FILENAME_TEMPLATE % {
+        "Species": species.capitalize(),
+        "reference": reference_name,
+        "release": ensembl_release,
+        "sequence_type": "dna",
+        "contig": contig
+    }
 
 def make_fasta_dna_url(
         ensembl_release,
@@ -105,23 +124,18 @@ def make_fasta_dna_url(
     Construct URL to FASTA file with full sequence of a particular chromosome.
     Returns server_url/subdir and filename as tuple result.
     """
-    ensembl_release, species, reference_name = _normalize_release_properties(
-        ensembl_release, species)
+    ensembl_release, species, _ = \
+        normalize_release_properties(ensembl_release, species)
     subdir = _species_subdir(
         ensembl_release,
         species=species,
         filetype="fasta",
         server=server,)
     server_subdir = urllib_parse.urljoin(server, subdir)
-
     server_sequence_subdir = join(server_subdir, "dna")
-    filename = FASTA_DNA_CHROMOSOME_FILENAME_TEMPLATE % {
-        "Species": species.capitalize(),
-        "reference": reference_name,
-        "release": ensembl_release,
-        "sequence_type": "dna",
-        "contig": contig
-    }
+    filename = make_fasta_dna_filename(
+        ensembl_release=ensembl_release,
+        species=species)
     return join(server_sequence_subdir, filename)
 
 
@@ -143,10 +157,39 @@ NEW_FASTA_FILENAME_TEMPLATE = \
 
 # ncRNA FASTA file for releases after Ensembl 75
 # example: Homo_sapiens.GRCh37.ncrna.fa.gz
-
 NEW_FASTA_FILENAME_TEMPLATE_NCRNA = \
     "%(Species)s.%(reference)s.ncrna.fa.gz"
 
+
+def make_fasta_filename(ensembl_release, species, sequence_type):
+    ensembl_release, species, reference_name = \
+        normalize_release_properties(ensembl_release, species)
+    if ensembl_release <= 75:
+        if sequence_type == 'ncrna':
+            return OLD_FASTA_FILENAME_TEMPLATE_NCRNA % {
+                "Species": species.capitalize(),
+                "reference": reference_name,
+                "release": ensembl_release
+            }
+        else:
+            return OLD_FASTA_FILENAME_TEMPLATE % {
+                "Species": species.capitalize(),
+                "reference": reference_name,
+                "release": ensembl_release,
+                "sequence_type": sequence_type,
+            }
+    else:
+        if sequence_type == 'ncrna':
+            return NEW_FASTA_FILENAME_TEMPLATE_NCRNA % {
+                "Species": species.capitalize(),
+                "reference": reference_name
+            }
+        else:
+            return NEW_FASTA_FILENAME_TEMPLATE % {
+                "Species": species.capitalize(),
+                "reference": reference_name,
+                "sequence_type": sequence_type,
+            }
 
 def make_fasta_url(
         ensembl_release,
@@ -160,40 +203,17 @@ def make_fasta_url(
         species = "Homo_sapiens"
         sequence_type = "cdna" (other option: "pep")
     """
-    ensembl_release, species, reference_name = _normalize_release_properties(
+    ensembl_release, species, reference_name = normalize_release_properties(
         ensembl_release, species)
     subdir = _species_subdir(
         ensembl_release,
         species=species,
         filetype="fasta",
         server=server)
-
     server_subdir = urllib_parse.urljoin(server, subdir)
     server_sequence_subdir = join(server_subdir, sequence_type)
-    if ensembl_release <= 75:
-        if sequence_type == 'ncrna':
-            filename = OLD_FASTA_FILENAME_TEMPLATE_NCRNA % {
-                "Species": species.capitalize(),
-                "reference": reference_name,
-                "release": ensembl_release
-            }
-        else:
-            filename = OLD_FASTA_FILENAME_TEMPLATE % {
-                "Species": species.capitalize(),
-                "reference": reference_name,
-                "release": ensembl_release,
-                "sequence_type": sequence_type,
-            }
-    else:
-        if sequence_type == 'ncrna':
-            filename = NEW_FASTA_FILENAME_TEMPLATE_NCRNA % {
-                "Species": species.capitalize(),
-                "reference": reference_name
-            }
-        else:
-            filename = NEW_FASTA_FILENAME_TEMPLATE % {
-                "Species": species.capitalize(),
-                "reference": reference_name,
-                "sequence_type": sequence_type,
-            }
+    filename = make_fasta_filename(
+        ensembl_release=ensembl_release,
+        species=species,
+        sequence_type=sequence_type)
     return join(server_sequence_subdir, filename)

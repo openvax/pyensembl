@@ -48,7 +48,7 @@ import logging.config
 import pkg_resources
 import os
 
-from .ensembl_release import EnsemblRelease
+from .ensembl_release import EnsemblRelease, MAX_ENSEMBL_RELEASE
 from .genome import Genome
 from .species import Species
 
@@ -72,12 +72,18 @@ release_group.add_argument(
     type=int,
     nargs="+",
     default=[],
-    help="Ensembl release version, multiple releases may be specified.")
+    help="Ensembl release version(s) (default=%d)" % MAX_ENSEMBL_RELEASE)
 
 release_group.add_argument(
     "--species",
-    default="human",
-    help="Which species to download Ensembl data for (default=%(default)s.")
+    default=[],
+    nargs="+",
+    help="Which species to download Ensembl data for (default=human)")
+
+release_group.add_argument(
+    "--custom-mirror",
+    default=None,
+    help="URL and directory to use instead of the default Ensembl FTP server")
 
 path_group = root_group.add_argument_group()
 
@@ -150,8 +156,55 @@ def collect_all_installed_ensembl_releases():
     return sorted(genomes, key=lambda g: (g.species.latin_name, g.release))
 
 
-def collect_selected_genomes(args):
+def all_combinations_of_ensembl_genomes(args):
+    """
+    Use all combinations of species and release versions specified by the
+    commandline arguments to return a list of EnsemblRelease or Genome objects.
+    The results will typically be of type EnsemblRelease unless the
+    --custom-mirror argument was given.
+    """
+    species_list = args.species if args.species else ["human"]
+    release_list = args.release if args.release else [MAX_ENSEMBL_RELEASE]
     genomes = []
+    for species in species_list:
+        # Otherwise, use Ensembl release information
+        for version in release_list:
+            ensembl_release = EnsemblRelease(version, species=species)
+
+            if not args.custom_mirror:
+                genomes.append(ensembl_release)
+            else:
+                # if we're using a custom mirror then we expect the provided
+                # URL to be a directory with all the same filenames as
+                # would be provided by Ensembl
+                gtf_url = os.path.join(
+                    args.custom_mirror,
+                    os.path.basename(ensembl_release.gtf_url))
+                transcript_fasta_urls = [
+                    os.path.join(
+                        args.custom_mirror,
+                        os.path.basename(transcript_fasta_url))
+                    for transcript_fasta_url in ensembl_release.transcript_fasta_urls
+                ]
+                protein_fasta_urls = [
+                    os.path.join(
+                        args.custom_mirror,
+                        os.path.basename(protein_fasta_url))
+                    for protein_fasta_url in
+                    ensembl_release.protein_fasta_urls
+                ]
+                reference_name = ensembl_release.reference_name
+                genome = Genome(
+                    reference_name=reference_name,
+                    annotation_name="ensembl",
+                    annotation_version=version,
+                    gtf_path_or_url=gtf_url,
+                    transcript_fasta_paths_or_urls=transcript_fasta_urls,
+                    protein_fasta_paths_or_urls=protein_fasta_urls)
+                genomes.append(genome)
+    return genomes
+
+def collect_selected_genomes(args):
     # If specific genome source URLs are provided, use those
     if args.gtf or args.transcript_fasta or args.protein_fasta:
         if args.release:
@@ -163,7 +216,7 @@ def collect_selected_genomes(args):
         if not args.annotation_name:
             raise ValueError("Must specify the name of the annotation source")
 
-        genomes.append(Genome(
+        return [Genome(
             reference_name=args.reference_name,
             annotation_name=args.annotation_name,
             annotation_version=args.annotation_version,
@@ -173,13 +226,9 @@ def collect_selected_genomes(args):
                 for transcript_fasta in args.transcript_fasta],
             protein_fasta_paths_or_urls=[
                 os.path.join(args.shared_prefix, protein_fasta)
-                for protein_fasta in args.protein_fasta]))
+                for protein_fasta in args.protein_fasta])]
     else:
-        # Otherwise, use Ensembl release information
-        for version in args.release:
-            genomes.append(
-                EnsemblRelease(version, species=args.species))
-    return genomes
+        return all_combinations_of_ensembl_genomes(args)
 
 
 def run():

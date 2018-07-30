@@ -72,57 +72,34 @@ install:
   - pip install --upgrade -r $PWD/vaxrank/requirements.txt
 script:
   - ./lint.sh
-  - >
-    echo "Testing network connectivity" &&
-    ping -c 5 -q ftp.ensembl.org
   - echo "Before installing Ensembl releases" && df -h
    # Ensembl 75
   - >
       pyensembl install
-      --reference-name GRCh37
-      --annotation-name ensembl
-      --annotation-version 75
-      --shared-prefix https://github.com/openvax/ensembl-data/releases/download/GRCh37.75/
-      --gtf Homo_sapiens.GRCh37.75.gtf.gz
-      --transcript-fasta Homo_sapiens.GRCh37.75.cdna.all.fa.gz
-      --transcript-fasta Homo_sapiens.GRCh37.75.ncrna.fa.gz
-      --protein-fasta Homo_sapiens.GRCh37.75.pep.all.fa.gz
+      --release 75
+      --species human
+      --custom-mirror https://github.com/openvax/ensembl-data/releases/download/GRCh37.75/
   - echo "Installed Ensembl 75" && df -h
   # Ensembl 77
   - >
       pyensembl install
-      --reference-name GRCh38
-      --annotation-name ensembl
-      --annotation-version 77
-      --shared-prefix https://github.com/openvax/ensembl-data/releases/download/GRCh38.77/
-      --gtf Homo_sapiens.GRCh38.77.gtf.gz
-      --transcript-fasta Homo_sapiens.GRCh38.cdna.all.fa.gz
-      --transcript-fasta Homo_sapiens.GRCh38.ncrna.fa.gz
-      --protein-fasta Homo_sapiens.GRCh38.pep.all.fa.gz
+      --release 77
+      --species human
+      --custom-mirror https://github.com/openvax/ensembl-data/releases/download/GRCh38.77/
   - echo "Installed Ensembl 77" && df -h
   # Ensembl 93
   - >
       pyensembl install
-      --reference-name GRCh38
-      --annotation-name ensembl
-      --annotation-version 93
-      --shared-prefix https://github.com/openvax/ensembl-data/releases/download/GRCh38.93/
-      --gtf Homo_sapiens.GRCh38.93.gtf.gz
-      --transcript-fasta Homo_sapiens.GRCh38.cdna.all.fa.gz
-      --transcript-fasta Homo_sapiens.GRCh38.ncrna.fa.gz
-      --protein-fasta Homo_sapiens.GRCh38.pep.all.fa.gz
+      --release 93
+      --species human
+      --custom-mirror https://github.com/openvax/ensembl-data/releases/download/GRCh38.93/
   - echo "Installed Ensembl 93 for humans" && df -h
   # latest mouse release
   - >
       pyensembl install
-      --reference-name GRCm38
-      --annotation-name ensembl
-      --annotation-version 93
-      --shared-prefix https://github.com/openvax/ensembl-data/releases/download/GRCm38.93/
-      --gtf Mus_musculus.GRCm38.93.gtf.gz
-      --transcript-fasta Mus_musculus.GRCm38.cdna.all.fa.gz
-      --transcript-fasta Mus_musculus.GRCm38.ncrna.fa.gz
-      --protein-fasta Mus_musculus.GRCm38.pep.all.fa.gz
+      --release 93
+      --species mouse
+      --custom-mirror https://github.com/openvax/ensembl-data/releases/download/GRCm38.93/
   - echo "Installed Ensembl 93 for mice" && df -h
   # run tests
   # -a '!skip' lets us skip certain tests on travis (relevant for vaxrank)

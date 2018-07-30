@@ -681,8 +681,10 @@ class Genome(Serializable):
             ]
             # Do not look for gene_name and gene_biotype if they are
             # not in the database.
-            field_names.extend([name for name in optional_field_names
-                                if self.db.column_exists("gene", name)])
+            field_names.extend([
+                name for name in optional_field_names
+                if self.db.column_exists("gene", name)
+            ])
             result = self.db.query_one(
                 field_names,
                 filter_column="gene_id",
@@ -859,8 +861,10 @@ class Genome(Serializable):
             ]
             # Do not look for transcript_name and transcript_biotype if
             # they are not in the database.
-            field_names.extend([name for name in optional_field_names
-                                if self.db.column_exists("transcript", name)])
+            field_names.extend([
+                name for name in optional_field_names
+                if self.db.column_exists("transcript", name)
+            ])
             result = self.db.query_one(
                 select_column_names=field_names,
                 filter_column="transcript_id",
