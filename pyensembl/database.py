@@ -213,7 +213,8 @@ class Database(object):
         """
         logger.info("Creating database: %s", self.local_db_path)
         df = self._load_gtf_as_dataframe(
-            restrict_gtf_columns=self.restrict_gtf_columns)
+            usecols=self.restrict_gtf_columns,
+            features=self.restrict_gtf_features)
         all_index_groups = self._all_possible_indices(df.columns)
 
         if self.restrict_gtf_features:
@@ -598,7 +599,7 @@ class Database(object):
                 feature, filter_column, filter_value, loci))
         return loci[0]
 
-    def _load_gtf_as_dataframe(self, restrict_gtf_columns=None):
+    def _load_gtf_as_dataframe(self, usecols=None, features=None):
         """
         Parse this genome source's GTF file and load it as a Pandas DataFrame
         """
@@ -610,14 +611,17 @@ class Database(object):
                 "strand": normalize_strand,
             },
             infer_biotype_column=True,
-            usecols=restrict_gtf_columns)
+            usecols=usecols,
+            features=features)
 
-        features = set(df["feature"])
         column_names = set(df.keys())
+        expect_gene_feature = features is None or "gene" in features
+        expect_transcript_feature = features is None or "transcript" in features
+        observed_features = set(df["feature"])
 
         # older Ensembl releases don't have "gene" or "transcript"
         # features, so fill in those rows if they're missing
-        if "gene" not in features:
+        if expect_gene_feature and "gene" not in observed_features:
             # if we have to reconstruct gene feature rows then
             # fill in values for 'gene_name' and 'gene_biotype'
             # but only if they're actually present in the GTF
@@ -634,7 +638,7 @@ class Database(object):
                 missing_value="")
             logger.info("Done.")
 
-        if "transcript" not in features:
+        if expect_transcript_feature and "transcript" not in observed_features:
             logger.info("Creating missing transcript features...")
             df = create_missing_features(
                 dataframe=df,
