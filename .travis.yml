@@ -52,10 +52,7 @@ before_install:
   - mkdir tmp
   - export NETMHC_BUNDLE_TMPDIR=$PWD/tmp
   - export PATH=$PATH:$NETMHC_BUNDLE_HOME/bin
-
-  # we want to include vaxrank unit tests as a general integration test to make sure the stack
-  # isn't broken in an obvious way
-  - git clone https://github.com/openvax/vaxrank.git
+  - git clone https://github.com/openvax/openvax-integration-tests.git
 install:
   - >
       conda create -q -n $CONDA_ENV python=$TRAVIS_PYTHON_VERSION
@@ -107,7 +104,7 @@ script:
   # time; travis_wait extends the time allowed with no output.
   - >
       nosetests -sv test --with-coverage --cover-package=pyensembl  &&
-      travis_wait nosetests -sv $PWD/vaxrank -a '!skip'
+      travis_wait nosetests -sv $PWD/openvax-integration-tests -a '!skip'
 after_success:
   coveralls
 deploy:
