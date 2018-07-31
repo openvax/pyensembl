@@ -70,7 +70,7 @@ install:
   - pip install --upgrade -r $PWD/openvax-integration-tests/requirements.txt
   # download MHCflurry models for integration tests
   - mhcflurry-downloads fetch models_class1_minimal
-script:
+before_script:
   - ./lint.sh
   - echo "Before installing Ensembl releases" && df -h
    # Ensembl 75
@@ -101,7 +101,7 @@ script:
       --species mouse
       --custom-mirror https://github.com/openvax/ensembl-data/releases/download/GRCm38.93/
   - echo "Installed Ensembl 93 for mice" && df -h
-  # run tests
+script:
   # -a '!skip' lets us skip certain tests on travis (relevant for integration tests)
   # this command runs both pyensembl and integration tests. Sometimes they don't print output for a long
   # time; travis_wait extends the time allowed with no output.
