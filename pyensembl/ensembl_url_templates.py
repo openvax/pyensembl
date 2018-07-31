@@ -135,7 +135,8 @@ def make_fasta_dna_url(
     server_sequence_subdir = join(server_subdir, "dna")
     filename = make_fasta_dna_filename(
         ensembl_release=ensembl_release,
-        species=species)
+        species=species,
+        contig=contig)
     return join(server_sequence_subdir, filename)
 
 
