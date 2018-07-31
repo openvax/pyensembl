@@ -109,8 +109,7 @@ class EnsemblRelease(Genome):
             annotation_version=self.release,
             gtf_path_or_url=self.gtf_url,
             transcript_fasta_paths_or_urls=self.transcript_fasta_urls,
-            protein_fasta_paths_or_urls=self.protein_fasta_urls,
-            require_ensembl_ids=True)
+            protein_fasta_paths_or_urls=self.protein_fasta_urls)
 
     def install_string(self):
         return "pyensembl install --release %d --species %s" % (

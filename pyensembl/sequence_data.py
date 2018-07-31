@@ -22,11 +22,7 @@ from collections import Counter
 from six.moves import cPickle as pickle
 from six import string_types
 
-from .common import (
-    require_ensembl_id,
-    load_pickle,
-    dump_pickle,
-)
+from .common import (load_pickle, dump_pickle)
 from .fasta import parse_fasta_dictionary
 
 
@@ -40,7 +36,6 @@ class SequenceData(object):
     def __init__(
             self,
             fasta_paths,
-            require_ensembl_ids=False,
             cache_directory_path=None):
 
         if isinstance(fasta_paths, string_types):
@@ -56,7 +51,6 @@ class SequenceData(object):
         for path in self.fasta_paths:
             if not exists(path):
                 raise ValueError("Couldn't find FASTA file %s" % (path,))
-        self.require_ensembl_ids = require_ensembl_ids
         self.fasta_dictionary_filenames = [
             filename + ".pickle" for filename in self.fasta_filenames]
         self.fasta_dictionary_pickle_paths = [
@@ -75,9 +69,7 @@ class SequenceData(object):
                 remove(path)
 
     def __str__(self):
-        return "SequenceData(fasta_paths=%s, require_ensembl_ids=%s)" % (
-            ','.join(self.fasta_paths),
-            self.require_ensembl_ids)
+        return "SequenceData(fasta_paths=%s)" % (self.fasta_paths,)
 
     def __repr__(self):
         return str(self)
@@ -145,7 +137,4 @@ class SequenceData(object):
 
     def get(self, sequence_id):
         """Get sequence associated with given ID or return None if missing"""
-        # all Ensembl identifiers start with ENS e.g. ENST, ENSP, ENSE
-        if self.require_ensembl_ids:
-            require_ensembl_id(sequence_id)
         return self.fasta_dictionary.get(sequence_id)

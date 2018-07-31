@@ -50,7 +50,6 @@ class Genome(Serializable):
             protein_fasta_paths_or_urls=None,
             decompress_on_download=False,
             copy_local_files_to_cache=False,
-            require_ensembl_ids=False,
             cache_directory_path=None):
         """
         Parameters
@@ -80,9 +79,6 @@ class Genome(Serializable):
         copy_local_files_to_cache : bool
             If genome data file is local use it directly or copy to cache first?
 
-        require_ensembl_ids : bool
-            Check gene/transcript/exon IDs to make sure they start with "ENS"
-
         cache_directory_path : None
             Where to place downloaded and cached files for this genome,
             by default inferred from reference name, annotation name,
@@ -103,7 +99,6 @@ class Genome(Serializable):
         self.annotation_version = annotation_version
         self.decompress_on_download = decompress_on_download
         self.copy_local_files_to_cache = copy_local_files_to_cache
-        self.require_ensembl_ids = require_ensembl_ids
         self.cache_directory_path = cache_directory_path
         self._gtf_path_or_url = gtf_path_or_url
         self._transcript_fasta_paths_or_urls = transcript_fasta_paths_or_urls
@@ -151,7 +146,6 @@ class Genome(Serializable):
             protein_fasta_paths_or_urls=self._protein_fasta_paths_or_urls,
             decompress_on_download=self.decompress_on_download,
             copy_local_files_to_cache=self.copy_local_files_to_cache,
-            require_ensembl_ids=self.require_ensembl_ids,
             cache_directory_path=self.cache_directory_path)
 
     def _init_lazy_fields(self):
@@ -350,7 +344,6 @@ class Genome(Serializable):
             assert self.protein_fasta_paths is not None
             self._protein_sequences = SequenceData(
                 fasta_paths=self.protein_fasta_paths,
-                require_ensembl_ids=self.require_ensembl_ids,
                 cache_directory_path=self.cache_directory_path)
         return self._protein_sequences
 
@@ -366,7 +359,6 @@ class Genome(Serializable):
             assert self.transcript_fasta_paths is not None
             self._transcript_sequences = SequenceData(
                 fasta_paths=self.transcript_fasta_paths,
-                require_ensembl_ids=self.require_ensembl_ids,
                 cache_directory_path=self.cache_directory_path)
         return self._transcript_sequences
 
