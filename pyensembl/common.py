@@ -84,7 +84,7 @@ def memoize(fn):
 
 def is_valid_ensembl_id(ensembl_id):
     """Is the argument a valid ID for any Ensembl feature?"""
-    return is_string(ensembl_id) and ensembl_id.startswith("ENS")
+    return is_string(ensembl_id) and (ensembl_id.startswith("ENS") or ensembl_id.startswith("Y"))
 
 def require_ensembl_id(ensembl_id):
     if not is_valid_ensembl_id(ensembl_id):
@@ -92,7 +92,7 @@ def require_ensembl_id(ensembl_id):
 
 def is_valid_human_transcript_id(transcript_id):
     """Is the argument a valid identifier for human Ensembl transcripts?"""
-    return is_string(transcript_id) and transcript_id.startswith("ENST")
+    return is_string(transcript_id) and (transcript_id.startswith("ENST") or ensembl_id.startswith("Y"))
 
 def require_human_transcript_id(transcript_id):
     if not is_valid_human_transcript_id(transcript_id):
@@ -100,7 +100,7 @@ def require_human_transcript_id(transcript_id):
 
 def is_valid_human_protein_id(protein_id):
     """Is the argument a valid identifier for human Ensembl proteins?"""
-    return is_string(protein_id) and protein_id.startswith("ENSP")
+    return is_string(protein_id) and (protein_id.startswith("ENSP") or ensembl_id.startswith("Y"))
 
 def require_human_protein_id(protein_id):
     if not is_valid_human_protein_id(protein_id):
