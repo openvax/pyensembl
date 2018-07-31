@@ -41,7 +41,7 @@ from .species import (
 )
 from .transcript import Transcript
 
-__version__ = '1.5.2'
+__version__ = '1.6.0'
 
 __all__ = [
     "MemoryCache",
