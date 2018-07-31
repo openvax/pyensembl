@@ -5,7 +5,6 @@ a FASTA dictionary
 """
 from os.path import exists
 
-from nose.tools import assert_raises
 from pyensembl import SequenceData
 
 from .common import TemporaryDirectory
@@ -25,15 +24,6 @@ def test_sequence_type():
             "Failed to find sequence for ENSMUST00000138942"
         assert isinstance(seq, str), \
             "Wrong sequence type, expected %s but got %s" % (str, type(seq))
-
-def test_check_ensembl_id():
-    with TemporaryDirectory() as tmpdir:
-        seqs = SequenceData(
-            [FASTA_PATH],
-            require_ensembl_ids=True,
-            cache_directory_path=tmpdir)
-        with assert_raises(ValueError):
-            seqs.get("WeirdID")
 
 def test_missing_sequence():
     with TemporaryDirectory() as tmpdir:
