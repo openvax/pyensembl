@@ -70,6 +70,7 @@ install:
   - pip install --upgrade -r $PWD/openvax-integration-tests/requirements.txt
   # download MHCflurry models for integration tests
   - mhcflurry-downloads fetch models_class1_minimal
+  - export MHCFLURRY_DEFAULT_CLASS1_MODELS="$(mhcflurry-downloads path models_class1_minimal)/models"
 before_script:
   - ./lint.sh
   - echo "Before installing Ensembl releases" && df -h
