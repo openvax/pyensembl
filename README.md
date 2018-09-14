@@ -81,7 +81,7 @@ non-Ensembl data is still very much in development.)
 For example:
 
 ```python
-data = Genome
+data = Genome(
     reference_name='GRCh38',
     annotation_name='my_genome_features',
     gtf_path_or_url='/My/local/gtf/path_to_my_genome_features.gtf'))
