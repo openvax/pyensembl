@@ -84,7 +84,7 @@ For example:
 data = Genome(
     reference_name='GRCh38',
     annotation_name='my_genome_features',
-    gtf_path_or_url='/My/local/gtf/path_to_my_genome_features.gtf'))
+    gtf_path_or_url='/My/local/gtf/path_to_my_genome_features.gtf')
 # parse GTF and construct database of genomic features
 data.index()
 gene_names = data.gene_names_at_locus(contig=6, position=29945884)
