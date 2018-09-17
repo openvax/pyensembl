@@ -844,6 +844,7 @@ class Genome(Serializable):
             optional_field_names = [
                 "transcript_name",
                 "transcript_biotype",
+                "transcript_support_level",
             ]
             field_names = [
                 "seqname",
@@ -867,17 +868,16 @@ class Genome(Serializable):
             if not result:
                 raise ValueError("Transcript not found: %s" % (transcript_id,))
 
-            transcript_name, transcript_biotype = None, None
-            assert len(result) >= 5 and len(result) <= 7, \
+            transcript_name, transcript_biotype, transcript_support_level = None, None, None
+            assert len(result) >= 5 and len(result) <= 8, \
                 "Result is not the expected length: %d" % len(result)
             contig, start, end, strand, gene_id = result[:5]
-            if len(result) == 6:
-                if "transcript_name" in field_names:
-                    transcript_name = result[5]
-                else:
-                    transcript_biotype = result[5]
-            elif len(result) == 7:
-                transcript_name, transcript_biotype = result[5:]
+            if len(result) > 5:
+                extra_field_names = [f for f in optional_field_names if f in field_names]
+                extra_data = dict(zip(extra_field_names, result[5:]))
+                transcript_name = extra_data.get("transcript_name")
+                transcript_biotype = extra_data.get("transcript_biotype")
+                transcript_support_level = extra_data.get("transcript_support_level")
 
             self._transcripts[transcript_id] = Transcript(
                 transcript_id=transcript_id,
@@ -887,6 +887,7 @@ class Genome(Serializable):
                 end=end,
                 strand=strand,
                 biotype=transcript_biotype,
+                support_level=transcript_support_level,
                 gene_id=gene_id,
                 genome=self)
 
