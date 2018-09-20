@@ -13,7 +13,6 @@ from .data import data_path
 
 FASTA_PATH = data_path("mouse.ensembl.81.partial.ENSMUSG00000017167.fa")
 
-
 def test_sequence_type():
     with TemporaryDirectory() as tmpdir:
         seqs_dna = SequenceData(

@@ -15,8 +15,8 @@ cache:
   # cache directory used for Ensembl downloads of GTF and FASTA files
   # along with the indexed db of intervals and ID mappings and pickles
   # of sequence dictionaries. Also, pip
-  directories:
-    - $HOME/.cache/pyensembl/
+  # directories:
+  #  - $HOME/.cache/pyensembl/
 env:
   global:
     # MHC_BUNDLE_PASS

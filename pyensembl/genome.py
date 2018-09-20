@@ -34,6 +34,7 @@ from .gene import Gene
 from .sequence_data import SequenceData
 from .transcript import Transcript
 
+
 class Genome(Serializable):
     """
     Bundles together the genomic annotation and sequence data associated with
