@@ -869,7 +869,7 @@ class Genome(Serializable):
                 raise ValueError("Transcript not found: %s" % (transcript_id,))
 
             transcript_name, transcript_biotype, transcript_support_level = None, None, None
-            assert len(result) >= 5 and len(result) <= 8, \
+            assert len(result) >= 5 and len(result) <= 5 + len(optional_field_names), \
                 "Result is not the expected length: %d" % len(result)
             contig, start, end, strand, gene_id = result[:5]
             if len(result) > 5:
