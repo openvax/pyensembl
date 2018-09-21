@@ -11,16 +11,21 @@ git:
   # https://github.com/travis-ci/travis-ci/issues/4575
   depth: 10
 cache:
+  # Cache pip installed dependencies
   pip: true
   # cache directory used for Ensembl downloads of GTF and FASTA files
   # along with the indexed db of intervals and ID mappings and pickles
-  # of sequence dictionaries. Also, pip
-  # directories:
-  #  - $HOME/.cache/pyensembl/
+  # of sequence dictionaries.
+  ## ---
+  ## Commenting this out for now due to failure of upload of cached data
+  ## to Travis at the end of build, probably exceeding some storage limit?
+  ##  - $HOME/.cache/pyensembl/
 env:
   global:
     # MHC_BUNDLE_PASS
-    - secure: "B2bLOYhDD1mSH6nBmUVoyoVzO8CsZ/qeduoQ/gq1UqPXyBa5cj8x1hYeYEXMVGH04dq6p5FHKIZoZOOmgtKoemje5enSV8IL2lttASqNvzsiyvy6I4C3r5Ve2H9HMLneDxkarfVVVhG2ZJyO7Y/vGN8STZWX6N3FJfCJ1B5kV5Q="
+    ## Trying to use only publicly available predictors until we can figure
+    ## out how to use encrypted values on Travis with PRs from external forks
+    ## - secure: "B2bLOYhDD1mSH6nBmUVoyoVzO8CsZ/qeduoQ/gq1UqPXyBa5cj8x1hYeYEXMVGH04dq6p5FHKIZoZOOmgtKoemje5enSV8IL2lttASqNvzsiyvy6I4C3r5Ve2H9HMLneDxkarfVVVhG2ZJyO7Y/vGN8STZWX6N3FJfCJ1B5kV5Q="
     - CONDA_ENV="test-environment-$TRAVIS_PYTHON_VERSION"
 addons:
   apt:
@@ -47,11 +52,13 @@ before_install:
   - conda info -a
 
   # install MHC predictors
-  - git clone https://mhcbundle:$MHC_BUNDLE_PASS@github.com/openvax/netmhc-bundle.git
-  - export NETMHC_BUNDLE_HOME=$PWD/netmhc-bundle
-  - mkdir tmp
-  - export NETMHC_BUNDLE_TMPDIR=$PWD/tmp
-  - export PATH=$PATH:$NETMHC_BUNDLE_HOME/bin
+  ## Trying to use only publicly available predictors until we can figure
+  ## out how to use encrypted values on Travis with PRs from external forks
+  ## - git clone https://mhcbundle:$MHC_BUNDLE_PASS@github.com/openvax/netmhc-bundle.git
+  ## - export NETMHC_BUNDLE_HOME=$PWD/netmhc-bundle
+  ## - mkdir tmp
+  ## - export NETMHC_BUNDLE_TMPDIR=$PWD/tmp
+  ## - export PATH=$PATH:$NETMHC_BUNDLE_HOME/bin
   - git clone https://github.com/openvax/openvax-integration-tests.git
 install:
   - >
