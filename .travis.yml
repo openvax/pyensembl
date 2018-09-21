@@ -22,10 +22,9 @@ cache:
   ##  - $HOME/.cache/pyensembl/
 env:
   global:
-    # MHC_BUNDLE_PASS
-    ## Trying to use only publicly available predictors until we can figure
-    ## out how to use encrypted values on Travis with PRs from external forks
-    ## - secure: "B2bLOYhDD1mSH6nBmUVoyoVzO8CsZ/qeduoQ/gq1UqPXyBa5cj8x1hYeYEXMVGH04dq6p5FHKIZoZOOmgtKoemje5enSV8IL2lttASqNvzsiyvy6I4C3r5Ve2H9HMLneDxkarfVVVhG2ZJyO7Y/vGN8STZWX6N3FJfCJ1B5kV5Q="
+    # MHC_BUNDLE_PASS = encrypted value
+    # Won't be available for PRs from external contributors
+    - secure: "B2bLOYhDD1mSH6nBmUVoyoVzO8CsZ/qeduoQ/gq1UqPXyBa5cj8x1hYeYEXMVGH04dq6p5FHKIZoZOOmgtKoemje5enSV8IL2lttASqNvzsiyvy6I4C3r5Ve2H9HMLneDxkarfVVVhG2ZJyO7Y/vGN8STZWX6N3FJfCJ1B5kV5Q="
     - CONDA_ENV="test-environment-$TRAVIS_PYTHON_VERSION"
 addons:
   apt:
@@ -50,15 +49,15 @@ before_install:
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
-
-  # install MHC predictors
-  ## Trying to use only publicly available predictors until we can figure
-  ## out how to use encrypted values on Travis with PRs from external forks
-  ## - git clone https://mhcbundle:$MHC_BUNDLE_PASS@github.com/openvax/netmhc-bundle.git
-  ## - export NETMHC_BUNDLE_HOME=$PWD/netmhc-bundle
-  ## - mkdir tmp
-  ## - export NETMHC_BUNDLE_TMPDIR=$PWD/tmp
-  ## - export PATH=$PATH:$NETMHC_BUNDLE_HOME/bin
+  # install non-public MHC predictors if running within OpenVax org
+  - |
+    if [ -n "$MHC_BUNDLE_PASS" ]; then
+      git clone https://mhcbundle:$MHC_BUNDLE_PASS@github.com/openvax/netmhc-bundle.git;
+      export NETMHC_BUNDLE_HOME=$PWD/netmhc-bundle;
+      mkdir tmp;
+      export NETMHC_BUNDLE_TMPDIR=$PWD/tmp;
+      export PATH=$PATH:$NETMHC_BUNDLE_HOME/bin;
+    fi
   - git clone https://github.com/openvax/openvax-integration-tests.git
 install:
   - >
