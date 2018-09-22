@@ -38,7 +38,7 @@ class Transcript(LocusWithGenome):
             biotype,
             gene_id,
             genome,
-            support_level):
+            support_level=None):
         LocusWithGenome.__init__(
             self,
             contig=contig,
