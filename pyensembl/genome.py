@@ -890,9 +890,9 @@ class Genome(Serializable):
                 end=end,
                 strand=strand,
                 biotype=transcript_biotype,
-                support_level=tsl,
                 gene_id=gene_id,
-                genome=self)
+                genome=self,
+                support_level=tsl)
 
         return self._transcripts[transcript_id]
 
