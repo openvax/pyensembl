@@ -844,6 +844,7 @@ class Genome(Serializable):
             optional_field_names = [
                 "transcript_name",
                 "transcript_biotype",
+                "transcript_support_level",
             ]
             field_names = [
                 "seqname",
@@ -852,8 +853,7 @@ class Genome(Serializable):
                 "strand",
                 "gene_id",
             ]
-            # Do not look for transcript_name and transcript_biotype if
-            # they are not in the database.
+            # Do not look for the optional fields if they are not in the database.
             field_names.extend([
                 name for name in optional_field_names
                 if self.db.column_exists("transcript", name)
@@ -867,17 +867,20 @@ class Genome(Serializable):
             if not result:
                 raise ValueError("Transcript not found: %s" % (transcript_id,))
 
-            transcript_name, transcript_biotype = None, None
-            assert len(result) >= 5 and len(result) <= 7, \
+            transcript_name, transcript_biotype, tsl = None, None, None
+            assert 5 <= len(result) <= 5 + len(optional_field_names), \
                 "Result is not the expected length: %d" % len(result)
             contig, start, end, strand, gene_id = result[:5]
-            if len(result) == 6:
-                if "transcript_name" in field_names:
-                    transcript_name = result[5]
+            if len(result) > 5:
+                extra_field_names = [f for f in optional_field_names if f in field_names]
+                extra_data = dict(zip(extra_field_names, result[5:]))
+                transcript_name = extra_data.get("transcript_name")
+                transcript_biotype = extra_data.get("transcript_biotype")
+                tsl = extra_data.get("transcript_support_level")
+                if not tsl or tsl == 'NA':
+                    tsl = None
                 else:
-                    transcript_biotype = result[5]
-            elif len(result) == 7:
-                transcript_name, transcript_biotype = result[5:]
+                    tsl = int(tsl)
 
             self._transcripts[transcript_id] = Transcript(
                 transcript_id=transcript_id,
@@ -888,7 +891,8 @@ class Genome(Serializable):
                 strand=strand,
                 biotype=transcript_biotype,
                 gene_id=gene_id,
-                genome=self)
+                genome=self,
+                support_level=tsl)
 
         return self._transcripts[transcript_id]
 

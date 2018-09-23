@@ -37,7 +37,8 @@ class Transcript(LocusWithGenome):
             strand,
             biotype,
             gene_id,
-            genome):
+            genome,
+            support_level=None):
         LocusWithGenome.__init__(
             self,
             contig=contig,
@@ -49,6 +50,7 @@ class Transcript(LocusWithGenome):
         self.transcript_id = transcript_id
         self.transcript_name = transcript_name
         self.gene_id = gene_id
+        self.support_level = support_level
 
     @property
     def id(self):
@@ -101,6 +103,7 @@ class Transcript(LocusWithGenome):
         state_dict["transcript_id"] = self.transcript_id
         state_dict["transcript_name"] = self.name
         state_dict["gene_id"] = self.gene_id
+        state_dict["support_level"] = self.support_level
         return state_dict
 
     @property
