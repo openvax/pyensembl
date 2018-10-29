@@ -18,6 +18,7 @@ from serializable import Serializable
 
 from .normalization import normalize_chromosome, normalize_strand
 
+
 class Locus(Serializable):
     """
     Base class for any entity which can be localized at a range of positions
@@ -71,12 +72,31 @@ class Locus(Serializable):
 
     def __eq__(self, other):
         return (
-            isinstance(other, Locus) and
+            self.__class__ is other.__class__ and
             self.contig == other.contig and
             self.start == other.start and
             self.end == other.end and
             self.strand == other.strand
         )
+
+    def to_tuple(self):
+        return (self.contig, self.start, self.end, self.strand)
+
+    def __lt__(self, other):
+        if not isinstance(other, Locus):
+            return False
+        return self.to_tuple() < other.to_tuple()
+
+    def __le__(self, other):
+        return (self == other) or (self < other)
+
+    def __gt__(self, other):
+        if not isinstance(other, Locus):
+            return False
+        return self.to_tuple() > other.to_tuple()
+
+    def __ge__(self, other):
+        return (self == other) or (self > other)
 
     def to_dict(self):
         return {
