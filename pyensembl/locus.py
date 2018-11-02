@@ -64,7 +64,7 @@ class Locus(Serializable):
         self.end = end
 
     def __str__(self):
-        return "Locus(contig='%s', start=%d, end=%s, strand='%s')" % (
+        return "Locus(contig='%s', start=%d, end=%d, strand='%s')" % (
             self.contig, self.start, self.end, self.strand)
 
     def __len__(self):

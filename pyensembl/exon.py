@@ -42,19 +42,19 @@ class Exon(Locus):
     def __str__(self):
         return (
             "Exon(exon_id='%s',"
+            " gene_id='%s',"
+            " gene_name='%s',"
             " contig='%s',"
             " start=%d,"
             " end=%s,"
-            " strand='%s',"
-            " gene_name='%s',"
-            " gene_id='%s')" % (
-                self.id,
+            " strand='%s')") % (
+                self.exon_id,
+                self.gene_id,
+                self.gene_name,
                 self.contig,
                 self.start,
                 self.end,
-                self.strand,
-                self.gene_name,
-                self.gene_id))
+                self.strand)
 
     def __eq__(self, other):
         if not isinstance(other, Exon):

@@ -57,13 +57,21 @@ class Gene(LocusWithGenome):
         return self.gene_name
 
     def __str__(self):
-        return "Gene(gene_id=%s, gene_name=%s, biotype=%s, location=%s:%d-%d)" % (
+        return (
+            "Gene(gene_id='%s',"
+            " gene_name='%s',"
+            " biotype='%s',"
+            " contig='%s',"
+            " start=%d,"
+            " end=%d, strand='%s', genome='%s')") % (
             self.gene_id,
             self.gene_name,
             self.biotype,
             self.contig,
             self.start,
-            self.end)
+            self.end,
+            self.strand,
+            self.genome.reference_name)
 
     def __eq__(self, other):
         return (
