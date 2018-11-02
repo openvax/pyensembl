@@ -16,6 +16,7 @@ from __future__ import print_function, division, absolute_import
 
 from .locus import Locus
 
+
 class Exon(Locus):
     def __init__(
             self,
@@ -27,17 +28,40 @@ class Exon(Locus):
             gene_name,
             gene_id):
         Locus.__init__(self, contig, start, end, strand)
-        self.id = exon_id
+        self.exon_id = exon_id
         self.gene_name = gene_name
         self.gene_id = gene_id
 
+    @property
+    def id(self):
+        """
+        Alias for exon_id necessary for backward compatibility.
+        """
+        return self.exon_id
+
     def __str__(self):
-        return "Exon(exon_id=%s, gene_name=%s, contig=%s, start=%d, end=%s)" % (
-            self.id, self.gene_name, self.contig, self.start, self.end)
+        return (
+            "Exon(exon_id='%s',"
+            " contig='%s',"
+            " start=%d,"
+            " end=%s,"
+            " strand='%s',"
+            " gene_name='%s',"
+            " gene_id='%s')" % (
+                self.id,
+                self.contig,
+                self.start,
+                self.end,
+                self.strand,
+                self.gene_name,
+                self.gene_id))
 
     def __eq__(self, other):
+        if not isinstance(other, Exon):
+            raise TypeError("Cannot compare %s and %s" % (
+                self.__class__.__name__,
+                other.__class.__name__))
         return (
-            other.__class__ is Exon and
             self.contig == other.contig and
             self.start == other.start and
             self.end == other.end and

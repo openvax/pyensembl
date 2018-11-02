@@ -19,6 +19,7 @@ from .data import (
 
 ensembl77 = cached_release(77)
 
+
 def test_transcript_start_codon():
     """
     test_transcript_start_codon : Check that fields Transcript
@@ -26,7 +27,8 @@ def test_transcript_start_codon():
     """
     CTNNBIP1_004_transcript = ensembl77.transcript_by_id(
         CTNNBIP1_004_transcript_id)
-    assert Locus.__eq__(CTNNBIP1_004_locus, CTNNBIP1_004_transcript), \
+
+    assert Locus.__eq__(CTNNBIP1_004_transcript, CTNNBIP1_004_locus), \
         "Expected locus %s but got %s" % (
             CTNNBIP1_004_locus, Locus.__str__(CTNNBIP1_004_transcript))
 
@@ -44,6 +46,7 @@ def test_transcript_start_codon():
     assert start_codon_offset == expected_start_codon_offset, \
         "Incorrect start codon offset, expected %d but got %d" % (
             expected_start_codon_offset, start_codon_offset)
+
 
 def test_transcript_exons():
     """

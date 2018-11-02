@@ -18,6 +18,7 @@ from memoized_property import memoized_property
 
 from .locus_with_genome import LocusWithGenome
 
+
 class Gene(LocusWithGenome):
 
     def __init__(
