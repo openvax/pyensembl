@@ -32,14 +32,6 @@ except IOError as e:
     print("Failed to open %s" % readme_path)
     readme_markdown = ""
 
-try:
-    import pypandoc
-    readme_restructured = pypandoc.convert(readme_markdown, to='rst', format='md')
-except ImportError as e:
-    readme_restructured = readme_markdown
-    print(e)
-    print("Failed to convert %s to reStructuredText" % readme_filename)
-    pass
 
 with open('%s/__init__.py' % package_name, 'r') as f:
     version = re.search(
@@ -84,7 +76,8 @@ if __name__ == '__main__':
             "serializable",
             "tinytimer",
         ],
-        long_description=readme_restructured,
+        long_description=readme_markdown,
+        long_description_content_type='text/markdown',
         packages=[package_name],
         package_data={package_name: ['logging.conf']},
     )
