@@ -21,6 +21,7 @@ from typechecks import is_string, is_integer
 # noticable overhead in this instance.
 NORMALIZE_CHROMOSOME_CACHE = {}
 
+
 def normalize_chromosome(c):
     try:
         return NORMALIZE_CHROMOSOME_CACHE[c]
@@ -31,6 +32,7 @@ def normalize_chromosome(c):
         raise TypeError("Chromosome cannot be '%s' : %s" % (c, type(c)))
 
     result = str(c)
+
     if result == "0":
         raise ValueError("Chromosome name cannot be 0")
     elif result == "":
@@ -56,6 +58,7 @@ def normalize_chromosome(c):
     NORMALIZE_CHROMOSOME_CACHE[c] = result
 
     return result
+
 
 def normalize_strand(strand):
     if strand == "+" or strand == "-":

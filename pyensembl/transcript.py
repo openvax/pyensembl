@@ -19,6 +19,7 @@ from memoized_property import memoized_property
 from .common import memoize
 from .locus_with_genome import LocusWithGenome
 
+
 class Transcript(LocusWithGenome):
     """
     Transcript encompasses the locus, exons, and sequence of a transcript.
@@ -68,20 +69,22 @@ class Transcript(LocusWithGenome):
 
     def __str__(self):
         return (
-            "Transcript(transcript_id=%s,"
-            " name=%s,"
-            " gene_id=%s,"
-            " gene_name=%s,"
-            " biotype=%s,"
-            " location=%s:%d-%d)") % (
+            "Transcript(transcript_id='%s',"
+            " transcript_name='%s',"
+            " gene_id='%s',"
+            " biotype='%s',"
+            " contig='%s',"
+            " start=%d,"
+            " end=%d, strand='%s', genome='%s')") % (
                 self.transcript_id,
                 self.name,
-                self.gene.id,
-                self.gene.name,
+                self.gene_id,
                 self.biotype,
                 self.contig,
                 self.start,
-                self.end)
+                self.end,
+                self.strand,
+                self.genome.reference_name)
 
     def __len__(self):
         """
@@ -109,6 +112,10 @@ class Transcript(LocusWithGenome):
     @property
     def gene(self):
         return self.genome.gene_by_id(self.gene_id)
+
+    @property
+    def gene_name(self):
+        return self.gene.name
 
     @property
     def exons(self):

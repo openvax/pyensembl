@@ -1,12 +1,14 @@
 import os
 from pyensembl import Locus, Genome
 
+
 def data_path(name):
     """
     Return the absolute path to a file in the test/data directory.
     The name specified should be relative to test/data.
     """
     return os.path.join(os.path.dirname(__file__), "data", name)
+
 
 # mapping of ensembl releases to transcript IDs for FOXP3-001
 FOXP3_001_transcript_id = "ENST00000376207"
@@ -127,6 +129,7 @@ custom_mouse_genome_grcm38_subset = Genome(
     gtf_path_or_url=MOUSE_ENSMUSG00000017167_PATH,
     transcript_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH],
     protein_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH])
+
 
 def setup_init_custom_mouse_genome():
     """

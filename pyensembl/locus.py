@@ -18,6 +18,7 @@ from serializable import Serializable
 
 from .normalization import normalize_chromosome, normalize_strand
 
+
 class Locus(Serializable):
     """
     Base class for any entity which can be localized at a range of positions
@@ -63,20 +64,46 @@ class Locus(Serializable):
         self.end = end
 
     def __str__(self):
-        return "Locus(contig=%s, start=%s, end=%s, strand=%s)" % (
+        return "Locus(contig='%s', start=%d, end=%d, strand='%s')" % (
             self.contig, self.start, self.end, self.strand)
 
     def __len__(self):
         return self.end - self.start + 1
 
     def __eq__(self, other):
+        if not isinstance(other, Locus):
+            raise TypeError("Cannot compare %s and %s" % (
+                self.__class__.__name__,
+                other.__class.__name__))
         return (
-            isinstance(other, Locus) and
             self.contig == other.contig and
             self.start == other.start and
             self.end == other.end and
             self.strand == other.strand
         )
+
+    def to_tuple(self):
+        return (self.contig, self.start, self.end, self.strand)
+
+    def __lt__(self, other):
+        if not isinstance(other, Locus):
+            raise TypeError("Cannot compare %s and %s" % (
+                self.__class__.__name__,
+                other.__class.__name__))
+        return self.to_tuple() < other.to_tuple()
+
+    def __le__(self, other):
+        return (self == other) or (self < other)
+
+    def __gt__(self, other):
+        if not isinstance(other, Locus):
+            raise TypeError("Cannot compare %s and %s" % (
+                self.__class__.__name__,
+                other.__class.__name__))
+        return self.to_tuple() > other.to_tuple()
+
+    def __ge__(self, other):
+        return (self == other) or (self > other)
 
     def to_dict(self):
         return {

@@ -25,11 +25,13 @@ from .data import (
     setup_init_custom_mouse_genome
 )
 
+
 @test_ensembl_releases()
 def test_pickle_ensembl_gene(ensembl_genome):
     gene = ensembl_genome.gene_by_id(TP53_gene_id)
     gene_new = pickle.loads(pickle.dumps(gene))
     eq_(gene, gene_new)
+
 
 @test_ensembl_releases()
 def test_pickle_ensembl_transcript(ensembl_genome):
@@ -47,11 +49,13 @@ def test_pickle_ensembl_exon(ensembl_genome):
     exon_reconstructed = pickle.loads(pickle.dumps(exon))
     eq_(exon, exon_reconstructed)
 
+
 @test_ensembl_releases()
 def test_json_ensembl_gene(ensembl_genome):
     gene = ensembl_genome.gene_by_id(TP53_gene_id)
     gene_reconstructed = Gene.from_json(gene.to_json())
     eq_(gene, gene_reconstructed)
+
 
 @test_ensembl_releases()
 def test_json_ensembl_transcript(ensembl_genome):
@@ -60,6 +64,7 @@ def test_json_ensembl_transcript(ensembl_genome):
     transcript_reconstructed = Transcript.from_json(transcript.to_json())
     eq_(transcript, transcript_reconstructed)
 
+
 @test_ensembl_releases()
 def test_json_ensembl_exon(ensembl_genome):
     gene = ensembl_genome.gene_by_id(TP53_gene_id)
@@ -67,6 +72,7 @@ def test_json_ensembl_exon(ensembl_genome):
     exon = transcript.exons[0]
     exon_reconstructed = Exon.from_json(exon.to_json())
     eq_(exon, exon_reconstructed)
+
 
 @test_ensembl_releases()
 def test_pickle_ensembl_genome(ensembl_genome):
@@ -78,11 +84,13 @@ def test_pickle_ensembl_genome(ensembl_genome):
     eq_(ensembl_genome.release, genome_reconstructed.release)
     eq_(ensembl_genome.species, genome_reconstructed.species)
 
+
 @test_ensembl_releases()
 def test_ensembl_genome_to_dict(ensembl_genome):
     genome_dict = ensembl_genome.to_dict()
     genome_reconstructed = ensembl_genome.__class__.from_dict(genome_dict)
     eq_(ensembl_genome, genome_reconstructed)
+
 
 @test_ensembl_releases()
 def test_ensembl_genome_to_json(ensembl_genome):
@@ -98,16 +106,20 @@ def test_custom_genome_to_json():
     reconstructed = Genome.from_json(json)
     eq_(custom_mouse_genome_grcm38_subset, reconstructed)
 
+
 @with_setup(setup=setup_init_custom_mouse_genome)
 def test_custom_genome_to_dict():
     reconstructed = Genome.from_dict(custom_mouse_genome_grcm38_subset.to_dict())
     eq_(custom_mouse_genome_grcm38_subset, reconstructed)
 
+
 def test_species_to_dict():
     eq_(human, Species.from_dict(human.to_dict()))
 
+
 def test_species_to_json():
     eq_(human, Species.from_json(human.to_json()))
+
 
 def test_species_to_pickle():
     eq_(human, pickle.loads(pickle.dumps(human)))

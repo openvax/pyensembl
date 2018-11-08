@@ -16,6 +16,7 @@ from __future__ import print_function, division, absolute_import
 
 from .locus import Locus
 
+
 class LocusWithGenome(Locus):
     """
     Common base class for Gene and Transcript to avoid copying
