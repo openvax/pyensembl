@@ -69,10 +69,10 @@ install:
   - pip install .
   - pip install coveralls
   # install requirements for integration tests
-  # - pip install --upgrade -r $PWD/openvax-integration-tests/requirements.txt
+  ## - pip install --upgrade -r $PWD/openvax-integration-tests/requirements.txt
   # download MHCflurry models for integration tests
-  - mhcflurry-downloads fetch models_class1_minimal
-  - export MHCFLURRY_DEFAULT_CLASS1_MODELS="$(mhcflurry-downloads path models_class1_minimal)/models"
+  ## - mhcflurry-downloads fetch models_class1_minimal
+  ## - export MHCFLURRY_DEFAULT_CLASS1_MODELS="$(mhcflurry-downloads path models_class1_minimal)/models"
 before_script:
   - ./lint.sh
   - echo "Before installing Ensembl releases" && df -h
@@ -109,7 +109,7 @@ script:
   # this command runs both pyensembl and integration tests. Sometimes they don't print output for a long
   # time; travis_wait extends the time allowed with no output.
   - nosetests -sv test --with-coverage --cover-package=pyensembl
-  # && travis_wait nosetests -sv $PWD/openvax-integration-tests -a '!skip'
+  ## && travis_wait nosetests -sv $PWD/openvax-integration-tests -a '!skip'
 after_success:
   coveralls
 deploy:
