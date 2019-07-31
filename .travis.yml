@@ -64,18 +64,15 @@ install:
       conda create -q -n $CONDA_ENV python=$TRAVIS_PYTHON_VERSION
       numpy nose pandas
   - source activate $CONDA_ENV
-  # install pysam from conda because I'm having trouble installing Cython
-  # for Python 3 on Travis
-  - conda install -c bioconda pysam=0.9.0
   - python --version #  make sure we're running the Python version we expect
   - pip install -r requirements.txt
   - pip install .
   - pip install coveralls
   # install requirements for integration tests
-  - pip install --upgrade -r $PWD/openvax-integration-tests/requirements.txt
+  ## - pip install --upgrade -r $PWD/openvax-integration-tests/requirements.txt
   # download MHCflurry models for integration tests
-  - mhcflurry-downloads fetch models_class1_minimal
-  - export MHCFLURRY_DEFAULT_CLASS1_MODELS="$(mhcflurry-downloads path models_class1_minimal)/models"
+  ## - mhcflurry-downloads fetch models_class1_minimal
+  ## - export MHCFLURRY_DEFAULT_CLASS1_MODELS="$(mhcflurry-downloads path models_class1_minimal)/models"
 before_script:
   - ./lint.sh
   - echo "Before installing Ensembl releases" && df -h
@@ -111,9 +108,8 @@ script:
   # -a '!skip' lets us skip certain tests on travis (relevant for integration tests)
   # this command runs both pyensembl and integration tests. Sometimes they don't print output for a long
   # time; travis_wait extends the time allowed with no output.
-  - >
-      nosetests -sv test --with-coverage --cover-package=pyensembl  &&
-      travis_wait nosetests -sv $PWD/openvax-integration-tests -a '!skip'
+  - nosetests -sv test --with-coverage --cover-package=pyensembl
+  ## && travis_wait nosetests -sv $PWD/openvax-integration-tests -a '!skip'
 after_success:
   coveralls
 deploy:
