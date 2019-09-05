@@ -32,6 +32,7 @@ from .reference_name import (
     which_reference,
     genome_for_reference_name,
 )
+
 from .search import find_nearest_locus
 from .sequence_data import SequenceData
 from .species import (
