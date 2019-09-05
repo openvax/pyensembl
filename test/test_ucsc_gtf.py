@@ -53,10 +53,10 @@ def test_ucsc_gencode_genome():
         eq_(gene_uc001aak4.name, None)
         eq_(gene_uc001aak4.biotype, None)
 
-        gene_1_17369 = genome.genes_at_locus(1, 17369)
+        gene_1_17369 = genome.genes_at_locus("chr1", 17369)
         eq_(gene_1_17369[0].id, "uc031tla.1")
 
-        transcript_1_30564 = genome.transcripts_at_locus(1, 30564)
+        transcript_1_30564 = genome.transcripts_at_locus("chr1", 30564)
         eq_(transcript_1_30564[0].id, "uc057aty.1")
 
 def test_ucsc_refseq_gtf():
@@ -102,7 +102,7 @@ def test_ucsc_refseq_genome():
         assert len(transcripts) == 2, \
             "Expected 2 transcripts, got %d: %s" % (
                 len(transcripts), transcripts)
-        genes_at_locus = genome.genes_at_locus(1, 67092176)
+        genes_at_locus = genome.genes_at_locus("chr1", 67092176)
         assert len(genes_at_locus) == 2, \
             "Expected 2 genes at locus chr1:67092176, got %d: %s" % (
                 len(genes_at_locus), genes_at_locus)

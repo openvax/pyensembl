@@ -32,6 +32,7 @@ from .reference_name import (
     which_reference,
     genome_for_reference_name,
 )
+
 from .search import find_nearest_locus
 from .sequence_data import SequenceData
 from .species import (
@@ -41,7 +42,7 @@ from .species import (
 )
 from .transcript import Transcript
 
-__version__ = '1.7.5'
+__version__ = '1.8.0'
 
 __all__ = [
     "MemoryCache",

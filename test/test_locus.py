@@ -1,25 +1,29 @@
 from __future__ import absolute_import
 
-from pyensembl.locus import normalize_chromosome, Locus
+from pyensembl.locus import Locus
+from pyensembl.normalization import normalize_chromosome
 
 from nose.tools import assert_raises
 
 def test_normalize_chromosome():
     assert normalize_chromosome("X") == "X"
-    assert normalize_chromosome("chrX") == "X"
+    assert normalize_chromosome("chrX") == "chrX"
+
     assert normalize_chromosome("x") == "X"
+    assert normalize_chromosome("chrx") == "chrX"
 
     assert normalize_chromosome(1) == "1"
     assert normalize_chromosome("1") == "1"
-    assert normalize_chromosome("chr1") == "1"
+    assert normalize_chromosome("chr1") == "chr1"
 
-    assert normalize_chromosome("chrM") == "MT"
-    assert normalize_chromosome("chrMT") == "MT"
-    assert normalize_chromosome("M") == "MT"
+    assert normalize_chromosome("chrM") == "chrM"
+    assert normalize_chromosome("chrMT") == "chrMT"
+    assert normalize_chromosome("M") == "M"
     assert normalize_chromosome("MT") == "MT"
-    assert normalize_chromosome("m") == "MT"
-    assert normalize_chromosome("chrm") == "MT"
+    assert normalize_chromosome("m") == "M"
+    assert normalize_chromosome("chrm") == "chrM"
     assert normalize_chromosome("mt") == "MT"
+    assert normalize_chromosome("chrmt") == "chrMT"
 
     with assert_raises(TypeError):
         normalize_chromosome({"a": "b"})

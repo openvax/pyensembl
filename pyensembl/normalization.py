@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2018. Mount Sinai School of Medicine
+# Copyright (c) 2016-2019. Mount Sinai School of Medicine
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,17 +38,13 @@ def normalize_chromosome(c):
     elif result == "":
         raise ValueError("Chromosome name cannot be empty")
 
-    # only strip off lowercase chr since some of the non-chromosomal
-    # contigs start with "CHR"
-    if result.startswith("chr"):
-        result = result[3:]
-
-    # just in case someone is being lazy, capitalize "M", "MT", X", "Y"
-    result = result.upper()
-
-    # standardize mitochondrial genome to be "MT"
-    if result == "M":
-        result = "MT"
+    if result.startswith("chr") and "_" not in result:
+        # excluding "_" for names like "chrUn_gl000212"
+        # capitalize "chrx" -> "chrX"
+        result = "chr" + result[3:].upper()
+    elif result.isalpha():
+        # capitalize e.g. "x" -> "X"
+        result = result.upper()
 
     # interning strings since the chromosome names probably get constructed
     # or parsed millions of times, can save memory in tight situations

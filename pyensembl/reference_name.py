@@ -56,7 +56,6 @@ def genome_for_reference_name(
     If `allow_older_downloaded_release` is True, and some older releases have
     been downloaded, then return the most recent locally available release.
 
-
     Otherwise, return the newest release of Ensembl (even if its data hasn't
     already been downloaded).
     """
