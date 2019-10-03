@@ -418,8 +418,8 @@ class Genome(Serializable):
             self.annotation_name,
             self.annotation_version,
             self._gtf_path_or_url,
-            self._protein_fasta_paths_or_urls,
-            self._transcript_fasta_paths_or_urls,
+            tuple(self._protein_fasta_paths_or_urls),
+            tuple(self._transcript_fasta_paths_or_urls),
         )
 
     def __eq__(self, other):
