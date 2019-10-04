@@ -71,7 +71,6 @@ def make_gtf_url(ensembl_release,
     """
     ensembl_release, species, _ = \
         normalize_release_properties(ensembl_release, species)
-    print(ensembl_release, species)
     subdir = GTF_SUBDIR_TEMPLATE % {
         "release": ensembl_release,
         "species": species
