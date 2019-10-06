@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2018. Mount Sinai School of Medicine
+# Copyright (c) 2015-2019. Mount Sinai School of Medicine
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -164,7 +164,19 @@ class DownloadCache(object):
         return str(self)
 
     def is_url_format(self, path_or_url):
-        assert path_or_url, "Expected non-empty string for path_or_url"
+        """
+        Is the given string a URL?
+
+        Parameters
+        ----------
+        path_or_url : str
+
+        Returns
+        -------
+        bool
+        """
+        if path_or_url is None or path_or_url == "":
+            raise ValueError("Expected non-empty string for path_or_url")
         return "://" in path_or_url
 
     def _remove_compression_suffix_if_present(self, filename):
@@ -183,7 +195,8 @@ class DownloadCache(object):
         When downloading remote files, the default behavior is to name local
         files the same as their remote counterparts.
         """
-        assert path_or_url, "Expected non-empty string for path_or_url"
+        if path_or_url is None or path_or_url == "":
+            raise ValueError("Expected non-empty string for path_or_url")
         remote_filename = split(path_or_url)[1]
         if self.is_url_format(path_or_url):
             # passing `decompress=False` since there is logic below
@@ -266,7 +279,8 @@ class DownloadCache(object):
         overwrite : bool, optional
             Overwrite existing copy if it exists
         """
-        assert path_or_url, "Expected non-empty string for path_or_url"
+        if path_or_url is None or path_or_url == "":
+            raise ValueError("Expected non-empty string for path_or_url")
         if self.is_url_format(path_or_url):
             return self._download_if_necessary(
                 path_or_url,
@@ -278,7 +292,6 @@ class DownloadCache(object):
     def _raise_missing_file_error(self, missing_urls_dict):
         missing_urls = list(missing_urls_dict.values())
         n_missing = len(missing_urls)
-        assert n_missing > 0
         error_message = "Missing genome data file%s from %s." % (
             ("s", missing_urls) if n_missing > 1 else ("", missing_urls[0]))
         if self.install_string_function:

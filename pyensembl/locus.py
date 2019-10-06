@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2016. Mount Sinai School of Medicine
+# Copyright (c) 2015-2019. Mount Sinai School of Medicine
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -143,9 +143,10 @@ class Locus(Serializable):
         on this locuses's strand and determines that position's offset from
         the earliest position in this locus.
         """
-        assert start <= end, \
-            "Locations should always have start < end, got start=%d, end=%d" % (
-                start, end)
+        if start > end:
+            raise ValueError(
+                "Locus should always have start <= end, got start=%d, end=%d" % (
+                    start, end))
 
         if start < self.start or end > self.end:
             raise ValueError("Range (%d, %d) falls outside %s" % (

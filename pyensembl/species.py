@@ -95,8 +95,9 @@ class Species(Serializable):
         self._release_to_genome = {}
         for (genome_name, (start, end)) in self.reference_assemblies.items():
             for i in range(start, end + 1):
-                assert i not in self._release_to_genome, \
-                    "Ensembl release %d already has an associated genome"
+                if i in self._release_to_genome:
+                    raise ValueError(
+                        "Ensembl release %d already has an associated genome" % i)
                 self._release_to_genome[i] = genome_name
 
     def which_reference(self, ensembl_release):

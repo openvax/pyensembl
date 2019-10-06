@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2018. Mount Sinai School of Medicine
+# Copyright (c) 2015-2019. Mount Sinai School of Medicine
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -291,7 +291,9 @@ class Genome(Serializable):
             # make sure GTF file exists locally
             # and populate self.gtf_path
             self._set_local_paths(download_if_missing=False, overwrite=False)
-            assert self.gtf_path is not None
+            if self.gtf_path is None:
+                raise ValueError(
+                    "Property 'gtf_path' of %s cannot be None" % self)
 
             # Database object turns the GTF dataframes into sqlite3 tables
             # and wraps them with methods like `query_one`
@@ -342,7 +344,9 @@ class Genome(Serializable):
             # make sure protein FASTA file exists locally
             # and populate self.protein_fasta_paths
             self._set_local_paths(download_if_missing=False, overwrite=False)
-            assert self.protein_fasta_paths is not None
+            if self.protein_fasta_paths is None:
+                raise ValueError(
+                    "Property 'protein_fasta_paths' of %s cannot be None" % self)
             self._protein_sequences = SequenceData(
                 fasta_paths=self.protein_fasta_paths,
                 cache_directory_path=self.cache_directory_path)
@@ -357,7 +361,10 @@ class Genome(Serializable):
             # make sure transcript FASTA file exists locally
             # and populate self.transcript_fasta_paths
             self._set_local_paths(download_if_missing=False, overwrite=False)
-            assert self.transcript_fasta_paths is not None
+            if self.transcript_fasta_paths is None:
+                raise ValueError(
+                    "Property 'transcript_fasta_paths' of %s cannot be None" % (
+                        self,))
             self._transcript_sequences = SequenceData(
                 fasta_paths=self.transcript_fasta_paths,
                 cache_directory_path=self.cache_directory_path)
@@ -687,8 +694,9 @@ class Genome(Serializable):
                 raise ValueError("Gene not found: %s" % (gene_id,))
 
             gene_name, gene_biotype = None, None
-            assert len(result) >= 4 and len(result) <= 6, \
-                "Result is not the expected length: %d" % len(result)
+            if len(result) < 4 or len(result) > 6:
+                raise ValueError(
+                    "Result is not the expected length: %d" % len(result))
             contig, start, end, strand = result[:4]
             if len(result) == 5:
                 if "gene_name" in field_names:
@@ -815,9 +823,10 @@ class Genome(Serializable):
             feature="CDS")
         if len(results) == 0:
             raise ValueError("Protein ID not found: %s" % protein_id)
-        assert len(results) == 1, \
-            ("Should have only one gene ID for a given protein ID, "
-             "but found %d: %s" % (len(results), results))
+        elif len(results) > 1:
+            raise ValueError(
+                ("Should have only one gene ID for a given protein ID, "
+                 "but found %d: %s") % (len(results), results))
         return results[0]
 
     ###################################################
@@ -868,8 +877,9 @@ class Genome(Serializable):
                 raise ValueError("Transcript not found: %s" % (transcript_id,))
 
             transcript_name, transcript_biotype, tsl = None, None, None
-            assert 5 <= len(result) <= 5 + len(optional_field_names), \
-                "Result is not the expected length: %d" % len(result)
+            if len(result) < 5 or len(result) > (5 + len(optional_field_names)):
+                raise ValueError(
+                    "Result is not the expected length: %d" % len(result))
             contig, start, end, strand, gene_id = result[:5]
             if len(result) > 5:
                 extra_field_names = [f for f in optional_field_names if f in field_names]
@@ -943,8 +953,10 @@ class Genome(Serializable):
         if len(transcript_names) == 0:
             raise ValueError(
                 "No transcript names for transcript ID = %s" % transcript_id)
-        assert len(transcript_names) == 1, \
-            "Multiple transcript names for transcript ID = %s" % transcript_id
+        elif len(transcript_names) > 1:
+            raise ValueError(
+                "Multiple transcript names for transcript ID = %s" % (
+                    transcript_id,))
         return transcript_names[0]
 
     ###################################################
@@ -996,9 +1008,10 @@ class Genome(Serializable):
             feature="CDS")
         if len(results) == 0:
             raise ValueError("Protein ID not found: %s" % protein_id)
-        assert len(results) == 1, \
-            ("Should have only one transcript ID for a given protein ID, "
-             "but found %d: %s" % (len(results), results))
+        elif len(results) > 1:
+            raise ValueError(
+                ("Should have only one transcript ID for a given protein ID, "
+                 "but found %d: %s") % (len(results), results))
         return results[0]
 
     ###################################################

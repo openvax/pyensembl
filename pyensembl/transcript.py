@@ -1,4 +1,4 @@
-# Copyright (c) 2015. Mount Sinai School of Medicine
+# Copyright (c) 2015-2019. Mount Sinai School of Medicine
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -135,23 +135,21 @@ class Transcript(LocusWithGenome):
 
         for exon_number, exon_id in exon_numbers_and_ids:
             exon = self.genome.exon_by_id(exon_id)
+            if exon is None:
+                raise ValueError(
+                    "Missing exon %s for transcript %s" % (
+                        exon_number, self.id))
             exon_number = int(exon_number)
-            assert exon_number >= 1, "Invalid exon number: %s" % exon_number
-            assert exon_number <= len(exons), \
-                "Invalid exon number: %s (max expected = %d)" % (
-                    exon_number, len(exons))
+            if exon_number < 1:
+                raise ValueError("Invalid exon number: %s" % exon_number)
+            elif exon_number > len(exons):
+                raise ValueError(
+                    "Invalid exon number: %s (max expected = %d)" % (
+                        exon_number, len(exons)))
 
             # exon_number is 1-based, convert to list index by subtracting 1
-            exons[exon_number - 1] = exon
-
-        assert all(exon is not None for exon in exons), \
-            "Missing exons %s for transcript %s" % (
-                [
-                    i
-                    for i, maybe_exon
-                    in enumerate(exons) if maybe_exon is None
-                ],
-                self.id)
+            exon_idx = exon_number - 1
+            exons[exon_idx] = exon
         return exons
 
     # possible annotations associated with transcripts
@@ -194,8 +192,9 @@ class Transcript(LocusWithGenome):
             # Python ranges are [inclusive, exclusive) we have to increment
             # the end position
             for position in range(start, end + 1):
-                assert position not in results, \
-                    "Repeated position %d for %s" % (position, feature)
+                if position in results:
+                    raise ValueError(
+                        "Repeated position %d for %s" % (position, feature))
                 results.append(position)
         return results
 
@@ -273,11 +272,10 @@ class Transcript(LocusWithGenome):
 
         Position must be inside some exon (otherwise raise exception).
         """
-        # this code is performance sensitive, so switching from
-        # typechecks.require_integer to a simpler assertion
-        assert type(position) == int, \
-            "Position argument must be an integer, got %s : %s" % (
-                position, type(position))
+        if type(position) is not int:
+            raise TypeError(
+                "Position argument must be an integer, got %s : %s" % (
+                    position, type(position)))
 
         if position < self.start or position > self.end:
             raise ValueError(
@@ -352,8 +350,9 @@ class Transcript(LocusWithGenome):
         """
         offsets.sort()
         for i in range(len(offsets) - 1):
-            assert offsets[i] + 1 == offsets[i + 1], \
-                "Offsets not contiguous: %s" % (offsets,)
+            if offsets[i] + 1 != offsets[i + 1]:
+                raise ValueError(
+                    "Offsets not contiguous: %s" % (offsets,))
         return offsets
 
     @memoized_property
