@@ -234,6 +234,17 @@ class Transcript(LocusWithGenome):
         stop_codons = self._transcript_feature_position_ranges(
             "stop_codon", required=False)
         return len(stop_codons) > 0
+    
+    @memoized_property
+    def start_codon_complete(self):
+        """
+        Does the start codon span 3 genomic positions?
+        """
+        try:
+            pos = self._codon_positions("start_codon")
+        except ValueError:
+            return False
+        return True
 
     @memoized_property
     def start_codon_positions(self):
@@ -397,6 +408,7 @@ class Transcript(LocusWithGenome):
         """
         return (
             self.contains_start_codon and
+            self.start_codon_complete and
             self.contains_stop_codon and
             self.coding_sequence is not None and
             len(self.coding_sequence) % 3 == 0
