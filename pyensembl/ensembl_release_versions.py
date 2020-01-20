@@ -1,5 +1,3 @@
-# Copyright (c) 2015-2018. Mount Sinai School of Medicine
-#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -15,7 +13,7 @@
 from __future__ import print_function, division, absolute_import
 
 MIN_ENSEMBL_RELEASE = 54
-MAX_ENSEMBL_RELEASE = 97
+MAX_ENSEMBL_RELEASE = 99
 
 def check_release_number(release):
     """
