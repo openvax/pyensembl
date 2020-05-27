@@ -48,7 +48,7 @@ if __name__ == '__main__':
         version=version,
         description="Python interface to ensembl reference genome metadata",
         author="Alex Rubinsteyn",
-        author_email="alex.rubinsteyn@mssm.edu",
+        author_email="alex.rubinsteyn@unc.edu",
         url=github_url,
         license="http://www.apache.org/licenses/LICENSE-2.0.html",
         entry_points={
@@ -67,7 +67,6 @@ if __name__ == '__main__':
         ],
         install_requires=[
             "typechecks>=0.0.2",
-            "numpy>=1.7",
             "pandas>=0.15",
             "datacache>=1.1.4",
             "memoized-property>=1.0.2",
