@@ -56,7 +56,7 @@ def test_cached_dataframe_with_tempfile():
             df = memory_cache.cached_dataframe(
                 f.name, compute_fn=counter.increment_dataframe)
             # get counter value from inside of dataframe
-            result = df['x'].ix[0]
+            result = df['x'].iloc[0]
             assert result == 1, \
                 "Expected result=1, got %s" % (result,)
             assert counter.count == 1, \
