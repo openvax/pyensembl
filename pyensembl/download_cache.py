@@ -13,7 +13,7 @@
 from __future__ import print_function, division, absolute_import
 
 from os import listdir, remove
-from os.path import join, exists, split, abspath
+from os.path import join, exists, split, abspath, isdir
 from shutil import copy2, rmtree
 import logging
 
@@ -130,7 +130,6 @@ class DownloadCache(object):
 
     @property
     def cache_directory_path(self):
-        datacache.ensure_dir(self._cache_directory_path)
         return self._cache_directory_path
 
     def _fields(self):
@@ -224,6 +223,7 @@ class DownloadCache(object):
         """
         Return local cached path to a remote file, download it if necessary.
         """
+        datacache.ensure_dir(self.cache_directory_path)
         cached_path = self.cached_path(url)
         missing = not exists(cached_path)
         if (missing or overwrite) and download_if_missing:
@@ -240,6 +240,7 @@ class DownloadCache(object):
         """
         Return cached path to local file, copying it to the cache if necessary.
         """
+        datacache.ensure_dir(self.cache_directory_path)
         local_path = abspath(local_path)
         if not exists(local_path):
             raise MissingLocalFile(local_path)
@@ -316,14 +317,16 @@ class DownloadCache(object):
         """
         Deletes any cached files matching the prefixes or suffixes given
         """
-        for filename in listdir(self.cache_directory_path):
-            delete = (
-                any([filename.endswith(ext) for ext in suffixes]) or
-                any([filename.startswith(pre) for pre in prefixes]))
-            if delete:
-                path = join(self.cache_directory_path, filename)
-                logger.info("Deleting %s", path)
-                remove(path)
+        if isdir(self.cache_directory_path):
+            for filename in listdir():
+                delete = (
+                    any([filename.endswith(ext) for ext in suffixes]) or
+                    any([filename.startswith(pre) for pre in prefixes]))
+                if delete:
+                    path = join(self.cache_directory_path, filename)
+                    logger.info("Deleting %s", path)
+                    remove(path)
 
     def delete_cache_directory(self):
-        rmtree(self.cache_directory_path)
+        if isdir(self.cache_directory_path):
+            rmtree(self.cache_directory_path)
