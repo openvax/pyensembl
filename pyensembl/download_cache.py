@@ -223,11 +223,12 @@ class DownloadCache(object):
         """
         Return local cached path to a remote file, download it if necessary.
         """
-        datacache.ensure_dir(self.cache_directory_path)
+
         cached_path = self.cached_path(url)
         missing = not exists(cached_path)
         if (missing or overwrite) and download_if_missing:
             logger.info("Fetching %s from URL %s", cached_path, url)
+            datacache.ensure_dir(self.cache_directory_path)
             datacache.download._download_and_decompress_if_necessary(
                 full_path=cached_path,
                 download_url=url,
@@ -240,7 +241,6 @@ class DownloadCache(object):
         """
         Return cached path to local file, copying it to the cache if necessary.
         """
-        datacache.ensure_dir(self.cache_directory_path)
         local_path = abspath(local_path)
         if not exists(local_path):
             raise MissingLocalFile(local_path)
@@ -250,6 +250,7 @@ class DownloadCache(object):
             cached_path = self.cached_path(local_path)
             if exists(cached_path) and not overwrite:
                 return cached_path
+            datacache.ensure_dir(self.cache_directory_path)
             copy2(local_path, cached_path)
             return cached_path
 
