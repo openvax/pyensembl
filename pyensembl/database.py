@@ -210,6 +210,8 @@ class Database(object):
         Returns a connection to the database.
         """
         logger.info("Creating database: %s", self.local_db_path)
+        datacache.ensure_dir(self.cache_directory_path)
+
         df = self._load_gtf_as_dataframe(
             usecols=self.restrict_gtf_columns,
             features=self.restrict_gtf_features)
