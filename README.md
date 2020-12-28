@@ -193,6 +193,9 @@ Ensembl database, optionally restricted to a particular contig or strand.</dd>
 <dd>Returns a list of exons IDs in the annotation database, optionally restricted
 by the given chromosome and strand.</dd>
 
+<dt>exon_by_id(exon_id)</dt>
+<dd>Construct an Exon object for given Ensembl exon ID (e.g. "ENSE00001209410")</dd>
+
 <dt>exon_ids_of_gene_id(gene_id)</dt>
 <dd>Returns a list of exon IDs associated with a given gene ID.</dd>
 
