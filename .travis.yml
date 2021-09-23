@@ -2,8 +2,8 @@ language: python
 dist: trusty
 sudo: false
 python:
-  - "2.7"
   - "3.6"
+  - "3.8"
 git:
   # don't need the default depth of 50
   # but don't want to use a depth of 1 since that affects
@@ -120,5 +120,5 @@ deploy:
     secure: "jr1jd8CbCoXaFLF9sxv1qwbxj6WxqA90K98fFj2IXTqWtNSnGL4xdGC7+pSuKdDSN2yxzs6As7sfo0GUAhSfwFGC8pd7W6ckoxq+G6JmYSfxQ5HTOtK4L/7a8gYqEi01arWu4rR9tHu/yv6dCeK8an7hl9vlREYHfAKgJDYAB0I="
   on:
     branch: master
-    condition: $TRAVIS_PYTHON_VERSION = "2.7"
+    condition: $TRAVIS_PYTHON_VERSION = "3.6"
 
