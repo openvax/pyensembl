@@ -1,5 +1,5 @@
-<a href="https://travis-ci.org/openvax/pyensembl">
-    <img src="https://travis-ci.org/openvax/pyensembl.svg?branch=master" alt="Build Status" />
+<a href="https://app.travis-ci.com/github/openvax/pyensembl">
+    <img src="https://app.travis-ci.com/openvax/pyensembl.svg?branch=master" alt="Build Status" />
 </a>
 <a href="https://coveralls.io/github/openvax/pyensembl?branch=master">
     <img src="https://coveralls.io/repos/openvax/pyensembl/badge.svg?branch=master&service=github" alt="Coverage Status" />
