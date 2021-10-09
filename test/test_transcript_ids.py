@@ -50,8 +50,9 @@ def test_all_transcript_ids(ensembl):
             "Missing transcript ID %s from %s" % (transcript_id, ensembl)
 
 def test_transcript_id_of_protein_id_CCR2():
-    # looked up CCR2-201 transcript ID ENST00000292301 mapping to protein ID
-    # ENSP00000292301 on Sept. 14th 2016 from GRCh38 Ensembl release 85
+    # Looked up on Oct 9 2021:
+    # CCR2-203 ENST00000445132.3 maps to ENSP00000399285.2
+    # Ensembl release 104, GRCh38.p13
     transcript_id = grch38.transcript_id_of_protein_id(
-        "ENSP00000292301")
-    eq_("ENST00000292301", transcript_id)
+        "ENSP00000399285")
+    eq_("ENST00000445132", transcript_id)
