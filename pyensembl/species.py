@@ -177,8 +177,8 @@ mouse = Species.register(
     synonyms=["mouse", "house mouse"],
     reference_assemblies={
         "NCBIM37": (54, 67),
-        "GRCm38": (68, MAX_ENSEMBL_RELEASE),
-
+        "GRCm38": (68, 102),
+        "GRCm39": (103, MAX_ENSEMBL_RELEASE),
     })
 
 dog = Species.register(
