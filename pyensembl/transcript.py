@@ -418,7 +418,7 @@ class Transcript(LocusWithGenome):
         Spliced cDNA sequence of transcript
         (includes 5" UTR, coding sequence, and 3" UTR)
         """
-        return self.genome.transcript_sequences.get(self.id)
+        return self.genome.transcript_sequences.get(self.transcript_id.rsplit(".", 1)[0])
 
     @memoized_property
     def first_start_codon_spliced_offset(self):
