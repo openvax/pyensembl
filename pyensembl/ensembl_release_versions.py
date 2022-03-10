@@ -13,7 +13,6 @@
 from __future__ import print_function, division, absolute_import
 
 MIN_ENSEMBL_RELEASE = 54
-MAX_ENSEMBL_RELEASE = 105
 
 def check_release_number(release):
     """
@@ -25,8 +24,8 @@ def check_release_number(release):
     except:
         raise ValueError("Invalid Ensembl release: %s" % release)
 
-    if release < MIN_ENSEMBL_RELEASE or release > MAX_ENSEMBL_RELEASE:
+    if release < MIN_ENSEMBL_RELEASE:
         raise ValueError(
-            "Invalid Ensembl releases %d, must be between %d and %d" % (
-                release, MIN_ENSEMBL_RELEASE, MAX_ENSEMBL_RELEASE))
+            "Invalid Ensembl releases %d, must be greater than %d" % (
+                release, MIN_ENSEMBL_RELEASE))
     return release
