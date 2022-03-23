@@ -204,5 +204,6 @@ brown_rat = Species.register(
     synonyms=["brown rat", "lab rat", "rat"],
     reference_assemblies={
         "Rnor_5.0": (75, 79),
-        "Rnor_6.0": (80, MAX_ENSEMBL_RELEASE),
+        "Rnor_6.0": (80, 104),
+        "mRatBN7.2": (105, MAX_ENSEMBL_RELEASE)
     })
