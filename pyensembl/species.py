@@ -207,3 +207,17 @@ brown_rat = Species.register(
         "Rnor_6.0": (80, 104),
         "mRatBN7.2": (105, MAX_ENSEMBL_RELEASE)
     })
+
+macaque = Species.register(
+    latin_name="macaca_fascicularis",
+    synonyms=["macaque", "Crab-eating macaque"],
+    reference_assemblies={
+        "Macaca_fascicularis_6.0": (103, MAX_ENSEMBL_RELEASE),
+    })
+
+green_monkey = Species.register(
+    latin_name="chlorocebus_sabaeus",
+    synonyms=["green_monkey", "african_green_monkey"],
+    reference_assemblies={
+        "ChlSab1.1": (86, MAX_ENSEMBL_RELEASE),
+    })
