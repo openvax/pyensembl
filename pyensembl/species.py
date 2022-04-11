@@ -206,3 +206,48 @@ brown_rat = Species.register(
         "Rnor_5.0": (75, 79),
         "Rnor_6.0": (80, MAX_ENSEMBL_RELEASE),
     })
+
+rhesus = Species.register(
+    latin_name="macaca_mulatta",
+    synonyms=["rhesus"],
+    reference_assemblies={"Mmul_10": (75, MAX_ENSEMBL_RELEASE)})
+
+cyno = Species.register(
+    latin_name="macaca_fascicularis",
+    synonyms=["cyno", "cynomolgus", "crab eating macaque"],
+    reference_assemblies={"Macaca_fascicularis_6.0": (75, MAX_ENSEMBL_RELEASE)})
+
+rabbit = Species.register(
+    latin_name="oryctolagus_cuniculus",
+    synonyms=["rabbit"],
+    reference_assemblies={"OryCun2.0": (75, MAX_ENSEMBL_RELEASE)})
+
+gerbil = Species.register(
+    latin_name="meriones_unguiculatus",
+    synonyms=["gerbil"],
+    reference_assemblies={"MunDraft-v1.0": (75, MAX_ENSEMBL_RELEASE)})
+
+syrian_hamster = Species.register(
+    latin_name="mesocricetus_auratus",
+    synonyms=["syrian_hamster"],
+    reference_assemblies={"MesAur1.0": (75, MAX_ENSEMBL_RELEASE)})
+
+chinese_hamster = Species.register(
+    latin_name="cricetulus_griseus_chok1gshd",
+    synonyms=["chinese_hamster"],
+    reference_assemblies={"CHOK1GS_HDv1": (75, MAX_ENSEMBL_RELEASE)})
+
+naked_mole_rat = Species.register(
+    latin_name="heterocephalus_glaber_female",
+    synonyms=["naked_mole_rat"],
+    reference_assemblies={"HetGla_female_1.0": (75, MAX_ENSEMBL_RELEASE)})
+
+guinea_pig = Species.register(
+    latin_name="cavia_porcellus",
+    synonyms=["guinea_pig"],
+    reference_assemblies={"Cavpor3.0": (75, MAX_ENSEMBL_RELEASE)})
+
+pig = Species.register(
+    latin_name="sus_scrofa",
+    synonyms=["pig"],
+    reference_assemblies={"Sscrofa11.1": (75, MAX_ENSEMBL_RELEASE)})
