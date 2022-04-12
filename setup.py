@@ -31,7 +31,7 @@ except IOError as e:
     readme_markdown = ""
 
 
-with open('%s/__init__.py' % package_name, 'r') as f:
+with open('%s/version.py' % package_name, 'r') as f:
     version = re.search(
         r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
         f.read(),
