@@ -19,7 +19,6 @@ For example, the human chromosomal DNA sequences for release 78 are in:
     ftp://ftp.ensembl.org/pub/release-78/fasta/homo_sapiens/dna/
 
 """
-from __future__ import print_function, division, absolute_import
 
 from .species import Species, find_species_by_name
 from .ensembl_release_versions import check_release_number

@@ -10,9 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import print_function, division, absolute_import
-
-from six.moves import intern
+from sys import intern
 from typechecks import is_string, is_integer
 
 # Manually memoizing here, since our simple common.memoize function has

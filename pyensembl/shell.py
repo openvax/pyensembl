@@ -38,10 +38,7 @@ To install a genome from source files:
  --protein-fasta URL_OR_PATH
 """
 
-from __future__ import print_function, division, absolute_import
-
 import argparse
-import logging
 import logging.config
 import pkg_resources
 import os

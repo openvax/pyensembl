@@ -10,8 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import print_function, division, absolute_import
-
 """
 Helper functions for searching over collections of PyEnsembl objects
 """

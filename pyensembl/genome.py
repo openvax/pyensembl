@@ -15,12 +15,9 @@ Contains the Genome class, with its millions of accessors and wrappers
 around an arbitrary genomic database.
 """
 
-from __future__ import print_function, division, absolute_import
 
 from os import remove
 from os.path import exists, getsize
-
-from six import string_types
 
 from serializable import Serializable
 
@@ -85,12 +82,12 @@ class Genome(Serializable):
         """
         if transcript_fasta_paths_or_urls is None:
             transcript_fasta_paths_or_urls = []
-        elif isinstance(transcript_fasta_paths_or_urls, string_types):
+        elif isinstance(transcript_fasta_paths_or_urls, str):
             transcript_fasta_paths_or_urls = [transcript_fasta_paths_or_urls]
 
         if protein_fasta_paths_or_urls is None:
             protein_fasta_paths_or_urls = []
-        elif isinstance(protein_fasta_paths_or_urls, string_types):
+        elif isinstance(protein_fasta_paths_or_urls, str):
             protein_fasta_paths_or_urls = [protein_fasta_paths_or_urls]
 
         self.reference_name = reference_name

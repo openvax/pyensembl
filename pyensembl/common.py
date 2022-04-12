@@ -10,11 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import print_function, absolute_import
+import pickle
 
 from functools import wraps
 
-from six.moves import cPickle as pickle
 
 def dump_pickle(obj, filepath):
     with open(filepath, "wb") as f:

@@ -18,12 +18,9 @@ Unfortunately, small errors creep in to different FASTA files on the
 Ensembl FTP server that no proper FASTA parser lets you skip over.
 """
 
-from __future__ import print_function, division, absolute_import
 
 from gzip import GzipFile
 import logging
-
-from six import binary_type, PY3
 
 
 logger = logging.getLogger(__name__)
@@ -34,9 +31,9 @@ def _parse_header_id(line):
     Pull the transcript or protein identifier from the header line
     which starts with '>'
     """
-    if type(line) is not binary_type:
+    if type(line) is not bytes:
         raise TypeError("Expected header line to be of type %s but got %s" % (
-            binary_type, type(line)))
+            bytes, type(line)))
 
     if len(line) <= 1:
         raise ValueError("No identifier on FASTA line")
@@ -125,12 +122,7 @@ class FastaParser(object):
                 logger.warn("No sequence data for '%s'", self.current_id)
             else:
                 sequence = b"".join(self.current_lines)
-                if PY3:
-                    # only decoding into an ASCII str for Python 3 since
-                    # the binary sequence type for Python 2 is already 'str'
-                    # and the unicode representation is inefficient
-                    # (using either 16 or 32 bits per character depends on build)
-                    sequence = sequence.decode("ascii")
+                sequence = sequence.decode("ascii")
                 return self.current_id, sequence
 
     def _read_header(self, line):

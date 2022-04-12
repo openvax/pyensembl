@@ -68,7 +68,6 @@ if __name__ == '__main__':
             "pandas>=0.15",
             "datacache>=1.1.4",
             "memoized-property>=1.0.2",
-            "six>=1.9.0",
             "gtfparse>=1.1.0",
             "serializable",
             "tinytimer",

@@ -22,7 +22,6 @@ A piece of data is returned from one of three sources:
 2) Cache warm on disk. Parse or unpickle the serialized result into memory.
 3) Cache warm in memory. Return cached object.
 """
-from __future__ import print_function, division, absolute_import
 
 import logging
 from os import remove, stat

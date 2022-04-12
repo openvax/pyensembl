@@ -10,8 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import print_function, division, absolute_import
-
 from .memory_cache import MemoryCache
 from .database import Database
 from .download_cache import DownloadCache
@@ -39,10 +37,10 @@ from .species import (
     normalize_species_name
 )
 from .transcript import Transcript
-
-__version__ = '1.9.6'
+from .version import __version__
 
 __all__ = [
+    "__version__",
     "MemoryCache",
     "DownloadCache",
     "Database",
