@@ -11,7 +11,7 @@
 # limitations under the License.
 
 MIN_ENSEMBL_RELEASE = 54
-MAX_ENSEMBL_RELEASE = 106
+MAX_ENSEMBL_RELEASE = 107
 
 def check_release_number(release):
     """
