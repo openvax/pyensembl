@@ -419,7 +419,7 @@ class Transcript(LocusWithGenome):
         transcript_id = self.transcript_id
         if transcript_id.startswith("ENS"):
             transcript_id = transcript_id.rsplit(".", 1)[0]
-        return self.genome.transcript_sequences.get(self.transcript_id.rsplit(".", 1)[0])
+        return self.genome.transcript_sequences.get(transcript_id)
 
     @memoized_property
     def first_start_codon_spliced_offset(self):
