@@ -416,6 +416,9 @@ class Transcript(LocusWithGenome):
         Spliced cDNA sequence of transcript
         (includes 5" UTR, coding sequence, and 3" UTR)
         """
+        transcript_id = self.transcript_id
+        if transcript_id.startswith("ENS"):
+            transcript_id = transcript_id.rsplit(".", 1)[0]
         return self.genome.transcript_sequences.get(self.transcript_id.rsplit(".", 1)[0])
 
     @memoized_property
