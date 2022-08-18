@@ -51,9 +51,13 @@ def _parse_header_id(line):
     # .e.g.
     # "ENST00000448914.1" instead of "ENST00000448914"
     # So now we have to parse out the identifier
-    dot_index = identifier.find(b".")
-    if dot_index >= 0:
-        identifier = identifier[:dot_index]
+
+    # only split name of ENSEMBL naming. In other database, such as TAIR,
+    # the '.1' notation is the isoform not the version.
+    if identifier.startswith(b"ENS"):
+        dot_index = identifier.find(b".")
+        if dot_index >= 0:
+            identifier = identifier[:dot_index]
 
     return identifier.decode("ascii")
 
