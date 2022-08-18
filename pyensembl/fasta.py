@@ -51,10 +51,9 @@ def _parse_header_id(line):
     # .e.g.
     # "ENST00000448914.1" instead of "ENST00000448914"
     # So now we have to parse out the identifier
-    if identifier.startswith(b"ENS"):
-        dot_index = identifier.find(b".")
-        if dot_index >= 0:
-            identifier = identifier[:dot_index]
+    dot_index = identifier.find(b".")
+    if dot_index >= 0:
+        identifier = identifier[:dot_index]
 
     return identifier.decode("ascii")
 
