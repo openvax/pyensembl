@@ -16,14 +16,14 @@ on the Ensembl ftp server.
 
 For example, the human chromosomal DNA sequences for release 78 are in:
 
-    ftp://ftp.ensembl.org/pub/release-78/fasta/homo_sapiens/dna/
+    https://ftp.ensembl.org/pub/release-78/fasta/homo_sapiens/dna/
 
 """
 
 from .species import Species, find_species_by_name
 from .ensembl_release_versions import check_release_number
 
-ENSEMBL_FTP_SERVER = "ftp://ftp.ensembl.org"
+ENSEMBL_FTP_SERVER = "https://ftp.ensembl.org"
 
 # Example directories
 # FASTA files: /pub/release-78/fasta/homo_sapiens/
