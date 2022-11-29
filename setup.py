@@ -65,7 +65,6 @@ if __name__ == '__main__':
         ],
         install_requires=[
             "typechecks>=0.0.2",
-            "pandas>=0.15",
             "datacache>=1.1.4",
             "memoized-property>=1.0.2",
             "gtfparse>=1.1.0",

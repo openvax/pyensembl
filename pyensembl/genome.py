@@ -21,7 +21,6 @@ from os.path import exists, getsize
 
 from serializable import Serializable
 
-from .memory_cache import MemoryCache
 from .download_cache import DownloadCache
 from .database import Database
 from .exon import Exon
@@ -108,7 +107,6 @@ class Genome(Serializable):
             copy_local_files_to_cache=self.copy_local_files_to_cache,
             install_string_function=self.install_string,
             cache_directory_path=cache_directory_path)
-        self.memory_cache = MemoryCache()
         self._init_lazy_fields()
 
     @property
@@ -435,8 +433,7 @@ class Genome(Serializable):
 
     def clear_cache(self):
         """
-        Clear any in-memory cached values and short-lived on-disk
-        materializations from MemoryCache
+        Clear any in-memory cached values
         """
         for maybe_fn in self.__dict__.values():
             # clear cache associated with all memoization decorators,

@@ -16,7 +16,6 @@ import sqlite3
 
 import datacache
 from typechecks import require_integer, require_string
-
 from gtfparse import read_gtf, create_missing_features
 
 from .common import memoize
