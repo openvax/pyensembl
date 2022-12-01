@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from pyensembl import EnsemblRelease, MAX_ENSEMBL_RELEASE
 
 from nose.tools import raises

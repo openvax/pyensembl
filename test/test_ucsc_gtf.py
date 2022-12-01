@@ -1,7 +1,6 @@
-from __future__ import absolute_import
+from nose.tools import eq_
 
 from pyensembl import Genome, Database
-from nose.tools import eq_
 
 from .common import TemporaryDirectory
 from .data import data_path

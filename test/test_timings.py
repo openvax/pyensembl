@@ -1,5 +1,3 @@
-from __future__ import print_function, absolute_import
-
 from pyensembl import genome_for_reference_name
 
 from tinytimer import benchmark
