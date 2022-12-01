@@ -187,7 +187,12 @@ dog = Species.register(
 cat = Species.register(
     latin_name="felis_catus",
     synonyms=["cat"],
-    reference_assemblies={"Felis_catus_6.2": (75, MAX_ENSEMBL_RELEASE)})
+    reference_assemblies={
+        "Felis_catus_6.2": (75, 90),
+        "Felis_catus_8.0": (91, 92),
+        "Felis_catus_9.0": (93, MAX_ENSEMBL_RELEASE),
+        
+        })
 
 chicken = Species.register(
     latin_name="gallus_gallus",
