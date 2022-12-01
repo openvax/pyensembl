@@ -41,6 +41,9 @@ if not version:
     raise RuntimeError('Cannot find version information')
 
 if __name__ == '__main__':
+    with open("requirements.txt") as f:
+        requirements = [l.strip() for l in f]
+    
     setup(
         name=package_name,
         version=version,
@@ -63,14 +66,7 @@ if __name__ == '__main__':
             'Programming Language :: Python',
             'Topic :: Scientific/Engineering :: Bio-Informatics',
         ],
-        install_requires=[
-            "typechecks>=0.0.2",
-            "datacache>=1.1.4",
-            "memoized-property>=1.0.2",
-            "gtfparse>=1.1.0",
-            "serializable",
-            "tinytimer",
-        ],
+        install_requires=requirements,
         long_description=readme_markdown,
         long_description_content_type='text/markdown',
         packages=[package_name],
