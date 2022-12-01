@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from nose.tools import eq_, with_setup
 
 from .data import (

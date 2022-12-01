@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from .common import major_releases
 
 from nose.tools import nottest

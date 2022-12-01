@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from pyensembl.locus import Locus
 from pyensembl.normalization import normalize_chromosome
 

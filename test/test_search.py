@@ -1,7 +1,6 @@
-from __future__ import absolute_import
+from nose.tools import eq_
 
 from pyensembl import find_nearest_locus
-from nose.tools import eq_
 from .common import test_ensembl_releases
 
 @test_ensembl_releases()

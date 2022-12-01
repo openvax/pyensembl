@@ -14,10 +14,7 @@ from os import remove
 from os.path import exists, abspath, split, join
 import logging
 from collections import Counter
-
-from six.moves import cPickle as pickle
-from six import string_types
-
+import pickle 
 from .common import (load_pickle, dump_pickle)
 from .fasta import parse_fasta_dictionary
 
@@ -34,7 +31,7 @@ class SequenceData(object):
             fasta_paths,
             cache_directory_path=None):
 
-        if isinstance(fasta_paths, string_types):
+        if type(fasta_paths) is str:
             fasta_paths = [fasta_paths]
 
         self.fasta_paths = [abspath(path) for path in fasta_paths]

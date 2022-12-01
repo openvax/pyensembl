@@ -14,7 +14,6 @@ import pickle
 
 from functools import wraps
 
-
 def dump_pickle(obj, filepath):
     with open(filepath, "wb") as f:
         # use lower protocol for compatibility between Python 2 and Python 3
