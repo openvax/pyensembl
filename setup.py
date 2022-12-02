@@ -70,5 +70,7 @@ if __name__ == '__main__':
         long_description=readme_markdown,
         long_description_content_type='text/markdown',
         packages=[package_name],
-        package_data={package_name: ['logging.conf']},
+        package_data={
+            package_name: ['logging.conf', '../requirements.txt'],
+        },
     )
