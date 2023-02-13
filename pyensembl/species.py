@@ -211,7 +211,7 @@ brown_rat = Species.register(
         "mRatBN7.2": (105, MAX_ENSEMBL_RELEASE)
     })
 
-macaque = cyno = Species.register(
+macaque = Species.register(
     latin_name="macaca_fascicularis",
     synonyms=["macaque", "Crab-eating macaque"],
     reference_assemblies={
