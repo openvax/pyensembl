@@ -264,3 +264,14 @@ pig = Species.register(
     latin_name="sus_scrofa",
     synonyms=["pig"],
     reference_assemblies={"Sscrofa11.1": (75, MAX_ENSEMBL_RELEASE)})
+
+fly = Species.register(
+    latin_name="drosophila_melanogaster",
+    synonyms=["drosophila", "fruit fly", "fly"],
+    reference_assemblies={
+         "BDGP5": (75, 78),
+         "BDGP6": (79, 95),
+         "BDGP6.22": (96, 98),
+         "BDGP6.28": (99, 102),
+         "BDGP6.32": (103, MAX_ENSEMBL_RELEASE)
+    })
