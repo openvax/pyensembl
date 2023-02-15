@@ -145,7 +145,7 @@ def normalize_species_name(name):
 def find_species_by_name(species_name):
     latin_name = normalize_species_name(species_name)
     if latin_name not in Species._latin_names_to_species:
-        raise ValueError("Species not found: %s" % species_name)
+        raise ValueError("Species not found: %s; For non-Ensembl Data, see https://github.com/openvax/pyensembl#non-ensembl-data" % species_name)
     return Species._latin_names_to_species[latin_name]
 
 
