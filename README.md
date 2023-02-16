@@ -36,8 +36,7 @@ You can install PyEnsembl using [pip](https://pip.pypa.io/en/latest/quickstart.h
 pip install pyensembl
 ```
 
-This should also install any required packages, such as [datacache](https://github.com/openvax/datacache) and
-[BioPython](http://biopython.org/).
+This should also install any required packages such as [datacache](https://github.com/openvax/datacache).
 
 Before using PyEnsembl, run the following command to download and install
 Ensembl data:
