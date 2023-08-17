@@ -47,67 +47,62 @@ def normalize_release_properties(ensembl_release, species):
 # GTF annotation file example: Homo_sapiens.GTCh38.gtf.gz
 GTF_FILENAME_TEMPLATE = "%(Species)s.%(reference)s.%(release)d.gtf.gz"
 
+
 def make_gtf_filename(ensembl_release, species):
     """
     Return GTF filename expect on Ensembl FTP server for a specific
     species/release combination
     """
     ensembl_release, species, reference_name = normalize_release_properties(
-        ensembl_release, species)
+        ensembl_release, species
+    )
     return GTF_FILENAME_TEMPLATE % {
         "Species": species.capitalize(),
         "reference": reference_name,
         "release": ensembl_release,
     }
 
-def make_gtf_url(ensembl_release,
-                 species,
-                 server=ENSEMBL_FTP_SERVER):
+
+def make_gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
     """
     Returns a URL and a filename, which can be joined together.
     """
-    ensembl_release, species, _ = \
-        normalize_release_properties(ensembl_release, species)
-    subdir = GTF_SUBDIR_TEMPLATE % {
-        "release": ensembl_release,
-        "species": species
-    }
-    filename = make_gtf_filename(
-        ensembl_release=ensembl_release,
-        species=species)
+    ensembl_release, species, _ = normalize_release_properties(ensembl_release, species)
+    subdir = GTF_SUBDIR_TEMPLATE % {"release": ensembl_release, "species": species}
+    filename = make_gtf_filename(ensembl_release=ensembl_release, species=species)
     return server + subdir + filename
 
 
 # cDNA & protein FASTA file for releases before (and including) Ensembl 75
 # example: Homo_sapiens.NCBI36.54.cdna.all.fa.gz
-OLD_FASTA_FILENAME_TEMPLATE = \
+OLD_FASTA_FILENAME_TEMPLATE = (
     "%(Species)s.%(reference)s.%(release)d.%(sequence_type)s.all.fa.gz"
+)
 
 # ncRNA FASTA file for releases before (and including) Ensembl 75
 # example: Homo_sapiens.NCBI36.54.ncrna.fa.gz
 
-OLD_FASTA_FILENAME_TEMPLATE_NCRNA = \
-    "%(Species)s.%(reference)s.%(release)d.ncrna.fa.gz"
+OLD_FASTA_FILENAME_TEMPLATE_NCRNA = "%(Species)s.%(reference)s.%(release)d.ncrna.fa.gz"
 
 # cDNA & protein FASTA file for releases after Ensembl 75
 # example: Homo_sapiens.GRCh37.cdna.all.fa.gz
-NEW_FASTA_FILENAME_TEMPLATE = \
-    "%(Species)s.%(reference)s.%(sequence_type)s.all.fa.gz"
+NEW_FASTA_FILENAME_TEMPLATE = "%(Species)s.%(reference)s.%(sequence_type)s.all.fa.gz"
 
 # ncRNA FASTA file for releases after Ensembl 75
 # example: Homo_sapiens.GRCh37.ncrna.fa.gz
-NEW_FASTA_FILENAME_TEMPLATE_NCRNA = \
-    "%(Species)s.%(reference)s.ncrna.fa.gz"
+NEW_FASTA_FILENAME_TEMPLATE_NCRNA = "%(Species)s.%(reference)s.ncrna.fa.gz"
+
 
 def make_fasta_filename(ensembl_release, species, sequence_type):
-    ensembl_release, species, reference_name = \
-        normalize_release_properties(ensembl_release, species)
+    ensembl_release, species, reference_name = normalize_release_properties(
+        ensembl_release, species
+    )
     if ensembl_release <= 75:
-        if sequence_type == 'ncrna':
+        if sequence_type == "ncrna":
             return OLD_FASTA_FILENAME_TEMPLATE_NCRNA % {
                 "Species": species.capitalize(),
                 "reference": reference_name,
-                "release": ensembl_release
+                "release": ensembl_release,
             }
         else:
             return OLD_FASTA_FILENAME_TEMPLATE % {
@@ -117,10 +112,10 @@ def make_fasta_filename(ensembl_release, species, sequence_type):
                 "sequence_type": sequence_type,
             }
     else:
-        if sequence_type == 'ncrna':
+        if sequence_type == "ncrna":
             return NEW_FASTA_FILENAME_TEMPLATE_NCRNA % {
                 "Species": species.capitalize(),
-                "reference": reference_name
+                "reference": reference_name,
             }
         else:
             return NEW_FASTA_FILENAME_TEMPLATE % {
@@ -129,11 +124,8 @@ def make_fasta_filename(ensembl_release, species, sequence_type):
                 "sequence_type": sequence_type,
             }
 
-def make_fasta_url(
-        ensembl_release,
-        species,
-        sequence_type,
-        server=ENSEMBL_FTP_SERVER):
+
+def make_fasta_url(ensembl_release, species, sequence_type, server=ENSEMBL_FTP_SERVER):
     """Construct URL to FASTA file with cDNA transcript or protein sequences
 
     Parameter examples:
@@ -142,14 +134,14 @@ def make_fasta_url(
         sequence_type = "cdna" (other option: "pep")
     """
     ensembl_release, species, reference_name = normalize_release_properties(
-        ensembl_release, species)
+        ensembl_release, species
+    )
     subdir = FASTA_SUBDIR_TEMPLATE % {
         "release": ensembl_release,
         "species": species,
-        "type": sequence_type
+        "type": sequence_type,
     }
     filename = make_fasta_filename(
-        ensembl_release=ensembl_release,
-        species=species,
-        sequence_type=sequence_type)
+        ensembl_release=ensembl_release, species=species, sequence_type=sequence_type
+    )
     return server + subdir + filename

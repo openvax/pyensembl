@@ -21,12 +21,7 @@ class Locus(Serializable):
     on a particular strand of a chromosome/contig.
     """
 
-    def __init__(
-            self,
-            contig,
-            start,
-            end,
-            strand):
+    def __init__(self, contig, start, end, strand):
         """
         contig : str
             Chromosome or other sequence name in the reference assembly
@@ -54,28 +49,33 @@ class Locus(Serializable):
 
         if end < start:
             raise ValueError(
-                "Expected start <= end, got start = %d, end = %d" % (
-                    start, end))
+                "Expected start <= end, got start = %d, end = %d" % (start, end)
+            )
         self.start = start
         self.end = end
 
     def __str__(self):
         return "Locus(contig='%s', start=%d, end=%d, strand='%s')" % (
-            self.contig, self.start, self.end, self.strand)
+            self.contig,
+            self.start,
+            self.end,
+            self.strand,
+        )
 
     def __len__(self):
         return self.end - self.start + 1
 
     def __eq__(self, other):
         if not isinstance(other, Locus):
-            raise TypeError("Cannot compare %s and %s" % (
-                self.__class__.__name__,
-                other.__class.__name__))
+            raise TypeError(
+                "Cannot compare %s and %s"
+                % (self.__class__.__name__, other.__class.__name__)
+            )
         return (
-            self.contig == other.contig and
-            self.start == other.start and
-            self.end == other.end and
-            self.strand == other.strand
+            self.contig == other.contig
+            and self.start == other.start
+            and self.end == other.end
+            and self.strand == other.strand
         )
 
     def to_tuple(self):
@@ -83,9 +83,10 @@ class Locus(Serializable):
 
     def __lt__(self, other):
         if not isinstance(other, Locus):
-            raise TypeError("Cannot compare %s and %s" % (
-                self.__class__.__name__,
-                other.__class.__name__))
+            raise TypeError(
+                "Cannot compare %s and %s"
+                % (self.__class__.__name__, other.__class.__name__)
+            )
         return self.to_tuple() < other.to_tuple()
 
     def __le__(self, other):
@@ -93,9 +94,10 @@ class Locus(Serializable):
 
     def __gt__(self, other):
         if not isinstance(other, Locus):
-            raise TypeError("Cannot compare %s and %s" % (
-                self.__class__.__name__,
-                other.__class.__name__))
+            raise TypeError(
+                "Cannot compare %s and %s"
+                % (self.__class__.__name__, other.__class.__name__)
+            )
         return self.to_tuple() > other.to_tuple()
 
     def __ge__(self, other):
@@ -106,7 +108,7 @@ class Locus(Serializable):
             "contig": self.contig,
             "start": self.start,
             "end": self.end,
-            "strand": self.strand
+            "strand": self.strand,
         }
 
     @property
@@ -122,8 +124,9 @@ class Locus(Serializable):
         """
         if position > self.end or position < self.start:
             raise ValueError(
-                "Position %d outside valid range %d..%d of %s" % (
-                    position, self.start, self.end, self))
+                "Position %d outside valid range %d..%d of %s"
+                % (position, self.start, self.end, self)
+            )
         elif self.on_forward_strand:
             return position - self.start
         else:
@@ -141,12 +144,12 @@ class Locus(Serializable):
         """
         if start > end:
             raise ValueError(
-                "Locus should always have start <= end, got start=%d, end=%d" % (
-                    start, end))
+                "Locus should always have start <= end, got start=%d, end=%d"
+                % (start, end)
+            )
 
         if start < self.start or end > self.end:
-            raise ValueError("Range (%d, %d) falls outside %s" % (
-                start, end, self))
+            raise ValueError("Range (%d, %d) falls outside %s" % (start, end, self))
 
         if self.on_forward_strand:
             return (start - self.start, end - self.start)
@@ -180,8 +183,7 @@ class Locus(Serializable):
         """
         Is this locus on the same contig and (optionally) on the same strand?
         """
-        return (self.on_contig(contig) and
-                (strand is None or self.on_strand(strand)))
+        return self.on_contig(contig) and (strand is None or self.on_strand(strand))
 
     def distance_to_interval(self, start, end):
         """
@@ -212,25 +214,21 @@ class Locus(Serializable):
         that e.g. chr1:10-10 overlaps with chr1:10-10
         """
         return (
-            self.can_overlap(contig, strand) and
-            self.distance_to_interval(start, end) == 0)
+            self.can_overlap(contig, strand)
+            and self.distance_to_interval(start, end) == 0
+        )
 
     def overlaps_locus(self, other_locus):
         return self.overlaps(
-            other_locus.contig,
-            other_locus.start,
-            other_locus.end,
-            other_locus.strand)
+            other_locus.contig, other_locus.start, other_locus.end, other_locus.strand
+        )
 
     def contains(self, contig, start, end, strand=None):
         return (
-            self.can_overlap(contig, strand) and
-            start >= self.start and
-            end <= self.end)
+            self.can_overlap(contig, strand) and start >= self.start and end <= self.end
+        )
 
     def contains_locus(self, other_locus):
         return self.contains(
-            other_locus.contig,
-            other_locus.start,
-            other_locus.end,
-            other_locus.strand)
+            other_locus.contig, other_locus.start, other_locus.end, other_locus.strand
+        )

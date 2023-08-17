@@ -15,15 +15,7 @@ from .locus import Locus
 
 
 class Exon(Locus):
-    def __init__(
-            self,
-            exon_id,
-            contig,
-            start,
-            end,
-            strand,
-            gene_name,
-            gene_id):
+    def __init__(self, exon_id, contig, start, end, strand, gene_name, gene_id):
         Locus.__init__(self, contig, start, end, strand)
         self.exon_id = exon_id
         self.gene_name = gene_name
@@ -44,26 +36,30 @@ class Exon(Locus):
             " contig='%s',"
             " start=%d,"
             " end=%s,"
-            " strand='%s')") % (
-                self.exon_id,
-                self.gene_id,
-                self.gene_name,
-                self.contig,
-                self.start,
-                self.end,
-                self.strand)
+            " strand='%s')"
+        ) % (
+            self.exon_id,
+            self.gene_id,
+            self.gene_name,
+            self.contig,
+            self.start,
+            self.end,
+            self.strand,
+        )
 
     def __eq__(self, other):
         if not isinstance(other, Exon):
-            raise TypeError("Cannot compare %s and %s" % (
-                self.__class__.__name__,
-                other.__class.__name__))
+            raise TypeError(
+                "Cannot compare %s and %s"
+                % (self.__class__.__name__, other.__class.__name__)
+            )
         return (
-            self.contig == other.contig and
-            self.start == other.start and
-            self.end == other.end and
-            self.strand == other.strand and
-            self.id == other.id)
+            self.contig == other.contig
+            and self.start == other.start
+            and self.end == other.end
+            and self.strand == other.strand
+            and self.id == other.id
+        )
 
     def __hash__(self):
         return hash(self.id)
