@@ -37,12 +37,13 @@ class Database(object):
     """
 
     def __init__(
-            self,
-            gtf_path,
-            install_string=None,
-            cache_directory_path=None,
-            restrict_gtf_columns=None,
-            restrict_gtf_features=None):
+        self,
+        gtf_path,
+        install_string=None,
+        cache_directory_path=None,
+        restrict_gtf_columns=None,
+        restrict_gtf_features=None,
+    ):
         """
         Parameters
         ----------
@@ -85,9 +86,7 @@ class Database(object):
         self._query_cache = {}
 
     def __eq__(self, other):
-        return (
-            other.__class__ is Database and
-            self.gtf_path == other.gtf_path)
+        return other.__class__ is Database and self.gtf_path == other.gtf_path
 
     def __str__(self):
         return "Database(gtf_path=%s)" % (self.gtf_path,)
@@ -115,14 +114,14 @@ class Database(object):
         missing  values for that feature or are the same as the table's primary key.
         """
         candidate_column_groups = [
-            ['seqname', 'start', 'end'],
-            ['gene_name'],
-            ['gene_id'],
-            ['transcript_id'],
-            ['transcript_name'],
-            ['exon_id'],
-            ['protein_id'],
-            ['ccds_id'],
+            ["seqname", "start", "end"],
+            ["gene_name"],
+            ["gene_id"],
+            ["transcript_id"],
+            ["transcript_name"],
+            ["exon_id"],
+            ["protein_id"],
+            ["ccds_id"],
         ]
         indices = []
         column_set = set(column_names)
@@ -137,8 +136,8 @@ class Database(object):
                 # other GTFs)
                 if column_name not in column_set:
                     logger.info(
-                        "Skipping database index for {%s}",
-                        ", ".join(column_group))
+                        "Skipping database index for {%s}", ", ".join(column_group)
+                    )
                     skip = True
             if skip:
                 continue
@@ -147,10 +146,7 @@ class Database(object):
 
     # mapping from database tables to their primary keys
     # sadly exon IDs *are* not unique, so can't be in this dict
-    PRIMARY_KEY_COLUMNS = {
-        'gene': 'gene_id',
-        'transcript': 'transcript_id'
-    }
+    PRIMARY_KEY_COLUMNS = {"gene": "gene_id", "transcript": "transcript_id"}
 
     def _get_primary_key(self, feature_name, feature_df):
         """Name of primary key for a feature table (e.g. "gene" -> "gene_id")
@@ -167,13 +163,13 @@ class Database(object):
         if primary_key_values.isnull().any():
             raise ValueError(
                 "Column '%s' can't be primary key of table '%s'"
-                " because it contains nulls values" % (
-                    primary_key, feature_name))
+                " because it contains nulls values" % (primary_key, feature_name)
+            )
         elif len(primary_key_values.unique()) < len(primary_key_values):
             raise ValueError(
                 "Column '%s' can't be primary key of table '%s'"
-                " because it contains repeated values" % (
-                    primary_key, feature_name))
+                " because it contains repeated values" % (primary_key, feature_name)
+            )
         else:
             return primary_key
 
@@ -196,9 +192,7 @@ class Database(object):
             result.append(index_group)
         return result
 
-    def create(
-            self,
-            overwrite=False):
+    def create(self, overwrite=False):
         """
         Create the local database (including indexing) if it's not
         already set up. If `overwrite` is True, always re-create
@@ -210,8 +204,8 @@ class Database(object):
         datacache.ensure_dir(self.cache_directory_path)
 
         df = self._load_gtf_as_dataframe(
-            usecols=self.restrict_gtf_columns,
-            features=self.restrict_gtf_features)
+            usecols=self.restrict_gtf_columns, features=self.restrict_gtf_features
+        )
         all_index_groups = self._all_possible_indices(df.columns)
 
         if self.restrict_gtf_features:
@@ -219,7 +213,7 @@ class Database(object):
         else:
             # split single DataFrame into dictionary mapping each unique
             # feature name onto that subset of the data
-            feature_names = df['feature'].unique()
+            feature_names = df["feature"].unique()
         dataframes = {}
         # every table gets the same set of indices
         indices_dict = {}
@@ -237,9 +231,8 @@ class Database(object):
                 primary_keys[feature] = primary_key
 
             indices_dict[feature] = self._feature_indices(
-                all_index_groups,
-                primary_key,
-                df_subset)
+                all_index_groups, primary_key, df_subset
+            )
 
         self._connection = datacache.db_from_dataframes_with_absolute_path(
             db_path=self.local_db_path,
@@ -247,7 +240,8 @@ class Database(object):
             table_names_to_primary_keys=primary_keys,
             table_names_to_indices=indices_dict,
             overwrite=overwrite,
-            version=DATABASE_SCHEMA_VERSION)
+            version=DATABASE_SCHEMA_VERSION,
+        )
         return self._connection
 
     def _get_connection(self):
@@ -260,8 +254,8 @@ class Database(object):
                 # TODO: expose this more explicitly in datacache
                 #
                 self._connection = datacache.connect_if_correct_version(
-                    self.local_db_path,
-                    DATABASE_SCHEMA_VERSION)
+                    self.local_db_path, DATABASE_SCHEMA_VERSION
+                )
         return self._connection
 
     @property
@@ -301,15 +295,16 @@ class Database(object):
         return column_name in self.columns(table_name)
 
     def column_values_at_locus(
-            self,
-            column_name,
-            feature,
-            contig,
-            position,
-            end=None,
-            strand=None,
-            distinct=False,
-            sorted=False):
+        self,
+        column_name,
+        feature,
+        contig,
+        position,
+        end=None,
+        strand=None,
+        distinct=False,
+        sorted=False,
+    ):
         """
         Get the non-null values of a column from the database
         at a particular range of loci
@@ -329,8 +324,13 @@ class Database(object):
         require_integer(end, "end")
 
         if not self.column_exists(feature, column_name):
-            raise ValueError("Table %s doesn't have column %s" % (
-                feature, column_name,))
+            raise ValueError(
+                "Table %s doesn't have column %s"
+                % (
+                    feature,
+                    column_name,
+                )
+            )
 
         if distinct:
             distinct_string = "DISTINCT "
@@ -344,7 +344,11 @@ class Database(object):
             AND start <= ?
             AND end >= ?
 
-        """ % (distinct_string, column_name, feature)
+        """ % (
+            distinct_string,
+            column_name,
+            feature,
+        )
 
         query_params = [contig, end, position]
 
@@ -362,13 +366,8 @@ class Database(object):
         return results
 
     def distinct_column_values_at_locus(
-            self,
-            column,
-            feature,
-            contig,
-            position,
-            end=None,
-            strand=None):
+        self, column, feature, contig, position, end=None, strand=None
+    ):
         """
         Gather all the distinct values for a property/column at some specified
         locus.
@@ -404,7 +403,8 @@ class Database(object):
             end=end,
             strand=strand,
             distinct=True,
-            sorted=True)
+            sorted=True,
+        )
 
     def run_sql_query(self, sql, required=False, query_params=[]):
         """
@@ -426,30 +426,33 @@ class Database(object):
         try:
             cursor = self.connection.execute(sql, query_params)
         except sqlite3.OperationalError as e:
-            error_message = e.message if hasattr(e, 'message') else str(e)
+            error_message = e.message if hasattr(e, "message") else str(e)
             logger.warn(
-                "Encountered error \"%s\" from query \"%s\" with parameters %s",
+                'Encountered error "%s" from query "%s" with parameters %s',
                 error_message,
                 sql,
-                query_params)
+                query_params,
+            )
             raise
         results = cursor.fetchall()
         if required and not results:
             raise ValueError(
-                "No results found for query:\n%s\nwith parameters: %s" % (
-                    sql, query_params))
+                "No results found for query:\n%s\nwith parameters: %s"
+                % (sql, query_params)
+            )
 
         return results
 
     @memoize
     def query(
-            self,
-            select_column_names,
-            filter_column,
-            filter_value,
-            feature,
-            distinct=False,
-            required=False):
+        self,
+        select_column_names,
+        filter_column,
+        filter_value,
+        feature,
+        distinct=False,
+        required=False,
+    ):
         """
         Construct a SQL query and run against the sqlite3 database,
         filtered both by the feature type and a user-provided column/value.
@@ -458,50 +461,49 @@ class Database(object):
             SELECT %s%s
             FROM %s
             WHERE %s = ?
-        """ % ("distinct " if distinct else "",
-               ", ".join(select_column_names),
-               feature,
-               filter_column)
+        """ % (
+            "distinct " if distinct else "",
+            ", ".join(select_column_names),
+            feature,
+            filter_column,
+        )
         query_params = [filter_value]
-        return self.run_sql_query(
-            sql, required=required, query_params=query_params)
+        return self.run_sql_query(sql, required=required, query_params=query_params)
 
     def query_one(
-            self,
-            select_column_names,
-            filter_column,
-            filter_value,
-            feature,
-            distinct=False,
-            required=False):
+        self,
+        select_column_names,
+        filter_column,
+        filter_value,
+        feature,
+        distinct=False,
+        required=False,
+    ):
         results = self.query(
             select_column_names,
             filter_column,
             filter_value,
             feature,
             distinct=distinct,
-            required=required)
+            required=required,
+        )
 
         if len(results) == 0:
             if required:
-                raise ValueError("%s not found: %s" % (
-                    filter_column, filter_value))
+                raise ValueError("%s not found: %s" % (filter_column, filter_value))
             else:
                 return None
         elif len(results) > 1:
             raise ValueError(
-                "Found multiple entries with %s=%s (%s)" % (
-                    filter_column, filter_value, results))
+                "Found multiple entries with %s=%s (%s)"
+                % (filter_column, filter_value, results)
+            )
         return results[0]
 
     @memoize
     def query_feature_values(
-            self,
-            column,
-            feature,
-            distinct=True,
-            contig=None,
-            strand=None):
+        self, column, feature, distinct=True, contig=None, strand=None
+    ):
         """
         Run a SQL query against the sqlite3 database, filtered
         only on the feature type.
@@ -510,7 +512,11 @@ class Database(object):
             SELECT %s%s
             FROM %s
             WHERE 1=1
-        """ % ("DISTINCT " if distinct else "", column, feature)
+        """ % (
+            "DISTINCT " if distinct else "",
+            column,
+            feature,
+        )
         query_params = []
 
         if contig:
@@ -528,10 +534,8 @@ class Database(object):
 
     def query_distinct_on_contig(self, column_name, feature, contig):
         return self.query_feature_values(
-            column=column_name,
-            feature=feature,
-            contig=contig,
-            distinct=True)
+            column=column_name, feature=feature, contig=contig, distinct=True
+        )
 
     def query_loci(self, filter_column, filter_value, feature):
         """
@@ -558,11 +562,11 @@ class Database(object):
             filter_value=filter_value,
             feature=feature,
             distinct=True,
-            required=True)
+            required=True,
+        )
         return [
             Locus(contig, start, end, strand)
-            for (contig, start, end, strand)
-            in result_tuples
+            for (contig, start, end, strand) in result_tuples
         ]
 
     def query_locus(self, filter_column, filter_value, feature):
@@ -584,16 +588,19 @@ class Database(object):
         Returns single Locus object.
         """
         loci = self.query_loci(
-            filter_column=filter_column,
-            filter_value=filter_value,
-            feature=feature)
+            filter_column=filter_column, filter_value=filter_value, feature=feature
+        )
 
         if len(loci) == 0:
-            raise ValueError("Couldn't find locus for %s with %s = %s" % (
-                feature, filter_column, filter_value))
+            raise ValueError(
+                "Couldn't find locus for %s with %s = %s"
+                % (feature, filter_column, filter_value)
+            )
         elif len(loci) > 1:
-            raise ValueError("Too many loci for %s with %s = %s: %s" % (
-                feature, filter_column, filter_value, loci))
+            raise ValueError(
+                "Too many loci for %s with %s = %s: %s"
+                % (feature, filter_column, filter_value, loci)
+            )
         return loci[0]
 
     def _load_gtf_as_dataframe(self, usecols=None, features=None):
@@ -609,7 +616,8 @@ class Database(object):
             },
             infer_biotype_column=True,
             usecols=usecols,
-            features=features)
+            features=features,
+        )
 
         column_names = set(df.keys())
         expect_gene_feature = features is None or "gene" in features
@@ -627,12 +635,10 @@ class Database(object):
                 dataframe=df,
                 unique_keys={"gene": "gene_id"},
                 extra_columns={
-                    "gene": {
-                        "gene_name",
-                        "gene_biotype"
-                    }.intersection(column_names),
+                    "gene": {"gene_name", "gene_biotype"}.intersection(column_names),
                 },
-                missing_value="")
+                missing_value="",
+            )
             logger.info("Done.")
 
         if expect_transcript_feature and "transcript" not in observed_features:
@@ -650,7 +656,8 @@ class Database(object):
                         "protein_id",
                     }.intersection(column_names)
                 },
-                missing_value="")
+                missing_value="",
+            )
             logger.info("Done.")
 
         return df

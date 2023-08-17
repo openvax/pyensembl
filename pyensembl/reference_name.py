@@ -42,9 +42,7 @@ def max_ensembl_release(reference_name):
     return max_release
 
 
-def genome_for_reference_name(
-        reference_name,
-        allow_older_downloaded_release=True):
+def genome_for_reference_name(reference_name, allow_older_downloaded_release=True):
     """
     Given a genome reference name, such as "GRCh38", returns the
     corresponding Ensembl Release object.
@@ -57,8 +55,9 @@ def genome_for_reference_name(
     """
     reference_name = normalize_reference_name(reference_name)
     species = find_species_by_reference(reference_name)
-    (min_ensembl_release, max_ensembl_release) = \
-        species.reference_assemblies[reference_name]
+    (min_ensembl_release, max_ensembl_release) = species.reference_assemblies[
+        reference_name
+    ]
     if allow_older_downloaded_release:
         # go through candidate releases in descending order
         for release in reversed(range(min_ensembl_release, max_ensembl_release + 1)):
@@ -69,6 +68,7 @@ def genome_for_reference_name(
         # see if any of the releases between [max, min] are already locally
         # available
     return EnsemblRelease.cached(release=max_ensembl_release, species=species)
+
 
 ensembl_grch36 = genome_for_reference_name("ncbi36")
 ensembl_grch37 = genome_for_reference_name("grch37")

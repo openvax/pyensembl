@@ -32,8 +32,9 @@ def _parse_header_id(line):
     which starts with '>'
     """
     if type(line) is not bytes:
-        raise TypeError("Expected header line to be of type %s but got %s" % (
-            bytes, type(line)))
+        raise TypeError(
+            "Expected header line to be of type %s but got %s" % (bytes, type(line))
+        )
 
     if len(line) <= 1:
         raise ValueError("No identifier on FASTA line")
@@ -61,11 +62,13 @@ def _parse_header_id(line):
 
     return identifier.decode("ascii")
 
+
 class FastaParser(object):
     """
     FastaParser object consumes lines of a FASTA file incrementally
     while building up a dictionary mapping sequence identifiers to sequences.
     """
+
     def __init__(self):
         self.current_id = None
         self.current_lines = []
@@ -75,7 +78,7 @@ class FastaParser(object):
         Read the contents of a FASTA file into a dictionary
         """
         fasta_dictionary = {}
-        for (identifier, sequence) in self.iterate_over_file(fasta_path):
+        for identifier, sequence in self.iterate_over_file(fasta_path):
             fasta_dictionary[identifier] = sequence
         return fasta_dictionary
 
@@ -114,9 +117,9 @@ class FastaParser(object):
         Open either a text file or compressed gzip file as a stream of bytes.
         """
         if fasta_path.endswith("gz") or fasta_path.endswith("gzip"):
-            return GzipFile(fasta_path, 'rb')
+            return GzipFile(fasta_path, "rb")
         else:
-            return open(fasta_path, 'rb')
+            return open(fasta_path, "rb")
 
     def _current_entry(self):
         # when we hit a new entry, if this isn't the first
@@ -139,6 +142,7 @@ class FastaParser(object):
 
         self.current_lines = []
         return previous_entry
+
 
 def parse_fasta_dictionary(fasta_path):
     """

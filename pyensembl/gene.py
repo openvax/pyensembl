@@ -17,17 +17,7 @@ from .locus_with_genome import LocusWithGenome
 
 
 class Gene(LocusWithGenome):
-
-    def __init__(
-            self,
-            gene_id,
-            gene_name,
-            contig,
-            start,
-            end,
-            strand,
-            biotype,
-            genome):
+    def __init__(self, gene_id, gene_name, contig, start, end, strand, biotype, genome):
         LocusWithGenome.__init__(
             self,
             contig=contig,
@@ -35,7 +25,8 @@ class Gene(LocusWithGenome):
             end=end,
             strand=strand,
             biotype=biotype,
-            genome=genome)
+            genome=genome,
+        )
         self.gene_id = gene_id
         self.gene_name = gene_name
 
@@ -60,7 +51,8 @@ class Gene(LocusWithGenome):
             " biotype='%s',"
             " contig='%s',"
             " start=%d,"
-            " end=%d, strand='%s', genome='%s')") % (
+            " end=%d, strand='%s', genome='%s')"
+        ) % (
             self.gene_id,
             self.gene_name,
             self.biotype,
@@ -68,13 +60,15 @@ class Gene(LocusWithGenome):
             self.start,
             self.end,
             self.strand,
-            self.genome.reference_name)
+            self.genome.reference_name,
+        )
 
     def __eq__(self, other):
         return (
-            other.__class__ is Gene and
-            self.id == other.id and
-            self.genome == other.genome)
+            other.__class__ is Gene
+            and self.id == other.id
+            and self.genome == other.genome
+        )
 
     def __hash__(self):
         return hash(self.id)
@@ -92,19 +86,19 @@ class Gene(LocusWithGenome):
         transcript IDs associated with this gene.
         """
         transcript_id_results = self.db.query(
-            select_column_names=['transcript_id'],
-            filter_column='gene_id',
+            select_column_names=["transcript_id"],
+            filter_column="gene_id",
             filter_value=self.id,
-            feature='transcript',
+            feature="transcript",
             distinct=False,
-            required=False)
+            required=False,
+        )
 
         # We're doing a SQL query for each transcript ID to fetch
         # its particular information, might be more efficient if we
         # just get all the columns here, but how do we keep that modular?
         return [
-            self.genome.transcript_by_id(result[0])
-            for result in transcript_id_results
+            self.genome.transcript_by_id(result[0]) for result in transcript_id_results
         ]
 
     @memoized_property

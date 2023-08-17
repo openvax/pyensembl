@@ -20,11 +20,7 @@ from .genome import Genome
 from .ensembl_release_versions import check_release_number, MAX_ENSEMBL_RELEASE
 from .species import check_species_object, human
 
-from .ensembl_url_templates import (
-    ENSEMBL_FTP_SERVER,
-    make_gtf_url,
-    make_fasta_url
-)
+from .ensembl_url_templates import ENSEMBL_FTP_SERVER, make_gtf_url, make_fasta_url
 
 
 class EnsemblRelease(Genome):
@@ -32,6 +28,7 @@ class EnsemblRelease(Genome):
     Bundles together the genomic annotation and sequence data associated with
     a particular release of the Ensembl database.
     """
+
     @classmethod
     def normalize_init_values(cls, release, species, server):
         """
@@ -50,10 +47,8 @@ class EnsemblRelease(Genome):
 
     @classmethod
     def cached(
-            cls,
-            release=MAX_ENSEMBL_RELEASE,
-            species=human,
-            server=ENSEMBL_FTP_SERVER):
+        cls, release=MAX_ENSEMBL_RELEASE, species=human, server=ENSEMBL_FTP_SERVER
+    ):
         """
         Construct EnsemblRelease if it's never been made before, otherwise
         return an old instance.
@@ -66,29 +61,29 @@ class EnsemblRelease(Genome):
         return genome
 
     def __init__(
-            self,
-            release=MAX_ENSEMBL_RELEASE,
-            species=human,
-            server=ENSEMBL_FTP_SERVER):
+        self, release=MAX_ENSEMBL_RELEASE, species=human, server=ENSEMBL_FTP_SERVER
+    ):
         self.release, self.species, self.server = self.normalize_init_values(
-            release=release, species=species, server=server)
+            release=release, species=species, server=server
+        )
 
         self.gtf_url = make_gtf_url(
-            ensembl_release=self.release,
-            species=self.species,
-            server=self.server)
+            ensembl_release=self.release, species=self.species, server=self.server
+        )
 
         self.transcript_fasta_urls = [
             make_fasta_url(
                 ensembl_release=self.release,
                 species=self.species.latin_name,
                 sequence_type="cdna",
-                server=server),
+                server=server,
+            ),
             make_fasta_url(
                 ensembl_release=self.release,
                 species=self.species.latin_name,
                 sequence_type="ncrna",
-                server=server)
+                server=server,
+            ),
         ]
 
         self.protein_fasta_urls = [
@@ -96,7 +91,9 @@ class EnsemblRelease(Genome):
                 ensembl_release=self.release,
                 species=self.species.latin_name,
                 sequence_type="pep",
-                server=self.server)]
+                server=self.server,
+            )
+        ]
 
         self.reference_name = self.species.which_reference(self.release)
 
@@ -107,33 +104,33 @@ class EnsemblRelease(Genome):
             annotation_version=self.release,
             gtf_path_or_url=self.gtf_url,
             transcript_fasta_paths_or_urls=self.transcript_fasta_urls,
-            protein_fasta_paths_or_urls=self.protein_fasta_urls)
+            protein_fasta_paths_or_urls=self.protein_fasta_urls,
+        )
 
     def install_string(self):
         return "pyensembl install --release %d --species %s" % (
             self.release,
-            self.species.latin_name)
+            self.species.latin_name,
+        )
 
     def __str__(self):
         return "EnsemblRelease(release=%d, species='%s')" % (
             self.release,
-            self.species.latin_name)
+            self.species.latin_name,
+        )
 
     def __eq__(self, other):
         return (
-            other.__class__ is EnsemblRelease and
-            self.release == other.release and
-            self.species == other.species)
+            other.__class__ is EnsemblRelease
+            and self.release == other.release
+            and self.species == other.species
+        )
 
     def __hash__(self):
         return hash((self.release, self.species))
 
     def to_dict(self):
-        return {
-            "release": self.release,
-            "species": self.species,
-            "server": self.server
-        }
+        return {"release": self.release, "species": self.species, "server": self.server}
 
     @classmethod
     def from_dict(cls, state_dict):

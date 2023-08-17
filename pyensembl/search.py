@@ -14,6 +14,7 @@
 Helper functions for searching over collections of PyEnsembl objects
 """
 
+
 def find_nearest_locus(start, end, loci):
     """
     Finds nearest locus (object with method `distance_to_interval`) to the

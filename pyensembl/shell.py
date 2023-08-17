@@ -56,7 +56,8 @@ parser.add_argument(
     "--overwrite",
     default=False,
     action="store_true",
-    help="Force download and indexing even if files already exist locally")
+    help="Force download and indexing even if files already exist locally",
+)
 
 
 root_group = parser.add_mutually_exclusive_group()
@@ -67,18 +68,21 @@ release_group.add_argument(
     type=int,
     nargs="+",
     default=[],
-    help="Ensembl release version(s) (default=%d)" % MAX_ENSEMBL_RELEASE)
+    help="Ensembl release version(s) (default=%d)" % MAX_ENSEMBL_RELEASE,
+)
 
 release_group.add_argument(
     "--species",
     default=[],
     nargs="+",
-    help="Which species to download Ensembl data for (default=human)")
+    help="Which species to download Ensembl data for (default=human)",
+)
 
 release_group.add_argument(
     "--custom-mirror",
     default=None,
-    help="URL and directory to use instead of the default Ensembl FTP server")
+    help="URL and directory to use instead of the default Ensembl FTP server",
+)
 
 path_group = root_group.add_argument_group()
 
@@ -86,44 +90,47 @@ path_group.add_argument(
     "--reference-name",
     type=str,
     default=None,
-    help="Name of the reference, e.g. GRCh38")
+    help="Name of the reference, e.g. GRCh38",
+)
 
 path_group.add_argument(
-    "--annotation-name",
-    default=None,
-    help="Name of annotation source (e.g. refseq)")
+    "--annotation-name", default=None, help="Name of annotation source (e.g. refseq)"
+)
 
 path_group.add_argument(
-    "--annotation-version",
-    default=None,
-    help="Version of annotation database")
+    "--annotation-version", default=None, help="Version of annotation database"
+)
 
 path_group.add_argument(
     "--gtf",
     type=str,
     default=None,
-    help="URL or local path to a GTF file containing annotations.")
+    help="URL or local path to a GTF file containing annotations.",
+)
 
 path_group.add_argument(
     "--transcript-fasta",
     type=str,
-    action='append',
+    action="append",
     default=[],
     help="URL or local path to a FASTA files containing the transcript "
     "data. This option can be specified multiple times for multiple "
-    "FASTA files.")
+    "FASTA files.",
+)
 
 path_group.add_argument(
     "--protein-fasta",
     type=str,
     default=[],
     action="append",
-    help="URL or local path to a FASTA file containing protein data.")
+    help="URL or local path to a FASTA file containing protein data.",
+)
 
 path_group.add_argument(
     "--shared-prefix",
     default="",
-    help="Add this prefix to URLs or paths specified by --gtf, --transcript-fasta, --protein-fasta")
+    help="Add this prefix to URLs or paths specified by --gtf, --transcript-fasta, --protein-fasta",
+)
 
 parser.add_argument(
     "action",
@@ -135,16 +142,18 @@ parser.add_argument(
         "list",
     ),
     help=(
-        "\"install\" will download and index any data that is  not "
-        "currently downloaded or indexed. \"delete-all-files\" will delete all data "
-        "associated with a genome annotation. \"delete-index-files\" deletes "
+        '"install" will download and index any data that is  not '
+        'currently downloaded or indexed. "delete-all-files" will delete all data '
+        'associated with a genome annotation. "delete-index-files" deletes '
         "all files other than the original GTF and FASTA files for a genome. "
-        "\"list\" will show you all installed Ensembl genomes."))
+        '"list" will show you all installed Ensembl genomes.'
+    ),
+)
 
 
 def collect_all_installed_ensembl_releases():
     genomes = []
-    for (species, release) in Species.all_species_release_pairs():
+    for species, release in Species.all_species_release_pairs():
         genome = EnsemblRelease(release, species=species)
         if genome.required_local_files_exist():
             genomes.append(genome)
@@ -173,20 +182,19 @@ def all_combinations_of_ensembl_genomes(args):
                 # URL to be a directory with all the same filenames as
                 # would be provided by Ensembl
                 gtf_url = os.path.join(
-                    args.custom_mirror,
-                    os.path.basename(ensembl_release.gtf_url))
+                    args.custom_mirror, os.path.basename(ensembl_release.gtf_url)
+                )
                 transcript_fasta_urls = [
                     os.path.join(
-                        args.custom_mirror,
-                        os.path.basename(transcript_fasta_url))
+                        args.custom_mirror, os.path.basename(transcript_fasta_url)
+                    )
                     for transcript_fasta_url in ensembl_release.transcript_fasta_urls
                 ]
                 protein_fasta_urls = [
                     os.path.join(
-                        args.custom_mirror,
-                        os.path.basename(protein_fasta_url))
-                    for protein_fasta_url in
-                    ensembl_release.protein_fasta_urls
+                        args.custom_mirror, os.path.basename(protein_fasta_url)
+                    )
+                    for protein_fasta_url in ensembl_release.protein_fasta_urls
                 ]
                 reference_name = ensembl_release.reference_name
                 genome = Genome(
@@ -195,9 +203,11 @@ def all_combinations_of_ensembl_genomes(args):
                     annotation_version=version,
                     gtf_path_or_url=gtf_url,
                     transcript_fasta_paths_or_urls=transcript_fasta_urls,
-                    protein_fasta_paths_or_urls=protein_fasta_urls)
+                    protein_fasta_paths_or_urls=protein_fasta_urls,
+                )
                 genomes.append(genome)
     return genomes
+
 
 def collect_selected_genomes(args):
     # If specific genome source URLs are provided, use those
@@ -205,23 +215,29 @@ def collect_selected_genomes(args):
         if args.release:
             raise ValueError(
                 "An Ensembl release cannot be specified if "
-                "specific paths are also given")
+                "specific paths are also given"
+            )
         if not args.reference_name:
             raise ValueError("Must specify a reference name")
         if not args.annotation_name:
             raise ValueError("Must specify the name of the annotation source")
 
-        return [Genome(
-            reference_name=args.reference_name,
-            annotation_name=args.annotation_name,
-            annotation_version=args.annotation_version,
-            gtf_path_or_url=os.path.join(args.shared_prefix, args.gtf),
-            transcript_fasta_paths_or_urls=[
-                os.path.join(args.shared_prefix, transcript_fasta)
-                for transcript_fasta in args.transcript_fasta],
-            protein_fasta_paths_or_urls=[
-                os.path.join(args.shared_prefix, protein_fasta)
-                for protein_fasta in args.protein_fasta])]
+        return [
+            Genome(
+                reference_name=args.reference_name,
+                annotation_name=args.annotation_name,
+                annotation_version=args.annotation_version,
+                gtf_path_or_url=os.path.join(args.shared_prefix, args.gtf),
+                transcript_fasta_paths_or_urls=[
+                    os.path.join(args.shared_prefix, transcript_fasta)
+                    for transcript_fasta in args.transcript_fasta
+                ],
+                protein_fasta_paths_or_urls=[
+                    os.path.join(args.shared_prefix, protein_fasta)
+                    for protein_fasta in args.protein_fasta
+                ],
+            )
+        ]
     else:
         return all_combinations_of_ensembl_genomes(args)
 

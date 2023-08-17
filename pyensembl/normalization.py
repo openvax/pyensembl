@@ -53,7 +53,7 @@ def normalize_chromosome(c):
 
 
 def normalize_strand(strand):
-    if strand == "+" or strand == 1 or strand == "+1" or strand == "1" :
+    if strand == "+" or strand == 1 or strand == "+1" or strand == "1":
         return "+"
     elif strand == "-" or strand == -1 or strand == "-1":
         return "-"

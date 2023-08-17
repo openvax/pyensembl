@@ -102,6 +102,8 @@ script:
   # -a '!skip' lets us skip certain tests on travis (relevant for integration tests)
   # this command runs both pyensembl and integration tests. Sometimes they don't print output for a long
   # time; travis_wait extends the time allowed with no output.
+  #
+  # TODO: replace nose with pytest
   - nosetests -sv test --with-coverage --cover-package=pyensembl
   ## && travis_wait nosetests -sv $PWD/openvax-integration-tests -a '!skip'
 after_success: coveralls
