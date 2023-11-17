@@ -19,6 +19,7 @@ class LocusWithGenome(Locus):
     Common base class for Gene and Transcript to avoid copying
     their shared logic.
     """
+
     def __init__(self, contig, start, end, strand, biotype, genome):
         Locus.__init__(self, contig, start, end, strand)
         self.genome = genome
@@ -32,7 +33,8 @@ class LocusWithGenome(Locus):
             end=self.end,
             strand=self.strand,
             biotype=self.biotype,
-            genome=self.genome)
+            genome=self.genome,
+        )
 
     @property
     def is_protein_coding(self):

@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from pyensembl import Genome
 from nose.tools import eq_, ok_, assert_raises
 

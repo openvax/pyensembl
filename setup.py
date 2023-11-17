@@ -14,16 +14,17 @@ from __future__ import print_function
 import os
 import re
 
+# TODO: replace setup.py with pyproject.toml
 from setuptools import setup
 
 package_name = "pyensembl"
 current_directory = os.path.dirname(__file__)
-readme_filename = 'README.md'
+readme_filename = "README.md"
 readme_path = os.path.join(current_directory, readme_filename)
 github_url = "https://github.com/openvax/%s" % package_name
 
 try:
-    with open(readme_path, 'r') as f:
+    with open(readme_path, "r") as f:
         readme_markdown = f.read()
 except IOError as e:
     print(e)
@@ -31,16 +32,18 @@ except IOError as e:
     readme_markdown = ""
 
 
-with open('%s/version.py' % package_name, 'r') as f:
+with open("%s/version.py" % package_name, "r") as f:
     version = re.search(
-        r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
-        f.read(),
-        re.MULTILINE).group(1)
+        r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE
+    ).group(1)
 
 if not version:
-    raise RuntimeError('Cannot find version information')
+    raise RuntimeError("Cannot find version information")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    with open("requirements.txt") as f:
+        requirements = [l.strip() for l in f]
+
     setup(
         name=package_name,
         version=version,
@@ -50,30 +53,22 @@ if __name__ == '__main__':
         url=github_url,
         license="http://www.apache.org/licenses/LICENSE-2.0.html",
         entry_points={
-            'console_scripts': [
-                'pyensembl = %s.shell:run' % package_name
-            ],
+            "console_scripts": ["pyensembl = %s.shell:run" % package_name],
         },
         classifiers=[
-            'Development Status :: 3 - Alpha',
-            'Environment :: Console',
-            'Operating System :: OS Independent',
-            'Intended Audience :: Science/Research',
-            'License :: OSI Approved :: Apache Software License',
-            'Programming Language :: Python',
-            'Topic :: Scientific/Engineering :: Bio-Informatics',
+            "Development Status :: 3 - Alpha",
+            "Environment :: Console",
+            "Operating System :: OS Independent",
+            "Intended Audience :: Science/Research",
+            "License :: OSI Approved :: Apache Software License",
+            "Programming Language :: Python",
+            "Topic :: Scientific/Engineering :: Bio-Informatics",
         ],
-        install_requires=[
-            "typechecks>=0.0.2",
-            "pandas>=0.15",
-            "datacache>=1.1.4",
-            "memoized-property>=1.0.2",
-            "gtfparse>=1.1.0",
-            "serializable",
-            "tinytimer",
-        ],
+        install_requires=requirements,
         long_description=readme_markdown,
-        long_description_content_type='text/markdown',
+        long_description_content_type="text/markdown",
         packages=[package_name],
-        package_data={package_name: ['logging.conf']},
+        package_data={
+            package_name: ["logging.conf", "../requirements.txt"],
+        },
     )

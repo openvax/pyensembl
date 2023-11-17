@@ -10,7 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .memory_cache import MemoryCache
 from .database import Database
 from .download_cache import DownloadCache
 from .ensembl_release import EnsemblRelease, cached_release
@@ -31,17 +30,12 @@ from .reference_name import (
 
 from .search import find_nearest_locus
 from .sequence_data import SequenceData
-from .species import (
-    find_species_by_name,
-    check_species_object,
-    normalize_species_name
-)
+from .species import find_species_by_name, check_species_object, normalize_species_name
 from .transcript import Transcript
 from .version import __version__
 
 __all__ = [
     "__version__",
-    "MemoryCache",
     "DownloadCache",
     "Database",
     "EnsemblRelease",

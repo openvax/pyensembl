@@ -20,10 +20,12 @@ def dump_pickle(obj, filepath):
         # use lower protocol for compatibility between Python 2 and Python 3
         pickle.dump(obj, file=f, protocol=2)
 
+
 def load_pickle(filepath):
     with open(filepath, "rb") as f:
         obj = pickle.load(f)
     return obj
+
 
 def _memoize_cache_key(args, kwargs):
     """Turn args tuple and kwargs dictionary into a hashable key.
@@ -40,12 +42,13 @@ def _memoize_cache_key(args, kwargs):
             cache_key_list.append(tuple(arg))
         else:
             cache_key_list.append(arg)
-    for (k, v) in sorted(kwargs.items()):
+    for k, v in sorted(kwargs.items()):
         if type(v) is list:
             cache_key_list.append((k, tuple(v)))
         else:
             cache_key_list.append((k, v))
     return tuple(cache_key_list)
+
 
 def memoize(fn):
     """Simple reset-able memoization decorator for functions and methods,

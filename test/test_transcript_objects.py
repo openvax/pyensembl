@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from pyensembl import Locus, cached_release
 from nose.tools import eq_, assert_not_equal, assert_greater
 

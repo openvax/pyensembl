@@ -1,11 +1,9 @@
 typechecks>=0.0.2
-numpy>=1.7
-pandas>=0.15
 datacache>=1.1.4
 memoized-property>=1.0.2
-nose>=1.3.3
 tinytimer
-six>=1.9.0
-pylint>=1.4.4
-gtfparse>=1.1.0
+gtfparse>=1.3.0,<2.0.0
 serializable
+nose>=1.3.3
+pylint>=1.4.4
+pandas>=1.3.5
