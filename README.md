@@ -70,6 +70,50 @@ os.environ['PYENSEMBL_CACHE_DIR'] = '/custom/cache/dir'
 # ... PyEnsembl API usage
 ```
 
+# Usage tips 
+
+## List installed genomes
+
+```sh
+pyensembl list
+```
+
+```python
+from pyensembl.shell import collect_all_installed_ensembl_releases
+collect_all_installed_ensembl_releases()
+```
+
+## Load genome quickly
+
+```python
+from pyensembl import EnsemblRelease
+data = EnsemblRelease(
+    release=100,
+    species=find_species_by_name('drosophila_melanogaster'),
+    )
+```
+
+## Data structure
+
+### Gene object
+
+```python
+gene=data.gene_by_id(gene_id='FBgn0011747')
+```
+
+### Transcript object
+
+```python
+transcript=gene.transcripts[0]
+```
+
+### Protein information
+
+```python
+transcript.protein_id
+transcript.protein_sequence
+```
+
 # Non-Ensembl Data
 
 PyEnsembl also allows arbitrary genomes via the specification
@@ -80,10 +124,16 @@ non-Ensembl data is still very much in development.)
 For example:
 
 ```python
+from pyensembl import Genome
 data = Genome(
     reference_name='GRCh38',
     annotation_name='my_genome_features',
-    gtf_path_or_url='/My/local/gtf/path_to_my_genome_features.gtf')
+    # annotation_version=None,
+    gtf_path_or_url='/My/local/gtf/path_to_my_genome_features.gtf', # Path or URL of GTF file
+    # transcript_fasta_paths_or_urls=None, # List of paths or URLs of FASTA files containing transcript sequences
+    # protein_fasta_paths_or_urls=None, # List of paths or URLs of FASTA files containing protein sequences
+    # cache_directory_path=None, # Where to place downloaded and cached files for this genome
+)
 # parse GTF and construct database of genomic features
 data.index()
 gene_names = data.gene_names_at_locus(contig=6, position=29945884)
