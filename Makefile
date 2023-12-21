@@ -13,8 +13,7 @@ PYTHON3 ?= python3
 all: check
 
 check:
-	./lint.sh
-	cd test && pytest
+	./lint-and-test.sh
 
 #: Clean up temporary files
 clean:
