@@ -100,7 +100,8 @@ class Species(Serializable):
             for i in range(start, end + 1):
                 if i in self._release_to_genome:
                     raise ValueError(
-                        "Ensembl release %d already has an associated genome" % i
+                        "Ensembl release %d already has an associated genome"
+                        % i
                     )
                 self._release_to_genome[i] = genome_name
 
@@ -113,10 +114,13 @@ class Species(Serializable):
         return self._release_to_genome[ensembl_release]
 
     def __str__(self):
-        return "Species(latin_name='%s', synonyms=%s, reference_assemblies=%s)" % (
-            self.latin_name,
-            self.synonyms,
-            self.reference_assemblies,
+        return (
+            "Species(latin_name='%s', synonyms=%s, reference_assemblies=%s)"
+            % (
+                self.latin_name,
+                self.synonyms,
+                self.reference_assemblies,
+            )
         )
 
     def __eq__(self, other):
@@ -304,6 +308,18 @@ pig = Species.register(
     reference_assemblies={"Sscrofa11.1": (75, MAX_ENSEMBL_RELEASE)},
 )
 
+zebrafish = Species.register(
+    latin_name="danio_rerio",
+    synonyms=["zebrafish"],
+    reference_assemblies={
+        "ZFISH7": (47, 53),
+        "Zv8": (54, 59),
+        "Zv9": (60, 79),
+        "GRCz10": (80, 91),
+        "GRCz11": (92, MAX_ENSEMBL_RELEASE),
+    },
+)
+
 fly = Species.register(
     latin_name="drosophila_melanogaster",
     synonyms=["drosophila", "fruit fly", "fly"],
@@ -316,9 +332,22 @@ fly = Species.register(
     },
 )
 
+nematode = Species.register(
+    latin_name="caenorhabditis_elegans",
+    synonyms=["nematode", "C_elegans"],
+    reference_assemblies={
+        "WS180": (47, 49),
+        "WS190": (50, 54),
+        "WS200": (55, 57),
+        "WS210": (58, 78),
+        "WS220": (79, 66),
+        "WBcel235": (67, MAX_ENSEMBL_RELEASE),
+    },
+)
+
 yeast = Species.register(
     latin_name="saccharomyces_cerevisiae",
-    synonyms=["yeast","budding_yeast"],
+    synonyms=["yeast", "budding_yeast"],
     reference_assemblies={
         "R64-1-1": (76, MAX_ENSEMBL_RELEASE),
     },
