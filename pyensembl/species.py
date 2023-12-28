@@ -315,3 +315,11 @@ fly = Species.register(
         "BDGP6.32": (103, MAX_ENSEMBL_RELEASE),
     },
 )
+
+yeast = Species.register(
+    latin_name="saccharomyces_cerevisiae",
+    synonyms=["yeast","budding_yeast"],
+    reference_assemblies={
+        "R64-1-1": (76, MAX_ENSEMBL_RELEASE),
+    },
+)

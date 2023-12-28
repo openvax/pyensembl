@@ -221,7 +221,6 @@ class DownloadCache(object):
         """
         Return local cached path to a remote file, download it if necessary.
         """
-
         cached_path = self.cached_path(url)
         missing = not exists(cached_path)
         if (missing or overwrite) and download_if_missing:
