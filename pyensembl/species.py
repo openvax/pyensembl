@@ -100,7 +100,8 @@ class Species(Serializable):
             for i in range(start, end + 1):
                 if i in self._release_to_genome:
                     raise ValueError(
-                        "Ensembl release %d already has an associated genome" % i
+                        "Ensembl release %d already has an associated genome"
+                        % i
                     )
                 self._release_to_genome[i] = genome_name
 
@@ -113,10 +114,13 @@ class Species(Serializable):
         return self._release_to_genome[ensembl_release]
 
     def __str__(self):
-        return "Species(latin_name='%s', synonyms=%s, reference_assemblies=%s)" % (
-            self.latin_name,
-            self.synonyms,
-            self.reference_assemblies,
+        return (
+            "Species(latin_name='%s', synonyms=%s, reference_assemblies=%s)"
+            % (
+                self.latin_name,
+                self.synonyms,
+                self.reference_assemblies,
+            )
         )
 
     def __eq__(self, other):
@@ -188,9 +192,9 @@ human = Species.register(
     latin_name="homo_sapiens",
     synonyms=["human"],
     reference_assemblies={
-        "GRCh38": (76, MAX_ENSEMBL_RELEASE),
-        "GRCh37": (55, 75),
         "NCBI36": (54, 54),
+        "GRCh37": (55, 75),
+        "GRCh38": (76, MAX_ENSEMBL_RELEASE),
     },
 )
 
