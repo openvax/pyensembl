@@ -162,7 +162,12 @@ def collect_all_available_ensembl_releases():
         species = Species._latin_names_to_species[species_name]
         # print in tree format
         print(
-            "* " + species_name + " (" + ",".join(species.synonyms) + ")" + ":"
+            "* "
+            + species_name
+            + " ("
+            + ", ".join(species.synonyms)
+            + ")"
+            + ":"
         )
         for (
             release_name,
