@@ -8,10 +8,9 @@
     <img src="https://img.shields.io/pypi/v/pyensembl.svg?maxAge=1000" alt="PyPI" />
 </a>
 
+# PyEnsembl
 
-PyEnsembl
-=======
-PyEnsembl is a Python interface to [Ensembl](http://www.ensembl.org) reference genome metadata such as exons and transcripts. PyEnsembl downloads [GTF](https://en.wikipedia.org/wiki/Gene_transfer_format) and [FASTA](https://en.wikipedia.org/wiki/FASTA_format) files from the [Ensembl FTP server](ftp://ftp.ensembl.org) and loads them into a local database. PyEnsembl can also work with custom reference data specified using user-supplied GTF and FASTA files. 
+PyEnsembl is a Python interface to [Ensembl](http://www.ensembl.org) reference genome metadata such as exons and transcripts. PyEnsembl downloads [GTF](https://en.wikipedia.org/wiki/Gene_transfer_format) and [FASTA](https://en.wikipedia.org/wiki/FASTA_format) files from the [Ensembl FTP server](ftp://ftp.ensembl.org) and loads them into a local database. PyEnsembl can also work with custom reference data specified using user-supplied GTF and FASTA files.
 
 # Example Usage
 
@@ -25,7 +24,7 @@ data = EnsemblRelease(77)
 gene_names = data.gene_names_at_locus(contig=6, position=29945884)
 
 # get all exons associated with HLA-A
-exon_ids  = data.exon_ids_of_gene_name('HLA-A')
+exon_ids = data.exon_ids_of_gene_name("HLA-A")
 ```
 
 # Installation
@@ -52,6 +51,7 @@ Alternatively, you can create the `EnsemblRelease` object from inside a Python
 process and call `ensembl_object.download()` followed by `ensembl_object.index()`.
 
 ## Cache Location
+
 By default, PyEnsembl uses the platform-specific `Cache` folder
 and caches the files into the `pyensembl` sub-directory.
 You can override this default by setting the environment key `PYENSEMBL_CACHE_DIR`
@@ -66,11 +66,11 @@ or
 ```python
 import os
 
-os.environ['PYENSEMBL_CACHE_DIR'] = '/custom/cache/dir'
+os.environ["PYENSEMBL_CACHE_DIR"] = "/custom/cache/dir"
 # ... PyEnsembl API usage
 ```
 
-# Usage tips 
+# Usage tips
 
 ## List installed genomes
 
@@ -80,6 +80,7 @@ pyensembl list
 
 ```python
 from pyensembl.shell import collect_all_installed_ensembl_releases
+
 collect_all_installed_ensembl_releases()
 ```
 
@@ -87,10 +88,11 @@ collect_all_installed_ensembl_releases()
 
 ```python
 from pyensembl import EnsemblRelease
+
 data = EnsemblRelease(
     release=100,
-    species=find_species_by_name('drosophila_melanogaster'),
-    )
+    species=find_species_by_name("drosophila_melanogaster"),
+)
 ```
 
 ## Data structure
@@ -98,13 +100,13 @@ data = EnsemblRelease(
 ### Gene object
 
 ```python
-gene=data.gene_by_id(gene_id='FBgn0011747')
+gene = data.gene_by_id(gene_id="FBgn0011747")
 ```
 
 ### Transcript object
 
 ```python
-transcript=gene.transcripts[0]
+transcript = gene.transcripts[0]
 ```
 
 ### Protein information
@@ -125,11 +127,12 @@ For example:
 
 ```python
 from pyensembl import Genome
+
 data = Genome(
-    reference_name='GRCh38',
-    annotation_name='my_genome_features',
+    reference_name="GRCh38",
+    annotation_name="my_genome_features",
     # annotation_version=None,
-    gtf_path_or_url='/My/local/gtf/path_to_my_genome_features.gtf', # Path or URL of GTF file
+    gtf_path_or_url="/My/local/gtf/path_to_my_genome_features.gtf",  # Path or URL of GTF file
     # transcript_fasta_paths_or_urls=None, # List of paths or URLs of FASTA files containing transcript sequences
     # protein_fasta_paths_or_urls=None, # List of paths or URLs of FASTA files containing protein sequences
     # cache_directory_path=None, # Where to place downloaded and cached files for this genome
@@ -142,8 +145,8 @@ gene_names = data.gene_names_at_locus(contig=6, position=29945884)
 # API
 
 The `EnsemblRelease` object has methods to let you access all possible
-combinations of the annotation features *gene\_name*, *gene\_id*,
-*transcript\_name*, *transcript\_id*, *exon\_id* as well as the location of
+combinations of the annotation features _gene_name_, _gene_id_,
+_transcript_name_, _transcript_id_, _exon_id_ as well as the location of
 these genomic elements (contig, start position, end position, strand).
 
 ## Genes

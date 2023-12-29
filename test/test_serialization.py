@@ -19,7 +19,7 @@ from .common import test_ensembl_releases
 from .data import (
     TP53_gene_id,
     custom_mouse_genome_grcm38_subset,
-    setup_init_custom_mouse_genome
+    setup_init_custom_mouse_genome,
 )
 
 
@@ -125,5 +125,6 @@ def test_species_to_pickle():
 @test_ensembl_releases()
 def test_unique_memory_address_of_unpickled_genomes(ensembl_genome):
     unpickled = pickle.loads(pickle.dumps(ensembl_genome))
-    assert ensembl_genome is unpickled, \
-        "Expected same object for %s but got two different instances" % (unpickled,)
+    assert (
+        ensembl_genome is unpickled
+    ), "Expected same object for %s but got two different instances" % (unpickled,)

@@ -9,6 +9,7 @@ from pyensembl import genome_for_reference_name
 
 grch38 = genome_for_reference_name("GRCh38")
 
+
 def test_transcript_sequence_ensembl_grch38():
     # extremely short TRD gene
     seq = grch38.transcript_sequence("ENST00000448914")

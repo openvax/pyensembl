@@ -13,16 +13,17 @@ from .data import data_path
 
 FASTA_PATH = data_path("mouse.ensembl.81.partial.ENSMUSG00000017167.fa")
 
+
 def test_sequence_type():
     with TemporaryDirectory() as tmpdir:
-        seqs_dna = SequenceData(
-            [FASTA_PATH],
-            cache_directory_path=tmpdir)
+        seqs_dna = SequenceData([FASTA_PATH], cache_directory_path=tmpdir)
         seq = seqs_dna.get("ENSMUST00000138942")
-        assert seq is not None, \
-            "Failed to find sequence for ENSMUST00000138942"
-        assert isinstance(seq, str), \
-            "Wrong sequence type, expected %s but got %s" % (str, type(seq))
+        assert seq is not None, "Failed to find sequence for ENSMUST00000138942"
+        assert isinstance(seq, str), "Wrong sequence type, expected %s but got %s" % (
+            str,
+            type(seq),
+        )
+
 
 def test_missing_sequence():
     with TemporaryDirectory() as tmpdir:
@@ -30,24 +31,24 @@ def test_missing_sequence():
         seq = seqs.get("NotInFasta")
         assert seq is None, "Should get None back for missing sequence"
 
+
 def test_clear_cache():
     with TemporaryDirectory() as tmpdir:
         seqs = SequenceData([FASTA_PATH], cache_directory_path=tmpdir)
-        assert not seqs._fasta_dictionary, \
-            "Expected _fasta_dictionary to load lazily"
+        assert not seqs._fasta_dictionary, "Expected _fasta_dictionary to load lazily"
 
         seqs._load_or_create_fasta_dictionary_pickle()
-        assert len(seqs._fasta_dictionary) > 0, \
-            "FASTA dictionary didn't get created"
+        assert len(seqs._fasta_dictionary) > 0, "FASTA dictionary didn't get created"
 
         seqs.clear_cache()
-        assert not seqs._fasta_dictionary, \
-            "Expected FASTA dictionary to be empty after clear_cache()"
+        assert (
+            not seqs._fasta_dictionary
+        ), "Expected FASTA dictionary to be empty after clear_cache()"
         for pickle_path in seqs.fasta_dictionary_pickle_paths:
-            assert not exists(pickle_path), \
-                "Cached pickle file should have been deleted"
+            assert not exists(
+                pickle_path
+            ), "Cached pickle file should have been deleted"
 
         seqs._load_or_create_fasta_dictionary_pickle()
         for pickle_path in seqs.fasta_dictionary_pickle_paths:
-            assert exists(pickle_path), \
-                "Cached pickle file should have been created"
+            assert exists(pickle_path), "Cached pickle file should have been created"

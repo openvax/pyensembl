@@ -14,6 +14,7 @@ major_releases = [grch37, grch38]
 
 contigs = [str(c) for c in range(1, 23)] + ["X", "Y", "M"]
 
+
 @nottest
 def test_ensembl_releases(*versions):
     """
@@ -33,7 +34,9 @@ def test_ensembl_releases(*versions):
         def new_test_fn():
             for ensembl in ensembl_releases:
                 test_fn(ensembl)
+
         return new_test_fn
+
     return decorator
 
 

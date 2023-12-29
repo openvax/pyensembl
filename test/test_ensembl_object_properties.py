@@ -8,6 +8,7 @@ from __future__ import absolute_import
 from nose.tools import eq_
 from pyensembl import EnsemblRelease, MAX_ENSEMBL_RELEASE
 
+
 def test_human_reference_name():
     eq_(EnsemblRelease(release=54).reference_name, "NCBI36")
     eq_(EnsemblRelease(release=74).reference_name, "GRCh37")
