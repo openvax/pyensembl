@@ -40,14 +40,17 @@ To install a genome from source files:
 
 import argparse
 import logging.config
-import pkg_resources
 import os
 
-from .ensembl_release import EnsemblRelease, MAX_ENSEMBL_RELEASE
+import pkg_resources
+
+from .ensembl_release import MAX_ENSEMBL_RELEASE, EnsemblRelease
 from .genome import Genome
 from .species import Species
 
-logging.config.fileConfig(pkg_resources.resource_filename(__name__, "logging.conf"))
+logging.config.fileConfig(
+    pkg_resources.resource_filename(__name__, "logging.conf")
+)
 logger = logging.getLogger(__name__)
 
 
@@ -94,7 +97,9 @@ path_group.add_argument(
 )
 
 path_group.add_argument(
-    "--annotation-name", default=None, help="Name of annotation source (e.g. refseq)"
+    "--annotation-name",
+    default=None,
+    help="Name of annotation source (e.g. refseq)",
 )
 
 path_group.add_argument(
@@ -140,6 +145,7 @@ parser.add_argument(
         "delete-all-files",
         "delete-index-files",
         "list",
+        "available",
     ),
     help=(
         '"install" will download and index any data that is  not '
@@ -149,6 +155,20 @@ parser.add_argument(
         '"list" will show you all installed Ensembl genomes.'
     ),
 )
+
+
+def collect_all_available_ensembl_releases():
+    for species_name in Species.all_registered_latin_names():
+        species = Species._latin_names_to_species[species_name]
+        # print in tree format
+        print(
+            "* " + species_name + " (" + ",".join(species.synonyms) + ")" + ":"
+        )
+        for (
+            release_name,
+            release_range,
+        ) in species.reference_assemblies.items():
+            print("  * " + release_name + ":", release_range)
 
 
 def collect_all_installed_ensembl_releases():
@@ -182,11 +202,13 @@ def all_combinations_of_ensembl_genomes(args):
                 # URL to be a directory with all the same filenames as
                 # would be provided by Ensembl
                 gtf_url = os.path.join(
-                    args.custom_mirror, os.path.basename(ensembl_release.gtf_url)
+                    args.custom_mirror,
+                    os.path.basename(ensembl_release.gtf_url),
                 )
                 transcript_fasta_urls = [
                     os.path.join(
-                        args.custom_mirror, os.path.basename(transcript_fasta_url)
+                        args.custom_mirror,
+                        os.path.basename(transcript_fasta_url),
                     )
                     for transcript_fasta_url in ensembl_release.transcript_fasta_urls
                 ]
@@ -244,7 +266,9 @@ def collect_selected_genomes(args):
 
 def run():
     args = parser.parse_args()
-    if args.action == "list":
+    if args.action == "available":
+        collect_all_available_ensembl_releases()
+    elif args.action == "list":
         # TODO: how do we also identify which non-Ensembl genomes are
         # installed?
         genomes = collect_all_installed_ensembl_releases()
