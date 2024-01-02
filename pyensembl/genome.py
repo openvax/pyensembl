@@ -896,8 +896,10 @@ class Genome(Serializable):
                 extra_data = dict(zip(extra_field_names, result[5:]))
                 transcript_name = extra_data.get("transcript_name")
                 transcript_biotype = extra_data.get("transcript_biotype")
-                tsl = extra_data.get("transcript_support_level")
-                if not tsl or tsl == "NA":
+                tsl = extra_data.get("transcript_support_level", "NA")
+                if tsl:
+                    tsl = tsl.split(" ")[0]
+                if not tsl or tsl == "NA" or not tsl.isnumeric():
                     tsl = None
                 else:
                     tsl = int(tsl)
