@@ -147,18 +147,34 @@ SPECIES_DATA = [
         "reference_assemblies": {"R64-1-1": (75, MAX_ENSEMBL_RELEASE)},
     },
     {
+        "latin_name": "arabidopsis_thaliana",
+        "synonyms": ["cress", "thale_cress", "hehe"],
+        "reference_assemblies": {
+            "TAIR10": (55, MAX_ENSEMBLGENOME_RELEASE),
+        },
+        "database": "plants",
+    },
+    {
         "latin_name": "oryza_sativa",
-        "synonyms": ["rice", "japanese_rice"],
+        "synonyms": ["rice"],
         "reference_assemblies": {
             "IRGSP-1.0": (55, MAX_ENSEMBLGENOME_RELEASE),
         },
         "database": "plants",
     },
     {
-        "latin_name": "arabidopsis_thaliana",
-        "synonyms": ["cress", "thale_cress", "hehe"],
+        "latin_name": "zea_mays",
+        "synonyms": ["maize"],
         "reference_assemblies": {
-            "TAIR10": (55, MAX_ENSEMBLGENOME_RELEASE),
+            "Zm-B73-REFERENCE-NAM-5.0": (55, MAX_ENSEMBLGENOME_RELEASE),
+        },
+        "database": "plants",
+    },
+    {
+        "latin_name": "glycine_max",
+        "synonyms": ["soybean"],
+        "reference_assemblies": {
+            "Glycine_max_v2.1": (55, MAX_ENSEMBLGENOME_RELEASE),
         },
         "database": "plants",
     },
