@@ -16,7 +16,6 @@ specific to (a particular release of) Ensembl.
 """
 from weakref import WeakValueDictionary
 
-from .config import MAX_ENSEMBL_RELEASE  # ENSEMBL_FTP_SERVER,
 from .ensembl_release_versions import check_release_number
 from .ensembl_url_templates import make_fasta_url, make_gtf_url
 from .genome import Genome
@@ -29,16 +28,6 @@ class EnsemblRelease(Genome):
     particular release of the Ensembl database.
     """
 
-    @classmethod
-    def normalize_init_values(cls, release, species, server):
-        """
-        Normalizes the arguments which uniquely specify an EnsemblRelease
-        genome.
-        """
-        release = check_release_number(release)
-        species = check_species_object(species)
-        return (release, species, server)
-
     # Using a WeakValueDictionary instead of an ordinary dict to prevent a
     # memory leak in cases where we test many different releases in sequence.
     # When all the references to a particular EnsemblRelease die then that
@@ -48,8 +37,9 @@ class EnsemblRelease(Genome):
     @classmethod
     def cached(
         cls,
-        release=MAX_ENSEMBL_RELEASE,
+        release=None,
         species=human,
+        database=None,
         server=None,
         # server=ENSEMBL_FTP_SERVER,
     ):
@@ -57,7 +47,10 @@ class EnsemblRelease(Genome):
         Construct EnsemblRelease if it's never been made before, otherwise
         return an old instance.
         """
-        init_args_tuple = cls.normalize_init_values(release, species, server)
+        release = check_release_number(release, database)
+        species = check_species_object(species)
+        init_args_tuple = (release, species, database, server)
+
         if init_args_tuple in cls._genome_cache:
             genome = cls._genome_cache[init_args_tuple]
         else:
@@ -66,14 +59,16 @@ class EnsemblRelease(Genome):
 
     def __init__(
         self,
-        release=MAX_ENSEMBL_RELEASE,
+        release=None,
         species=human,
+        database=None,
         server=None,
         # server=EMBL_FTP_SERVER,,
     ):
-        self.release, self.species, self.server = self.normalize_init_values(
-            release=release, species=species, server=server
-        )
+        self.release = check_release_number(release, database)
+        self.species = check_species_object(species)
+        self.database = database
+        self.server = server
 
         self.gtf_url = make_gtf_url(
             ensembl_release=self.release,

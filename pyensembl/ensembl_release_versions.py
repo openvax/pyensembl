@@ -22,6 +22,8 @@ def check_release_number(release, database=None):
     """
     Check to make sure a release is in the valid range of Ensembl releases.
     """
+    if release is None:
+        return MAX_ENSEMBL_RELEASE if database is None else MAX_ENSEMBLGENOME_RELEASE
     try:
         release = int(release)
     except ValueError:
