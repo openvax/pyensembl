@@ -52,4 +52,4 @@ class LocusWithGenome(Locus):
         frame in this gene/transcript whose successful transcription has
         been observed.
         """
-        return self.biotype in ["protein_coding", "mRNA"]
+        return self.biotype in "protein_coding"
