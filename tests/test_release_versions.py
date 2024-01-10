@@ -26,7 +26,9 @@ def test_version_is_none():
 def test_max_ensembl_release():
     assert isinstance(
         MAX_ENSEMBL_RELEASE, int
-    ), "Unexpected type for MAX_ENSEMBL_RELEASE: %s" % (type(MAX_ENSEMBL_RELEASE),)
+    ), "Unexpected type for MAX_ENSEMBL_RELEASE: %s" % (
+        type(MAX_ENSEMBL_RELEASE),
+    )
     assert 83 <= MAX_ENSEMBL_RELEASE < 1000, (
         "Unexpected value for MAX_ENSEMBL_RELEASE: %d" % MAX_ENSEMBL_RELEASE
     )

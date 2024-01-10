@@ -49,7 +49,8 @@ class Locus(Serializable):
 
         if end < start:
             raise ValueError(
-                "Expected start <= end, got start = %d, end = %d" % (start, end)
+                "Expected start <= end, got start = %d, end = %d"
+                % (start, end)
             )
         self.start = start
         self.end = end
@@ -149,7 +150,9 @@ class Locus(Serializable):
             )
 
         if start < self.start or end > self.end:
-            raise ValueError("Range (%d, %d) falls outside %s" % (start, end, self))
+            raise ValueError(
+                "Range (%d, %d) falls outside %s" % (start, end, self)
+            )
 
         if self.on_forward_strand:
             return (start - self.start, end - self.start)
@@ -183,7 +186,9 @@ class Locus(Serializable):
         """
         Is this locus on the same contig and (optionally) on the same strand?
         """
-        return self.on_contig(contig) and (strand is None or self.on_strand(strand))
+        return self.on_contig(contig) and (
+            strand is None or self.on_strand(strand)
+        )
 
     def distance_to_interval(self, start, end):
         """
@@ -220,15 +225,23 @@ class Locus(Serializable):
 
     def overlaps_locus(self, other_locus):
         return self.overlaps(
-            other_locus.contig, other_locus.start, other_locus.end, other_locus.strand
+            other_locus.contig,
+            other_locus.start,
+            other_locus.end,
+            other_locus.strand,
         )
 
     def contains(self, contig, start, end, strand=None):
         return (
-            self.can_overlap(contig, strand) and start >= self.start and end <= self.end
+            self.can_overlap(contig, strand)
+            and start >= self.start
+            and end <= self.end
         )
 
     def contains_locus(self, other_locus):
         return self.contains(
-            other_locus.contig, other_locus.start, other_locus.end, other_locus.strand
+            other_locus.contig,
+            other_locus.start,
+            other_locus.end,
+            other_locus.strand,
         )

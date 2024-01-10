@@ -17,7 +17,9 @@ from .locus_with_genome import LocusWithGenome
 
 
 class Gene(LocusWithGenome):
-    def __init__(self, gene_id, gene_name, contig, start, end, strand, biotype, genome):
+    def __init__(
+        self, gene_id, gene_name, contig, start, end, strand, biotype, genome
+    ):
         LocusWithGenome.__init__(
             self,
             contig=contig,
@@ -98,7 +100,8 @@ class Gene(LocusWithGenome):
         # its particular information, might be more efficient if we
         # just get all the columns here, but how do we keep that modular?
         return [
-            self.genome.transcript_by_id(result[0]) for result in transcript_id_results
+            self.genome.transcript_by_id(result[0])
+            for result in transcript_id_results
         ]
 
     @memoized_property

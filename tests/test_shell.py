@@ -4,7 +4,9 @@ from pyensembl import ensembl_grch38
 
 
 def test_genome_selection_grch38():
-    args = parser.parse_args(["install", "--release", "100", "--species", "human"])
+    args = parser.parse_args(
+        ["install", "--release", "100", "--species", "human"]
+    )
     genomes = all_combinations_of_ensembl_genomes(args)
     assert len(genomes) == 1
     genome = genomes[0]

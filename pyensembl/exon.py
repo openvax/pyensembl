@@ -15,7 +15,9 @@ from .locus import Locus
 
 
 class Exon(Locus):
-    def __init__(self, exon_id, contig, start, end, strand, gene_name, gene_id):
+    def __init__(
+        self, exon_id, contig, start, end, strand, gene_name, gene_id
+    ):
         Locus.__init__(self, contig, start, end, strand)
         self.exon_id = exon_id
         self.gene_name = gene_name

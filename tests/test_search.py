@@ -37,13 +37,17 @@ def test_find_nearest_BRAF_transcript(ensembl):
     for transcript in transcripts:
         # immediately before transcript
         result_before = find_nearest_locus(
-            start=transcript.start - 2, end=transcript.start - 1, loci=transcripts
+            start=transcript.start - 2,
+            end=transcript.start - 1,
+            loci=transcripts,
         )
         eq_(result_before, (1, transcript))
 
         # overlapping with transcript
         result_overlap = find_nearest_locus(
-            start=transcript.start - 2, end=transcript.start + 1, loci=transcripts
+            start=transcript.start - 2,
+            end=transcript.start + 1,
+            loci=transcripts,
         )
         eq_(result_overlap, (0, transcript))
 

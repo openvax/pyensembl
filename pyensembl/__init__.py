@@ -19,12 +19,18 @@ from .gene import Gene
 from .genome import Genome
 from .locus import Locus
 from .reference_name import (  # ensembl_grch36,; ensembl_grch37,; ensembl_grch38,
-    find_species_by_reference, genome_for_reference_name,
-    normalize_reference_name, which_reference)
+    find_species_by_reference,
+    genome_for_reference_name,
+    normalize_reference_name,
+    which_reference,
+)
 from .search import find_nearest_locus
 from .sequence_data import SequenceData
-from .species import (check_species_object, find_species_by_name,
-                      normalize_species_name)
+from .species import (
+    check_species_object,
+    find_species_by_name,
+    normalize_species_name,
+)
 from .transcript import Transcript
 from .version import __version__
 

@@ -122,7 +122,8 @@ def test_exon_ids_of_transcript_name():
         len(exon_ids),
     )
     assert all(
-        exon_id in TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77 for exon_id in exon_ids
+        exon_id in TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77
+        for exon_id in exon_ids
     )
 
 
@@ -140,5 +141,6 @@ def exon_ids_of_transcript_id():
         len(exon_ids),
     )
     assert all(
-        exon_id in TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77 for exon_id in exon_ids
+        exon_id in TP53_TRANSCRIPT_26_EXON_IDS_RELEASE_77
+        for exon_id in exon_ids
     )

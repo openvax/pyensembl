@@ -18,8 +18,12 @@ def test_sequence_type():
     with TemporaryDirectory() as tmpdir:
         seqs_dna = SequenceData([FASTA_PATH], cache_directory_path=tmpdir)
         seq = seqs_dna.get("ENSMUST00000138942")
-        assert seq is not None, "Failed to find sequence for ENSMUST00000138942"
-        assert isinstance(seq, str), "Wrong sequence type, expected %s but got %s" % (
+        assert (
+            seq is not None
+        ), "Failed to find sequence for ENSMUST00000138942"
+        assert isinstance(
+            seq, str
+        ), "Wrong sequence type, expected %s but got %s" % (
             str,
             type(seq),
         )
@@ -35,10 +39,14 @@ def test_missing_sequence():
 def test_clear_cache():
     with TemporaryDirectory() as tmpdir:
         seqs = SequenceData([FASTA_PATH], cache_directory_path=tmpdir)
-        assert not seqs._fasta_dictionary, "Expected _fasta_dictionary to load lazily"
+        assert (
+            not seqs._fasta_dictionary
+        ), "Expected _fasta_dictionary to load lazily"
 
         seqs._load_or_create_fasta_dictionary_pickle()
-        assert len(seqs._fasta_dictionary) > 0, "FASTA dictionary didn't get created"
+        assert (
+            len(seqs._fasta_dictionary) > 0
+        ), "FASTA dictionary didn't get created"
 
         seqs.clear_cache()
         assert (
@@ -51,4 +59,6 @@ def test_clear_cache():
 
         seqs._load_or_create_fasta_dictionary_pickle()
         for pickle_path in seqs.fasta_dictionary_pickle_paths:
-            assert exists(pickle_path), "Cached pickle file should have been created"
+            assert exists(
+                pickle_path
+            ), "Cached pickle file should have been created"

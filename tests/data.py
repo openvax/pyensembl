@@ -43,7 +43,9 @@ CTNNBIP1_004_UTR5 = "".join(
 )
 
 # 3' UTR for beta-catenin interacting protein (CTNNBIP1-004)
-CTNNBIP1_004_UTR3 = "CTGCAAAGCCCTTGGAACACCCTGGATGCTGTTGAGGGCCAAGAGATCTGTGTGGCTCC"
+CTNNBIP1_004_UTR3 = (
+    "CTGCAAAGCCCTTGGAACACCCTGGATGCTGTTGAGGGCCAAGAGATCTGTGTGGCTCC"
+)
 
 CTNNBIP1_004_locus = Locus("1", 9850659, 9878176, "-")
 
@@ -131,7 +133,9 @@ custom_mouse_genome_grcm38_subset = Genome(
     reference_name="GRCm38",
     annotation_name="_test_mouse_ensembl81_subset",
     gtf_path_or_url=MOUSE_ENSMUSG00000017167_PATH,
-    transcript_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH],
+    transcript_fasta_paths_or_urls=[
+        MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH
+    ],
     protein_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH],
 )
 

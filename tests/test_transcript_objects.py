@@ -23,7 +23,9 @@ def test_transcript_start_codon():
     test_transcript_start_codon : Check that fields Transcript
     (for transcript named CTNNBIP1-004) matches known values.
     """
-    CTNNBIP1_004_transcript = ensembl77.transcript_by_id(CTNNBIP1_004_transcript_id)
+    CTNNBIP1_004_transcript = ensembl77.transcript_by_id(
+        CTNNBIP1_004_transcript_id
+    )
 
     assert Locus.__eq__(
         CTNNBIP1_004_transcript, CTNNBIP1_004_locus
@@ -61,7 +63,9 @@ def test_transcript_exons():
     """
     transcript = ensembl77.transcript_by_id(CTNNBIP1_004_transcript_id)
     exons = transcript.exons
-    assert isinstance(exons, list), "Expected list of Exon objects, got %s : %s" % (
+    assert isinstance(
+        exons, list
+    ), "Expected list of Exon objects, got %s : %s" % (
         exons,
         type(exons),
     )
@@ -69,7 +73,10 @@ def test_transcript_exons():
     # CTTNBIP1-004 has 5 exons
     assert len(exons) == len(
         CTTNNIP1_004_exon_lengths
-    ), "Expected %d exons but got %d" % (len(CTTNNIP1_004_exon_lengths), len(exons))
+    ), "Expected %d exons but got %d" % (
+        len(CTTNNIP1_004_exon_lengths),
+        len(exons),
+    )
 
     for i, exon in enumerate(exons):
         expected_id = CTTNNIP1_004_exon_ids[i]
@@ -128,7 +135,13 @@ def test_sequence_parts(genome):
         combined_sequence_length,
         len(transcript),
         "Length 5' UTR(%dnt) + CDS(%dnt) + 3' UTR(%d) = %d, expected %d"
-        % (len(utr5), len(cds), len(utr3), combined_sequence_length, len(transcript)),
+        % (
+            len(utr5),
+            len(cds),
+            len(utr3),
+            combined_sequence_length,
+            len(transcript),
+        ),
     )
     eq_(
         combined_string,
@@ -145,7 +158,8 @@ def test_transcript_utr5_sequence_CTNNIP1_004():
     eq_(
         len(utr5),
         expected_utr5_length,
-        "Expected 5' UTR length %d, got %d" % (expected_utr5_length, len(utr5)),
+        "Expected 5' UTR length %d, got %d"
+        % (expected_utr5_length, len(utr5)),
     )
     eq_(utr5, CTNNBIP1_004_UTR5)
 
@@ -157,7 +171,8 @@ def test_transcript_utr3_sequence_CTNNIP1_004():
     eq_(
         len(utr3),
         expected_utr3_length,
-        "Expected 3' UTR length %d, got %d" % (expected_utr3_length, len(utr3)),
+        "Expected 3' UTR length %d, got %d"
+        % (expected_utr3_length, len(utr3)),
     )
     eq_(utr3, CTNNBIP1_004_UTR3)
 
@@ -209,10 +224,11 @@ def test_transcript_gene_should_match_parent_gene():
 @test_ensembl_releases()
 def test_BRCA1_201_has_protein_coding_biotype(genome):
     transcript = genome.transcripts_by_name("BRCA1-201")[0]
-    assert (
-        transcript.is_protein_coding
-    ), "Expected BRCA1-201 transcript %s to have a protein coding biotype in %s" % (
-        transcript,
-        genome,
+    assert transcript.is_protein_coding, (
+        "Expected BRCA1-201 transcript %s to have a protein coding biotype in %s"
+        % (
+            transcript,
+            genome,
+        )
     )
     eq_(transcript.biotype, "protein_coding")

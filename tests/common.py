@@ -26,7 +26,9 @@ def test_ensembl_releases(*versions):
         ensembl_releases = major_releases
     else:
         if any(version > MAX_ENSEMBL_RELEASE for version in versions):
-            raise ValueError("Invalid ensembl release numbers: %s" % (versions,))
+            raise ValueError(
+                "Invalid ensembl release numbers: %s" % (versions,)
+            )
         ensembl_releases = [cached_release(version) for version in versions]
 
     def decorator(test_fn):

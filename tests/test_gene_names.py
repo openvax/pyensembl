@@ -67,6 +67,9 @@ def test_gene_name_of_HLA_gene_id():
     gene_ids = grch38.gene_ids_of_gene_name("HLA-A")
     gene_names = [grch38.gene_name_of_gene_id(gene_id) for gene_id in gene_ids]
     unique_gene_names = list(set(gene_names))
-    assert len(unique_gene_names) == 1, (len(unique_gene_names), unique_gene_names)
+    assert len(unique_gene_names) == 1, (
+        len(unique_gene_names),
+        unique_gene_names,
+    )
     gene_name = unique_gene_names[0]
     assert gene_name == "HLA-A", gene_name

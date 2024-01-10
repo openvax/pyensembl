@@ -32,10 +32,14 @@ class SequenceData(object):
             fasta_paths = [fasta_paths]
 
         self.fasta_paths = [abspath(path) for path in fasta_paths]
-        self.fasta_directory_paths = [split(path)[0] for path in self.fasta_paths]
+        self.fasta_directory_paths = [
+            split(path)[0] for path in self.fasta_paths
+        ]
         self.fasta_filenames = [split(path)[1] for path in self.fasta_paths]
         if cache_directory_path:
-            self.cache_directory_paths = [cache_directory_path] * len(self.fasta_paths)
+            self.cache_directory_paths = [cache_directory_path] * len(
+                self.fasta_paths
+            )
         else:
             self.cache_directory_paths = self.fasta_directory_paths
         for path in self.fasta_paths:
@@ -104,7 +108,9 @@ class SequenceData(object):
                 try:
                     fasta_dictionary_tmp = load_pickle(pickle_path)
                     self._add_to_fasta_dictionary(fasta_dictionary_tmp)
-                    logger.info("Loaded sequence dictionary from %s", pickle_path)
+                    logger.info(
+                        "Loaded sequence dictionary from %s", pickle_path
+                    )
                     continue
                 except (pickle.UnpicklingError, AttributeError):
                     # catch either an UnpicklingError or an AttributeError

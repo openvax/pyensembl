@@ -1,6 +1,9 @@
 from nose.tools import eq_, with_setup
 
-from .data import custom_mouse_genome_grcm38_subset, setup_init_custom_mouse_genome
+from .data import (
+    custom_mouse_genome_grcm38_subset,
+    setup_init_custom_mouse_genome,
+)
 
 
 @with_setup(setup=setup_init_custom_mouse_genome)

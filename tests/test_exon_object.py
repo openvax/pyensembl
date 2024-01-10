@@ -16,7 +16,9 @@ def test_exon_object_by_id():
     up by ID in Ensembl 77.
     """
     exon = ensembl.exon_by_id("ENSE00003464041")
-    assert exon.gene_name == "CTNNB1", "Unexpected gene name: %s" % exon.gene_name
+    assert exon.gene_name == "CTNNB1", (
+        "Unexpected gene name: %s" % exon.gene_name
+    )
     assert exon.contig == "3", exon.contig
     assert exon.strand == "+"
     assert exon.on_forward_strand
@@ -32,7 +34,9 @@ def test_exon_object_by_id_on_negative_strand():
     from CXCR3 when looked up by ID in Ensembl 77.
     """
     exon = ensembl.exon_by_id("ENSE00001817013")
-    assert exon.gene_name == "CXCR3", "Unexpected gene name: %s" % exon.gene_name
+    assert exon.gene_name == "CXCR3", (
+        "Unexpected gene name: %s" % exon.gene_name
+    )
     assert exon.contig == "X", exon.contig
     assert exon.strand == "-"
     assert exon.on_backward_strand
@@ -86,7 +90,9 @@ def test_exon_basic_properties_str():
 
 def test_exon_basic_properties_hash():
     exon = ensembl.exon_by_id("ENSE00001817013")
-    assert isinstance(hash(exon), int), "Hash function returns %s instead of int" % (
+    assert isinstance(
+        hash(exon), int
+    ), "Hash function returns %s instead of int" % (
         type(
             hash(exon),
         )

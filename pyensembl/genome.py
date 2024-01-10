@@ -11,8 +11,8 @@
 # limitations under the License.
 
 """
-Contains the Genome class, with its millions of accessors and wrappers
-around an arbitrary genomic database.
+Contains the Genome class, with its millions of accessors and wrappers around
+an arbitrary genomic database.
 """
 
 
@@ -31,8 +31,8 @@ from .transcript import Transcript
 
 class Genome(Serializable):
     """
-    Bundles together the genomic annotation and sequence data associated with
-    a particular genomic database source (e.g. a single Ensembl release) and
+    Bundles together the genomic annotation and sequence data associated with a
+    particular genomic database source (e.g. a single Ensembl release) and
     provides a wide variety of helper methods for accessing this data.
     """
 
@@ -148,7 +148,7 @@ class Genome(Serializable):
 
     def _init_lazy_fields(self):
         """
-        Member data that gets loaded or constructed on demand
+        Member data that gets loaded or constructed on demand.
         """
         self.gtf_path = None
         self._protein_sequences = None
@@ -163,11 +163,15 @@ class Genome(Serializable):
         self._exons = {}
 
     def _get_cached_path(
-        self, field_name, path_or_url, download_if_missing=False, overwrite=False
+        self,
+        field_name,
+        path_or_url,
+        download_if_missing=False,
+        overwrite=False,
     ):
         """
-        Get the local path for a possibly remote file, invoking either
-        a download or install error message if it's missing.
+        Get the local path for a possibly remote file, invoking either a
+        download or install error message if it's missing.
         """
         if len(field_name) == 0:
             raise ValueError("Expected non-empty field name")
@@ -188,7 +192,9 @@ class Genome(Serializable):
             overwrite=overwrite,
         )
 
-    def _get_transcript_fasta_paths(self, download_if_missing=False, overwrite=False):
+    def _get_transcript_fasta_paths(
+        self, download_if_missing=False, overwrite=False
+    ):
         if not self.requires_transcript_fasta:
             raise ValueError("No transcript FASTA source for %s" % self)
         return [
@@ -201,7 +207,9 @@ class Genome(Serializable):
             for path in self._transcript_fasta_paths_or_urls
         ]
 
-    def _get_protein_fasta_paths(self, download_if_missing=False, overwrite=False):
+    def _get_protein_fasta_paths(
+        self, download_if_missing=False, overwrite=False
+    ):
         # get the path for peptide FASTA files containing
         # this genome's protein sequences
         if not self.requires_protein_fasta:
@@ -233,7 +241,9 @@ class Genome(Serializable):
     def required_local_files(self):
         paths = []
         if self._gtf_path_or_url:
-            paths.append(self.download_cache.cached_path(self._gtf_path_or_url))
+            paths.append(
+                self.download_cache.cached_path(self._gtf_path_or_url)
+            )
         if self._transcript_fasta_paths_or_urls:
             paths.extend(
                 [
@@ -273,8 +283,8 @@ class Genome(Serializable):
     def index(self, overwrite=False):
         """
         Assuming that all necessary data for this Genome has been downloaded,
-        generate the GTF database and save efficient representation of
-        FASTA sequence files.
+        generate the GTF database and save efficient representation of FASTA
+        sequence files.
         """
         if self.requires_gtf:
             self.db.connect_or_create(overwrite=overwrite)
@@ -295,7 +305,9 @@ class Genome(Serializable):
                 overwrite=False,
             )
             if self.gtf_path is None:
-                raise ValueError("Property 'gtf_path' of %s cannot be None" % self)
+                raise ValueError(
+                    "Property 'gtf_path' of %s cannot be None" % self
+                )
 
             # Database object turns the GTF dataframes into sqlite3 tables
             # and wraps them with methods like `query_one`
@@ -348,7 +360,8 @@ class Genome(Serializable):
             self._set_local_paths(download_if_missing=False, overwrite=False)
             if self.protein_fasta_paths is None:
                 raise ValueError(
-                    "Property 'protein_fasta_paths' of %s cannot be None" % self
+                    "Property 'protein_fasta_paths' of %s cannot be None"
+                    % self
                 )
             self._protein_sequences = SequenceData(
                 fasta_paths=self.protein_fasta_paths,
@@ -360,13 +373,16 @@ class Genome(Serializable):
     def transcript_sequences(self):
         if self._transcript_sequences is None:
             if not self.requires_transcript_fasta:
-                raise ValueError("Missing transcript FASTA source for %s" % self)
+                raise ValueError(
+                    "Missing transcript FASTA source for %s" % self
+                )
             # make sure transcript FASTA file exists locally
             # and populate self.transcript_fasta_paths
             self._set_local_paths(download_if_missing=False, overwrite=False)
             if self.transcript_fasta_paths is None:
                 raise ValueError(
-                    "Property 'transcript_fasta_paths' of %s cannot be None" % (self,)
+                    "Property 'transcript_fasta_paths' of %s cannot be None"
+                    % (self,)
                 )
             self._transcript_sequences = SequenceData(
                 fasta_paths=self.transcript_fasta_paths,
@@ -376,8 +392,8 @@ class Genome(Serializable):
 
     def install_string(self):
         """
-        Add every missing file to the install string shown to the user
-        in an error message.
+        Add every missing file to the install string shown to the user in an
+        error message.
         """
         args = [
             "--reference-name",
@@ -451,7 +467,7 @@ class Genome(Serializable):
 
     def clear_cache(self):
         """
-        Clear any in-memory cached values
+        Clear any in-memory cached values.
         """
         for maybe_fn in self.__dict__.values():
             # clear cache associated with all memoization decorators,
@@ -461,7 +477,7 @@ class Genome(Serializable):
 
     def delete_index_files(self):
         """
-        Delete all data aside from source GTF and FASTA files
+        Delete all data aside from source GTF and FASTA files.
         """
         self.clear_cache()
         db_path = self.db.local_db_path()
@@ -472,9 +488,8 @@ class Genome(Serializable):
         self, column, feature, distinct=True, contig=None, strand=None
     ):
         """
-        Cached lookup of all values for a particular feature property from
-        the database, caches repeated queries in memory and
-        stores them as a CSV.
+        Cached lookup of all values for a particular feature property from the
+        database, caches repeated queries in memory and stores them as a CSV.
 
         Parameters
         ----------
@@ -505,23 +520,31 @@ class Genome(Serializable):
         )
 
     def transcript_sequence(self, transcript_id):
-        """Return cDNA nucleotide sequence of transcript, or None if
-        transcript doesn't have cDNA sequence.
+        """
+        Return cDNA nucleotide sequence of transcript, or None if transcript
+        doesn't have cDNA sequence.
         """
         if self.transcript_sequences is None:
-            raise ValueError("No transcript FASTA supplied to this Genome: %s" % self)
+            raise ValueError(
+                "No transcript FASTA supplied to this Genome: %s" % self
+            )
         return self.transcript_sequences.get(transcript_id)
 
     def protein_sequence(self, protein_id):
-        """Return cDNA nucleotide sequence of transcript, or None if
-        transcript doesn't have cDNA sequence.
+        """
+        Return cDNA nucleotide sequence of transcript, or None if transcript
+        doesn't have cDNA sequence.
         """
         if self.protein_sequences is None:
-            raise ValueError("No protein FASTA supplied to this Genome: %s" % self)
+            raise ValueError(
+                "No protein FASTA supplied to this Genome: %s" % self
+            )
         return self.protein_sequences.get(protein_id)
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
-        gene_ids = self.gene_ids_at_locus(contig, position, end=end, strand=strand)
+        gene_ids = self.gene_ids_at_locus(
+            contig, position, end=end, strand=strand
+        )
         return [self.gene_by_id(gene_id) for gene_id in gene_ids]
 
     def transcripts_at_locus(self, contig, position, end=None, strand=None):
@@ -529,11 +552,14 @@ class Genome(Serializable):
             contig, position, end=end, strand=strand
         )
         return [
-            self.transcript_by_id(transcript_id) for transcript_id in transcript_ids
+            self.transcript_by_id(transcript_id)
+            for transcript_id in transcript_ids
         ]
 
     def exons_at_locus(self, contig, position, end=None, strand=None):
-        exon_ids = self.exon_ids_at_locus(contig, position, end=end, strand=strand)
+        exon_ids = self.exon_ids_at_locus(
+            contig, position, end=end, strand=strand
+        )
         return [self.exon_by_id(exon_id) for exon_id in exon_ids]
 
     def gene_ids_at_locus(self, contig, position, end=None, strand=None):
@@ -576,7 +602,9 @@ class Genome(Serializable):
             strand=strand,
         )
 
-    def transcript_names_at_locus(self, contig, position, end=None, strand=None):
+    def transcript_names_at_locus(
+        self, contig, position, end=None, strand=None
+    ):
         return self.db.distinct_column_values_at_locus(
             column="transcript_name",
             feature="transcript",
@@ -606,7 +634,7 @@ class Genome(Serializable):
 
     def locus_of_gene_id(self, gene_id):
         """
-        Given a gene ID returns Locus with: chromosome, start, stop, strand
+        Given a gene ID returns Locus with: chromosome, start, stop, strand.
         """
         return self.db.query_locus(
             filter_column="gene_id", filter_value=gene_id, feature="gene"
@@ -615,9 +643,9 @@ class Genome(Serializable):
     def loci_of_gene_names(self, gene_name):
         """
         Given a gene name returns list of Locus objects with fields:
-            chromosome, start, stop, strand
-        You can get multiple results since a gene might have multiple copies
-        in the genome.
+
+        chromosome, start, stop, strand You can get multiple results
+        since a gene might have multiple copies in the genome.
         """
         return self.db.query_loci("gene_name", gene_name, "gene")
 
@@ -630,7 +658,7 @@ class Genome(Serializable):
 
     def locus_of_exon_id(self, exon_id):
         """
-        Given an exon ID returns Locus
+        Given an exon ID returns Locus.
         """
         return self.db.query_locus("exon_id", exon_id, feature="exon")
 
@@ -642,8 +670,8 @@ class Genome(Serializable):
 
     def contigs(self):
         """
-        Returns all contig names for any gene in the genome
-        (field called "seqname" in Ensembl GTF files)
+        Returns all contig names for any gene in the genome (field called
+        "seqname" in Ensembl GTF files)
         """
         return self.db.query_feature_values("seqname", "gene")
 
@@ -704,7 +732,9 @@ class Genome(Serializable):
 
             gene_name, gene_biotype = None, None
             if len(result) < 4 or len(result) > 6:
-                raise ValueError("Result is not the expected length: %d" % len(result))
+                raise ValueError(
+                    "Result is not the expected length: %d" % len(result)
+                )
             contig, start, end, strand = result[:4]
             if len(result) == 5:
                 if "gene_name" in field_names:
@@ -738,8 +768,8 @@ class Genome(Serializable):
 
     def gene_by_protein_id(self, protein_id):
         """
-        Get the gene ID associated with the given protein ID,
-        return its Gene object
+        Get the gene ID associated with the given protein ID, return its Gene
+        object.
         """
         gene_id = self.gene_id_of_protein_id(protein_id)
         return self.gene_by_id(gene_id)
@@ -763,8 +793,8 @@ class Genome(Serializable):
 
     def gene_names(self, contig=None, strand=None):
         """
-        Return all genes in the database,
-        optionally restrict to a chromosome and/or strand.
+        Return all genes in the database, optionally restrict to a chromosome
+        and/or strand.
         """
         return self._all_feature_values(
             column="gene_name", feature="gene", contig=contig, strand=strand
@@ -774,10 +804,14 @@ class Genome(Serializable):
         return self._query_gene_name("gene_id", gene_id, "gene")
 
     def gene_name_of_transcript_id(self, transcript_id):
-        return self._query_gene_name("transcript_id", transcript_id, "transcript")
+        return self._query_gene_name(
+            "transcript_id", transcript_id, "transcript"
+        )
 
     def gene_name_of_transcript_name(self, transcript_name):
-        return self._query_gene_name("transcript_name", transcript_name, "transcript")
+        return self._query_gene_name(
+            "transcript_name", transcript_name, "transcript"
+        )
 
     def gene_name_of_exon_id(self, exon_id):
         return self._query_gene_name("exon_id", exon_id, "exon")
@@ -801,8 +835,8 @@ class Genome(Serializable):
 
     def gene_ids(self, contig=None, strand=None):
         """
-        What are all the gene IDs
-        (optionally restrict to a given chromosome/contig and/or strand)
+        What are all the gene IDs (optionally restrict to a given
+        chromosome/contig and/or strand)
         """
         return self._all_feature_values(
             column="gene_id", feature="gene", contig=contig, strand=strand
@@ -811,6 +845,7 @@ class Genome(Serializable):
     def gene_ids_of_gene_name(self, gene_name):
         """
         What are the gene IDs associated with a given gene name?
+
         (due to copy events, there might be multiple genes per name)
         """
         results = self._query_gene_ids("gene_name", gene_name)
@@ -843,17 +878,21 @@ class Genome(Serializable):
 
     def transcripts(self, contig=None, strand=None):
         """
-        Construct Transcript object for every transcript entry in
-        the database. Optionally restrict to a particular
-        chromosome using the `contig` argument.
+        Construct Transcript object for every transcript entry in the database.
+
+        Optionally restrict to a particular chromosome using the
+        `contig` argument.
         """
         transcript_ids = self.transcript_ids(contig=contig, strand=strand)
         return [
-            self.transcript_by_id(transcript_id) for transcript_id in transcript_ids
+            self.transcript_by_id(transcript_id)
+            for transcript_id in transcript_ids
         ]
 
     def transcript_by_id(self, transcript_id):
-        """Construct Transcript object with given transcript ID"""
+        """
+        Construct Transcript object with given transcript ID.
+        """
         if transcript_id not in self._transcripts:
             optional_field_names = [
                 "transcript_name",
@@ -886,8 +925,12 @@ class Genome(Serializable):
                 raise ValueError("Transcript not found: %s" % (transcript_id,))
 
             transcript_name, transcript_biotype, tsl = None, None, None
-            if len(result) < 5 or len(result) > (5 + len(optional_field_names)):
-                raise ValueError("Result is not the expected length: %d" % len(result))
+            if len(result) < 5 or len(result) > (
+                5 + len(optional_field_names)
+            ):
+                raise ValueError(
+                    "Result is not the expected length: %d" % len(result)
+                )
             contig, start, end, strand, gene_id = result[:5]
             if len(result) > 5:
                 extra_field_names = [
@@ -920,9 +963,12 @@ class Genome(Serializable):
         return self._transcripts[transcript_id]
 
     def transcripts_by_name(self, transcript_name):
-        transcript_ids = self.transcript_ids_of_transcript_name(transcript_name)
+        transcript_ids = self.transcript_ids_of_transcript_name(
+            transcript_name
+        )
         return [
-            self.transcript_by_id(transcript_id) for transcript_id in transcript_ids
+            self.transcript_by_id(transcript_id)
+            for transcript_id in transcript_ids
         ]
 
     def transcript_by_protein_id(self, protein_id):
@@ -948,25 +994,31 @@ class Genome(Serializable):
 
     def transcript_names(self, contig=None, strand=None):
         """
-        What are all the transcript names in the database
-        (optionally, restrict to a given chromosome and/or strand)
+        What are all the transcript names in the database (optionally, restrict
+        to a given chromosome and/or strand)
         """
         return self._all_feature_values(
-            column="transcript_name", feature="transcript", contig=contig, strand=strand
+            column="transcript_name",
+            feature="transcript",
+            contig=contig,
+            strand=strand,
         )
 
     def transcript_names_of_gene_name(self, gene_name):
         return self._query_transcript_names("gene_name", gene_name)
 
     def transcript_name_of_transcript_id(self, transcript_id):
-        transcript_names = self._query_transcript_names("transcript_id", transcript_id)
+        transcript_names = self._query_transcript_names(
+            "transcript_id", transcript_id
+        )
         if len(transcript_names) == 0:
             raise ValueError(
                 "No transcript names for transcript ID = %s" % transcript_id
             )
         elif len(transcript_names) > 1:
             raise ValueError(
-                "Multiple transcript names for transcript ID = %s" % (transcript_id,)
+                "Multiple transcript names for transcript ID = %s"
+                % (transcript_id,)
             )
         return transcript_names[0]
 
@@ -976,7 +1028,9 @@ class Genome(Serializable):
     #
     ###################################################
 
-    def _query_transcript_ids(self, property_name, value, feature="transcript"):
+    def _query_transcript_ids(
+        self, property_name, value, feature="transcript"
+    ):
         results = self.db.query(
             select_column_names=["transcript_id"],
             filter_column=property_name,
@@ -989,7 +1043,10 @@ class Genome(Serializable):
 
     def transcript_ids(self, contig=None, strand=None):
         return self._all_feature_values(
-            column="transcript_id", feature="transcript", contig=contig, strand=strand
+            column="transcript_id",
+            feature="transcript",
+            contig=contig,
+            strand=strand,
         )
 
     def transcript_ids_of_gene_id(self, gene_id):
@@ -1008,7 +1065,9 @@ class Genome(Serializable):
         """
         What is the transcript ID associated with a given protein ID?
         """
-        results = self._query_transcript_ids("protein_id", protein_id, feature="CDS")
+        results = self._query_transcript_ids(
+            "protein_id", protein_id, feature="CDS"
+        )
         if len(results) == 0:
             raise ValueError("Protein ID not found: %s" % protein_id)
         elif len(results) > 1:
@@ -1029,15 +1088,16 @@ class Genome(Serializable):
 
     def exons(self, contig=None, strand=None):
         """
-        Create exon object for all exons in the database, optionally
-        restrict to a particular chromosome using the `contig` argument.
+        Create exon object for all exons in the database, optionally restrict
+        to a particular chromosome using the `contig` argument.
         """
         # DataFrame with single column called "exon_id"
         exon_ids = self.exon_ids(contig=contig, strand=strand)
         return [self.exon_by_id(exon_id) for exon_id in exon_ids]
 
     def exon_by_id(self, exon_id):
-        """Construct an Exon object from its ID by looking up the exon"s
+        """
+        Construct an Exon object from its ID by looking up the exon"s
         properties in the given Database.
         """
         if exon_id not in self._exons:
@@ -1112,8 +1172,8 @@ class Genome(Serializable):
 
     def protein_ids(self, contig=None, strand=None):
         """
-        What are all the protein IDs
-        (optionally restrict to a given chromosome and/or strand)
+        What are all the protein IDs (optionally restrict to a given chromosome
+        and/or strand)
         """
         protein_ids = self._all_feature_values(
             column="protein_id",

@@ -22,7 +22,9 @@ def test_gene_ids_grch38_hla_a():
     # Summary?db=core;g=ENSG00000206503;r=6:29941260-29945884
     ids = ensembl_grch38.gene_ids_at_locus(6, 29945884)
     expected = "ENSG00000206503"
-    assert ids == ["ENSG00000206503"], "Expected HLA-A, gene ID = %s, got: %s" % (
+    assert ids == [
+        "ENSG00000206503"
+    ], "Expected HLA-A, gene ID = %s, got: %s" % (
         expected,
         ids,
     )
@@ -46,7 +48,9 @@ def test_gene_id_of_protein_id_release77():
 
 def test_gene_id_of_invalid_name():
     with assert_raises(Exception):
-        ensembl_grch38.gene_ids_of_gene_name("A wonderous pony sees through your soul")
+        ensembl_grch38.gene_ids_of_gene_name(
+            "A wonderous pony sees through your soul"
+        )
 
 
 @test_ensembl_releases()

@@ -29,7 +29,9 @@ def normalize_reference_name(name):
 
 
 def find_species_by_reference(reference_name):
-    return Species._reference_names_to_species[normalize_reference_name(reference_name)]
+    return Species._reference_names_to_species[
+        normalize_reference_name(reference_name)
+    ]
 
 
 def which_reference(species_name, ensembl_release):
@@ -42,7 +44,9 @@ def max_ensembl_release(reference_name):
     return max_release
 
 
-def genome_for_reference_name(reference_name, allow_older_downloaded_release=True):
+def genome_for_reference_name(
+    reference_name, allow_older_downloaded_release=True
+):
     """
     Given a genome reference name, such as "GRCh38", returns the
     corresponding Ensembl Release object.
@@ -60,7 +64,9 @@ def genome_for_reference_name(reference_name, allow_older_downloaded_release=Tru
     ]
     if allow_older_downloaded_release:
         # go through candidate releases in descending order
-        for release in reversed(range(min_ensembl_release, max_ensembl_release + 1)):
+        for release in reversed(
+            range(min_ensembl_release, max_ensembl_release + 1)
+        ):
             # check if release has been locally downloaded
             candidate = EnsemblRelease.cached(release=release, species=species)
             if candidate.required_local_files_exist():

@@ -220,7 +220,13 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "pyensembl.tex", "pyensembl Documentation", "Hammer Lab", "manual"),
+    (
+        master_doc,
+        "pyensembl.tex",
+        "pyensembl Documentation",
+        "Hammer Lab",
+        "manual",
+    ),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

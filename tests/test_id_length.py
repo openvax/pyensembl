@@ -10,7 +10,9 @@ def check_id_length(method_name):
         # only load chromosome Y to speed up tests
         idents = method(contig="Y")
         assert len(idents) > 0, "No values returned by %s" % method_name
-        assert all(len(ident) == 15 for ident in idents), "Invalid IDs for %s: %s" % (
+        assert all(
+            len(ident) == 15 for ident in idents
+        ), "Invalid IDs for %s: %s" % (
             method_name,
             [ident for ident in idents if len(ident) != 15],
         )

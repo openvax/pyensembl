@@ -1,5 +1,9 @@
 from nose.tools import assert_raises, ok_
-from pyensembl.download_cache import DownloadCache, MissingLocalFile, MissingRemoteFile
+from pyensembl.download_cache import (
+    DownloadCache,
+    MissingLocalFile,
+    MissingRemoteFile,
+)
 
 import os
 import tempfile

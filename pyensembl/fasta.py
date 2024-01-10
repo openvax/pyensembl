@@ -32,7 +32,8 @@ def _parse_header_id(line):
     """
     if type(line) is not bytes:
         raise TypeError(
-            "Expected header line to be of type %s but got %s" % (bytes, type(line))
+            "Expected header line to be of type %s but got %s"
+            % (bytes, type(line))
         )
 
     if len(line) <= 1:

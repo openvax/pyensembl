@@ -126,7 +126,10 @@ class Transcript(LocusWithGenome):
         # in each transcript
         columns = ["exon_number", "exon_id"]
         exon_numbers_and_ids = self.db.query(
-            columns, filter_column="transcript_id", filter_value=self.id, feature="exon"
+            columns,
+            filter_column="transcript_id",
+            filter_value=self.id,
+            feature="exon",
         )
 
         # fill this list in its correct order (by exon_number) by using
@@ -137,7 +140,8 @@ class Transcript(LocusWithGenome):
             exon = self.genome.exon_by_id(exon_id)
             if exon is None:
                 raise ValueError(
-                    "Missing exon %s for transcript %s" % (exon_number, self.id)
+                    "Missing exon %s for transcript %s"
+                    % (exon_number, self.id)
                 )
             exon_number = int(exon_number)
             if exon_number < 1:
@@ -174,7 +178,8 @@ class Transcript(LocusWithGenome):
 
         if required and len(results) == 0:
             raise ValueError(
-                "Transcript %s does not contain feature %s" % (self.id, feature)
+                "Transcript %s does not contain feature %s"
+                % (self.id, feature)
             )
         return results
 
@@ -183,7 +188,9 @@ class Transcript(LocusWithGenome):
         """
         Get unique positions for feature, raise an error if feature is absent.
         """
-        ranges = self._transcript_feature_position_ranges(feature, required=True)
+        ranges = self._transcript_feature_position_ranges(
+            feature, required=True
+        )
         results = []
         # a feature (such as a stop codon), maybe be split over multiple
         # contiguous ranges. Collect all the nucleotide positions into a
@@ -329,7 +336,9 @@ class Transcript(LocusWithGenome):
                 exon_offset = unspliced_offset - exon_unspliced_start
                 return total_spliced_offset + exon_offset
             else:
-                exon_length = len(exon)  # exon_end_position - exon_start_position + 1
+                exon_length = len(
+                    exon
+                )  # exon_end_position - exon_start_position + 1
                 total_spliced_offset += exon_length
         raise ValueError(
             "Couldn't find position %d on any exon of %s" % (position, self.id)
@@ -341,7 +350,9 @@ class Transcript(LocusWithGenome):
         Offsets from start of unspliced pre-mRNA transcript
         of nucleotides in start codon.
         """
-        return [self.offset(position) for position in self.start_codon_positions]
+        return [
+            self.offset(position) for position in self.start_codon_positions
+        ]
 
     @memoized_property
     def stop_codon_unspliced_offsets(self):
@@ -349,7 +360,9 @@ class Transcript(LocusWithGenome):
         Offsets from start of unspliced pre-mRNA transcript
         of nucleotides in stop codon.
         """
-        return [self.offset(position) for position in self.stop_codon_positions]
+        return [
+            self.offset(position) for position in self.stop_codon_positions
+        ]
 
     def _contiguous_offsets(self, offsets):
         """
@@ -369,7 +382,8 @@ class Transcript(LocusWithGenome):
         of nucleotides in start codon.
         """
         offsets = [
-            self.spliced_offset(position) for position in self.start_codon_positions
+            self.spliced_offset(position)
+            for position in self.start_codon_positions
         ]
         return self._contiguous_offsets(offsets)
 
@@ -380,7 +394,8 @@ class Transcript(LocusWithGenome):
         of nucleotides in stop codon.
         """
         offsets = [
-            self.spliced_offset(position) for position in self.stop_codon_positions
+            self.spliced_offset(position)
+            for position in self.stop_codon_positions
         ]
         return self._contiguous_offsets(offsets)
 
