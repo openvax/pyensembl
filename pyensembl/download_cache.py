@@ -151,10 +151,7 @@ class DownloadCache(object):
         )
 
     def __eq__(self, other):
-        return (
-            other.__class__ is DownloadCache
-            and self._fields() == other._fields()
-        )
+        return other.__class__ is DownloadCache and self._fields() == other._fields()
 
     def __hash__(self):
         return hash(self._fields())
@@ -216,14 +213,10 @@ class DownloadCache(object):
         # if we expect the download function to decompress this file then
         # we should use its name without the compression extension
         if self.decompress_on_download:
-            local_filename = self._remove_compression_suffix_if_present(
-                local_filename
-            )
+            local_filename = self._remove_compression_suffix_if_present(local_filename)
 
         if len(local_filename) == 0:
-            raise ValueError(
-                "Can't determine local filename for %s" % (path_or_url,)
-            )
+            raise ValueError("Can't determine local filename for %s" % (path_or_url,))
 
         return join(self.cache_directory_path, local_filename)
 
@@ -326,9 +319,9 @@ class DownloadCache(object):
         """
         if isdir(self.cache_directory_path):
             for filename in listdir():
-                delete = any(
-                    [filename.endswith(ext) for ext in suffixes]
-                ) or any([filename.startswith(pre) for pre in prefixes])
+                delete = any([filename.endswith(ext) for ext in suffixes]) or any(
+                    [filename.startswith(pre) for pre in prefixes]
+                )
                 if delete:
                     path = join(self.cache_directory_path, filename)
                     logger.info("Deleting %s", path)
