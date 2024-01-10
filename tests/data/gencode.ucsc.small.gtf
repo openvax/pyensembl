@@ -11,6 +11,6 @@ chr1	hg38_knownGene	exon	35277	35481	0.000000	-	.	gene_id "uc001aak.4"; transcri
 chr1	hg38_knownGene	exon	35721	36081	0.000000	-	.	gene_id "uc001aak.4"; transcript_id "uc001aak.4"; 
 chr1	hg38_knownGene	exon	35245	35481	0.000000	-	.	gene_id "uc057aua.1"; transcript_id "uc057aua.1"; 
 chr1	hg38_knownGene	exon	35721	36073	0.000000	-	.	gene_id "uc057aua.1"; transcript_id "uc057aua.1"; 
-chr1	hg38_knownGene	start_codon 69091	69093	0.000000	+	.	gene_id "uc001aal.1"; transcript_id "uc001aal.1"; 
-chr1	hg38_knownGene	CDS 69091	70005	0.000000	+	0	gene_id "uc001aal.1"; transcript_id "uc001aal.1"; 
+chr1	hg38_knownGene	start_codon	69091	69093	0.000000	+	.	gene_id "uc001aal.1"; transcript_id "uc001aal.1"; 
+chr1	hg38_knownGene	CDS	69091	70005	0.000000	+	0	gene_id "uc001aal.1"; transcript_id "uc001aal.1"; 
 chr1	hg38_knownGene	stop_codon	70006	70008	0.000000	+	.	gene_id "uc001aal.1"; transcript_id "uc001aal.1";
