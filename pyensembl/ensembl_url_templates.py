@@ -36,7 +36,7 @@ FASTA_SUBDIR_TEMPLATE = "/pub/release-%(release)d/fasta/%(species)s/%(type)s/"
 GTF_SUBDIR_TEMPLATE = "/pub/release-%(release)d/gtf/%(species)s/"
 
 DATABASE_FASTA_SUBDIR_TEMPLATE = (
-    "/pub/release-%(release)d/$(database)s/fasta/%(species)s/%(type)s/"
+    "/pub/release-%(release)d/%(database)s/fasta/%(species)s/%(type)s/"
 )
 DATABASE_GTF_SUBDIR_TEMPLATE = (
     "/pub/release-%(release)d/%(database)s/gtf/%(species)s/"
