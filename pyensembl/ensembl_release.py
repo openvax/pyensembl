@@ -66,7 +66,7 @@ class EnsemblRelease(Genome):
         # server=EMBL_FTP_SERVER,,
     ):
         self.species = check_species_object(species)
-        self.release = check_release_number(release, species.database)
+        self.release = check_release_number(release, self.species.database)
         self.database = database
         self.server = server
 
