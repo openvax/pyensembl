@@ -114,7 +114,6 @@ def make_gtf_url(ensembl_release, species, server=None, database=None):
             "species": species,
         }
     else:
-        print(ensembl_release, species, database)
         subdir = DATABASE_GTF_SUBDIR_TEMPLATE % {
             "release": ensembl_release,
             "database": database,
@@ -126,11 +125,16 @@ def make_gtf_url(ensembl_release, species, server=None, database=None):
     return server + subdir + filename
 
 
-def make_fasta_filename(ensembl_release, species, sequence_type):
+def make_fasta_filename(ensembl_release, species, database, sequence_type):
     ensembl_release, species, reference_name = normalize_release_properties(
         ensembl_release, species
     )
-    if ensembl_release <= 75:
+    # for plant database, start from release 32 (inlcude 32) , the fasta file use the "old name"
+    # for releses before 31, the fasta file use the "new name"
+    # version 31 use both old and new name
+    if (ensembl_release <= 75 and database is None) or (
+        ensembl_release <= 31 and database is not None
+    ):
         if sequence_type == "ncrna":
             return OLD_FASTA_FILENAME_TEMPLATE_NCRNA % {
                 "Species": species.capitalize(),
@@ -198,6 +202,7 @@ def make_fasta_url(
     filename = make_fasta_filename(
         ensembl_release=ensembl_release,
         species=species,
+        database=database,
         sequence_type=sequence_type,
     )
     return server + subdir + filename
