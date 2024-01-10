@@ -226,7 +226,22 @@ class Database(object):
         primary_keys = {}
 
         for feature in feature_names:
-            df_subset = df[df.feature == feature]
+            # Some speices such as soybean, do not have a gene_name and transcript_name
+            if (
+                feature == "gene_name"
+                and "gene_id" in feature_names
+                and (df.feature == "gene_name").sum() == 0
+            ):
+                alias_feature = "gene_id"
+            if (
+                feature == "transcript_name"
+                and "transcript_id" in feature_names
+                and (df.feature == "transcript_name").sum() == 0
+            ):
+                alias_feature = "transcript_id"
+
+            alias_feature = feature
+            df_subset = df[df.feature == alias_feature]
             if len(df_subset) == 0:
                 continue
             dataframes[feature] = df_subset
