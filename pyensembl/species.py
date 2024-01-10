@@ -205,4 +205,5 @@ for data in SPECIES_DATA:
         latin_name=data["latin_name"],
         synonyms=data["synonyms"],
         reference_assemblies=data["reference_assemblies"],
+        database=data.get("database", None),
     )

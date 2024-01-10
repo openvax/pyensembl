@@ -10,14 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from os import remove
-from os.path import exists, abspath, split, join
 import logging
-from collections import Counter
 import pickle
-from .common import load_pickle, dump_pickle
-from .fasta import parse_fasta_dictionary
+from collections import Counter
+from os import remove
+from os.path import abspath, exists, join, split
 
+from .common import dump_pickle, load_pickle
+from .fasta import parse_fasta_dictionary
 
 logger = logging.getLogger(__name__)
 

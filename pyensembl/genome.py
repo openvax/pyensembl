@@ -21,8 +21,8 @@ from os.path import exists, getsize
 
 from serializable import Serializable
 
-from .download_cache import DownloadCache
 from .database import Database
+from .download_cache import DownloadCache
 from .exon import Exon
 from .gene import Gene
 from .sequence_data import SequenceData

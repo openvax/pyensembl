@@ -152,12 +152,14 @@ SPECIES_DATA = [
         "reference_assemblies": {
             "IRGSP-1.0": (55, MAX_ENSEMBLGENOME_RELEASE),
         },
+        "database": "plants",
     },
     {
         "latin_name": "arabidopsis_thaliana",
-        "synonyms": ["cress", "thale_cress"],
+        "synonyms": ["cress", "thale_cress", "hehe"],
         "reference_assemblies": {
             "TAIR10": (55, MAX_ENSEMBLGENOME_RELEASE),
         },
+        "database": "plants",
     },
 ]

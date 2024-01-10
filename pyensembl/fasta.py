@@ -19,9 +19,8 @@ Ensembl FTP server that no proper FASTA parser lets you skip over.
 """
 
 
-from gzip import GzipFile
 import logging
-
+from gzip import GzipFile
 
 logger = logging.getLogger(__name__)
 

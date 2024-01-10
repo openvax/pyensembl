@@ -11,7 +11,6 @@
 # limitations under the License.
 
 import pickle
-
 from functools import wraps
 
 
@@ -28,10 +27,11 @@ def load_pickle(filepath):
 
 
 def _memoize_cache_key(args, kwargs):
-    """Turn args tuple and kwargs dictionary into a hashable key.
+    """
+    Turn args tuple and kwargs dictionary into a hashable key.
 
-    Expects that all arguments to a memoized function are either hashable
-    or can be uniquely identified from type(arg) and repr(arg).
+    Expects that all arguments to a memoized function are either
+    hashable or can be uniquely identified from type(arg) and repr(arg).
     """
     cache_key_list = []
 
@@ -51,9 +51,9 @@ def _memoize_cache_key(args, kwargs):
 
 
 def memoize(fn):
-    """Simple reset-able memoization decorator for functions and methods,
-    assumes that all arguments to the function can be hashed and
-    compared.
+    """
+    Simple reset-able memoization decorator for functions and methods, assumes
+    that all arguments to the function can be hashed and compared.
     """
     cache = {}
 

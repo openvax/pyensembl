@@ -11,7 +11,8 @@
 # limitations under the License.
 
 from sys import intern
-from typechecks import is_string, is_integer
+
+from typechecks import is_integer, is_string
 
 # Manually memoizing here, since our simple common.memoize function has
 # noticable overhead in this instance.

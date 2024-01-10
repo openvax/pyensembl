@@ -11,16 +11,16 @@
 # limitations under the License.
 
 import logging
-from os.path import split, join, exists, splitext
 import sqlite3
+from os.path import exists, join, split, splitext
 
 import datacache
+from gtfparse import create_missing_features, read_gtf
 from typechecks import require_integer, require_string
-from gtfparse import read_gtf, create_missing_features
 
 from .common import memoize
-from .normalization import normalize_chromosome, normalize_strand
 from .locus import Locus
+from .normalization import normalize_chromosome, normalize_strand
 
 # any time we update the database schema, increment this version number
 DATABASE_SCHEMA_VERSION = 3
@@ -31,9 +31,9 @@ logger = logging.getLogger(__name__)
 
 class Database(object):
     """
-    Wrapper around sqlite3 database so that the rest of the
-    library doesn't have to worry about constructing the .db file or
-    writing SQL queries directly.
+    Wrapper around sqlite3 database so that the rest of the library doesn't
+    have to worry about constructing the .db file or writing SQL queries
+    directly.
     """
 
     def __init__(
@@ -104,8 +104,8 @@ class Database(object):
 
     def _all_possible_indices(self, column_names):
         """
-        Create list of tuples containing all possible index groups
-        we might want to create over tables in this database.
+        Create list of tuples containing all possible index groups we might
+        want to create over tables in this database.
 
         If a set of genome annotations is missing some column we want
         to index on, we have to drop any indices which use that column.
@@ -136,7 +136,8 @@ class Database(object):
                 # other GTFs)
                 if column_name not in column_set:
                     logger.info(
-                        "Skipping database index for {%s}", ", ".join(column_group)
+                        "Skipping database index for {%s}",
+                        ", ".join(column_group),
                     )
                     skip = True
             if skip:
@@ -149,7 +150,8 @@ class Database(object):
     PRIMARY_KEY_COLUMNS = {"gene": "gene_id", "transcript": "transcript_id"}
 
     def _get_primary_key(self, feature_name, feature_df):
-        """Name of primary key for a feature table (e.g. "gene" -> "gene_id")
+        """
+        Name of primary key for a feature table (e.g. "gene" -> "gene_id")
 
         Since we're potentially going to run this code over unseen data,
         make sure that the primary is unique and never null.
@@ -163,18 +165,21 @@ class Database(object):
         if primary_key_values.isnull().any():
             raise ValueError(
                 "Column '%s' can't be primary key of table '%s'"
-                " because it contains nulls values" % (primary_key, feature_name)
+                " because it contains nulls values"
+                % (primary_key, feature_name)
             )
         elif len(primary_key_values.unique()) < len(primary_key_values):
             raise ValueError(
                 "Column '%s' can't be primary key of table '%s'"
-                " because it contains repeated values" % (primary_key, feature_name)
+                " because it contains repeated values"
+                % (primary_key, feature_name)
             )
         else:
             return primary_key
 
     def _feature_indices(self, all_index_groups, primary_key, feature_df):
-        """Choose subset of index group tuples from `all_index_groups` which are
+        """
+        Choose subset of index group tuples from `all_index_groups` which are
         applicable to a particular feature (not same as its primary key, have
         non-null values).
         """
@@ -194,9 +199,8 @@ class Database(object):
 
     def create(self, overwrite=False):
         """
-        Create the local database (including indexing) if it's not
-        already set up. If `overwrite` is True, always re-create
-        the database from scratch.
+        Create the local database (including indexing) if it's not already set
+        up. If `overwrite` is True, always re-create the database from scratch.
 
         Returns a connection to the database.
         """
@@ -204,7 +208,8 @@ class Database(object):
         datacache.ensure_dir(self.cache_directory_path)
 
         df = self._load_gtf_as_dataframe(
-            usecols=self.restrict_gtf_columns, features=self.restrict_gtf_features
+            usecols=self.restrict_gtf_columns,
+            features=self.restrict_gtf_features,
         )
         all_index_groups = self._all_possible_indices(df.columns)
 
@@ -261,7 +266,7 @@ class Database(object):
     @property
     def connection(self):
         """
-        Get a connection to the database or raise an exception
+        Get a connection to the database or raise an exception.
         """
         connection = self._get_connection()
         if connection:
@@ -275,6 +280,7 @@ class Database(object):
     def connect_or_create(self, overwrite=False):
         """
         Return a connection to the database if it exists, otherwise create it.
+
         Overwrite the existing database if `overwrite` is True.
         """
         connection = self._get_connection()
@@ -306,8 +312,8 @@ class Database(object):
         sorted=False,
     ):
         """
-        Get the non-null values of a column from the database
-        at a particular range of loci
+        Get the non-null values of a column from the database at a particular
+        range of loci.
         """
 
         # TODO: combine with the query method, since they overlap
@@ -408,8 +414,8 @@ class Database(object):
 
     def run_sql_query(self, sql, required=False, query_params=[]):
         """
-        Given an arbitrary SQL query, run it against the database
-        and return the results.
+        Given an arbitrary SQL query, run it against the database and return
+        the results.
 
         Parameters
         ----------
@@ -454,8 +460,8 @@ class Database(object):
         required=False,
     ):
         """
-        Construct a SQL query and run against the sqlite3 database,
-        filtered both by the feature type and a user-provided column/value.
+        Construct a SQL query and run against the sqlite3 database, filtered
+        both by the feature type and a user-provided column/value.
         """
         sql = """
             SELECT %s%s
@@ -468,7 +474,9 @@ class Database(object):
             filter_column,
         )
         query_params = [filter_value]
-        return self.run_sql_query(sql, required=required, query_params=query_params)
+        return self.run_sql_query(
+            sql, required=required, query_params=query_params
+        )
 
     def query_one(
         self,
@@ -490,7 +498,9 @@ class Database(object):
 
         if len(results) == 0:
             if required:
-                raise ValueError("%s not found: %s" % (filter_column, filter_value))
+                raise ValueError(
+                    "%s not found: %s" % (filter_column, filter_value)
+                )
             else:
                 return None
         elif len(results) > 1:
@@ -505,8 +515,8 @@ class Database(object):
         self, column, feature, distinct=True, contig=None, strand=None
     ):
         """
-        Run a SQL query against the sqlite3 database, filtered
-        only on the feature type.
+        Run a SQL query against the sqlite3 database, filtered only on the
+        feature type.
         """
         query = """
             SELECT %s%s
@@ -541,7 +551,6 @@ class Database(object):
         """
         Query for loci satisfying a given filter and feature type.
 
-
         Parameters
         ----------
         filter_column : str
@@ -571,8 +580,8 @@ class Database(object):
 
     def query_locus(self, filter_column, filter_value, feature):
         """
-        Query for unique locus, raises error if missing or more than
-        one locus in the database.
+        Query for unique locus, raises error if missing or more than one locus
+        in the database.
 
         Parameters
         ----------
@@ -588,7 +597,9 @@ class Database(object):
         Returns single Locus object.
         """
         loci = self.query_loci(
-            filter_column=filter_column, filter_value=filter_value, feature=feature
+            filter_column=filter_column,
+            filter_value=filter_value,
+            feature=feature,
         )
 
         if len(loci) == 0:
@@ -605,7 +616,7 @@ class Database(object):
 
     def _load_gtf_as_dataframe(self, usecols=None, features=None):
         """
-        Parse this genome source's GTF file and load it as a Pandas DataFrame
+        Parse this genome source's GTF file and load it as a Pandas DataFrame.
         """
         logger.info("Reading GTF from %s", self.gtf_path)
         df = read_gtf(
@@ -621,7 +632,9 @@ class Database(object):
 
         column_names = set(df.keys())
         expect_gene_feature = features is None or "gene" in features
-        expect_transcript_feature = features is None or "transcript" in features
+        expect_transcript_feature = (
+            features is None or "transcript" in features
+        )
         observed_features = set(df["feature"])
 
         # older Ensembl releases don't have "gene" or "transcript"
@@ -635,7 +648,9 @@ class Database(object):
                 dataframe=df,
                 unique_keys={"gene": "gene_id"},
                 extra_columns={
-                    "gene": {"gene_name", "gene_biotype"}.intersection(column_names),
+                    "gene": {"gene_name", "gene_biotype"}.intersection(
+                        column_names
+                    ),
                 },
                 missing_value="",
             )

@@ -70,6 +70,6 @@ def genome_for_reference_name(reference_name, allow_older_downloaded_release=Tru
     return EnsemblRelease.cached(release=max_ensembl_release, species=species)
 
 
-ensembl_grch36 = genome_for_reference_name("ncbi36")
-ensembl_grch37 = genome_for_reference_name("grch37")
-ensembl_grch38 = genome_for_reference_name("grch38")
+# ensembl_grch36 = genome_for_reference_name("ncbi36")
+# ensembl_grch37 = genome_for_reference_name("grch37")
+# ensembl_grch38 = genome_for_reference_name("grch38")

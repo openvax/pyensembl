@@ -10,27 +10,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .config import MAX_ENSEMBL_RELEASE, MAX_ENSEMBLGENOME_RELEASE
 from .database import Database
 from .download_cache import DownloadCache
 from .ensembl_release import EnsemblRelease, cached_release
-from .ensembl_release_versions import MAX_ENSEMBL_RELEASE
 from .exon import Exon
-from .genome import Genome
 from .gene import Gene
+from .genome import Genome
 from .locus import Locus
-from .reference_name import (
-    ensembl_grch36,
-    ensembl_grch37,
-    ensembl_grch38,
-    normalize_reference_name,
-    find_species_by_reference,
-    which_reference,
-    genome_for_reference_name,
-)
-
+from .reference_name import (  # ensembl_grch36,; ensembl_grch37,; ensembl_grch38,
+    find_species_by_reference, genome_for_reference_name,
+    normalize_reference_name, which_reference)
 from .search import find_nearest_locus
 from .sequence_data import SequenceData
-from .species import find_species_by_name, check_species_object, normalize_species_name
+from .species import (check_species_object, find_species_by_name,
+                      normalize_species_name)
 from .transcript import Transcript
 from .version import __version__
 
@@ -41,6 +35,7 @@ __all__ = [
     "EnsemblRelease",
     "cached_release",
     "MAX_ENSEMBL_RELEASE",
+    "MAX_ENSEMBLGENOME_RELEASE",
     "Gene",
     "Transcript",
     "Exon",
@@ -56,7 +51,7 @@ __all__ = [
     "Genome",
     "Locus",
     "Exon",
-    "ensembl_grch36",
-    "ensembl_grch37",
-    "ensembl_grch38",
+    # "ensembl_grch36",
+    # "ensembl_grch37",
+    # "ensembl_grch38",
 ]

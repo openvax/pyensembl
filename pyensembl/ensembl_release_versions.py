@@ -10,12 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .config import (
-    MAX_ENSEMBL_RELEASE,
-    MAX_ENSEMBLGENOME_RELEASE,
-    MIN_ENSEMBL_RELEASE,
-    MIN_ENSEMBLGENOME_RELEASE,
-)
+from .config import (MAX_ENSEMBL_RELEASE, MAX_ENSEMBLGENOME_RELEASE,
+                     MIN_ENSEMBL_RELEASE, MIN_ENSEMBLGENOME_RELEASE)
 
 
 def check_release_number(release, database=None):
