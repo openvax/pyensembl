@@ -10,25 +10,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-MIN_ENSEMBL_RELEASE = 54
-MAX_ENSEMBL_RELEASE = 110
-MIN_ENSEMBLGENOME_RELEASE = 50
-MAX_ENSEMBLGENOME_RELEASE = 57
+from .config import (
+    MAX_ENSEMBL_RELEASE,
+    MAX_ENSEMBLGENOME_RELEASE,
+    MIN_ENSEMBL_RELEASE,
+    MIN_ENSEMBLGENOME_RELEASE,
+)
 
 
-def check_release_number(release):
+def check_release_number(release, database=None):
     """
-    Check to make sure a release is in the valid range of
-    Ensembl releases.
+    Check to make sure a release is in the valid range of Ensembl releases.
     """
     try:
         release = int(release)
-    except:
+    except ValueError:
         raise ValueError("Invalid Ensembl release: %s" % release)
-
-    if release < MIN_ENSEMBL_RELEASE:
+    if database is None:
+        min_release = MIN_ENSEMBL_RELEASE
+    else:
+        min_release = MIN_ENSEMBLGENOME_RELEASE
+    if release < min_release:
         raise ValueError(
             "Invalid Ensembl releases %d, must be greater than %d"
-            % (release, MIN_ENSEMBL_RELEASE)
+            % (release, min_release)
         )
     return release

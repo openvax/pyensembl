@@ -47,11 +47,14 @@ import os
 
 import pkg_resources
 
-from .ensembl_release import MAX_ENSEMBL_RELEASE, EnsemblRelease
+from .config import MAX_ENSEMBL_RELEASE
+from .ensembl_release import EnsemblRelease
 from .genome import Genome
 from .species import Species, normalize_species_name
 
-logging.config.fileConfig(pkg_resources.resource_filename(__name__, "logging.conf"))
+logging.config.fileConfig(
+    pkg_resources.resource_filename(__name__, "logging.conf")
+)
 logger = logging.getLogger(__name__)
 
 
@@ -162,7 +165,14 @@ def collect_all_available_ensembl_releases():
     for species_name in Species.all_registered_latin_names():
         species = Species._latin_names_to_species[species_name]
         # print in tree format
-        print("* " + species_name + " (" + ", ".join(species.synonyms) + ")" + ":")
+        print(
+            "* "
+            + species_name
+            + " ("
+            + ", ".join(species.synonyms)
+            + ")"
+            + ":"
+        )
         for (
             release_name,
             release_range,

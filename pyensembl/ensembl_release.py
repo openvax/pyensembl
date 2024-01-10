@@ -16,12 +16,9 @@ specific to (a particular release of) Ensembl.
 """
 from weakref import WeakValueDictionary
 
-from .ensembl_release_versions import MAX_ENSEMBL_RELEASE, check_release_number
-from .ensembl_url_templates import (
-    ENSEMBL_FTP_SERVER,
-    make_fasta_url,
-    make_gtf_url,
-)
+from .config import MAX_ENSEMBL_RELEASE  # ENSEMBL_FTP_SERVER,
+from .ensembl_release_versions import check_release_number
+from .ensembl_url_templates import make_fasta_url, make_gtf_url
 from .genome import Genome
 from .species import check_species_object, human
 
@@ -72,7 +69,7 @@ class EnsemblRelease(Genome):
         release=MAX_ENSEMBL_RELEASE,
         species=human,
         server=None,
-        # ENSEMBL_FTP_SERVER,
+        # server=EMBL_FTP_SERVER,,
     ):
         self.release, self.species, self.server = self.normalize_init_values(
             release=release, species=species, server=server

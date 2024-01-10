@@ -12,10 +12,7 @@
 
 from serializable import Serializable
 
-from .ensembl_release_versions import (
-    MAX_ENSEMBL_RELEASE,
-    MAX_ENSEMBLGENOME_RELEASE,
-)
+from .config import SPECIES_DATA
 
 # TODO: replace Serializable with data class
 
@@ -33,7 +30,9 @@ class Species(Serializable):
     _reference_names_to_species = {}
 
     @classmethod
-    def register(cls, latin_name, synonyms, reference_assemblies, database=None):
+    def register(
+        cls, latin_name, synonyms, reference_assemblies, database=None
+    ):
         """
         Create a Species object from the given arguments and enter into all the
         dicts used to look the species up by its fields.
@@ -84,7 +83,9 @@ class Species(Serializable):
                 for release in range(release_range[0], release_range[1] + 1):
                     yield species_name, release
 
-    def __init__(self, latin_name, synonyms=[], reference_assemblies={}, database=None):
+    def __init__(
+        self, latin_name, synonyms=[], reference_assemblies={}, database=None
+    ):
         """
         Parameters
         ----------
@@ -105,7 +106,8 @@ class Species(Serializable):
             for i in range(start, end + 1):
                 if i in self._release_to_genome:
                     raise ValueError(
-                        "Ensembl release %d already has an associated genome" % i
+                        "Ensembl release %d already has an associated genome"
+                        % i
                     )
                 self._release_to_genome[i] = genome_name
 
@@ -198,186 +200,9 @@ def check_species_object(species_name_or_object):
         )
 
 
-human = Species.register(
-    latin_name="homo_sapiens",
-    synonyms=["human"],
-    reference_assemblies={
-        "NCBI36": (54, 54),
-        "GRCh37": (55, 75),
-        "GRCh38": (76, MAX_ENSEMBL_RELEASE),
-    },
-)
-
-mouse = Species.register(
-    latin_name="mus_musculus",
-    synonyms=["mouse", "house mouse"],
-    reference_assemblies={
-        "NCBIM37": (54, 67),
-        "GRCm38": (68, 102),
-        "GRCm39": (103, MAX_ENSEMBL_RELEASE),
-    },
-)
-
-dog = Species.register(
-    latin_name="canis_familiaris",
-    synonyms=["dog"],
-    reference_assemblies={"CanFam3.1": (75, MAX_ENSEMBL_RELEASE)},
-)
-
-cat = Species.register(
-    latin_name="felis_catus",
-    synonyms=["cat"],
-    reference_assemblies={
-        "Felis_catus_6.2": (75, 90),
-        "Felis_catus_8.0": (91, 92),
-        "Felis_catus_9.0": (93, MAX_ENSEMBL_RELEASE),
-    },
-)
-
-chicken = Species.register(
-    latin_name="gallus_gallus",
-    synonyms=["chicken"],
-    reference_assemblies={
-        "Galgal4": (75, 85),
-        "Gallus_gallus-5.0": (86, MAX_ENSEMBL_RELEASE),
-    },
-)
-
-# Does the black rat (Rattus Rattus) get used for research too?
-brown_rat = Species.register(
-    latin_name="rattus_norvegicus",
-    synonyms=["brown rat", "lab rat", "rat"],
-    reference_assemblies={
-        "Rnor_5.0": (75, 79),
-        "Rnor_6.0": (80, 104),
-        "mRatBN7.2": (105, MAX_ENSEMBL_RELEASE),
-    },
-)
-
-macaque = Species.register(
-    latin_name="macaca_fascicularis",
-    synonyms=["macaque", "Crab-eating macaque"],
-    reference_assemblies={
-        "Macaca_fascicularis_6.0": (103, MAX_ENSEMBL_RELEASE),
-    },
-)
-
-green_monkey = Species.register(
-    latin_name="chlorocebus_sabaeus",
-    synonyms=["green_monkey", "african_green_monkey"],
-    reference_assemblies={
-        "ChlSab1.1": (86, MAX_ENSEMBL_RELEASE),
-    },
-)
-
-rhesus = Species.register(
-    latin_name="macaca_mulatta",
-    synonyms=["rhesus"],
-    reference_assemblies={"Mmul_10": (75, MAX_ENSEMBL_RELEASE)},
-)
-
-rabbit = Species.register(
-    latin_name="oryctolagus_cuniculus",
-    synonyms=["rabbit"],
-    reference_assemblies={"OryCun2.0": (75, MAX_ENSEMBL_RELEASE)},
-)
-
-gerbil = Species.register(
-    latin_name="meriones_unguiculatus",
-    synonyms=["gerbil"],
-    reference_assemblies={"MunDraft-v1.0": (75, MAX_ENSEMBL_RELEASE)},
-)
-
-syrian_hamster = Species.register(
-    latin_name="mesocricetus_auratus",
-    synonyms=["syrian_hamster"],
-    reference_assemblies={"MesAur1.0": (75, MAX_ENSEMBL_RELEASE)},
-)
-
-chinese_hamster = Species.register(
-    latin_name="cricetulus_griseus_chok1gshd",
-    synonyms=["chinese_hamster"],
-    reference_assemblies={"CHOK1GS_HDv1": (75, MAX_ENSEMBL_RELEASE)},
-)
-
-naked_mole_rat = Species.register(
-    latin_name="heterocephalus_glaber_female",
-    synonyms=["naked_mole_rat"],
-    reference_assemblies={"HetGla_female_1.0": (75, MAX_ENSEMBL_RELEASE)},
-)
-
-guinea_pig = Species.register(
-    latin_name="cavia_porcellus",
-    synonyms=["guinea_pig"],
-    reference_assemblies={"Cavpor3.0": (75, MAX_ENSEMBL_RELEASE)},
-)
-
-pig = Species.register(
-    latin_name="sus_scrofa",
-    synonyms=["pig"],
-    reference_assemblies={"Sscrofa11.1": (75, MAX_ENSEMBL_RELEASE)},
-)
-
-zebrafish = Species.register(
-    latin_name="danio_rerio",
-    synonyms=["zebrafish"],
-    reference_assemblies={
-        # "ZFISH7": (47, 53),
-        "Zv8": (54, 59),
-        "Zv9": (60, 79),
-        "GRCz10": (80, 91),
-        "GRCz11": (92, MAX_ENSEMBL_RELEASE),
-    },
-)
-
-fly = Species.register(
-    latin_name="drosophila_melanogaster",
-    synonyms=["drosophila", "fruit fly", "fly"],
-    reference_assemblies={
-        "BDGP5": (75, 78),
-        "BDGP6": (79, 95),
-        "BDGP6.22": (96, 98),
-        "BDGP6.28": (99, 102),
-        "BDGP6.32": (103, MAX_ENSEMBL_RELEASE),
-    },
-)
-
-nematode = Species.register(
-    latin_name="caenorhabditis_elegans",
-    synonyms=["nematode", "C_elegans"],
-    reference_assemblies={
-        # "WS180": (47, 49),
-        # "WS190": (50, 54),
-        "WS200": (55, 57),
-        "WS210": (58, 60),
-        "WS220": (61, 66),
-        "WBcel235": (67, MAX_ENSEMBL_RELEASE),
-    },
-)
-
-yeast = Species.register(
-    latin_name="saccharomyces_cerevisiae",
-    synonyms=["yeast", "budding_yeast"],
-    reference_assemblies={
-        "R64-1-1": (75, MAX_ENSEMBL_RELEASE),
-    },
-)
-
-rice = Species.register(
-    latin_name="oryza_sativa",
-    synonyms=["rice", "japanese_rice"],
-    reference_assemblies={
-        "IRGSP-1.0": (55, MAX_ENSEMBLGENOME_RELEASE),
-    },
-    database="plants",
-)
-
-
-cress = Species.register(
-    latin_name="arabidopsis_thaliana",
-    synonyms=["cress", "thale_cress"],
-    reference_assemblies={
-        "TAIR10": (55, MAX_ENSEMBLGENOME_RELEASE),
-    },
-    database="plants",
-)
+for data in SPECIES_DATA:
+    globals()[data["synonyms"][0]] = Species.register(
+        latin_name=data["latin_name"],
+        synonyms=data["synonyms"],
+        reference_assemblies=data["reference_assemblies"],
+    )
