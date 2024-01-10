@@ -38,7 +38,9 @@ GTF_SUBDIR_TEMPLATE = "/pub/release-%(release)d/gtf/%(species)s/"
 DATABASE_FASTA_SUBDIR_TEMPLATE = (
     "/pub/release-%(release)d/%(database)s/fasta/%(species)s/%(type)s/"
 )
-DATABASE_GTF_SUBDIR_TEMPLATE = "/pub/release-%(release)d/%(database)s/gtf/%(species)s/"
+DATABASE_GTF_SUBDIR_TEMPLATE = (
+    "/pub/release-%(release)d/%(database)s/gtf/%(species)s/"
+)
 
 # GTF annotation file example: Homo_sapiens.GTCh38.gtf.gz
 GTF_FILENAME_TEMPLATE = "%(Species)s.%(reference)s.%(release)d.gtf.gz"
@@ -52,11 +54,15 @@ OLD_FASTA_FILENAME_TEMPLATE = (
 # ncRNA FASTA file for releases before (and including) Ensembl 75
 # example: Homo_sapiens.NCBI36.54.ncrna.fa.gz
 
-OLD_FASTA_FILENAME_TEMPLATE_NCRNA = "%(Species)s.%(reference)s.%(release)d.ncrna.fa.gz"
+OLD_FASTA_FILENAME_TEMPLATE_NCRNA = (
+    "%(Species)s.%(reference)s.%(release)d.ncrna.fa.gz"
+)
 
 # cDNA & protein FASTA file for releases after Ensembl 75
 # example: Homo_sapiens.GRCh37.cdna.all.fa.gz
-NEW_FASTA_FILENAME_TEMPLATE = "%(Species)s.%(reference)s.%(sequence_type)s.all.fa.gz"
+NEW_FASTA_FILENAME_TEMPLATE = (
+    "%(Species)s.%(reference)s.%(sequence_type)s.all.fa.gz"
+)
 
 # ncRNA FASTA file for releases after Ensembl 75
 # example: Homo_sapiens.GRCh37.ncrna.fa.gz
@@ -68,9 +74,11 @@ def normalize_release_properties(ensembl_release, species):
     Make sure a given release is valid, normalize it to be an integer,
     normalize the species name, and get its associated reference.
     """
-    ensembl_release = check_release_number(ensembl_release)
     if not isinstance(species, Species):
         species = find_species_by_name(species)
+    ensembl_release = check_release_number(
+        ensembl_release, database=species.database
+    )
     reference_name = species.which_reference(ensembl_release)
     return ensembl_release, species.latin_name, reference_name
 
@@ -99,7 +107,9 @@ def make_gtf_url(ensembl_release, species, server=None, database=None):
             server = ENSEMBL_FTP_SERVER
         else:
             server = ENSEMBLGENOME_FTP_SERVER
-    ensembl_release, species, _ = normalize_release_properties(ensembl_release, species)
+    ensembl_release, species, _ = normalize_release_properties(
+        ensembl_release, species
+    )
     if database is None:
         subdir = GTF_SUBDIR_TEMPLATE % {
             "release": ensembl_release,
@@ -111,7 +121,9 @@ def make_gtf_url(ensembl_release, species, server=None, database=None):
             "database": database,
             "species": species,
         }
-    filename = make_gtf_filename(ensembl_release=ensembl_release, species=species)
+    filename = make_gtf_filename(
+        ensembl_release=ensembl_release, species=species
+    )
     return server + subdir + filename
 
 
@@ -172,7 +184,7 @@ def make_fasta_url(
             server = ENSEMBL_FTP_SERVER
         else:
             server = ENSEMBLGENOME_FTP_SERVER
-    ensembl_release, species, reference_name = normalize_release_properties(
+    ensembl_release, species, _ = normalize_release_properties(
         ensembl_release, species
     )
     if database is None:
