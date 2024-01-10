@@ -33,7 +33,9 @@ class Species(Serializable):
     _reference_names_to_species = {}
 
     @classmethod
-    def register(cls, latin_name, synonyms, reference_assemblies, database=None):
+    def register(
+        cls, latin_name, synonyms, reference_assemblies, database=None
+    ):
         """
         Create a Species object from the given arguments and enter into all the
         dicts used to look the species up by its fields.
@@ -84,7 +86,9 @@ class Species(Serializable):
                 for release in range(release_range[0], release_range[1] + 1):
                     yield species_name, release
 
-    def __init__(self, latin_name, synonyms=[], reference_assemblies={}, database=None):
+    def __init__(
+        self, latin_name, synonyms=[], reference_assemblies={}, database=None
+    ):
         """
         Parameters
         ----------
@@ -105,7 +109,8 @@ class Species(Serializable):
             for i in range(start, end + 1):
                 if i in self._release_to_genome:
                     raise ValueError(
-                        "Ensembl release %d already has an associated genome" % i
+                        "Ensembl release %d already has an associated genome"
+                        % i
                     )
                 self._release_to_genome[i] = genome_name
 
@@ -368,6 +373,16 @@ rice = Species.register(
     synonyms=["rice", "japanese_rice"],
     reference_assemblies={
         "IRGSP-1.0": (55, MAX_ENSEMBLGENOME_RELEASE),
+    },
+    database="plants",
+)
+
+
+cress = Species.register(
+    latin_name="arabidopsis_thaliana",
+    synonyms=["cress", "thale_cress"],
+    reference_assemblies={
+        "TAIR10": (55, MAX_ENSEMBLGENOME_RELEASE),
     },
     database="plants",
 )
