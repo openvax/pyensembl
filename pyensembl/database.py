@@ -211,6 +211,16 @@ class Database(object):
             usecols=self.restrict_gtf_columns,
             features=self.restrict_gtf_features,
         )
+        # Some species such as soybean, do not have a gene_name and transcript_name
+        # but do have gene_id and transcript_id, use the as alias of names
+        if "gene_id" in df.columns and "gene_name" not in df.columns:
+            df["gene_name"] = df["gene_id"]
+        if (
+            "transcript_id" in df.columns
+            and "transcript_name" not in df.columns
+        ):
+            df["transcript_name"] = df["transcript_id"]
+
         all_index_groups = self._all_possible_indices(df.columns)
 
         if self.restrict_gtf_features:
@@ -227,21 +237,7 @@ class Database(object):
 
         for feature in feature_names:
             # Some speices such as soybean, do not have a gene_name and transcript_name
-            if (
-                feature == "gene_name"
-                and "gene_id" in feature_names
-                and (df.feature == "gene_name").sum() == 0
-            ):
-                alias_feature = "gene_id"
-            if (
-                feature == "transcript_name"
-                and "transcript_id" in feature_names
-                and (df.feature == "transcript_name").sum() == 0
-            ):
-                alias_feature = "transcript_id"
-
-            alias_feature = feature
-            df_subset = df[df.feature == alias_feature]
+            df_subset = df[df.feature == feature]
             if len(df_subset) == 0:
                 continue
             dataframes[feature] = df_subset
