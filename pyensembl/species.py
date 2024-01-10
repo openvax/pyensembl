@@ -100,8 +100,8 @@ class Species(Serializable):
             for i in range(start, end + 1):
                 if i in self._release_to_genome:
                     raise ValueError(
-                        "Ensembl release %d already has an associated genome"
-                        % i
+                        "Ensembl release %d for %s already has an associated genome"
+                        % (i, latin_name)
                     )
                 self._release_to_genome[i] = genome_name
 
@@ -114,13 +114,10 @@ class Species(Serializable):
         return self._release_to_genome[ensembl_release]
 
     def __str__(self):
-        return (
-            "Species(latin_name='%s', synonyms=%s, reference_assemblies=%s)"
-            % (
-                self.latin_name,
-                self.synonyms,
-                self.reference_assemblies,
-            )
+        return "Species(latin_name='%s', synonyms=%s, reference_assemblies=%s)" % (
+            self.latin_name,
+            self.synonyms,
+            self.reference_assemblies,
         )
 
     def __eq__(self, other):
@@ -339,9 +336,10 @@ nematode = Species.register(
         "WS180": (47, 49),
         "WS190": (50, 54),
         "WS200": (55, 57),
-        "WS210": (58, 78),
-        "WS220": (79, 66),
-        "WBcel235": (67, MAX_ENSEMBL_RELEASE),
+        "WS210": (58, 59),
+        "WS220": (61, 66),
+        "WBcel215": (67, 70),
+        "WBcel235": (71, MAX_ENSEMBL_RELEASE),
     },
 )
 
