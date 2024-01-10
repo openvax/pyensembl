@@ -211,7 +211,7 @@ class Database(object):
             usecols=self.restrict_gtf_columns,
             features=self.restrict_gtf_features,
         )
-        # Some species such as soybean, do not have a gene_name and transcript_name
+        # Some species such as maize, do not have a gene_name and transcript_name
         # but do have gene_id and transcript_id, use the as alias of names
         if "gene_id" in df.columns and "gene_name" not in df.columns:
             df["gene_name"] = df["gene_id"]
@@ -236,7 +236,6 @@ class Database(object):
         primary_keys = {}
 
         for feature in feature_names:
-            # Some speices such as soybean, do not have a gene_name and transcript_name
             df_subset = df[df.feature == feature]
             if len(df_subset) == 0:
                 continue
