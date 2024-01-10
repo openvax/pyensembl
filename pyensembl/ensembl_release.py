@@ -47,8 +47,8 @@ class EnsemblRelease(Genome):
         Construct EnsemblRelease if it's never been made before, otherwise
         return an old instance.
         """
-        release = check_release_number(release, database)
         species = check_species_object(species)
+        release = check_release_number(release, species.database)
         init_args_tuple = (release, species, database, server)
 
         if init_args_tuple in cls._genome_cache:
@@ -65,8 +65,8 @@ class EnsemblRelease(Genome):
         server=None,
         # server=EMBL_FTP_SERVER,,
     ):
-        self.release = check_release_number(release, database)
         self.species = check_species_object(species)
+        self.release = check_release_number(release, species.database)
         self.database = database
         self.server = server
 
