@@ -30,6 +30,9 @@ To delete only cached data related to transcript and protein sequences:
 To list all installed genomes:
     %(prog)s list
 
+To list all available genomes:
+    %(prog)s available
+
 To install a genome from source files:
     %(prog)s install \
  --reference-name "GRCh38" \
@@ -46,11 +49,9 @@ import pkg_resources
 
 from .ensembl_release import MAX_ENSEMBL_RELEASE, EnsemblRelease
 from .genome import Genome
-from .species import Species
+from .species import Species, normalize_species_name
 
-logging.config.fileConfig(
-    pkg_resources.resource_filename(__name__, "logging.conf")
-)
+logging.config.fileConfig(pkg_resources.resource_filename(__name__, "logging.conf"))
 logger = logging.getLogger(__name__)
 
 
@@ -161,14 +162,7 @@ def collect_all_available_ensembl_releases():
     for species_name in Species.all_registered_latin_names():
         species = Species._latin_names_to_species[species_name]
         # print in tree format
-        print(
-            "* "
-            + species_name
-            + " ("
-            + ", ".join(species.synonyms)
-            + ")"
-            + ":"
-        )
+        print("* " + species_name + " (" + ", ".join(species.synonyms) + ")" + ":")
         for (
             release_name,
             release_range,
@@ -189,11 +183,26 @@ def all_combinations_of_ensembl_genomes(args):
     """
     Use all combinations of species and release versions specified by the
     commandline arguments to return a list of EnsemblRelease or Genome objects.
-    The results will typically be of type EnsemblRelease unless the
+    The results will typically be of type EnsemblRelease unless the.
+
     --custom-mirror argument was given.
     """
     species_list = args.species if args.species else ["human"]
-    release_list = args.release if args.release else [MAX_ENSEMBL_RELEASE]
+
+    release_list = (
+        args.release
+        if args.release
+        else [
+            max(
+                i
+                for _, i in Species._latin_names_to_species[
+                    normalize_species_name(species_name)
+                ].reference_assemblies.values()
+            )
+            for species_name in species_list
+        ]
+    )
+
     genomes = []
     for species in species_list:
         # Otherwise, use Ensembl release information

@@ -11,22 +11,25 @@
 # limitations under the License.
 
 """
-Contains the EnsemblRelease class, which extends the Genome class
-to be specific to (a particular release of) Ensembl.
+Contains the EnsemblRelease class, which extends the Genome class to be
+specific to (a particular release of) Ensembl.
 """
 from weakref import WeakValueDictionary
 
+from .ensembl_release_versions import MAX_ENSEMBL_RELEASE, check_release_number
+from .ensembl_url_templates import (
+    ENSEMBL_FTP_SERVER,
+    make_fasta_url,
+    make_gtf_url,
+)
 from .genome import Genome
-from .ensembl_release_versions import check_release_number, MAX_ENSEMBL_RELEASE
 from .species import check_species_object, human
-
-from .ensembl_url_templates import ENSEMBL_FTP_SERVER, make_gtf_url, make_fasta_url
 
 
 class EnsemblRelease(Genome):
     """
-    Bundles together the genomic annotation and sequence data associated with
-    a particular release of the Ensembl database.
+    Bundles together the genomic annotation and sequence data associated with a
+    particular release of the Ensembl database.
     """
 
     @classmethod
@@ -47,7 +50,11 @@ class EnsemblRelease(Genome):
 
     @classmethod
     def cached(
-        cls, release=MAX_ENSEMBL_RELEASE, species=human, server=ENSEMBL_FTP_SERVER
+        cls,
+        release=MAX_ENSEMBL_RELEASE,
+        species=human,
+        server=None,
+        # server=ENSEMBL_FTP_SERVER,
     ):
         """
         Construct EnsemblRelease if it's never been made before, otherwise
@@ -61,14 +68,21 @@ class EnsemblRelease(Genome):
         return genome
 
     def __init__(
-        self, release=MAX_ENSEMBL_RELEASE, species=human, server=ENSEMBL_FTP_SERVER
+        self,
+        release=MAX_ENSEMBL_RELEASE,
+        species=human,
+        server=None,
+        # ENSEMBL_FTP_SERVER,
     ):
         self.release, self.species, self.server = self.normalize_init_values(
             release=release, species=species, server=server
         )
 
         self.gtf_url = make_gtf_url(
-            ensembl_release=self.release, species=self.species, server=self.server
+            ensembl_release=self.release,
+            species=self.species.latin_name,
+            server=self.server,
+            database=self.species.database,
         )
 
         self.transcript_fasta_urls = [
@@ -77,12 +91,14 @@ class EnsemblRelease(Genome):
                 species=self.species.latin_name,
                 sequence_type="cdna",
                 server=server,
+                database=self.species.database,
             ),
             make_fasta_url(
                 ensembl_release=self.release,
                 species=self.species.latin_name,
                 sequence_type="ncrna",
                 server=server,
+                database=self.species.database,
             ),
         ]
 
@@ -92,6 +108,7 @@ class EnsemblRelease(Genome):
                 species=self.species.latin_name,
                 sequence_type="pep",
                 server=self.server,
+                database=self.species.database,
             )
         ]
 
@@ -130,7 +147,11 @@ class EnsemblRelease(Genome):
         return hash((self.release, self.species))
 
     def to_dict(self):
-        return {"release": self.release, "species": self.species, "server": self.server}
+        return {
+            "release": self.release,
+            "species": self.species,
+            "server": self.server,
+        }
 
     @classmethod
     def from_dict(cls, state_dict):
@@ -144,7 +165,9 @@ def cached_release(release, species="human"):
     """
     Create an EnsemblRelease instance only if it's hasn't already been made,
     otherwise returns the old instance.
-    Keeping this function for backwards compatibility but this functionality
-    has been moving into the cached method of EnsemblRelease.
+
+    Keeping this function for backwards compatibility but this
+    functionality has been moving into the cached method of
+    EnsemblRelease.
     """
     return EnsemblRelease.cached(release=release, species=species)

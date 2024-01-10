@@ -12,7 +12,10 @@
 
 from serializable import Serializable
 
-from .ensembl_release_versions import MAX_ENSEMBL_RELEASE
+from .ensembl_release_versions import (
+    MAX_ENSEMBL_RELEASE,
+    MAX_ENSEMBLGENOME_RELEASE,
+)
 
 # TODO: replace Serializable with data class
 
@@ -30,15 +33,16 @@ class Species(Serializable):
     _reference_names_to_species = {}
 
     @classmethod
-    def register(cls, latin_name, synonyms, reference_assemblies):
+    def register(cls, latin_name, synonyms, reference_assemblies, database=None):
         """
-        Create a Species object from the given arguments and enter into
-        all the dicts used to look the species up by its fields.
+        Create a Species object from the given arguments and enter into all the
+        dicts used to look the species up by its fields.
         """
         species = Species(
             latin_name=latin_name,
             synonyms=synonyms,
             reference_assemblies=reference_assemblies,
+            database=database,
         )
         cls._latin_names_to_species[species.latin_name] = species
         for synonym in synonyms:
@@ -71,8 +75,8 @@ class Species(Serializable):
     @classmethod
     def all_species_release_pairs(cls):
         """
-        Generator which yields (species, release) pairs
-        for all possible combinations.
+        Generator which yields (species, release) pairs for all possible
+        combinations.
         """
         for species_name in cls.all_registered_latin_names():
             species = cls._latin_names_to_species[species_name]
@@ -80,7 +84,7 @@ class Species(Serializable):
                 for release in range(release_range[0], release_range[1] + 1):
                     yield species_name, release
 
-    def __init__(self, latin_name, synonyms=[], reference_assemblies={}):
+    def __init__(self, latin_name, synonyms=[], reference_assemblies={}, database=None):
         """
         Parameters
         ----------
@@ -95,13 +99,13 @@ class Species(Serializable):
         self.latin_name = latin_name.lower().replace(" ", "_")
         self.synonyms = synonyms
         self.reference_assemblies = reference_assemblies
+        self.database = database
         self._release_to_genome = {}
         for genome_name, (start, end) in self.reference_assemblies.items():
             for i in range(start, end + 1):
                 if i in self._release_to_genome:
                     raise ValueError(
-                        "Ensembl release %d already has an associated genome"
-                        % i
+                        "Ensembl release %d already has an associated genome" % i
                     )
                 self._release_to_genome[i] = genome_name
 
@@ -115,11 +119,12 @@ class Species(Serializable):
 
     def __str__(self):
         return (
-            "Species(latin_name='%s', synonyms=%s, reference_assemblies=%s)"
+            "Species(latin_name='%s', synonyms=%s, reference_assemblies=%s, database=%s)"
             % (
                 self.latin_name,
                 self.synonyms,
                 self.reference_assemblies,
+                self.database,
             )
         )
 
@@ -129,6 +134,7 @@ class Species(Serializable):
             and self.latin_name == other.latin_name
             and self.synonyms == other.synonyms
             and self.reference_assemblies == other.reference_assemblies
+            and self.database == other.database
         )
 
     def to_dict(self):
@@ -144,15 +150,17 @@ class Species(Serializable):
                 self.latin_name,
                 tuple(self.synonyms),
                 frozenset(self.reference_assemblies.items()),
+                self.database,
             )
         )
 
 
 def normalize_species_name(name):
     """
-    If species name was "Homo sapiens" then replace spaces with underscores
-    and return "homo_sapiens". Also replace common names like "human" with
-    "homo_sapiens".
+    If species name was "Homo sapiens" then replace spaces with underscores and
+    return "homo_sapiens".
+
+    Also replace common names like "human" with "homo_sapiens".
     """
     lower_name = name.lower().strip()
 
@@ -176,6 +184,8 @@ def find_species_by_name(species_name):
 def check_species_object(species_name_or_object):
     """
     Helper for validating user supplied species names or objects.
+
+    Return `Species` Object
     """
     if isinstance(species_name_or_object, Species):
         return species_name_or_object
@@ -351,4 +361,13 @@ yeast = Species.register(
     reference_assemblies={
         "R64-1-1": (75, MAX_ENSEMBL_RELEASE),
     },
+)
+
+rice = Species.register(
+    latin_name="oryza_sativa",
+    synonyms=["rice", "japanese_rice"],
+    reference_assemblies={
+        "IRGSP-1.0": (55, MAX_ENSEMBLGENOME_RELEASE),
+    },
+    database="plants",
 )

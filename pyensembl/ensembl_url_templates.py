@@ -11,25 +11,62 @@
 # limitations under the License.
 
 """
-Templates for URLs and paths to specific relase, species, and file type
-on the Ensembl ftp server.
+Templates for URLs and paths to specific relase, species, and file type on the
+Ensembl ftp server.
 
 For example, the human chromosomal DNA sequences for release 78 are in:
 
     https://ftp.ensembl.org/pub/release-78/fasta/homo_sapiens/dna/
 
+For plant, fungi and metazoa species, the url is as follow:
+
+    https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-57/plants/fasta/glycine_max/cdna/
 """
 
-from .species import Species, find_species_by_name
 from .ensembl_release_versions import check_release_number
+from .species import Species, find_species_by_name
 
 ENSEMBL_FTP_SERVER = "https://ftp.ensembl.org"
+ENSEMBLGENOME_FTP_SERVER = "https://ftp.ensemblgenomes.ebi.ac.uk"
 
 # Example directories
 # FASTA files: /pub/release-78/fasta/homo_sapiens/
 # GTF annotation files: /pub/release-78/gtf/homo_sapiens/
 FASTA_SUBDIR_TEMPLATE = "/pub/release-%(release)d/fasta/%(species)s/%(type)s/"
 GTF_SUBDIR_TEMPLATE = "/pub/release-%(release)d/gtf/%(species)s/"
+
+DATABASE_FASTA_SUBDIR_TEMPLATE = (
+    "/pub/release-%(release)d/$(database)s/fasta/%(species)s/%(type)s/"
+)
+DATABASE_GTF_SUBDIR_TEMPLATE = (
+    "/pub/release-%(release)d/%(database)s/gtf/%(species)s/"
+)
+
+# GTF annotation file example: Homo_sapiens.GTCh38.gtf.gz
+GTF_FILENAME_TEMPLATE = "%(Species)s.%(reference)s.%(release)d.gtf.gz"
+
+# cDNA & protein FASTA file for releases before (and including) Ensembl 75
+# example: Homo_sapiens.NCBI36.54.cdna.all.fa.gz
+OLD_FASTA_FILENAME_TEMPLATE = (
+    "%(Species)s.%(reference)s.%(release)d.%(sequence_type)s.all.fa.gz"
+)
+
+# ncRNA FASTA file for releases before (and including) Ensembl 75
+# example: Homo_sapiens.NCBI36.54.ncrna.fa.gz
+
+OLD_FASTA_FILENAME_TEMPLATE_NCRNA = (
+    "%(Species)s.%(reference)s.%(release)d.ncrna.fa.gz"
+)
+
+# cDNA & protein FASTA file for releases after Ensembl 75
+# example: Homo_sapiens.GRCh37.cdna.all.fa.gz
+NEW_FASTA_FILENAME_TEMPLATE = (
+    "%(Species)s.%(reference)s.%(sequence_type)s.all.fa.gz"
+)
+
+# ncRNA FASTA file for releases after Ensembl 75
+# example: Homo_sapiens.GRCh37.ncrna.fa.gz
+NEW_FASTA_FILENAME_TEMPLATE_NCRNA = "%(Species)s.%(reference)s.ncrna.fa.gz"
 
 
 def normalize_release_properties(ensembl_release, species):
@@ -44,14 +81,10 @@ def normalize_release_properties(ensembl_release, species):
     return ensembl_release, species.latin_name, reference_name
 
 
-# GTF annotation file example: Homo_sapiens.GTCh38.gtf.gz
-GTF_FILENAME_TEMPLATE = "%(Species)s.%(reference)s.%(release)d.gtf.gz"
-
-
 def make_gtf_filename(ensembl_release, species):
     """
     Return GTF filename expect on Ensembl FTP server for a specific
-    species/release combination
+    species/release combination.
     """
     ensembl_release, species, reference_name = normalize_release_properties(
         ensembl_release, species
@@ -63,34 +96,34 @@ def make_gtf_filename(ensembl_release, species):
     }
 
 
-def make_gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
+def make_gtf_url(ensembl_release, species, server=None, database=None):
     """
     Returns a URL and a filename, which can be joined together.
     """
-    ensembl_release, species, _ = normalize_release_properties(ensembl_release, species)
-    subdir = GTF_SUBDIR_TEMPLATE % {"release": ensembl_release, "species": species}
-    filename = make_gtf_filename(ensembl_release=ensembl_release, species=species)
+    if server is None:
+        if database is None:
+            server = ENSEMBL_FTP_SERVER
+        else:
+            server = ENSEMBLGENOME_FTP_SERVER
+    ensembl_release, species, _ = normalize_release_properties(
+        ensembl_release, species
+    )
+    if database is None:
+        subdir = GTF_SUBDIR_TEMPLATE % {
+            "release": ensembl_release,
+            "species": species,
+        }
+    else:
+        print(ensembl_release, species, database)
+        subdir = DATABASE_GTF_SUBDIR_TEMPLATE % {
+            "release": ensembl_release,
+            "database": database,
+            "species": species,
+        }
+    filename = make_gtf_filename(
+        ensembl_release=ensembl_release, species=species
+    )
     return server + subdir + filename
-
-
-# cDNA & protein FASTA file for releases before (and including) Ensembl 75
-# example: Homo_sapiens.NCBI36.54.cdna.all.fa.gz
-OLD_FASTA_FILENAME_TEMPLATE = (
-    "%(Species)s.%(reference)s.%(release)d.%(sequence_type)s.all.fa.gz"
-)
-
-# ncRNA FASTA file for releases before (and including) Ensembl 75
-# example: Homo_sapiens.NCBI36.54.ncrna.fa.gz
-
-OLD_FASTA_FILENAME_TEMPLATE_NCRNA = "%(Species)s.%(reference)s.%(release)d.ncrna.fa.gz"
-
-# cDNA & protein FASTA file for releases after Ensembl 75
-# example: Homo_sapiens.GRCh37.cdna.all.fa.gz
-NEW_FASTA_FILENAME_TEMPLATE = "%(Species)s.%(reference)s.%(sequence_type)s.all.fa.gz"
-
-# ncRNA FASTA file for releases after Ensembl 75
-# example: Homo_sapiens.GRCh37.ncrna.fa.gz
-NEW_FASTA_FILENAME_TEMPLATE_NCRNA = "%(Species)s.%(reference)s.ncrna.fa.gz"
 
 
 def make_fasta_filename(ensembl_release, species, sequence_type):
@@ -125,23 +158,46 @@ def make_fasta_filename(ensembl_release, species, sequence_type):
             }
 
 
-def make_fasta_url(ensembl_release, species, sequence_type, server=ENSEMBL_FTP_SERVER):
-    """Construct URL to FASTA file with cDNA transcript or protein sequences
+def make_fasta_url(
+    ensembl_release,
+    species,
+    sequence_type,
+    server=None,
+    database=None,
+):
+    """
+    Construct URL to FASTA file with cDNA transcript or protein sequences.
 
     Parameter examples:
         ensembl_release = 75
         species = "Homo_sapiens"
         sequence_type = "cdna" (other option: "pep")
     """
+    if server is None:
+        if database is None:
+            server = ENSEMBL_FTP_SERVER
+        else:
+            server = ENSEMBLGENOME_FTP_SERVER
     ensembl_release, species, reference_name = normalize_release_properties(
         ensembl_release, species
     )
-    subdir = FASTA_SUBDIR_TEMPLATE % {
-        "release": ensembl_release,
-        "species": species,
-        "type": sequence_type,
-    }
+    if database is None:
+        subdir = FASTA_SUBDIR_TEMPLATE % {
+            "release": ensembl_release,
+            "species": species,
+            "type": sequence_type,
+        }
+    else:
+        subdir = DATABASE_FASTA_SUBDIR_TEMPLATE % {
+            "release": ensembl_release,
+            "database": database,
+            "species": species,
+            "type": sequence_type,
+        }
+
     filename = make_fasta_filename(
-        ensembl_release=ensembl_release, species=species, sequence_type=sequence_type
+        ensembl_release=ensembl_release,
+        species=species,
+        sequence_type=sequence_type,
     )
     return server + subdir + filename

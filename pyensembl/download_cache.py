@@ -11,13 +11,12 @@
 # limitations under the License.
 
 
-from os import listdir, remove
-from os.path import join, exists, split, abspath, isdir
-from shutil import copy2, rmtree
 import logging
+from os import listdir, remove
+from os.path import abspath, exists, isdir, join, split
+from shutil import copy2, rmtree
 
 import datacache
-
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +28,11 @@ def cache_subdirectory(
     reference_name=None, annotation_name=None, annotation_version=None
 ):
     """
-    Which cache subdirectory to use for a given annotation database
-    over a particular reference. All arguments can be omitted to just get
-    the base subdirectory for all pyensembl cached datasets.
+    Which cache subdirectory to use for a given annotation database over a
+    particular reference.
+
+    All arguments can be omitted to just get the base subdirectory for
+    all pyensembl cached datasets.
     """
     if reference_name is None:
         reference_name = ""
@@ -135,7 +136,7 @@ class DownloadCache(object):
 
     def _fields(self):
         """
-        Fields used for hashing, string representation, equality comparison
+        Fields used for hashing, string representation, equality comparison.
         """
         return (
             (
@@ -150,7 +151,10 @@ class DownloadCache(object):
         )
 
     def __eq__(self, other):
-        return other.__class__ is DownloadCache and self._fields() == other._fields()
+        return (
+            other.__class__ is DownloadCache
+            and self._fields() == other._fields()
+        )
 
     def __hash__(self):
         return hash(self._fields())
@@ -202,7 +206,9 @@ class DownloadCache(object):
             # for stripping decompression extensions for both local
             # and remote files
             local_filename = datacache.build_local_filename(
-                download_url=path_or_url, filename=remote_filename, decompress=False
+                download_url=path_or_url,
+                filename=remote_filename,
+                decompress=False,
             )
         else:
             local_filename = remote_filename
@@ -210,10 +216,14 @@ class DownloadCache(object):
         # if we expect the download function to decompress this file then
         # we should use its name without the compression extension
         if self.decompress_on_download:
-            local_filename = self._remove_compression_suffix_if_present(local_filename)
+            local_filename = self._remove_compression_suffix_if_present(
+                local_filename
+            )
 
         if len(local_filename) == 0:
-            raise ValueError("Can't determine local filename for %s" % (path_or_url,))
+            raise ValueError(
+                "Can't determine local filename for %s" % (path_or_url,)
+            )
 
         return join(self.cache_directory_path, local_filename)
 
@@ -254,8 +264,8 @@ class DownloadCache(object):
         self, path_or_url, download_if_missing=False, overwrite=False
     ):
         """
-        Download a remote file or copy
-        Get the local path to a possibly remote file.
+        Download a remote file or copy Get the local path to a possibly remote
+        file.
 
         Download if file is missing from the cache directory and
         `download_if_missing` is True. Download even if local file exists if
@@ -295,7 +305,11 @@ class DownloadCache(object):
         raise ValueError(error_message)
 
     def local_path_or_install_error(
-        self, field_name, path_or_url, download_if_missing=False, overwrite=False
+        self,
+        field_name,
+        path_or_url,
+        download_if_missing=False,
+        overwrite=False,
     ):
         try:
             return self.download_or_copy_if_necessary(
@@ -308,13 +322,13 @@ class DownloadCache(object):
 
     def delete_cached_files(self, prefixes=[], suffixes=[]):
         """
-        Deletes any cached files matching the prefixes or suffixes given
+        Deletes any cached files matching the prefixes or suffixes given.
         """
         if isdir(self.cache_directory_path):
             for filename in listdir():
-                delete = any([filename.endswith(ext) for ext in suffixes]) or any(
-                    [filename.startswith(pre) for pre in prefixes]
-                )
+                delete = any(
+                    [filename.endswith(ext) for ext in suffixes]
+                ) or any([filename.startswith(pre) for pre in prefixes])
                 if delete:
                     path = join(self.cache_directory_path, filename)
                     logger.info("Deleting %s", path)
