@@ -12,7 +12,7 @@
 
 """
 Contains the EnsemblRelease class, which extends the Genome class
-to be specific to (a particular release of) Ensembl.
+to be specific to a particular release of Ensembl.
 """
 from weakref import WeakValueDictionary
 
