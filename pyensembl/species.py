@@ -12,7 +12,7 @@
 
 from serializable import Serializable
 
-from .ensembl_release_versions import MAX_ENSEMBL_RELEASE
+from .ensembl_versions import MAX_ENSEMBL_RELEASE
 
 # TODO: replace Serializable with data class
 

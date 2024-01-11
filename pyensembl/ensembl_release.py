@@ -17,7 +17,7 @@ to be specific to a particular release of Ensembl.
 from weakref import WeakValueDictionary
 
 from .genome import Genome
-from .ensembl_release_versions import check_release_number, MAX_ENSEMBL_RELEASE
+from .ensembl_versions import check_release_number, MAX_ENSEMBL_RELEASE
 from .species import check_species_object, human
 
 from .ensembl_url_templates import ENSEMBL_FTP_SERVER, make_gtf_url, make_fasta_url

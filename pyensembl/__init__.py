@@ -13,7 +13,7 @@
 from .database import Database
 from .download_cache import DownloadCache
 from .ensembl_release import EnsemblRelease, cached_release
-from .ensembl_release_versions import MAX_ENSEMBL_RELEASE
+from .ensembl_versions import MAX_ENSEMBL_RELEASE
 from .exon import Exon
 from .genome import Genome
 from .gene import Gene

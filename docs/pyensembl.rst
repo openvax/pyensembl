@@ -44,10 +44,10 @@ pyensembl.ensembl_release module
     :undoc-members:
     :show-inheritance:
 
-pyensembl.ensembl_release_versions module
+pyensembl.ensembl_versions module
 -----------------------------------------
 
-.. automodule:: pyensembl.ensembl_release_versions
+.. automodule:: pyensembl.ensembl_versions
     :members:
     :undoc-members:
     :show-inheritance:

@@ -21,7 +21,7 @@ For example, the human chromosomal DNA sequences for release 78 are in:
 """
 
 from .species import Species, find_species_by_name
-from .ensembl_release_versions import check_release_number
+from .ensembl_versions import check_release_number
 
 ENSEMBL_FTP_SERVER = "https://ftp.ensembl.org"
 
