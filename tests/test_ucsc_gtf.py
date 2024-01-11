@@ -1,8 +1,6 @@
-from nose.tools import eq_
-
 from pyensembl import Genome, Database
 
-from .common import TemporaryDirectory
+from .common import TemporaryDirectory, eq_
 from .data import data_path
 
 UCSC_GENCODE_PATH = data_path("gencode.ucsc.small.gtf")
@@ -15,10 +13,14 @@ def test_ucsc_gencode_gtf():
         df = db._load_gtf_as_dataframe()
         exons = df[df["feature"] == "exon"]
         # expect 12 exons from the dataframe
+<<<<<<< HEAD
         assert len(exons) == 12, "Expected 12 exons, got %d: %s" % (
             len(exons),
             exons,
         )
+=======
+        assert len(exons) == 12, "Expected 12 exons, got %d: %s" % (len(exons), exons)
+>>>>>>> upstream/master
 
 
 def test_ucsc_gencode_genome():
@@ -36,6 +38,7 @@ def test_ucsc_gencode_genome():
         genome.index()
         genes = genome.genes()
         for gene in genes:
+<<<<<<< HEAD
             assert gene.id, "Gene with missing ID in %s" % (
                 genome.gtf.dataframe(),
             )
@@ -43,6 +46,10 @@ def test_ucsc_gencode_genome():
             len(genes),
             genes,
         )
+=======
+            assert gene.id, "Gene with missing ID in %s" % (genome.gtf.dataframe(),)
+        assert len(genes) == 7, "Expected 7 genes, got %d: %s" % (len(genes), genes)
+>>>>>>> upstream/master
         transcripts = genome.transcripts()
         for transcript in transcripts:
             assert transcript.id, "Transcript with missing ID in %s" % (
@@ -75,10 +82,14 @@ def test_ucsc_refseq_gtf():
         df = db._load_gtf_as_dataframe()
         exons = df[df["feature"] == "exon"]
         # expect 16 exons from the GTF
+<<<<<<< HEAD
         assert len(exons) == 16, "Expected 16 exons, got %d: %s" % (
             len(exons),
             exons,
         )
+=======
+        assert len(exons) == 16, "Expected 16 exons, got %d: %s" % (len(exons), exons)
+>>>>>>> upstream/master
 
 
 def test_ucsc_refseq_genome():
@@ -99,10 +110,14 @@ def test_ucsc_refseq_genome():
             assert gene.id, "Gene with missing ID in %s" % (
                 genome.db._load_gtf_as_dataframe(),
             )
+<<<<<<< HEAD
         assert len(genes) == 2, "Expected 2 genes, got %d: %s" % (
             len(genes),
             genes,
         )
+=======
+        assert len(genes) == 2, "Expected 2 genes, got %d: %s" % (len(genes), genes)
+>>>>>>> upstream/master
         transcripts = genome.transcripts()
         for transcript in transcripts:
             assert transcript.id, "Transcript with missing ID in %s" % (

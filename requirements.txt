@@ -2,7 +2,7 @@ typechecks>=0.0.2
 datacache>=1.1.4
 memoized-property>=1.0.2
 tinytimer
-gtfparse>=2.1.0
+gtfparse>=2.1.0,<2.2.0
 serializable
 nose>=1.3.3
 pylint>=1.4.4

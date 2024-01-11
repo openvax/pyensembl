@@ -4,7 +4,7 @@ and `reverse_complement`
 """
 
 from __future__ import absolute_import
-from nose.tools import eq_
+from .common import eq_
 from pyensembl import genome_for_reference_name
 
 grch38 = genome_for_reference_name("GRCh38")

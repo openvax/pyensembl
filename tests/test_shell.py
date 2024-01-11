@@ -1,6 +1,5 @@
-from nose.tools import eq_, with_setup
 from pyensembl.shell import parser, all_combinations_of_ensembl_genomes
-from pyensembl import ensembl_grch38
+from .common import eq_
 
 
 def test_genome_selection_grch38():

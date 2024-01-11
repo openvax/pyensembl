@@ -5,7 +5,7 @@ from some other type of name or ID.
 from __future__ import absolute_import, print_function
 from pyensembl import genome_for_reference_name
 
-from .common import test_ensembl_releases
+from .common import run_multiple_genomes
 
 grch38 = genome_for_reference_name("GRCh38")
 
@@ -18,18 +18,27 @@ KNOWN_GENE_NAMES = [
 ]
 
 
+<<<<<<< HEAD
 @test_ensembl_releases()
 def test_all_gene_names(ensembl):
+=======
+@run_multiple_genomes()
+def test_all_gene_names(genome):
+>>>>>>> upstream/master
     """
     test_all_gene_names : Make sure some known gene names such as
     SMAD4, TP53, ERBB2, &c
     """
-    gene_names = ensembl.gene_names()
+    gene_names = genome.gene_names()
     print(type(gene_names))
     for gene_name in KNOWN_GENE_NAMES:
         assert gene_name in gene_names, "Missing gene name %s from %s" % (
             gene_name,
+<<<<<<< HEAD
             ensembl,
+=======
+            genome,
+>>>>>>> upstream/master
         )
 
 
@@ -41,6 +50,7 @@ def test_gene_names_at_locus_grch38_hla_a():
     names = grch38.gene_names_at_locus(6, 29945884)
     assert names == ["HLA-A"], "Expected gene name HLA-A, got: %s" % (names,)
 
+<<<<<<< HEAD
 
 @test_ensembl_releases()
 def test_gene_names_on_contig(ensembl):
@@ -58,6 +68,25 @@ def test_gene_names_on_contig(ensembl):
         "SMAD4" in gene_names_chr18
     ), "No SMAD4 in gene names on chr18 of %s, gene names: %s ... (%d)" % (
         ensembl,
+=======
+
+@run_multiple_genomes()
+def test_gene_names_on_contig(genome):
+    gene_names_chr17 = genome.gene_names(17)
+    assert (
+        "TP53" in gene_names_chr17
+    ), "No TP53 in gene names on chr17 of %s, gene names: %s ... (%d)" % (
+        genome,
+        list(gene_names_chr17[:4]),
+        len(gene_names_chr17),
+    )
+
+    gene_names_chr18 = genome.gene_names(18)
+    assert (
+        "SMAD4" in gene_names_chr18
+    ), "No SMAD4 in gene names on chr18 of %s, gene names: %s ... (%d)" % (
+        genome,
+>>>>>>> upstream/master
         list(gene_names_chr18[:4]),
         len(gene_names_chr18),
     )

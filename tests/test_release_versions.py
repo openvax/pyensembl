@@ -1,34 +1,54 @@
 from pyensembl import EnsemblRelease, MAX_ENSEMBL_RELEASE
 
-from nose.tools import raises
+from pytest import raises
 
 
-@raises(Exception)
 def test_version_too_old_1():
-    EnsemblRelease(1)
+    with raises(Exception):
+        EnsemblRelease(1)
 
+
+<<<<<<< HEAD
 
 @raises(Exception)
+=======
+>>>>>>> upstream/master
 def test_version_too_old_47():
-    EnsemblRelease(47)
+    with raises(Exception):
+        EnsemblRelease(47)
 
+
+<<<<<<< HEAD
 
 @raises(Exception)
+=======
+>>>>>>> upstream/master
 def test_version_is_not_numeric():
-    EnsemblRelease("wuzzle")
+    with raises(Exception):
+        EnsemblRelease("wuzzle")
 
+
+<<<<<<< HEAD
 
 @raises(Exception)
+=======
+>>>>>>> upstream/master
 def test_version_is_none():
-    EnsemblRelease(None)
+    with raises(Exception):
+        EnsemblRelease(None)
+
 
 
 def test_max_ensembl_release():
     assert isinstance(
         MAX_ENSEMBL_RELEASE, int
+<<<<<<< HEAD
     ), "Unexpected type for MAX_ENSEMBL_RELEASE: %s" % (
         type(MAX_ENSEMBL_RELEASE),
     )
+=======
+    ), "Unexpected type for MAX_ENSEMBL_RELEASE: %s" % (type(MAX_ENSEMBL_RELEASE),)
+>>>>>>> upstream/master
     assert 83 <= MAX_ENSEMBL_RELEASE < 1000, (
         "Unexpected value for MAX_ENSEMBL_RELEASE: %d" % MAX_ENSEMBL_RELEASE
     )

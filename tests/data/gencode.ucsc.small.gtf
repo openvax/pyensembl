@@ -1,3 +1,4 @@
+# expected format is <seqname> <source> <feature> <start> <end> <score> <strand> <frame> [attributes] [comments]
 chr1	hg38_knownGene	exon	17369	17436	0.000000	-	.	gene_id "uc031tla.1"; transcript_id "uc031tla.1"; 
 chr1	hg38_knownGene	exon	29554	30039	0.000000	+	.	gene_id "uc057aty.1"; transcript_id "uc057aty.1"; 
 chr1	hg38_knownGene	exon	30564	30667	0.000000	+	.	gene_id "uc057aty.1"; transcript_id "uc057aty.1"; 

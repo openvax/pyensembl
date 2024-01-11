@@ -14,9 +14,13 @@ def make_repeat_lookup_fn(lookup_fn, n_positions):
 
     def repeat_lookup_fn():
         for contig in contigs:
+<<<<<<< HEAD
             for position in [
                 10**6 + i * 10**6 for i in range(n_positions)
             ]:
+=======
+            for position in [10**6 + i * 10**6 for i in range(n_positions)]:
+>>>>>>> upstream/master
                 lookup_fn(contig, position)
 
     return repeat_lookup_fn
@@ -30,6 +34,7 @@ def run_benchmark(lookup_fn, n_positions_per_contig=20, time_limit=60.0):
     repeat_lookup_fn = make_repeat_lookup_fn(lookup_fn, n_positions_per_contig)
     n_loci = n_positions_per_contig * len(contigs)
     name = lookup_fn.__name__
+<<<<<<< HEAD
     average_time = benchmark(
         repeat_lookup_fn, name="%s for %d loci" % (name, n_loci)
     )
@@ -37,6 +42,11 @@ def run_benchmark(lookup_fn, n_positions_per_contig=20, time_limit=60.0):
     assert (
         average_time < time_limit
     ), "%s took too long for %s loci: %0.4fs" % (
+=======
+    average_time = benchmark(repeat_lookup_fn, name="%s for %d loci" % (name, n_loci))
+    print("-- %s : %0.4fs" % (name, average_time))
+    assert average_time < time_limit, "%s took too long for %s loci: %0.4fs" % (
+>>>>>>> upstream/master
         name,
         n_loci,
         average_time,

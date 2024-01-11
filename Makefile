@@ -13,8 +13,7 @@ PYTHON3 ?= python3
 all: check
 
 check:
-	find pyensembl -name '*.py' | xargs pylint --errors-only --disable=unsubscriptable-object,not-an-iterable,no-member && echo 'Passes pylint check'
-	pytest --cov=pyensembl/ --cov-report=term-missing tests
+	./lint-and-test.sh
 
 #: Clean up temporary files
 clean:

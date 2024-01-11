@@ -7,7 +7,7 @@ from __future__ import absolute_import
 from pyensembl import genome_for_reference_name
 from nose.tools import eq_
 
-from .common import test_ensembl_releases
+from .common import run_multiple_genomes
 
 grch38 = genome_for_reference_name("GRCh38")
 
@@ -32,8 +32,12 @@ def test_transcript_ids_ensembl_grch38_hla_a():
     transcript_ids = grch38.transcript_ids_at_locus(6, 29941260, 29945884)
     for transcript_id in HLA_A_TRANSCRIPT_IDS:
         assert transcript_id in transcript_ids, (
+<<<<<<< HEAD
             "Transcript %s of HLA-A not found overlapping locus"
             % transcript_id
+=======
+            "Transcript %s of HLA-A not found overlapping locus" % transcript_id
+>>>>>>> upstream/master
         )
 
 
@@ -46,15 +50,21 @@ KNOWN_TRANSCRIPT_IDS = HLA_A_TRANSCRIPT_IDS + [
 
 # TODO: add release 54 after transcript IDs for older GTFs are filled in
 # See https://github.com/hammerlab/pyensembl/issues/20
-@test_ensembl_releases(75, grch38.release)
-def test_all_transcript_ids(ensembl):
-    transcript_ids = set(ensembl.transcript_ids())
+@run_multiple_genomes(75, grch38.release)
+def test_all_transcript_ids(genome):
+    transcript_ids = set(genome.transcript_ids())
     for transcript_id in KNOWN_TRANSCRIPT_IDS:
+<<<<<<< HEAD
         assert (
             transcript_id in transcript_ids
         ), "Missing transcript ID %s from %s" % (
             transcript_id,
             ensembl,
+=======
+        assert transcript_id in transcript_ids, "Missing transcript ID %s from %s" % (
+            transcript_id,
+            genome,
+>>>>>>> upstream/master
         )
 
 

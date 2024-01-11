@@ -4,7 +4,7 @@ converting from some type of name or ID.
 """
 from __future__ import absolute_import
 
-from nose.tools import eq_
+from .common import eq_
 
 from pyensembl import cached_release
 

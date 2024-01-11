@@ -1,5 +1,7 @@
-from nose.tools import eq_, with_setup
+from .common import eq_
+from .data import custom_mouse_genome_grcm38_subset, setup_init_custom_mouse_genome
 
+<<<<<<< HEAD
 from .data import (
     custom_mouse_genome_grcm38_subset,
     setup_init_custom_mouse_genome,
@@ -7,6 +9,9 @@ from .data import (
 
 
 @with_setup(setup=setup_init_custom_mouse_genome)
+=======
+
+>>>>>>> upstream/master
 def test_mouse_ENSMUSG00000017167():
     """
     GTF cropped from ftp://ftp.ensembl.org/pub/release-81/gtf/mus_musculus/
@@ -28,6 +33,7 @@ def test_mouse_ENSMUSG00000017167():
     Tested against:
     http://useast.ensembl.org/Mus_musculus/Gene/Summary?db=core;g=ENSMUSG00000017167
     """
+    setup_init_custom_mouse_genome()
     genes_cntnap1 = custom_mouse_genome_grcm38_subset.genes_by_name("Cntnap1")
     eq_(len(genes_cntnap1), 1)
     gene_cntnap1 = genes_cntnap1[0]

@@ -1,5 +1,5 @@
 from pyensembl import Locus, Gene, ensembl_grch37, Transcript, Exon
-from nose.tools import eq_
+from .common import eq_
 
 
 def test_Locus_string_representation():
