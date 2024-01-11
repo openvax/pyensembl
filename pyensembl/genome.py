@@ -291,8 +291,9 @@ class Genome(Serializable):
             # make sure GTF file exists locally
             # and populate self.gtf_path
             self._set_local_paths(
-                download_if_missing=True, ## if set at False the files are not downloaded in interactive python, works anyways via command line though
-                overwrite=False)
+                download_if_missing=True,  ## if set at False the files are not downloaded in interactive python, works anyways via command line though
+                overwrite=False,
+            )
             if self.gtf_path is None:
                 raise ValueError("Property 'gtf_path' of %s cannot be None" % self)
 

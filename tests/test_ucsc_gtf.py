@@ -31,13 +31,11 @@ def test_ucsc_gencode_genome():
         genome.index()
         genes = genome.genes()
         for gene in genes:
-            assert gene.id, "Gene with missing ID in %s" % (genome.gtf.dataframe(),)
+            assert gene.id, "Gene with missing ID in %s" % (genome,)
         assert len(genes) == 7, "Expected 7 genes, got %d: %s" % (len(genes), genes)
         transcripts = genome.transcripts()
         for transcript in transcripts:
-            assert transcript.id, "Transcript with missing ID in %s" % (
-                genome.gtf.dataframe(),
-            )
+            assert transcript.id, "Transcript with missing ID in %s" % (genome,)
         assert len(transcripts) == 7, "Expected 7 transcripts, got %d: %s" % (
             len(transcripts),
             transcripts,

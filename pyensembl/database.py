@@ -619,7 +619,7 @@ class Database(object):
             features=features,
         )
 
-        column_names = set(df.keys())
+        column_names = set(df.columns)
         expect_gene_feature = features is None or "gene" in features
         expect_transcript_feature = features is None or "transcript" in features
         observed_features = set(df["feature"])
@@ -631,6 +631,7 @@ class Database(object):
             # fill in values for 'gene_name' and 'gene_biotype'
             # but only if they're actually present in the GTF
             logger.info("Creating missing gene features...")
+
             df = create_missing_features(
                 dataframe=df,
                 unique_keys={"gene": "gene_id"},
