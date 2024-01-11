@@ -10,8 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-MIN_ENSEMBL_RELEASE = 54
-MAX_ENSEMBL_RELEASE = 110
+MIN_ENSEMBL_RELEASE = 47
+MAX_ENSEMBL_RELEASE = 111
 
 
 def check_release_number(release):
