@@ -1,17 +1,7 @@
 from .common import eq_
 from .data import custom_mouse_genome_grcm38_subset, setup_init_custom_mouse_genome
 
-<<<<<<< HEAD
-from .data import (
-    custom_mouse_genome_grcm38_subset,
-    setup_init_custom_mouse_genome,
-)
 
-
-@with_setup(setup=setup_init_custom_mouse_genome)
-=======
-
->>>>>>> upstream/master
 def test_mouse_ENSMUSG00000017167():
     """
     GTF cropped from ftp://ftp.ensembl.org/pub/release-81/gtf/mus_musculus/

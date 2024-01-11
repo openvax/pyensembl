@@ -4,15 +4,9 @@ from pyensembl import find_nearest_locus
 from .common import run_multiple_genomes
 
 
-<<<<<<< HEAD
-@test_ensembl_releases()
-def test_find_nearest_BRAF_exon(ensembl):
-    braf = ensembl.genes_by_name("BRAF")[0]
-=======
 @run_multiple_genomes()
 def test_find_nearest_BRAF_exon(genome):
     braf = genome.genes_by_name("BRAF")[0]
->>>>>>> upstream/master
     braf_transcripts = braf.transcripts
     exons = braf_transcripts[0].exons
     for exon in exons:
@@ -35,40 +29,21 @@ def test_find_nearest_BRAF_exon(genome):
         eq_(result_after, (1, exon))
 
 
-<<<<<<< HEAD
-@test_ensembl_releases()
-def test_find_nearest_BRAF_transcript(ensembl):
-    braf_transcript = ensembl.genes_by_name("BRAF")[0].transcripts[0]
-    egfr_transcript = ensembl.genes_by_name("EGFR")[0].transcripts[0]
-=======
 @run_multiple_genomes()
 def test_find_nearest_BRAF_transcript(genome):
     braf_transcript = genome.genes_by_name("BRAF")[0].transcripts[0]
     egfr_transcript = genome.genes_by_name("EGFR")[0].transcripts[0]
->>>>>>> upstream/master
     transcripts = [braf_transcript, egfr_transcript]
     for transcript in transcripts:
         # immediately before transcript
         result_before = find_nearest_locus(
-<<<<<<< HEAD
-            start=transcript.start - 2,
-            end=transcript.start - 1,
-            loci=transcripts,
-=======
             start=transcript.start - 2, end=transcript.start - 1, loci=transcripts
->>>>>>> upstream/master
         )
         eq_(result_before, (1, transcript))
 
         # overlapping with transcript
         result_overlap = find_nearest_locus(
-<<<<<<< HEAD
-            start=transcript.start - 2,
-            end=transcript.start + 1,
-            loci=transcripts,
-=======
             start=transcript.start - 2, end=transcript.start + 1, loci=transcripts
->>>>>>> upstream/master
         )
         eq_(result_overlap, (0, transcript))
 

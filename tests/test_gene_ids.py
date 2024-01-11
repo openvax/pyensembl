@@ -22,13 +22,7 @@ def test_gene_ids_grch38_hla_a():
     # Summary?db=core;g=ENSG00000206503;r=6:29941260-29945884
     ids = ensembl_grch38.gene_ids_at_locus(6, 29945884)
     expected = "ENSG00000206503"
-<<<<<<< HEAD
-    assert ids == [
-        "ENSG00000206503"
-    ], "Expected HLA-A, gene ID = %s, got: %s" % (
-=======
     assert ids == ["ENSG00000206503"], "Expected HLA-A, gene ID = %s, got: %s" % (
->>>>>>> upstream/master
         expected,
         ids,
     )
@@ -47,24 +41,12 @@ def test_gene_ids_of_gene_name_hla_grch38():
 
 def test_gene_id_of_protein_id_release77():
     gene_id = ensembl77.gene_id_of_protein_id("ENSP00000485677")
-<<<<<<< HEAD
-    ok_("ENSG00000279634", gene_id)
-
-
-def test_gene_id_of_invalid_name():
-    with assert_raises(Exception):
-        ensembl_grch38.gene_ids_of_gene_name(
-            "A wonderous pony sees through your soul"
-        )
-
-=======
     eq_("ENSG00000279634", gene_id)
 
 
 def test_gene_id_of_invalid_name():
     with raises(Exception):
         ensembl_grch38.gene_ids_of_gene_name("A wonderous pony sees through your soul")
->>>>>>> upstream/master
 
 
 @run_multiple_genomes()
@@ -76,11 +58,7 @@ def test_gene_ids_on_contig(genome):
         tp53 in gene_ids_chr17
     ), "Missing %s from %s on chr17, example IDs: %s (total = %d)" % (
         tp53,
-<<<<<<< HEAD
-        ensembl,
-=======
         genome,
->>>>>>> upstream/master
         gene_ids_chr17[:5],
         len(gene_ids_chr17),
     )
@@ -92,11 +70,7 @@ def test_gene_ids_on_contig(genome):
         smad4 in gene_ids_chr18
     ), "Missing %s from %s on chr18, example result: %s (total = %d)" % (
         smad4,
-<<<<<<< HEAD
-        ensembl,
-=======
         genome,
->>>>>>> upstream/master
         gene_ids_chr18[:5],
         len(gene_ids_chr18),
     )

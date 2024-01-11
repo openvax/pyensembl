@@ -9,16 +9,14 @@ from pyensembl import cached_release
 
 ensembl = cached_release(77)
 
-
 def test_exon_object_by_id():
     """
     test_exon_object_by_id : check properties of exon 4 of CTNNB1 when looked
     up by ID in Ensembl 77.
     """
     exon = ensembl.exon_by_id("ENSE00003464041")
-    assert exon.gene_name == "CTNNB1", (
+    assert exon.gene_name == "CTNNB1", \
         "Unexpected gene name: %s" % exon.gene_name
-    )
     assert exon.contig == "3", exon.contig
     assert exon.strand == "+"
     assert exon.on_forward_strand
@@ -27,16 +25,14 @@ def test_exon_object_by_id():
     assert exon.end == 41224753, "Unexpected exon end: %s" % exon.end
     assert exon.length == len(exon) == 228
 
-
 def test_exon_object_by_id_on_negative_strand():
     """
     test_exon_object_by_id_on_negative_strand : check properties of exon 1
     from CXCR3 when looked up by ID in Ensembl 77.
     """
     exon = ensembl.exon_by_id("ENSE00001817013")
-    assert exon.gene_name == "CXCR3", (
+    assert exon.gene_name == "CXCR3", \
         "Unexpected gene name: %s" % exon.gene_name
-    )
     assert exon.contig == "X", exon.contig
     assert exon.strand == "-"
     assert exon.on_backward_strand
@@ -61,7 +57,6 @@ def test_exon_object_at_locus():
         assert exon.start <= 41224526, "Unexpected exon start: %s" % exon.start
         assert exon.end >= 41224526, "Unexpected exon end: %s" % exon.end
 
-
 def test_exon_object_at_locus_on_negative_strand():
     """
     test_exon_object_at_locus : check properties of exon 1 of CXCR3 when looked
@@ -77,7 +72,6 @@ def test_exon_object_at_locus_on_negative_strand():
         assert exon.start <= 71618517, "Unexpected exon start: %s" % exon.start
         assert exon.end >= 71618517, "Unexpected exon end: %s" % exon.end
 
-
 def test_exon_basic_properties_str():
     exon = ensembl.exon_by_id("ENSE00001817013")
     assert isinstance(str(exon), str)
@@ -87,16 +81,11 @@ def test_exon_basic_properties_str():
     # change this test
     assert str(exon) == repr(exon), "%s != %s" % (str(exon), repr(exon))
 
-
 def test_exon_basic_properties_hash():
     exon = ensembl.exon_by_id("ENSE00001817013")
-    assert isinstance(
-        hash(exon), int
-    ), "Hash function returns %s instead of int" % (
-        type(
-            hash(exon),
-        )
-    )
+    assert isinstance(hash(exon), int), \
+        "Hash function returns %s instead of int" % (
+            type(hash(exon),))
     assert hash(exon) == hash(exon), "Hash function is non-deterministic!"
     other_exon = ensembl.exon_by_id("ENSE00003464041")
     assert exon != other_exon

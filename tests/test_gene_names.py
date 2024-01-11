@@ -18,13 +18,8 @@ KNOWN_GENE_NAMES = [
 ]
 
 
-<<<<<<< HEAD
-@test_ensembl_releases()
-def test_all_gene_names(ensembl):
-=======
 @run_multiple_genomes()
 def test_all_gene_names(genome):
->>>>>>> upstream/master
     """
     test_all_gene_names : Make sure some known gene names such as
     SMAD4, TP53, ERBB2, &c
@@ -34,11 +29,7 @@ def test_all_gene_names(genome):
     for gene_name in KNOWN_GENE_NAMES:
         assert gene_name in gene_names, "Missing gene name %s from %s" % (
             gene_name,
-<<<<<<< HEAD
-            ensembl,
-=======
             genome,
->>>>>>> upstream/master
         )
 
 
@@ -50,25 +41,6 @@ def test_gene_names_at_locus_grch38_hla_a():
     names = grch38.gene_names_at_locus(6, 29945884)
     assert names == ["HLA-A"], "Expected gene name HLA-A, got: %s" % (names,)
 
-<<<<<<< HEAD
-
-@test_ensembl_releases()
-def test_gene_names_on_contig(ensembl):
-    gene_names_chr17 = ensembl.gene_names(17)
-    assert (
-        "TP53" in gene_names_chr17
-    ), "No TP53 in gene names on chr17 of %s, gene names: %s ... (%d)" % (
-        ensembl,
-        list(gene_names_chr17[:4]),
-        len(gene_names_chr17),
-    )
-
-    gene_names_chr18 = ensembl.gene_names(18)
-    assert (
-        "SMAD4" in gene_names_chr18
-    ), "No SMAD4 in gene names on chr18 of %s, gene names: %s ... (%d)" % (
-        ensembl,
-=======
 
 @run_multiple_genomes()
 def test_gene_names_on_contig(genome):
@@ -86,7 +58,6 @@ def test_gene_names_on_contig(genome):
         "SMAD4" in gene_names_chr18
     ), "No SMAD4 in gene names on chr18 of %s, gene names: %s ... (%d)" % (
         genome,
->>>>>>> upstream/master
         list(gene_names_chr18[:4]),
         len(gene_names_chr18),
     )
@@ -96,9 +67,6 @@ def test_gene_name_of_HLA_gene_id():
     gene_ids = grch38.gene_ids_of_gene_name("HLA-A")
     gene_names = [grch38.gene_name_of_gene_id(gene_id) for gene_id in gene_ids]
     unique_gene_names = list(set(gene_names))
-    assert len(unique_gene_names) == 1, (
-        len(unique_gene_names),
-        unique_gene_names,
-    )
+    assert len(unique_gene_names) == 1, (len(unique_gene_names), unique_gene_names)
     gene_name = unique_gene_names[0]
     assert gene_name == "HLA-A", gene_name

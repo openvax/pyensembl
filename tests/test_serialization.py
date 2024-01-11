@@ -105,14 +105,8 @@ def test_custom_genome_to_json():
 
 
 def test_custom_genome_to_dict():
-<<<<<<< HEAD
-    reconstructed = Genome.from_dict(
-        custom_mouse_genome_grcm38_subset.to_dict()
-    )
-=======
     setup_init_custom_mouse_genome()
     reconstructed = Genome.from_dict(custom_mouse_genome_grcm38_subset.to_dict())
->>>>>>> upstream/master
     eq_(custom_mouse_genome_grcm38_subset, reconstructed)
 
 
@@ -128,20 +122,9 @@ def test_species_to_pickle():
     eq_(human, pickle.loads(pickle.dumps(human)))
 
 
-<<<<<<< HEAD
-@test_ensembl_releases()
-def test_unique_memory_address_of_unpickled_genomes(ensembl_genome):
-    unpickled = pickle.loads(pickle.dumps(ensembl_genome))
-    assert (
-        ensembl_genome is unpickled
-    ), "Expected same object for %s but got two different instances" % (
-        unpickled,
-    )
-=======
 @run_multiple_genomes()
 def test_unique_memory_address_of_unpickled_genomes(genome):
     unpickled = pickle.loads(pickle.dumps(genome))
     assert (
         genome is unpickled
     ), "Expected same object for %s but got two different instances" % (unpickled,)
->>>>>>> upstream/master

@@ -32,12 +32,7 @@ def test_transcript_ids_ensembl_grch38_hla_a():
     transcript_ids = grch38.transcript_ids_at_locus(6, 29941260, 29945884)
     for transcript_id in HLA_A_TRANSCRIPT_IDS:
         assert transcript_id in transcript_ids, (
-<<<<<<< HEAD
-            "Transcript %s of HLA-A not found overlapping locus"
-            % transcript_id
-=======
             "Transcript %s of HLA-A not found overlapping locus" % transcript_id
->>>>>>> upstream/master
         )
 
 
@@ -54,17 +49,9 @@ KNOWN_TRANSCRIPT_IDS = HLA_A_TRANSCRIPT_IDS + [
 def test_all_transcript_ids(genome):
     transcript_ids = set(genome.transcript_ids())
     for transcript_id in KNOWN_TRANSCRIPT_IDS:
-<<<<<<< HEAD
-        assert (
-            transcript_id in transcript_ids
-        ), "Missing transcript ID %s from %s" % (
-            transcript_id,
-            ensembl,
-=======
         assert transcript_id in transcript_ids, "Missing transcript ID %s from %s" % (
             transcript_id,
             genome,
->>>>>>> upstream/master
         )
 
 

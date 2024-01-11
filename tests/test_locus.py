@@ -3,7 +3,6 @@ from pyensembl.normalization import normalize_chromosome
 
 from nose.tools import assert_raises
 
-
 def test_normalize_chromosome():
     assert normalize_chromosome("X") == "X"
     assert normalize_chromosome("chrX") == "chrX"
@@ -39,7 +38,6 @@ def test_normalize_chromosome():
     with assert_raises(ValueError):
         normalize_chromosome(0)
 
-
 def test_locus_overlaps():
     locus = Locus("1", 10, 20, "+")
     assert locus.overlaps("1", 10, 20, "+")
@@ -58,7 +56,6 @@ def test_locus_overlaps():
     assert not locus.overlaps("2", 10, 20)
     # wrong strand
     assert not locus.overlaps("1", 10, 20, "-")
-
 
 def test_locus_contains():
     locus = Locus("1", 10, 20, "+")
@@ -84,7 +81,6 @@ def test_locus_contains():
 
     # wrong strand
     assert not locus.contains("1", 10, 20, "-")
-
 
 def test_position_offset():
     forward_locus = Locus("1", 10, 20, "+")
@@ -146,7 +142,6 @@ def test_range_offset():
     # don't allow negative offsets
     with assert_raises(ValueError):
         negative_locus.offset_range(9, 10)
-
 
 def test_locus_distance():
     locus_chr1_10_20_pos = Locus("1", 10, 20, "+")
