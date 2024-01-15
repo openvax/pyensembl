@@ -1,5 +1,4 @@
-from nose.tools import eq_
-
+from .common import eq_
 from .common import run_multiple_genomes
 from .data import TP53_gene_id
 

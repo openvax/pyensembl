@@ -5,8 +5,7 @@ converting from some type of name or ID.
 from __future__ import absolute_import
 
 from pyensembl import genome_for_reference_name
-from nose.tools import eq_
-
+from .common import eq_
 from .common import run_multiple_genomes
 
 grch38 = genome_for_reference_name("GRCh38")

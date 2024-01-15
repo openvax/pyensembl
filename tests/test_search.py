@@ -1,6 +1,5 @@
-from nose.tools import eq_
-
 from pyensembl import find_nearest_locus
+from .common import eq_
 from .common import run_multiple_genomes
 
 
