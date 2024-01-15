@@ -46,6 +46,10 @@ except ImportError:
             return False
 
 
+def ok_(b):
+    assert b
+
+
 def eq_(x, y, msg=None):
     if msg is None:
         assert x == y

@@ -1,7 +1,7 @@
 from pyensembl.locus import Locus
 from pyensembl.normalization import normalize_chromosome
 
-from pytest import asserts as assert_raises
+from pytest import raises as assert_raises
 
 
 def test_normalize_chromosome():
