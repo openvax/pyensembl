@@ -24,18 +24,20 @@ class Transcript(LocusWithGenome):
     and not using the sequence, avoid the memory/performance overhead
     of fetching and storing sequences from a FASTA file.
     """
+
     def __init__(
-            self,
-            transcript_id,
-            transcript_name,
-            contig,
-            start,
-            end,
-            strand,
-            biotype,
-            gene_id,
-            genome,
-            support_level=None):
+        self,
+        transcript_id,
+        transcript_name,
+        contig,
+        start,
+        end,
+        strand,
+        biotype,
+        gene_id,
+        genome,
+        support_level=None,
+    ):
         LocusWithGenome.__init__(
             self,
             contig=contig,
@@ -43,7 +45,8 @@ class Transcript(LocusWithGenome):
             end=end,
             strand=strand,
             biotype=biotype,
-            genome=genome)
+            genome=genome,
+        )
         self.transcript_id = transcript_id
         self.transcript_name = transcript_name
         self.gene_id = gene_id
@@ -71,16 +74,18 @@ class Transcript(LocusWithGenome):
             " biotype='%s',"
             " contig='%s',"
             " start=%d,"
-            " end=%d, strand='%s', genome='%s')") % (
-                self.transcript_id,
-                self.name,
-                self.gene_id,
-                self.biotype,
-                self.contig,
-                self.start,
-                self.end,
-                self.strand,
-                self.genome.reference_name)
+            " end=%d, strand='%s', genome='%s')"
+        ) % (
+            self.transcript_id,
+            self.name,
+            self.gene_id,
+            self.biotype,
+            self.contig,
+            self.start,
+            self.end,
+            self.strand,
+            self.genome.reference_name,
+        )
 
     def __len__(self):
         """
@@ -90,9 +95,10 @@ class Transcript(LocusWithGenome):
 
     def __eq__(self, other):
         return (
-            other.__class__ is Transcript and
-            self.id == other.id and
-            self.genome == other.genome)
+            other.__class__ is Transcript
+            and self.id == other.id
+            and self.genome == other.genome
+        )
 
     def __hash__(self):
         return hash(self.id)
@@ -120,10 +126,8 @@ class Transcript(LocusWithGenome):
         # in each transcript
         columns = ["exon_number", "exon_id"]
         exon_numbers_and_ids = self.db.query(
-            columns,
-            filter_column="transcript_id",
-            filter_value=self.id,
-            feature="exon")
+            columns, filter_column="transcript_id", filter_value=self.id, feature="exon"
+        )
 
         # fill this list in its correct order (by exon_number) by using
         # the exon_number as a 1-based list offset
@@ -133,15 +137,16 @@ class Transcript(LocusWithGenome):
             exon = self.genome.exon_by_id(exon_id)
             if exon is None:
                 raise ValueError(
-                    "Missing exon %s for transcript %s" % (
-                        exon_number, self.id))
+                    "Missing exon %s for transcript %s" % (exon_number, self.id)
+                )
             exon_number = int(exon_number)
             if exon_number < 1:
                 raise ValueError("Invalid exon number: %s" % exon_number)
             elif exon_number > len(exons):
                 raise ValueError(
-                    "Invalid exon number: %s (max expected = %d)" % (
-                        exon_number, len(exons)))
+                    "Invalid exon number: %s (max expected = %d)"
+                    % (exon_number, len(exons))
+                )
 
             # exon_number is 1-based, convert to list index by subtracting 1
             exon_idx = exon_number - 1
@@ -164,12 +169,13 @@ class Transcript(LocusWithGenome):
             select_column_names=["start", "end"],
             filter_column="transcript_id",
             filter_value=self.id,
-            feature=feature)
+            feature=feature,
+        )
 
         if required and len(results) == 0:
             raise ValueError(
-                "Transcript %s does not contain feature %s" % (
-                    self.id, feature))
+                "Transcript %s does not contain feature %s" % (self.id, feature)
+            )
         return results
 
     @memoize
@@ -177,20 +183,20 @@ class Transcript(LocusWithGenome):
         """
         Get unique positions for feature, raise an error if feature is absent.
         """
-        ranges = self._transcript_feature_position_ranges(
-            feature, required=True)
+        ranges = self._transcript_feature_position_ranges(feature, required=True)
         results = []
         # a feature (such as a stop codon), maybe be split over multiple
         # contiguous ranges. Collect all the nucleotide positions into a
         # single list.
-        for (start, end) in ranges:
+        for start, end in ranges:
             # since ranges are [inclusive, inclusive] and
             # Python ranges are [inclusive, exclusive) we have to increment
             # the end position
             for position in range(start, end + 1):
                 if position in results:
                     raise ValueError(
-                        "Repeated position %d for %s" % (position, feature))
+                        "Repeated position %d for %s" % (position, feature)
+                    )
                 results.append(position)
         return results
 
@@ -207,10 +213,9 @@ class Transcript(LocusWithGenome):
         results = self._transcript_feature_positions(feature)
         if len(results) != 3:
             raise ValueError(
-                "Expected 3 positions for %s of %s but got %d" % (
-                    feature,
-                    self.id,
-                    len(results)))
+                "Expected 3 positions for %s of %s but got %d"
+                % (feature, self.id, len(results))
+            )
         return results
 
     @memoized_property
@@ -219,7 +224,8 @@ class Transcript(LocusWithGenome):
         Does this transcript have an annotated start_codon entry?
         """
         start_codons = self._transcript_feature_position_ranges(
-            "start_codon", required=False)
+            "start_codon", required=False
+        )
         return len(start_codons) > 0
 
     @memoized_property
@@ -228,16 +234,17 @@ class Transcript(LocusWithGenome):
         Does this transcript have an annotated stop_codon entry?
         """
         stop_codons = self._transcript_feature_position_ranges(
-            "stop_codon", required=False)
+            "stop_codon", required=False
+        )
         return len(stop_codons) > 0
-    
+
     @memoized_property
     def start_codon_complete(self):
         """
         Does the start codon span 3 genomic positions?
         """
         try:
-            pos = self._codon_positions("start_codon")
+            self._codon_positions("start_codon")
         except ValueError:
             return False
         return True
@@ -266,9 +273,10 @@ class Transcript(LocusWithGenome):
             select_column_names=["exon_number", "start", "end"],
             filter_column="transcript_id",
             filter_value=self.id,
-            feature="exon")
+            feature="exon",
+        )
         sorted_intervals = [None] * len(results)
-        for (exon_number, start, end) in results:
+        for exon_number, start, end in results:
             sorted_intervals[int(exon_number) - 1] = (start, end)
         return sorted_intervals
 
@@ -281,15 +289,15 @@ class Transcript(LocusWithGenome):
         """
         if type(position) is not int:
             raise TypeError(
-                "Position argument must be an integer, got %s : %s" % (
-                    position, type(position)))
+                "Position argument must be an integer, got %s : %s"
+                % (position, type(position))
+            )
 
         if position < self.start or position > self.end:
             raise ValueError(
-                "Invalid position: %d (must be between %d and %d)" % (
-                    position,
-                    self.start,
-                    self.end))
+                "Invalid position: %d (must be between %d and %d)"
+                % (position, self.start, self.end)
+            )
 
         # offset from beginning of unspliced transcript (including introns)
         unspliced_offset = self.offset(position)
@@ -306,7 +314,8 @@ class Transcript(LocusWithGenome):
         # Intron vs. Exon: ...iiiiiieeeeeeiiiiiiiiiiiiiiiieeeeeeiiiiiiiiiii...
         for exon in self.exons:
             exon_unspliced_start, exon_unspliced_end = self.offset_range(
-                exon.start, exon.end)
+                exon.start, exon.end
+            )
             # If the relative position is not within this exon, keep a running
             # total of the total exonic length-so-far.
             #
@@ -323,8 +332,8 @@ class Transcript(LocusWithGenome):
                 exon_length = len(exon)  # exon_end_position - exon_start_position + 1
                 total_spliced_offset += exon_length
         raise ValueError(
-            "Couldn't find position %d on any exon of %s" % (
-                position, self.id))
+            "Couldn't find position %d on any exon of %s" % (position, self.id)
+        )
 
     @memoized_property
     def start_codon_unspliced_offsets(self):
@@ -332,11 +341,7 @@ class Transcript(LocusWithGenome):
         Offsets from start of unspliced pre-mRNA transcript
         of nucleotides in start codon.
         """
-        return [
-            self.offset(position)
-            for position
-            in self.start_codon_positions
-        ]
+        return [self.offset(position) for position in self.start_codon_positions]
 
     @memoized_property
     def stop_codon_unspliced_offsets(self):
@@ -344,11 +349,7 @@ class Transcript(LocusWithGenome):
         Offsets from start of unspliced pre-mRNA transcript
         of nucleotides in stop codon.
         """
-        return [
-            self.offset(position)
-            for position
-            in self.stop_codon_positions
-        ]
+        return [self.offset(position) for position in self.stop_codon_positions]
 
     def _contiguous_offsets(self, offsets):
         """
@@ -358,8 +359,7 @@ class Transcript(LocusWithGenome):
         offsets.sort()
         for i in range(len(offsets) - 1):
             if offsets[i] + 1 != offsets[i + 1]:
-                raise ValueError(
-                    "Offsets not contiguous: %s" % (offsets,))
+                raise ValueError("Offsets not contiguous: %s" % (offsets,))
         return offsets
 
     @memoized_property
@@ -369,9 +369,7 @@ class Transcript(LocusWithGenome):
         of nucleotides in start codon.
         """
         offsets = [
-            self.spliced_offset(position)
-            for position
-            in self.start_codon_positions
+            self.spliced_offset(position) for position in self.start_codon_positions
         ]
         return self._contiguous_offsets(offsets)
 
@@ -382,9 +380,7 @@ class Transcript(LocusWithGenome):
         of nucleotides in stop codon.
         """
         offsets = [
-            self.spliced_offset(position)
-            for position
-            in self.stop_codon_positions
+            self.spliced_offset(position) for position in self.stop_codon_positions
         ]
         return self._contiguous_offsets(offsets)
 
@@ -403,11 +399,11 @@ class Transcript(LocusWithGenome):
         a coding sequence whose length is divisible by 3
         """
         return (
-            self.contains_start_codon and
-            self.start_codon_complete and
-            self.contains_stop_codon and
-            self.coding_sequence is not None and
-            len(self.coding_sequence) % 3 == 0
+            self.contains_start_codon
+            and self.start_codon_complete
+            and self.contains_stop_codon
+            and self.coding_sequence is not None
+            and len(self.coding_sequence) % 3 == 0
         )
 
     @memoized_property
@@ -459,7 +455,7 @@ class Transcript(LocusWithGenome):
 
         # pylint: disable=invalid-slice-index
         # TODO(tavi) Figure out pylint is not happy with this slice
-        return self.sequence[start:end + 1]
+        return self.sequence[start : end + 1]
 
     @memoized_property
     def five_prime_utr_sequence(self):
@@ -469,7 +465,7 @@ class Transcript(LocusWithGenome):
         """
         # pylint: disable=invalid-slice-index
         # TODO(tavi) Figure out pylint is not happy with this slice
-        return self.sequence[:self.first_start_codon_spliced_offset]
+        return self.sequence[: self.first_start_codon_spliced_offset]
 
     @memoized_property
     def three_prime_utr_sequence(self):
@@ -477,7 +473,7 @@ class Transcript(LocusWithGenome):
         cDNA sequence of 3' UTR
         (untranslated region at the end of the transcript)
         """
-        return self.sequence[self.last_stop_codon_spliced_offset + 1:]
+        return self.sequence[self.last_stop_codon_spliced_offset + 1 :]
 
     @memoized_property
     def protein_id(self):
@@ -487,7 +483,8 @@ class Transcript(LocusWithGenome):
             filter_value=self.id,
             feature="CDS",
             distinct=True,
-            required=False)
+            required=False,
+        )
         if result_tuple:
             return result_tuple[0]
         else:
