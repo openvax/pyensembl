@@ -91,6 +91,7 @@ collect_all_installed_ensembl_releases()
 
 ```python
 from pyensembl import EnsemblRelease
+from pyensembl.species import find_species_by_name
 data = EnsemblRelease(
     release=100,
     species=find_species_by_name('drosophila_melanogaster'),
