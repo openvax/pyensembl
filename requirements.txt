@@ -4,4 +4,4 @@ memoized-property>=1.0.2
 tinytimer>=0.0.0,<1.0.0
 gtfparse>=2.4.0,<3.0.0
 serializable>=0.2.1,<1.0.0
-pylint>=1.4.4,<2.0.0
+pylint>=2.17.2,<3.0.0
