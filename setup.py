@@ -47,7 +47,7 @@ if __name__ == "__main__":
     setup(
         name=package_name,
         version=version,
-        description="Python interface to ensembl reference genome metadata",
+        description="Python interface to Ensembl reference genome metadata",
         author="Alex Rubinsteyn",
         author_email="alex.rubinsteyn@unc.edu",
         url=github_url,
@@ -56,7 +56,7 @@ if __name__ == "__main__":
             "console_scripts": ["pyensembl = %s.shell:run" % package_name],
         },
         classifiers=[
-            "Development Status :: 3 - Alpha",
+            "Development Status :: 4 - Beta",
             "Environment :: Console",
             "Operating System :: OS Independent",
             "Intended Audience :: Science/Research",

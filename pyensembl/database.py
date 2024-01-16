@@ -206,6 +206,8 @@ class Database(object):
         df = self._load_gtf_as_dataframe(
             usecols=self.restrict_gtf_columns, features=self.restrict_gtf_features
         )
+        if hasattr(df, "to_pandas"):
+            df = df.to_pandas()
         all_index_groups = self._all_possible_indices(df.columns)
 
         if self.restrict_gtf_features:
@@ -221,7 +223,7 @@ class Database(object):
         primary_keys = {}
 
         for feature in feature_names:
-            df_subset = df[df.feature == feature]
+            df_subset = df[df["feature"] == feature]
             if len(df_subset) == 0:
                 continue
             dataframes[feature] = df_subset
