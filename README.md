@@ -8,8 +8,10 @@
     <img src="https://coveralls.io/repos/openvax/pyensembl/badge.svg?branch=master&service=github" alt="Coverage Status" />
 </a>
 -->
+
+[![Tests](https://github.com/openvax/pyensembl/actions/workflows/tests.yml/badge.svg)](https://github.com/openvax/pyensembl/actions/workflows/tests.yml)
 <a href="https://pypi.python.org/pypi/pyensembl/">
-    <img src="https://img.shields.io/pypi/v/pyensembl.svg?maxAge=1000" alt="PyPI" />
+<img src="https://img.shields.io/pypi/v/pyensembl.svg?maxAge=1000" alt="PyPI" />
 </a>
 
 # PyEnsembl
