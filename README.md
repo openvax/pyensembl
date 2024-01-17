@@ -1,15 +1,5 @@
-<!--
-<a href="https://app.travis-ci.com/github/openvax/pyensembl">
-    <img src="https://app.travis-ci.com/openvax/pyensembl.svg?branch=master" alt="Build Status" />
-</a>
--->
-<!--
-<a href="https://coveralls.io/github/openvax/pyensembl?branch=master">
-    <img src="https://coveralls.io/repos/openvax/pyensembl/badge.svg?branch=master&service=github" alt="Coverage Status" />
-</a>
--->
-
 [![Tests](https://github.com/openvax/pyensembl/actions/workflows/tests.yml/badge.svg)](https://github.com/openvax/pyensembl/actions/workflows/tests.yml)
+[![Coverage Status](https://coveralls.io/repos/github/openvax/pyensembl/badge.svg?branch=master)](https://coveralls.io/github/openvax/pyensembl?branch=master)
 <a href="https://pypi.python.org/pypi/pyensembl/">
 <img src="https://img.shields.io/pypi/v/pyensembl.svg?maxAge=1000" alt="PyPI" />
 </a>
@@ -104,13 +94,13 @@ data = EnsemblRelease(release=100, species='drosophila_melanogaster')
 
 ## Data structures
 
-### Gene 
+### Gene
 
 ```python
 gene = genome.gene_by_id(gene_id='FBgn0011747')
 ```
 
-### Transcript 
+### Transcript
 
 ```python
 transcript = gene.transcripts[0]
