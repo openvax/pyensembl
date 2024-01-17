@@ -80,37 +80,40 @@ os.environ['PYENSEMBL_CACHE_DIR'] = '/custom/cache/dir'
 
 ## List installed genomes
 
+To see the genomes for which PyEnsembl has already downloaded and indexed metadata you can run:
+
 ```sh
 pyensembl list
 ```
+
+Or equivalently do this in Python:
 
 ```python
 from pyensembl.shell import collect_all_installed_ensembl_releases
 collect_all_installed_ensembl_releases()
 ```
 
-## Load genome quickly
+## Load genome in Python
+
+Here's an example Python snippet that loads fly genome data from Ensembl release v100:
 
 ```python
 from pyensembl import EnsemblRelease
-data = EnsemblRelease(
-    release=100,
-    species=find_species_by_name('drosophila_melanogaster'),
-    )
+data = EnsemblRelease(release=100, species='drosophila_melanogaster')
 ```
 
-## Data structure
+## Data structures
 
-### Gene object
+### Gene 
 
 ```python
-gene=data.gene_by_id(gene_id='FBgn0011747')
+gene = genome.gene_by_id(gene_id='FBgn0011747')
 ```
 
-### Transcript object
+### Transcript 
 
 ```python
-transcript=gene.transcripts[0]
+transcript = gene.transcripts[0]
 ```
 
 ### Protein information
