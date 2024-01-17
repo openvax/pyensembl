@@ -1,5 +1,5 @@
 [![Tests](https://github.com/openvax/pyensembl/actions/workflows/tests.yml/badge.svg)](https://github.com/openvax/pyensembl/actions/workflows/tests.yml)
-[![Coverage Status](https://coveralls.io/repos/github/openvax/pyensembl/badge.svg?branch=master)](https://coveralls.io/github/openvax/pyensembl?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/openvax/pyensembl/badge.svg?branch=main)](https://coveralls.io/github/openvax/pyensembl?branch=main)
 <a href="https://pypi.python.org/pypi/pyensembl/">
 <img src="https://img.shields.io/pypi/v/pyensembl.svg?maxAge=1000" alt="PyPI" />
 </a>
