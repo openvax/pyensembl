@@ -41,6 +41,7 @@ To install a genome from source files:
 import argparse
 import logging.config
 import pkg_resources
+import os
 
 from .ensembl_release import EnsemblRelease
 from .ensembl_versions import MAX_ENSEMBL_RELEASE
