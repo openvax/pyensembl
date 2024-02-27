@@ -41,17 +41,24 @@ To install a genome from source files:
 import argparse
 import logging.config
 import pkg_resources
-import os
 
-from .ensembl_release import EnsemblRelease, MAX_ENSEMBL_RELEASE
+from .ensembl_release import EnsemblRelease
+from .ensembl_versions import MAX_ENSEMBL_RELEASE
 from .genome import Genome
-from .species import Species
+from .version import __version__
 
 logging.config.fileConfig(pkg_resources.resource_filename(__name__, "logging.conf"))
 logger = logging.getLogger(__name__)
 
 
 parser = argparse.ArgumentParser(usage=__doc__)
+
+parser.add_argument(
+    "--version", 
+    action="version",
+    version='%(prog)s {version}'.format(version=__version__)
+)
+
 parser.add_argument(
     "--overwrite",
     default=False,
