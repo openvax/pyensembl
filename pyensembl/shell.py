@@ -46,6 +46,7 @@ import os
 from .ensembl_release import EnsemblRelease
 from .ensembl_versions import MAX_ENSEMBL_RELEASE
 from .genome import Genome
+from .species import Species
 from .version import __version__
 
 logging.config.fileConfig(pkg_resources.resource_filename(__name__, "logging.conf"))
