@@ -77,12 +77,14 @@ class EnsemblRelease(Genome):
                 species=self.species.latin_name,
                 sequence_type="cdna",
                 server=server,
+                is_plant = self.species.is_plant,
             ),
             make_fasta_url(
                 ensembl_release=self.release,
                 species=self.species.latin_name,
                 sequence_type="ncrna",
                 server=server,
+                is_plant = self.species.is_plant,
             ),
         ]
 
@@ -92,6 +94,7 @@ class EnsemblRelease(Genome):
                 species=self.species.latin_name,
                 sequence_type="pep",
                 server=self.server,
+                is_plant = self.species.is_plant,
             )
         ]
 

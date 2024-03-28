@@ -12,7 +12,7 @@
 
 from serializable import Serializable
 
-from .ensembl_versions import MAX_ENSEMBL_RELEASE
+from .ensembl_versions import MAX_ENSEMBL_RELEASE, MAX_PLANTS_ENSEMBL_RELEASE
 
 # TODO: replace Serializable with data class
 
@@ -30,7 +30,7 @@ class Species(Serializable):
     _reference_names_to_species = {}
 
     @classmethod
-    def register(cls, latin_name, synonyms, reference_assemblies):
+    def register(cls, latin_name, synonyms, reference_assemblies, is_plant=False):
         """
         Create a Species object from the given arguments and enter into
         all the dicts used to look the species up by its fields.
@@ -39,6 +39,7 @@ class Species(Serializable):
             latin_name=latin_name,
             synonyms=synonyms,
             reference_assemblies=reference_assemblies,
+            is_plant=is_plant,
         )
         cls._latin_names_to_species[species.latin_name] = species
         for synonym in synonyms:
@@ -80,7 +81,7 @@ class Species(Serializable):
                 for release in range(release_range[0], release_range[1] + 1):
                     yield species_name, release
 
-    def __init__(self, latin_name, synonyms=[], reference_assemblies={}):
+    def __init__(self, latin_name, synonyms=[], reference_assemblies={}, is_plant=False):
         """
         Parameters
         ----------
@@ -96,6 +97,7 @@ class Species(Serializable):
         self.synonyms = synonyms
         self.reference_assemblies = reference_assemblies
         self._release_to_genome = {}
+        self.is_plant = is_plant
         for genome_name, (start, end) in self.reference_assemblies.items():
             for i in range(start, end + 1):
                 if i in self._release_to_genome:
@@ -349,4 +351,22 @@ yeast = Species.register(
     reference_assemblies={
         "R64-1-1": (76, MAX_ENSEMBL_RELEASE),
     },
+)
+
+arabidopsis_thaliana = Species.register(
+    latin_name="arabidopsis_thaliana",
+    synonyms=["arabidopsis"],
+    reference_assemblies={
+        "TAIR10": (40, MAX_PLANTS_ENSEMBL_RELEASE),
+    },
+    is_plant=True
+)
+
+rice = Species.register(
+    latin_name="oryza_sativa",
+    synonyms=["rice"],
+    reference_assemblies={
+        "IRGSP-1.0": (40, MAX_PLANTS_ENSEMBL_RELEASE),
+    },
+    is_plant=True
 )
