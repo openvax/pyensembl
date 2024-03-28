@@ -12,7 +12,7 @@
 
 MIN_ENSEMBL_RELEASE = 47
 MAX_ENSEMBL_RELEASE = 111
-
+MAX_PLANTS_ENSEMBL_RELEASE = 58
 
 def check_release_number(release):
     """

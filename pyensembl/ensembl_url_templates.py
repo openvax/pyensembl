@@ -24,13 +24,19 @@ from .species import Species, find_species_by_name
 from .ensembl_versions import check_release_number
 
 ENSEMBL_FTP_SERVER = "https://ftp.ensembl.org"
+ENSEMBL_PLANTS_FTP_SERVER = "https://ftp.ensemblgenomes.ebi.ac.uk/"
 
 # Example directories
 # FASTA files: /pub/release-78/fasta/homo_sapiens/
 # GTF annotation files: /pub/release-78/gtf/homo_sapiens/
 FASTA_SUBDIR_TEMPLATE = "/pub/release-%(release)d/fasta/%(species)s/%(type)s/"
+PLANTS_FASTA_SUBDIR_TEMPLATE = "/pub/release-%(release)d/plants/fasta/%(species)s/%(type)s/"
 GTF_SUBDIR_TEMPLATE = "/pub/release-%(release)d/gtf/%(species)s/"
+PLANTS_GTF_SUBDIR_TEMPLATE = "/pub/release-%(release)d/plants/gtf/%(species)s/"
 
+#List plants
+#Lest do a vector with all the plants species that we added to make the custom url
+lPlants = ("arabidopsis_thaliana","arabidopsis")
 
 def normalize_release_properties(ensembl_release, species):
     """
@@ -63,12 +69,18 @@ def make_gtf_filename(ensembl_release, species):
     }
 
 
-def make_gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER):
+def make_gtf_url(ensembl_release, species, server=ENSEMBL_FTP_SERVER, gtf_subdir=GTF_SUBDIR_TEMPLATE):
     """
     Returns a URL and a filename, which can be joined together.
     """
+    if species.is_plant:
+        server = ENSEMBL_PLANTS_FTP_SERVER
+        gtf_subdir = PLANTS_GTF_SUBDIR_TEMPLATE
+    #else:
+        #print(f"[+] {species.latin_name} it is not a plant", flush=True)
+
     ensembl_release, species, _ = normalize_release_properties(ensembl_release, species)
-    subdir = GTF_SUBDIR_TEMPLATE % {"release": ensembl_release, "species": species}
+    subdir = gtf_subdir % {"release": ensembl_release, "species": species}
     filename = make_gtf_filename(ensembl_release=ensembl_release, species=species)
     return server + subdir + filename
 
@@ -93,11 +105,11 @@ NEW_FASTA_FILENAME_TEMPLATE = "%(Species)s.%(reference)s.%(sequence_type)s.all.f
 NEW_FASTA_FILENAME_TEMPLATE_NCRNA = "%(Species)s.%(reference)s.ncrna.fa.gz"
 
 
-def make_fasta_filename(ensembl_release, species, sequence_type):
+def make_fasta_filename(ensembl_release, species, sequence_type, is_plant):
     ensembl_release, species, reference_name = normalize_release_properties(
         ensembl_release, species
     )
-    if ensembl_release <= 75:
+    if ensembl_release <= 75 and not is_plant:
         if sequence_type == "ncrna":
             return OLD_FASTA_FILENAME_TEMPLATE_NCRNA % {
                 "Species": species.capitalize(),
@@ -125,7 +137,7 @@ def make_fasta_filename(ensembl_release, species, sequence_type):
             }
 
 
-def make_fasta_url(ensembl_release, species, sequence_type, server=ENSEMBL_FTP_SERVER):
+def make_fasta_url(ensembl_release, species, sequence_type, is_plant, server=ENSEMBL_FTP_SERVER, fasta_subdir=FASTA_SUBDIR_TEMPLATE):
     """Construct URL to FASTA file with cDNA transcript or protein sequences
 
     Parameter examples:
@@ -136,12 +148,17 @@ def make_fasta_url(ensembl_release, species, sequence_type, server=ENSEMBL_FTP_S
     ensembl_release, species, reference_name = normalize_release_properties(
         ensembl_release, species
     )
-    subdir = FASTA_SUBDIR_TEMPLATE % {
+
+    if is_plant:
+        server = ENSEMBL_PLANTS_FTP_SERVER
+        fasta_subdir = PLANTS_FASTA_SUBDIR_TEMPLATE
+
+    subdir = fasta_subdir % {
         "release": ensembl_release,
         "species": species,
         "type": sequence_type,
     }
     filename = make_fasta_filename(
-        ensembl_release=ensembl_release, species=species, sequence_type=sequence_type
+        ensembl_release=ensembl_release, species=species, sequence_type=sequence_type, is_plant = is_plant
     )
     return server + subdir + filename
