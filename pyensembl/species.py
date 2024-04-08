@@ -303,7 +303,7 @@ guinea_pig = Species.register(
 
 pig = Species.register(
     latin_name="sus_scrofa",
-    synonyms=["pig"],
+    synonyms=["pok",],
     reference_assemblies={"Sscrofa11.1": (75, MAX_ENSEMBL_RELEASE)},
 )
 
