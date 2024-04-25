@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-MIN_ENSEMBL_RELEASE = 47
+MIN_ENSEMBL_RELEASE = 40
 MAX_ENSEMBL_RELEASE = 111
 MAX_PLANTS_ENSEMBL_RELEASE = 58
 
