@@ -10,6 +10,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""pyensembl public API and compatibility helpers."""
+
+import numpy as np
+
+# ``numpy.typeDict`` was removed in NumPy 2.0.  Some of ``pyensembl``'s
+# dependencies still rely on this old attribute, so provide it when
+# running under newer versions of NumPy.
+if not hasattr(np, "typeDict"):
+    np.typeDict = np.sctypeDict
+
 from .database import Database
 from .download_cache import DownloadCache
 from .ensembl_release import EnsemblRelease, cached_release
