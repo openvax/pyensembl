@@ -157,9 +157,10 @@ PyEnsembl uses pytest for testing. Before running tests, you'll need to install 
 
 ```sh
 # Install required Ensembl releases for testing
-pyensembl install --release 75 --species human
-pyensembl install --release 77 --species human
-pyensembl install --release 93 --species human
+pyensembl install --release 75 --species human \
+  && pyensembl install --release 77 --species human \
+  && pyensembl install --release 93 --species human \
+  && pyensembl install --release 111 --species homo_sapiens
 ```
 
 ### Run all tests:
