@@ -28,9 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install flake8 pytest pytest-cov coveralls
-          pip install -r requirements.txt
-          pip install .
+          pip install -e ".[dev]"
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
@@ -49,6 +47,6 @@ jobs:
           pyensembl install --release 93 --species mouse --custom-mirror https://github.com/openvax/ensembl-data/releases/download/GRCm38.93/
       - name: Run unit tests
         run: |
-          ./test.sh
+          pytest --cov=pyensembl/ --cov-report=term-missing tests/
       - name: Publish coverage to Coveralls
         uses: coverallsapp/github-action@v2.2.3

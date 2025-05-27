@@ -4,7 +4,8 @@
 <img src="https://img.shields.io/pypi/v/pyensembl.svg?maxAge=1000" alt="PyPI" />
 </a>
 
-# PyEnsembl
+PyEnsembl
+=========
 
 PyEnsembl is a Python interface to [Ensembl](http://www.ensembl.org) reference genome metadata such as exons and transcripts. PyEnsembl downloads [GTF](https://en.wikipedia.org/wiki/Gene_transfer_format) and [FASTA](https://en.wikipedia.org/wiki/FASTA_format) files from the [Ensembl FTP server](ftp://ftp.ensembl.org) and loads them into a local database. PyEnsembl can also work with custom reference data specified using user-supplied GTF and FASTA files.
 
@@ -136,6 +137,59 @@ data = Genome(
 # parse GTF and construct database of genomic features
 data.index()
 gene_names = data.gene_names_at_locus(contig=6, position=29945884)
+```
+
+# Development and Testing
+
+## Installation for Development
+
+To install PyEnsembl for development with testing dependencies:
+
+```sh
+pip install -e ".[dev]"
+```
+
+This installs PyEnsembl in editable mode along with development dependencies including `pytest`, `pytest-cov`, `flake8`, and `coveralls`.
+
+## Running Tests
+
+PyEnsembl uses pytest for testing. Before running tests, you'll need to install some Ensembl data:
+
+```sh
+# Install required Ensembl releases for testing
+pyensembl install --release 75 --species human
+pyensembl install --release 77 --species human
+pyensembl install --release 93 --species human
+```
+
+### Run all tests:
+
+```sh
+pytest tests/
+```
+
+### Run tests with coverage:
+
+```sh
+pytest --cov=pyensembl/ --cov-report=term-missing tests/
+```
+
+### Run a specific test file:
+
+```sh
+pytest tests/test_gene_names.py
+```
+
+### Run a specific test function:
+
+```sh
+pytest tests/test_gene_names.py::test_all_gene_names
+```
+
+### Run tests with verbose output:
+
+```sh
+pytest -v tests/
 ```
 
 # API

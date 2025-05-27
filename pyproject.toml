@@ -21,6 +21,14 @@ dependencies = [
     "serializable>=0.2.1,<1.0.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov>=2.0",
+    "flake8>=3.8",
+    "coveralls>=3.0",
+]
+
 [project.urls]
 Homepage = "https://github.com/openvax/pyensembl"
 Source = "https://github.com/openvax/pyensembl"
