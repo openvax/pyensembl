@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyensembl"
+dynamic = ["version"]
+description = "Python interface to Ensembl reference genome metadata"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+authors = [{name = "Alex Rubinsteyn", email = "alex.rubinsteyn@unc.edu"}]
+keywords = ["ensembl", "genomics", "bioinformatics"]
+
+dependencies = [
+    "typechecks>=0.0.2,<1.0.0",
+    "datacache>=1.4.0,<2.0.0",
+    "memoized-property>=1.0.2",
+    "tinytimer>=0.0.0,<1.0.0",
+    "gtfparse>=2.5.0,<3.0.0",
+    "serializable>=0.2.1,<1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/openvax/pyensembl"
+Source = "https://github.com/openvax/pyensembl"
+
+[project.scripts]
+pyensembl = "pyensembl.shell:run"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pyensembl*"]
+
+[tool.setuptools.package-data]
+pyensembl = ["logging.conf"]
+
+[tool.setuptools.dynamic]
+version = {attr = "pyensembl.version.__version__"}

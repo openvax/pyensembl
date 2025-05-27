@@ -40,7 +40,10 @@ To install a genome from source files:
 
 import argparse
 import logging.config
-import pkg_resources
+try:
+    from importlib import resources as importlib_resources
+except ImportError:  # pragma: no cover - Python <3.9 fallback
+    import importlib_resources  # type: ignore
 import os
 
 from .ensembl_release import EnsemblRelease
@@ -49,7 +52,9 @@ from .genome import Genome
 from .species import Species
 from .version import __version__
 
-logging.config.fileConfig(pkg_resources.resource_filename(__name__, "logging.conf"))
+logging.config.fileConfig(
+    importlib_resources.files(__package__).joinpath("logging.conf")
+)
 logger = logging.getLogger(__name__)
 
 
