@@ -14,6 +14,7 @@ MIN_ENSEMBL_RELEASE = 40
 MAX_ENSEMBL_RELEASE = 114
 MAX_PLANTS_ENSEMBL_RELEASE = 58
 
+
 def check_release_number(release):
     """
     Check to make sure a release is in the valid range of
@@ -21,7 +22,7 @@ def check_release_number(release):
     """
     try:
         release = int(release)
-    except:
+    except (ValueError, TypeError):
         raise ValueError("Invalid Ensembl release: %s" % release)
 
     if release < MIN_ENSEMBL_RELEASE:
