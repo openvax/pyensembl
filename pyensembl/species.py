@@ -239,7 +239,8 @@ brown_rat = Species.register(
     reference_assemblies={
         "Rnor_5.0": (75, 79),
         "Rnor_6.0": (80, 104),
-        "mRatBN7.2": (105, MAX_ENSEMBL_RELEASE),
+        "mRatBN7.2": (105, 113),
+        "GRCr8": (114, MAX_ENSEMBL_RELEASE),
     },
 )
 
