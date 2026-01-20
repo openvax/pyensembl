@@ -371,3 +371,44 @@ rice = Species.register(
     },
     is_plant=True
 )
+
+#BALB/c
+mus_musculus_balbc = Species.register(
+    latin_name='mus_musculus_balbcj',
+    synonyms=['mus_balbc', 'BALB/c'],
+    reference_assemblies = {
+        'BALB_cJ_v1':(76, 113),
+        'BALB_cJ_v3':(114, MAX_ENSEMBL_RELEASE),
+    })
+#129
+mus_musculus_129 = Species.register(
+    latin_name='mus_musculus_129s1svimj',
+    synonyms=['mus_129', '129'],
+    reference_assemblies = {
+        '129S1_SvImJ_v1':(76, 113),
+        '129S1_SvImJ_v3':(114, MAX_ENSEMBL_RELEASE),
+    })
+#FVB
+mus_musculus_fvb = Species.register(
+    latin_name='mus_musculus_fvbnj',
+    synonyms=['mus_fvb', 'FVB'],
+    reference_assemblies = {
+        'FVB_NJ_v1':(76, 113),
+        'FVB_NJ_v3':(114, MAX_ENSEMBL_RELEASE),
+    })
+#NOD
+mus_musculus_nod = Species.register(
+    latin_name='mus_musculus_nodshiltj',
+    synonyms=['mus_nod', 'NOD'],
+    reference_assemblies = {
+        'NOD_ShiLtJ_v1':(76, 113),
+        'NOD_ShiLtJ_v3':(114, MAX_ENSEMBL_RELEASE),
+    })
+#6NJ
+mus_musculus_c57bl6nj = Species.register(
+    latin_name='mus_musculus_c57bl6nj',
+    synonyms=['mus_6nj', '6NJ'],
+    reference_assemblies = {
+        'C57BL_6NJ_v1':(76, 113),
+        'C57BL_6NJ_v3':(114, MAX_ENSEMBL_RELEASE),
+    })
