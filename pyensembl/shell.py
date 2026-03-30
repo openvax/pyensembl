@@ -40,7 +40,7 @@ To install a genome from source files:
 
 import argparse
 import logging.config
-import pkg_resources
+from importlib import resources
 import os
 
 from .ensembl_release import EnsemblRelease
@@ -49,7 +49,7 @@ from .genome import Genome
 from .species import Species
 from .version import __version__
 
-logging.config.fileConfig(pkg_resources.resource_filename(__name__, "logging.conf"))
+logging.config.fileConfig(str(resources.files(__name__) / "logging.conf"))
 logger = logging.getLogger(__name__)
 
 
