@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyensembl"
+version = "2.4.0"
+description = "Python interface to Ensembl reference genome metadata"
+authors = [
+    {name = "Alex Rubinsteyn", email = "alex.rubinsteyn@unc.edu"}
+]
+license = {text = "Apache-2.0"}
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = [
+    "typechecks>=0.0.2,<1.0.0",
+    "datacache>=1.4.0,<2.0.0",
+    "memoized-property>=1.0.2",
+    "tinytimer>=0.0.0,<1.0.0",
+    "gtfparse>=2.5.0,<3.0.0",
+    "serializable>=0.2.1,<1.0.0",
+    "numpy<2",
+]
+
+[project.scripts]
+pyensembl = "pyensembl.shell:run"
+
+[project.optional-dependencies]
+dev = [
+    "flake8",
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "coveralls",
+    "build",
+]
+
+[tool.setuptools]
+packages = ["pyensembl"]
+
+[tool.setuptools.package-data]
+pyensembl = ["logging.conf"]
