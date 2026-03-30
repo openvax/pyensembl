@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyensembl"
-version = "2.4.0"
+dynamic = ["version"]
 description = "Python interface to Ensembl reference genome metadata"
 authors = [
     {name = "Alex Rubinsteyn", email = "alex.rubinsteyn@unc.edu"}
@@ -41,6 +41,7 @@ dev = [
     "ruff",
     "coveralls",
     "build",
+    "tomli; python_version < '3.11'",
 ]
 
 [tool.setuptools]
@@ -48,3 +49,6 @@ packages = ["pyensembl"]
 
 [tool.setuptools.package-data]
 pyensembl = ["logging.conf"]
+
+[tool.setuptools.dynamic]
+version = {attr = "pyensembl.version.__version__"}
