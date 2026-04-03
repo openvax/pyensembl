@@ -49,7 +49,7 @@ from .genome import Genome
 from .species import Species
 from .version import __version__
 
-logging.config.fileConfig(str(resources.files(__name__) / "logging.conf"))
+logging.config.fileConfig(str(resources.files("pyensembl") / "logging.conf"))
 logger = logging.getLogger(__name__)
 
 
