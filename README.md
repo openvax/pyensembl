@@ -25,7 +25,7 @@ exon_ids  = data.exon_ids_of_gene_name('HLA-A')
 
 # Installation
 
-You can install PyEnsembl using [pip](https://pip.pypa.io/en/latest/quickstart.html):
+PyEnsembl requires Python 3.9 or later. You can install PyEnsembl using [pip](https://pip.pypa.io/en/latest/quickstart.html):
 
 ```sh
 pip install pyensembl
@@ -45,6 +45,27 @@ human reference data from Ensembl releases 75 and 76.
 
 Alternatively, you can create the `EnsemblRelease` object from inside a Python
 process and call `ensembl_object.download()` followed by `ensembl_object.index()`.
+
+## Development Setup
+
+For development, install PyEnsembl in editable mode with development dependencies:
+
+```sh
+git clone https://github.com/openvax/pyensembl.git
+cd pyensembl
+pip install -e .[dev]
+```
+
+This installs the package in development mode along with tools for testing, linting, and building:
+- `pytest` for running tests
+- `ruff` and `flake8` for code linting
+- `pytest-cov` for coverage reporting
+- `build` for package building
+
+Run tests with:
+```sh
+pytest
+```
 
 ## Cache Location
 
