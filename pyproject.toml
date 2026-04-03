@@ -25,9 +25,9 @@ dependencies = [
     "datacache>=1.4.0,<2.0.0",
     "memoized-property>=1.0.2",
     "tinytimer>=0.0.0,<1.0.0",
-    "gtfparse>=2.5.0,<3.0.0",
+    "gtfparse>=2.6.0,<3.0.0",
     "serializable>=0.2.1,<1.0.0",
-    "numpy<2",
+    "numpy>=2.0.0,<3.0.0",
 ]
 
 [project.scripts]
