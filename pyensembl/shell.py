@@ -69,9 +69,7 @@ parser.add_argument(
 )
 
 
-root_group = parser.add_mutually_exclusive_group()
-
-release_group = root_group.add_argument_group()
+release_group = parser.add_argument_group("Ensembl release options")
 release_group.add_argument(
     "--release",
     type=int,
@@ -93,7 +91,7 @@ release_group.add_argument(
     help="URL and directory to use instead of the default Ensembl FTP server",
 )
 
-path_group = root_group.add_argument_group()
+path_group = parser.add_argument_group("Custom genome options")
 
 path_group.add_argument(
     "--reference-name",
