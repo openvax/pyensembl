@@ -3,7 +3,6 @@
 
 # TODO:
 # - cache this directory $HOME/.cache/pyensembl/
-# - update coveralls
 # - get a badge for tests passing
 # - download binary dependencies from conda
 name: Tests
@@ -13,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
 
@@ -49,6 +48,18 @@ jobs:
       - name: Run unit tests
         run: |
           ./test.sh
-      - name: Publish coverage to Coveralls
+      - name: Upload coverage to Coveralls
         uses: coverallsapp/github-action@v2.2.3
-        continue-on-error: true
+        with:
+          parallel: true
+          flag-name: python-${{ matrix.python-version }}
+
+  coveralls-finish:
+    needs: build
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Finalize Coveralls
+        uses: coverallsapp/github-action@v2.2.3
+        with:
+          parallel-finished: true
