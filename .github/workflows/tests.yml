@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
 
@@ -51,3 +51,4 @@ jobs:
           ./test.sh
       - name: Publish coverage to Coveralls
         uses: coverallsapp/github-action@v2.2.3
+        continue-on-error: true
