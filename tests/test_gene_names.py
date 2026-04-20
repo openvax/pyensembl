@@ -34,12 +34,17 @@ def test_all_gene_names(genome):
 
 
 def test_gene_names_at_locus_grch38_hla_a():
-    # chr6:29,945,884  is a position for HLA-A
-    # based on:
+    # chr6:29,945,884 is a position for HLA-A. Ensembl release 114
+    # introduced overlapping gene POLR1HASP at the same locus, so accept
+    # either HLA-A alone or the HLA-A + POLR1HASP pair.
     # http://useast.ensembl.org/Homo_sapiens/Gene/
     # Summary?db=core;g=ENSG00000206503;r=6:29941260-29945884
-    names = grch38.gene_names_at_locus(6, 29945884)
-    assert names == ["HLA-A"], "Expected gene name HLA-A, got: %s" % (names,)
+    names = set(grch38.gene_names_at_locus(6, 29945884))
+    assert "HLA-A" in names, "Expected gene name HLA-A, got: %s" % (names,)
+    if len(names) > 1:
+        assert names == {"HLA-A", "POLR1HASP"}, (
+            "Expected HLA-A alone or HLA-A + POLR1HASP, got: %s" % (names,)
+        )
 
 
 @run_multiple_genomes()
