@@ -16,6 +16,24 @@ from .common import memoize
 from .locus_with_genome import LocusWithGenome
 
 
+def _merge_ranges(ranges):
+    """
+    Sort [(start, end)] inclusive-inclusive ranges and merge any that are
+    adjacent or overlapping (end+1 == next start).
+    """
+    if not ranges:
+        return []
+    ordered = sorted(ranges)
+    merged = [ordered[0]]
+    for start, end in ordered[1:]:
+        prev_start, prev_end = merged[-1]
+        if start <= prev_end + 1:
+            merged[-1] = (prev_start, max(prev_end, end))
+        else:
+            merged.append((start, end))
+    return merged
+
+
 class Transcript(LocusWithGenome):
     """
     Transcript encompasses the locus, exons, and sequence of a transcript.
@@ -388,9 +406,15 @@ class Transcript(LocusWithGenome):
     def coding_sequence_position_ranges(self):
         """
         Return absolute chromosome position ranges for CDS fragments
-        of this transcript
+        of this transcript, including the stop codon (which Ensembl
+        encodes as a separate feature from the CDS).
         """
-        return self._transcript_feature_position_ranges("CDS")
+        ranges = list(self._transcript_feature_position_ranges("CDS"))
+        if self.contains_stop_codon:
+            ranges.extend(
+                self._transcript_feature_position_ranges("stop_codon", required=False)
+            )
+        return _merge_ranges(ranges)
 
     @memoized_property
     def complete(self):
