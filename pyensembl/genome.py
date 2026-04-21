@@ -589,7 +589,7 @@ class Genome(Serializable):
     def protein_ids_at_locus(self, contig, position, end=None, strand=None):
         return self.db.distinct_column_values_at_locus(
             column="protein_id",
-            feature="transcript",
+            feature="CDS",
             contig=contig,
             position=position,
             end=end,
