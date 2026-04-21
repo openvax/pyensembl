@@ -13,6 +13,7 @@
 from memoized_property import memoized_property
 
 from .common import memoize
+from .exon import Exon
 from .locus_with_genome import LocusWithGenome
 
 
@@ -141,23 +142,25 @@ class Transcript(LocusWithGenome):
     def exons(self):
         # need to look up exon_number alongside ID since each exon may
         # appear in multiple transcripts and have a different exon number
-        # in each transcript
-        columns = ["exon_number", "exon_id"]
-        exon_numbers_and_ids = self.db.query(
+        # in each transcript.
+        # Older or non-Ensembl GTFs may omit the exon_id attribute, in
+        # which case we build Exon objects directly from the exon row
+        # and synthesize a stable per-transcript ID.
+        has_exon_id = self.db.column_exists("exon", "exon_id")
+        if has_exon_id:
+            columns = ["exon_number", "exon_id"]
+        else:
+            columns = ["exon_number", "seqname", "start", "end", "strand"]
+        rows = self.db.query(
             columns, filter_column="transcript_id", filter_value=self.id, feature="exon"
         )
 
         # fill this list in its correct order (by exon_number) by using
         # the exon_number as a 1-based list offset
-        exons = [None] * len(exon_numbers_and_ids)
+        exons = [None] * len(rows)
 
-        for exon_number, exon_id in exon_numbers_and_ids:
-            exon = self.genome.exon_by_id(exon_id)
-            if exon is None:
-                raise ValueError(
-                    "Missing exon %s for transcript %s" % (exon_number, self.id)
-                )
-            exon_number = int(exon_number)
+        for row in rows:
+            exon_number = int(row[0])
             if exon_number < 1:
                 raise ValueError("Invalid exon number: %s" % exon_number)
             elif exon_number > len(exons):
@@ -166,9 +169,27 @@ class Transcript(LocusWithGenome):
                     % (exon_number, len(exons))
                 )
 
+            if has_exon_id:
+                exon_id = row[1]
+                exon = self.genome.exon_by_id(exon_id)
+                if exon is None:
+                    raise ValueError(
+                        "Missing exon %s for transcript %s" % (exon_number, self.id)
+                    )
+            else:
+                _, seqname, start, end, strand = row
+                exon = Exon(
+                    exon_id="%s_exon_%d" % (self.id, exon_number),
+                    contig=seqname,
+                    start=start,
+                    end=end,
+                    strand=strand,
+                    gene_name=self.gene_name,
+                    gene_id=self.gene_id,
+                )
+
             # exon_number is 1-based, convert to list index by subtracting 1
-            exon_idx = exon_number - 1
-            exons[exon_idx] = exon
+            exons[exon_number - 1] = exon
         return exons
 
     # possible annotations associated with transcripts
