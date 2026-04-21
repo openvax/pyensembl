@@ -60,3 +60,19 @@ def test_transcript_id_of_protein_id_CCR2():
     # Ensembl release 104, GRCh38.p13
     transcript_id = grch38.transcript_id_of_protein_id("ENSP00000399285")
     eq_("ENST00000445132", transcript_id)
+
+
+def test_protein_ids_at_locus_grch38_hla_a():
+    # Regression test for https://github.com/openvax/pyensembl/issues/286:
+    # protein_ids_at_locus previously queried the "transcript" feature,
+    # which stores an empty protein_id, so results were a list of empty
+    # strings instead of real protein IDs.
+    # chr6:29,942,555 falls inside the first CDS of HLA-A transcripts.
+    protein_ids = set(grch38.protein_ids_at_locus(6, 29942555))
+    assert protein_ids, "Expected non-empty protein IDs at HLA-A CDS locus"
+    assert "" not in protein_ids, (
+        "protein_ids_at_locus should not return empty strings: %s" % (protein_ids,)
+    )
+    assert "ENSP00000365998" in protein_ids, (
+        "Expected HLA-A protein ENSP00000365998 at locus, got: %s" % (protein_ids,)
+    )
