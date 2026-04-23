@@ -489,6 +489,13 @@ class Transcript(LocusWithGenome):
         if self.sequence is None:
             return None
 
+        # Some GTF annotations (e.g. fragments in Ensembl Plants) leave a
+        # protein-coding transcript without a start_codon or stop_codon
+        # feature. Return None rather than crashing when either endpoint of
+        # the CDS cannot be located.
+        if not self.contains_start_codon or not self.contains_stop_codon:
+            return None
+
         start = self.first_start_codon_spliced_offset
         end = self.last_stop_codon_spliced_offset
 
