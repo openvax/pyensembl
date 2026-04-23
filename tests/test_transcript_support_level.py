@@ -7,6 +7,23 @@ from __future__ import absolute_import
 from .common import eq_
 
 from pyensembl import cached_release
+from pyensembl.genome import _parse_transcript_support_level
+
+
+def test_parse_transcript_support_level_values():
+    # Recent Ensembl releases append parenthetical text to the TSL; we should
+    # still recover the leading integer. See openvax/pyensembl#297.
+    eq_(_parse_transcript_support_level("1 (assigned to previous version 5)"), 1)
+    eq_(_parse_transcript_support_level("3 (assigned to previous version 12)"), 3)
+    # Plain numeric strings still work.
+    eq_(_parse_transcript_support_level("1"), 1)
+    eq_(_parse_transcript_support_level("5"), 5)
+    # Missing / NA / junk values collapse to None.
+    eq_(_parse_transcript_support_level(None), None)
+    eq_(_parse_transcript_support_level(""), None)
+    eq_(_parse_transcript_support_level("NA"), None)
+    eq_(_parse_transcript_support_level("NA (something)"), None)
+    eq_(_parse_transcript_support_level("   "), None)
 
 
 def test_transcript_support_level():
