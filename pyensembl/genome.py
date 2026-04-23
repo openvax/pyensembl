@@ -41,7 +41,8 @@ def _parse_transcript_support_level(value):
     """
     if not value:
         return None
-    leading = value.split()[0] if value.split() else None
+    tokens = value.split()
+    leading = tokens[0] if tokens else None
     if leading and leading.isdigit():
         return int(leading)
     return None
