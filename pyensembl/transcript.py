@@ -489,6 +489,13 @@ class Transcript(LocusWithGenome):
         if self.sequence is None:
             return None
 
+        # Some GTF annotations (e.g. fragments in Ensembl Plants) leave a
+        # protein-coding transcript without a start_codon or stop_codon
+        # feature. Return None rather than crashing when either endpoint of
+        # the CDS cannot be located.
+        if not self.contains_start_codon or not self.contains_stop_codon:
+            return None
+
         start = self.first_start_codon_spliced_offset
         end = self.last_stop_codon_spliced_offset
 
@@ -508,6 +515,8 @@ class Transcript(LocusWithGenome):
         cDNA sequence of 5' UTR
         (untranslated region at the beginning of the transcript)
         """
+        if self.sequence is None or not self.contains_start_codon:
+            return None
         # pylint: disable=invalid-slice-index
         # TODO(tavi) Figure out pylint is not happy with this slice
         return self.sequence[: self.first_start_codon_spliced_offset]
@@ -518,6 +527,8 @@ class Transcript(LocusWithGenome):
         cDNA sequence of 3' UTR
         (untranslated region at the end of the transcript)
         """
+        if self.sequence is None or not self.contains_stop_codon:
+            return None
         return self.sequence[self.last_stop_codon_spliced_offset + 1 :]
 
     @memoized_property
