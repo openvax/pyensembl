@@ -29,6 +29,24 @@ from .sequence_data import SequenceData
 from .transcript import Transcript
 
 
+def _parse_transcript_support_level(value):
+    """
+    Coerce a raw ``transcript_support_level`` attribute into an int or None.
+
+    Recent Ensembl releases append text such as
+    ``"1 (assigned to previous version 5)"`` after the numeric TSL, and
+    older or missing entries can be ``None`` or the literal string ``"NA"``.
+    Keep only the leading whitespace-separated token and return it as an
+    int when it is a digit, otherwise None.
+    """
+    if not value:
+        return None
+    leading = value.split()[0] if value.split() else None
+    if leading and leading.isdigit():
+        return int(leading)
+    return None
+
+
 class Genome(Serializable):
     """
     Bundles together the genomic annotation and sequence data associated with
@@ -896,11 +914,9 @@ class Genome(Serializable):
                 extra_data = dict(zip(extra_field_names, result[5:]))
                 transcript_name = extra_data.get("transcript_name")
                 transcript_biotype = extra_data.get("transcript_biotype")
-                tsl = extra_data.get("transcript_support_level")
-                if not tsl or tsl == "NA":
-                    tsl = None
-                else:
-                    tsl = int(tsl)
+                tsl = _parse_transcript_support_level(
+                    extra_data.get("transcript_support_level")
+                )
 
             self._transcripts[transcript_id] = Transcript(
                 transcript_id=transcript_id,
