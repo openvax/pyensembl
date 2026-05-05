@@ -346,6 +346,15 @@ nematode = Species.register(
     },
 )
 
+xenopus = Species.register(
+    latin_name="xenopus_tropicalis",
+    synonyms=["xenopus", "western clawed frog", "tropical clawed frog"],
+    reference_assemblies={
+        "UCB_Xtro_10.0": (100, MAX_ENSEMBL_RELEASE),
+    },
+)
+    
+
 yeast = Species.register(
     latin_name="saccharomyces_cerevisiae",
     synonyms=["yeast", "budding_yeast"],
@@ -370,6 +379,33 @@ rice = Species.register(
         "IRGSP-1.0": (40, MAX_PLANTS_ENSEMBL_RELEASE),
     },
     is_plant=True
+)
+
+maize = Species.register(
+    latin_name="zea_mays",
+    synonyms=["maize", "corn"],
+    reference_assemblies={
+        "Zm-B73-REFERENCE-NAM-5.0": (54, MAX_PLANTS_ENSEMBL_RELEASE),
+    },
+    is_plant=True,
+)
+
+tomato = Species.register(
+    latin_name="solanum_lycopersicum",
+    synonyms=["tomato"],
+    reference_assemblies={
+        "SL3.0": (42, MAX_PLANTS_ENSEMBL_RELEASE),
+    },
+    is_plant=True,
+)
+
+soybean = Species.register(
+    latin_name="glycine_max",
+    synonyms=["soybean", "soya bean"],
+    reference_assemblies={
+        "Glycine_max_v2.1": (43, MAX_PLANTS_ENSEMBL_RELEASE),
+    },
+    is_plant=True,
 )
 
 #BALB/c
