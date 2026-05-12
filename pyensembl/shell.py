@@ -147,13 +147,16 @@ parser.add_argument(
         "delete-all-files",
         "delete-index-files",
         "list",
+        "available",
     ),
     help=(
         '"install" will download and index any data that is  not '
         'currently downloaded or indexed. "delete-all-files" will delete all data '
         'associated with a genome annotation. "delete-index-files" deletes '
         "all files other than the original GTF and FASTA files for a genome. "
-        '"list" will show you all installed Ensembl genomes.'
+        '"list" will show you all installed Ensembl genomes. '
+        '"available" prints every species and the Ensembl release ranges '
+        "supported by pyensembl."
     ),
 )
 
@@ -249,6 +252,25 @@ def collect_selected_genomes(args):
         return all_combinations_of_ensembl_genomes(args)
 
 
+def format_available_species():
+    """
+    Build the multi-line string printed by the "available" action: every
+    registered species followed by its supported Ensembl release ranges,
+    grouped by reference assembly.
+    """
+    lines = []
+    for latin_name in sorted(Species._latin_names_to_species):
+        species = Species._latin_names_to_species[latin_name]
+        if species.synonyms:
+            synonyms = ",".join(species.synonyms)
+            lines.append("* %s (%s):" % (latin_name, synonyms))
+        else:
+            lines.append("* %s:" % latin_name)
+        for assembly, (start, end) in species.reference_assemblies.items():
+            lines.append("  * %s: (%d, %d)" % (assembly, start, end))
+    return "\n".join(lines)
+
+
 def run():
     args = parser.parse_args()
     if args.action == "list":
@@ -261,6 +283,8 @@ def run():
             filepaths = genome.required_local_files()
             directories = {os.path.split(path)[0] for path in filepaths}
             print("-- %s: %s" % (genome, ", ".join(directories)))
+    elif args.action == "available":
+        print(format_available_species())
     else:
         genomes = collect_selected_genomes(args)
 
