@@ -321,7 +321,7 @@ class Genome(Serializable):
             self._db = Database(
                 gtf_path=self.gtf_path,
                 install_string=self.install_string(),
-                cache_directory_path=self.cache_directory_path,
+                cache_directory_path=self.download_cache.cache_directory_path,
                 restrict_gtf_columns={
                     "seqname",
                     "source",
@@ -371,7 +371,7 @@ class Genome(Serializable):
                 )
             self._protein_sequences = SequenceData(
                 fasta_paths=self.protein_fasta_paths,
-                cache_directory_path=self.cache_directory_path,
+                cache_directory_path=self.download_cache.cache_directory_path,
             )
         return self._protein_sequences
 
@@ -389,7 +389,7 @@ class Genome(Serializable):
                 )
             self._transcript_sequences = SequenceData(
                 fasta_paths=self.transcript_fasta_paths,
-                cache_directory_path=self.cache_directory_path,
+                cache_directory_path=self.download_cache.cache_directory_path,
             )
         return self._transcript_sequences
 
