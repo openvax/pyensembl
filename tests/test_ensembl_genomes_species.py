@@ -20,6 +20,7 @@ from pyensembl.species import (
     maize,
     plasmodium_falciparum,
     rice,
+    soybean,
     tomato,
     toxoplasma_gondii,
     wheat,
@@ -27,7 +28,7 @@ from pyensembl.species import (
 
 
 GENOMES_SPECIES_BY_DIVISION = {
-    "plants": [arabidopsis_thaliana, rice, wheat, maize, tomato],
+    "plants": [arabidopsis_thaliana, rice, wheat, maize, tomato, soybean],
     "fungi": [fission_yeast, aspergillus_nidulans, candida_albicans],
     "metazoa": [anopheles_gambiae],
     "protists": [plasmodium_falciparum, toxoplasma_gondii],
@@ -86,6 +87,26 @@ def test_existing_non_vertebrate_species_stay_on_main_ensembl():
         release = EnsemblRelease(release=110, species=species)
         assert release.server == ENSEMBL_FTP_SERVER
         assert release.gtf_url.startswith(ENSEMBL_FTP_SERVER)
+
+
+def test_xenopus_picks_assembly_by_release():
+    """Xenopus tropicalis is served from main Ensembl with two assemblies:
+    Xenopus_tropicalis_v9.1 covers releases 98-106 and UCB_Xtro_10.0
+    covers 107 onwards. Verify both halves route through main Ensembl
+    and resolve to the right assembly per release."""
+    from pyensembl.ensembl_url_templates import ENSEMBL_FTP_SERVER
+
+    xenopus = Species._latin_names_to_species["xenopus_tropicalis"]
+    assert xenopus.division == "vertebrates"
+    assert xenopus.ensembl_genomes is False
+
+    r106 = EnsemblRelease(release=106, species=xenopus)
+    assert r106.server == ENSEMBL_FTP_SERVER
+    assert "Xenopus_tropicalis_v9.1" in r106.gtf_url
+
+    r107 = EnsemblRelease(release=107, species=xenopus)
+    assert r107.server == ENSEMBL_FTP_SERVER
+    assert "UCB_Xtro_10.0" in r107.gtf_url
 
 
 def test_is_plant_kwarg_back_compat_implies_ensembl_genomes():

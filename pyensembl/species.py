@@ -397,6 +397,15 @@ zebrafish = Species.register(
     },
 )
 
+xenopus = Species.register(
+    latin_name="xenopus_tropicalis",
+    synonyms=["xenopus", "western_clawed_frog", "tropical_clawed_frog"],
+    reference_assemblies={
+        "Xenopus_tropicalis_v9.1": (98, 106),
+        "UCB_Xtro_10.0": (107, MAX_ENSEMBL_RELEASE),
+    },
+)
+
 fly = Species.register(
     latin_name="drosophila_melanogaster",
     synonyms=["drosophila", "fruit fly", "fly"],
@@ -472,7 +481,10 @@ maize = Species.register(
     latin_name="zea_mays",
     synonyms=["maize", "corn"],
     reference_assemblies={
-        "Zm-B73-REFERENCE-NAM-5.0": (40, MAX_ENSEMBL_GENOMES_RELEASE),
+        # Zm-B73-REFERENCE-NAM-5.0 was introduced at Ensembl Plants release
+        # 54; earlier releases used a different assembly and returned 404
+        # for this asset.
+        "Zm-B73-REFERENCE-NAM-5.0": (54, MAX_ENSEMBL_GENOMES_RELEASE),
     },
     division="plants",
     ensembl_genomes=True,
@@ -482,7 +494,17 @@ tomato = Species.register(
     latin_name="solanum_lycopersicum",
     synonyms=["tomato"],
     reference_assemblies={
-        "SL3.0": (40, MAX_ENSEMBL_GENOMES_RELEASE),
+        "SL3.0": (42, MAX_ENSEMBL_GENOMES_RELEASE),
+    },
+    division="plants",
+    ensembl_genomes=True,
+)
+
+soybean = Species.register(
+    latin_name="glycine_max",
+    synonyms=["soybean", "soya_bean"],
+    reference_assemblies={
+        "Glycine_max_v2.1": (43, MAX_ENSEMBL_GENOMES_RELEASE),
     },
     division="plants",
     ensembl_genomes=True,
