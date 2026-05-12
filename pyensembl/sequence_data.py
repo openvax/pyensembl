@@ -11,7 +11,9 @@
 # limitations under the License.
 
 from os import remove
-from os.path import exists, abspath, split, join
+from os.path import dirname, exists, abspath, split, join
+
+import datacache
 import logging
 from collections import Counter
 import pickle
@@ -119,6 +121,7 @@ class SequenceData(object):
             fasta_dictionary_tmp = parse_fasta_dictionary(fasta_path)
             self._add_to_fasta_dictionary(fasta_dictionary_tmp)
             logger.info("Saving sequence dictionary to %s", pickle_path)
+            datacache.ensure_dir(dirname(pickle_path))
             dump_pickle(fasta_dictionary_tmp, pickle_path)
 
     def index(self, overwrite=False):
