@@ -252,22 +252,115 @@ def collect_selected_genomes(args):
         return all_combinations_of_ensembl_genomes(args)
 
 
-def format_available_species():
+_DIVISION_LABELS = (
+    ("vertebrates", "Vertebrates"),
+    ("metazoa", "Invertebrates"),
+    ("plants", "Plants"),
+    ("fungi", "Fungi"),
+    ("protists", "Protists"),
+    ("bacteria", "Bacteria"),
+)
+
+
+def _format_release_range(start, end):
+    # Inclusive range; collapse a single-value range to just that integer.
+    if start == end:
+        return str(start)
+    return "%d–%d" % (start, end)  # en-dash
+
+
+def _species_display_name(species):
+    if species.synonyms:
+        return species.synonyms[0]
+    return species.latin_name
+
+
+def format_available_species(use_color=None):
     """
-    Build the multi-line string printed by the "available" action: every
-    registered species followed by its supported Ensembl release ranges,
-    grouped by reference assembly.
+    Render the table printed by the "available" CLI action: every registered
+    species and its supported Ensembl release ranges, grouped by division.
+
+    When ``use_color`` is ``None`` (the default), ANSI styling is applied if
+    stdout is a TTY and suppressed otherwise.
     """
-    lines = []
+    import sys
+
+    if use_color is None:
+        use_color = sys.stdout.isatty()
+    BOLD = "\x1b[1m" if use_color else ""
+    DIM = "\x1b[2m" if use_color else ""
+    RESET = "\x1b[0m" if use_color else ""
+
+    species_by_division = {key: [] for key, _ in _DIVISION_LABELS}
     for latin_name in sorted(Species._latin_names_to_species):
         species = Species._latin_names_to_species[latin_name]
-        if species.synonyms:
-            synonyms = ",".join(species.synonyms)
-            lines.append("* %s (%s):" % (latin_name, synonyms))
-        else:
-            lines.append("* %s:" % latin_name)
-        for assembly, (start, end) in species.reference_assemblies.items():
-            lines.append("  * %s: (%d, %d)" % (assembly, start, end))
+        species_by_division.setdefault(species.division, []).append(species)
+
+    all_species = [s for group in species_by_division.values() for s in group]
+    if not all_species:
+        return ""
+
+    def _w(values, fallback):
+        return max((len(v) for v in values), default=fallback)
+
+    name_w = _w([_species_display_name(s) for s in all_species], 8)
+    asm_w = _w(
+        [asm for s in all_species for asm in s.reference_assemblies], 8
+    )
+    rng_w = _w(
+        [
+            _format_release_range(start, end)
+            for s in all_species
+            for (start, end) in s.reference_assemblies.values()
+        ],
+        8,
+    )
+    latin_w = _w([s.latin_name for s in all_species], 8)
+
+    col_name = max(name_w, len("Species")) + 2
+    col_asm = max(asm_w, len("Assembly")) + 2
+    col_rng = max(rng_w, len("Releases")) + 2
+    col_latin = max(latin_w, len("Latin name"))
+    total_w = col_name + col_asm + col_rng + col_latin
+
+    lines = []
+    header_row = "%-*s%-*s%-*s%s" % (
+        col_name, "Species",
+        col_asm, "Assembly",
+        col_rng, "Releases",
+        "Latin name",
+    )
+    lines.append("%s%s%s" % (BOLD, header_row, RESET))
+    lines.append("─" * total_w)
+
+    for division_key, division_label in _DIVISION_LABELS:
+        members = species_by_division.get(division_key, [])
+        if not members:
+            continue
+        members.sort(key=_species_display_name)
+        lines.append("")
+        section = "── %s " % division_label
+        section += "─" * max(2, total_w - len(section))
+        lines.append("%s%s%s" % (BOLD, section, RESET))
+        for species in members:
+            for i, (asm, (start, end)) in enumerate(
+                species.reference_assemblies.items()
+            ):
+                if i == 0:
+                    name_cell = _species_display_name(species)
+                    latin_cell = "%s%s%s" % (DIM, species.latin_name, RESET)
+                else:
+                    name_cell = ""
+                    latin_cell = ""
+                lines.append(
+                    "%-*s%-*s%-*s%s"
+                    % (
+                        col_name, name_cell,
+                        col_asm, asm,
+                        col_rng, _format_release_range(start, end),
+                        latin_cell,
+                    )
+                )
     return "\n".join(lines)
 
 

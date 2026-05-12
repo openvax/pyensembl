@@ -30,16 +30,28 @@ class Species(Serializable):
     _reference_names_to_species = {}
 
     @classmethod
-    def register(cls, latin_name, synonyms, reference_assemblies, is_plant=False):
+    def register(
+        cls,
+        latin_name,
+        synonyms,
+        reference_assemblies,
+        division="vertebrates",
+        is_plant=False,
+    ):
         """
         Create a Species object from the given arguments and enter into
         all the dicts used to look the species up by its fields.
+
+        ``is_plant`` is retained for backward compatibility; new callers
+        should pass ``division`` instead.
         """
+        if is_plant:
+            division = "plants"
         species = Species(
             latin_name=latin_name,
             synonyms=synonyms,
             reference_assemblies=reference_assemblies,
-            is_plant=is_plant,
+            division=division,
         )
         cls._latin_names_to_species[species.latin_name] = species
         for synonym in synonyms:
@@ -81,7 +93,17 @@ class Species(Serializable):
                 for release in range(release_range[0], release_range[1] + 1):
                     yield species_name, release
 
-    def __init__(self, latin_name, synonyms=[], reference_assemblies={}, is_plant=False):
+    VALID_DIVISIONS = frozenset(
+        {"vertebrates", "plants", "fungi", "metazoa", "protists", "bacteria"}
+    )
+
+    def __init__(
+        self,
+        latin_name,
+        synonyms=[],
+        reference_assemblies={},
+        division="vertebrates",
+    ):
         """
         Parameters
         ----------
@@ -92,12 +114,22 @@ class Species(Serializable):
         reference_assemblies : dict
             Mapping of names of reference genomes onto inclusive ranges of
             Ensembl releases Example: {"GRCh37": (54, 75)}
+
+        division : str
+            Ensembl division this species belongs to. One of
+            ``"vertebrates"``, ``"plants"``, ``"fungi"``, ``"metazoa"``,
+            ``"protists"``, ``"bacteria"``. Defaults to ``"vertebrates"``.
         """
+        if division not in self.VALID_DIVISIONS:
+            raise ValueError(
+                "Invalid division %r for %s; must be one of %s"
+                % (division, latin_name, sorted(self.VALID_DIVISIONS))
+            )
         self.latin_name = latin_name.lower().replace(" ", "_")
         self.synonyms = synonyms
         self.reference_assemblies = reference_assemblies
+        self.division = division
         self._release_to_genome = {}
-        self.is_plant = is_plant
         for genome_name, (start, end) in self.reference_assemblies.items():
             for i in range(start, end + 1):
                 if i in self._release_to_genome:
@@ -106,6 +138,34 @@ class Species(Serializable):
                         % (i, latin_name)
                     )
                 self._release_to_genome[i] = genome_name
+
+    @property
+    def is_plant(self):
+        return self.division == "plants"
+
+    @property
+    def is_fungus(self):
+        return self.division == "fungi"
+
+    @property
+    def is_vertebrate(self):
+        return self.division == "vertebrates"
+
+    @property
+    def is_invertebrate(self):
+        return self.division == "metazoa"
+
+    @property
+    def is_animal(self):
+        return self.division in ("vertebrates", "metazoa")
+
+    @property
+    def is_protist(self):
+        return self.division == "protists"
+
+    @property
+    def is_bacterium(self):
+        return self.division == "bacteria"
 
     def which_reference(self, ensembl_release):
         if ensembl_release not in self._release_to_genome:
@@ -330,6 +390,7 @@ fly = Species.register(
         "BDGP6.28": (99, 102),
         "BDGP6.32": (103, MAX_ENSEMBL_RELEASE),
     },
+    division="metazoa",
 )
 
 nematode = Species.register(
@@ -344,6 +405,7 @@ nematode = Species.register(
         "WBcel215": (67, 70),
         "WBcel235": (71, MAX_ENSEMBL_RELEASE),
     },
+    division="metazoa",
 )
 
 yeast = Species.register(
@@ -352,6 +414,7 @@ yeast = Species.register(
     reference_assemblies={
         "R64-1-1": (76, MAX_ENSEMBL_RELEASE),
     },
+    division="fungi",
 )
 
 arabidopsis_thaliana = Species.register(
@@ -360,7 +423,7 @@ arabidopsis_thaliana = Species.register(
     reference_assemblies={
         "TAIR10": (40, MAX_PLANTS_ENSEMBL_RELEASE),
     },
-    is_plant=True
+    division="plants",
 )
 
 rice = Species.register(
@@ -369,7 +432,7 @@ rice = Species.register(
     reference_assemblies={
         "IRGSP-1.0": (40, MAX_PLANTS_ENSEMBL_RELEASE),
     },
-    is_plant=True
+    division="plants",
 )
 
 #BALB/c
