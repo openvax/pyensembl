@@ -488,7 +488,13 @@ class Genome(Serializable):
             remove(db_path)
 
     def _all_feature_values(
-        self, column, feature, distinct=True, contig=None, strand=None
+        self,
+        column,
+        feature,
+        distinct=True,
+        contig=None,
+        strand=None,
+        biotype=None,
     ):
         """
         Cached lookup of all values for a particular feature property from
@@ -513,6 +519,11 @@ class Genome(Serializable):
         strand : str, optional
             Restrict results to "+" or "-" strands
 
+        biotype : str, optional
+            Restrict results to rows whose ``{feature}_biotype`` column
+            matches this value (e.g. ``"protein_coding"``). Only meaningful
+            for the ``gene`` and ``transcript`` features.
+
         Returns a list constructed from query results.
         """
         return self.db.query_feature_values(
@@ -521,6 +532,7 @@ class Genome(Serializable):
             distinct=distinct,
             contig=contig,
             strand=strand,
+            biotype=biotype,
         )
 
     def transcript_sequence(self, transcript_id):
@@ -672,10 +684,10 @@ class Genome(Serializable):
     #
     ###################################################
 
-    def genes(self, contig=None, strand=None):
+    def genes(self, contig=None, strand=None, biotype=None):
         """
         Returns all Gene objects in the database. Can be restricted to a
-        particular contig/chromosome and strand by the following arguments:
+        particular contig/chromosome, strand, or biotype.
 
         Parameters
         ----------
@@ -684,8 +696,12 @@ class Genome(Serializable):
 
         strand : str
             Only return genes on this strand.
+
+        biotype : str
+            Only return genes with this Ensembl ``gene_biotype``
+            (e.g. ``"protein_coding"``).
         """
-        gene_ids = self.gene_ids(contig=contig, strand=strand)
+        gene_ids = self.gene_ids(contig=contig, strand=strand, biotype=biotype)
         return [self.gene_by_id(gene_id) for gene_id in gene_ids]
 
     def gene_by_id(self, gene_id):
@@ -818,13 +834,17 @@ class Genome(Serializable):
         )
         return [str(result[0]) for result in results if result[0]]
 
-    def gene_ids(self, contig=None, strand=None):
+    def gene_ids(self, contig=None, strand=None, biotype=None):
         """
-        What are all the gene IDs
-        (optionally restrict to a given chromosome/contig and/or strand)
+        What are all the gene IDs (optionally restrict to a given
+        chromosome/contig, strand, or ``gene_biotype``).
         """
         return self._all_feature_values(
-            column="gene_id", feature="gene", contig=contig, strand=strand
+            column="gene_id",
+            feature="gene",
+            contig=contig,
+            strand=strand,
+            biotype=biotype,
         )
 
     def gene_ids_of_gene_name(self, gene_name):
@@ -860,13 +880,15 @@ class Genome(Serializable):
     #
     ###################################################
 
-    def transcripts(self, contig=None, strand=None):
+    def transcripts(self, contig=None, strand=None, biotype=None):
         """
         Construct Transcript object for every transcript entry in
-        the database. Optionally restrict to a particular
-        chromosome using the `contig` argument.
+        the database. Optionally restrict to a particular contig, strand,
+        or ``transcript_biotype`` (e.g. ``"protein_coding"``).
         """
-        transcript_ids = self.transcript_ids(contig=contig, strand=strand)
+        transcript_ids = self.transcript_ids(
+            contig=contig, strand=strand, biotype=biotype
+        )
         return [
             self.transcript_by_id(transcript_id) for transcript_id in transcript_ids
         ]
@@ -1002,9 +1024,13 @@ class Genome(Serializable):
         )
         return [result[0] for result in results]
 
-    def transcript_ids(self, contig=None, strand=None):
+    def transcript_ids(self, contig=None, strand=None, biotype=None):
         return self._all_feature_values(
-            column="transcript_id", feature="transcript", contig=contig, strand=strand
+            column="transcript_id",
+            feature="transcript",
+            contig=contig,
+            strand=strand,
+            biotype=biotype,
         )
 
     def transcript_ids_of_gene_id(self, gene_id):

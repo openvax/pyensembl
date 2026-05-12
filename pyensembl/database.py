@@ -504,7 +504,7 @@ class Database(object):
 
     @memoize
     def query_feature_values(
-        self, column, feature, distinct=True, contig=None, strand=None
+        self, column, feature, distinct=True, contig=None, strand=None, biotype=None
     ):
         """
         Run a SQL query against the sqlite3 database, filtered
@@ -530,6 +530,16 @@ class Database(object):
             strand = normalize_strand(strand)
             query += " AND strand = ?"
             query_params.append(strand)
+
+        if biotype is not None:
+            biotype_column = "%s_biotype" % feature
+            if not self.column_exists(feature, biotype_column):
+                raise ValueError(
+                    "Cannot filter by biotype: table %r has no column %r"
+                    % (feature, biotype_column)
+                )
+            query += " AND %s = ?" % biotype_column
+            query_params.append(biotype)
 
         rows = self.run_sql_query(query, query_params=query_params)
         return [row[0] for row in rows if row is not None]
