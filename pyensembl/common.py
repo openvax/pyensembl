@@ -50,6 +50,25 @@ def _memoize_cache_key(args, kwargs):
     return tuple(cache_key_list)
 
 
+def merge_intervals(ranges):
+    """
+    Sort ``[(start, end)]`` inclusive-inclusive ranges and merge any pair
+    that overlaps or is exactly adjacent (``end + 1 == next start``).
+    Returns a new list of merged ``(start, end)`` tuples in ascending order.
+    """
+    if not ranges:
+        return []
+    ordered = sorted(ranges)
+    merged = [ordered[0]]
+    for start, end in ordered[1:]:
+        prev_start, prev_end = merged[-1]
+        if start <= prev_end + 1:
+            merged[-1] = (prev_start, max(prev_end, end))
+        else:
+            merged.append((start, end))
+    return merged
+
+
 def memoize(fn):
     """Simple reset-able memoization decorator for functions and methods,
     assumes that all arguments to the function can be hashed and

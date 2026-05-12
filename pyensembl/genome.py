@@ -22,9 +22,11 @@ from os.path import exists, getsize
 from serializable import Serializable
 
 from .download_cache import DownloadCache
+from .common import merge_intervals
 from .database import Database
 from .exon import Exon
 from .gene import Gene
+from .normalization import normalize_chromosome, normalize_strand
 from .search import find_nearest_locus
 from .sequence_data import SequenceData
 from .transcript import Transcript
@@ -587,6 +589,24 @@ class Genome(Serializable):
             end=end,
             loci=self.genes(contig=contig, strand=strand),
         )
+
+    def merged_gene_intervals(self, contig, strand=None):
+        """
+        Return the union of all gene loci on ``contig`` as a sorted list of
+        non-overlapping ``(start, end)`` tuples. Adjacent intervals
+        (``end + 1 == next start``) are merged into one. Pass ``strand`` to
+        restrict to one strand of the contig.
+
+        Useful for asking "is this position inside any gene?" or computing
+        gene-density coverage without double-counting overlapping genes.
+        """
+        sql = "SELECT start, end FROM gene WHERE seqname = ?"
+        params = [normalize_chromosome(contig)]
+        if strand is not None:
+            sql += " AND strand = ?"
+            params.append(normalize_strand(strand))
+        rows = self.db.run_sql_query(sql, query_params=params)
+        return merge_intervals(rows)
 
     def nearest_transcript(self, contig, position, end=None, strand=None):
         """
