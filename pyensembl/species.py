@@ -12,7 +12,10 @@
 
 from serializable import Serializable
 
-from .ensembl_versions import MAX_ENSEMBL_RELEASE, MAX_PLANTS_ENSEMBL_RELEASE
+from .ensembl_versions import (
+    MAX_ENSEMBL_RELEASE,
+    MAX_ENSEMBL_GENOMES_RELEASE,
+)
 
 # TODO: replace Serializable with data class
 
@@ -36,22 +39,26 @@ class Species(Serializable):
         synonyms,
         reference_assemblies,
         division="vertebrates",
+        ensembl_genomes=False,
         is_plant=False,
     ):
         """
         Create a Species object from the given arguments and enter into
         all the dicts used to look the species up by its fields.
 
-        ``is_plant`` is retained for backward compatibility; new callers
-        should pass ``division`` instead.
+        ``is_plant`` is retained for backward compatibility and implies
+        ``division="plants"`` and ``ensembl_genomes=True``. New callers
+        should pass ``division`` and ``ensembl_genomes`` directly.
         """
         if is_plant:
             division = "plants"
+            ensembl_genomes = True
         species = Species(
             latin_name=latin_name,
             synonyms=synonyms,
             reference_assemblies=reference_assemblies,
             division=division,
+            ensembl_genomes=ensembl_genomes,
         )
         cls._latin_names_to_species[species.latin_name] = species
         for synonym in synonyms:
@@ -103,6 +110,7 @@ class Species(Serializable):
         synonyms=[],
         reference_assemblies={},
         division="vertebrates",
+        ensembl_genomes=False,
     ):
         """
         Parameters
@@ -119,6 +127,14 @@ class Species(Serializable):
             Ensembl division this species belongs to. One of
             ``"vertebrates"``, ``"plants"``, ``"fungi"``, ``"metazoa"``,
             ``"protists"``, ``"bacteria"``. Defaults to ``"vertebrates"``.
+
+        ensembl_genomes : bool
+            If True, the species' annotation and FASTA files live on the
+            Ensembl Genomes server (``ftp.ensemblgenomes.ebi.ac.uk``) under
+            the ``/{division}/...`` subtree, with their own release
+            numbering (1..MAX_ENSEMBL_GENOMES_RELEASE). If False (default)
+            the species is served from the main Ensembl FTP at
+            ``ftp.ensembl.org``.
         """
         if division not in self.VALID_DIVISIONS:
             raise ValueError(
@@ -129,6 +145,7 @@ class Species(Serializable):
         self.synonyms = synonyms
         self.reference_assemblies = reference_assemblies
         self.division = division
+        self.ensembl_genomes = ensembl_genomes
         self._release_to_genome = {}
         for genome_name, (start, end) in self.reference_assemblies.items():
             for i in range(start, end + 1):
@@ -421,18 +438,114 @@ arabidopsis_thaliana = Species.register(
     latin_name="arabidopsis_thaliana",
     synonyms=["arabidopsis"],
     reference_assemblies={
-        "TAIR10": (40, MAX_PLANTS_ENSEMBL_RELEASE),
+        "TAIR10": (40, MAX_ENSEMBL_GENOMES_RELEASE),
     },
     division="plants",
+    ensembl_genomes=True,
 )
 
 rice = Species.register(
     latin_name="oryza_sativa",
     synonyms=["rice"],
     reference_assemblies={
-        "IRGSP-1.0": (40, MAX_PLANTS_ENSEMBL_RELEASE),
+        "IRGSP-1.0": (40, MAX_ENSEMBL_GENOMES_RELEASE),
     },
     division="plants",
+    ensembl_genomes=True,
+)
+
+# Additional Ensembl Genomes species (issue #298).
+# Release ranges use the conservative lower bound 40 to match the existing
+# plants entries; older releases at this assembly version may 404.
+
+wheat = Species.register(
+    latin_name="triticum_aestivum",
+    synonyms=["wheat", "bread_wheat"],
+    reference_assemblies={
+        "IWGSC": (40, MAX_ENSEMBL_GENOMES_RELEASE),
+    },
+    division="plants",
+    ensembl_genomes=True,
+)
+
+maize = Species.register(
+    latin_name="zea_mays",
+    synonyms=["maize", "corn"],
+    reference_assemblies={
+        "Zm-B73-REFERENCE-NAM-5.0": (40, MAX_ENSEMBL_GENOMES_RELEASE),
+    },
+    division="plants",
+    ensembl_genomes=True,
+)
+
+tomato = Species.register(
+    latin_name="solanum_lycopersicum",
+    synonyms=["tomato"],
+    reference_assemblies={
+        "SL3.0": (40, MAX_ENSEMBL_GENOMES_RELEASE),
+    },
+    division="plants",
+    ensembl_genomes=True,
+)
+
+fission_yeast = Species.register(
+    latin_name="schizosaccharomyces_pombe",
+    synonyms=["fission_yeast", "pombe"],
+    reference_assemblies={
+        "ASM294v2": (40, MAX_ENSEMBL_GENOMES_RELEASE),
+    },
+    division="fungi",
+    ensembl_genomes=True,
+)
+
+aspergillus_nidulans = Species.register(
+    latin_name="aspergillus_nidulans",
+    synonyms=["aspergillus"],
+    reference_assemblies={
+        "ASM1142v1": (40, MAX_ENSEMBL_GENOMES_RELEASE),
+    },
+    division="fungi",
+    ensembl_genomes=True,
+)
+
+candida_albicans = Species.register(
+    latin_name="candida_albicans",
+    synonyms=["candida"],
+    reference_assemblies={
+        "GCA000182965v3": (40, MAX_ENSEMBL_GENOMES_RELEASE),
+    },
+    division="fungi",
+    ensembl_genomes=True,
+)
+
+anopheles_gambiae = Species.register(
+    latin_name="anopheles_gambiae",
+    synonyms=["mosquito", "malaria_mosquito"],
+    reference_assemblies={
+        "AgamP4": (40, MAX_ENSEMBL_GENOMES_RELEASE),
+    },
+    division="metazoa",
+    ensembl_genomes=True,
+)
+
+plasmodium_falciparum = Species.register(
+    latin_name="plasmodium_falciparum",
+    synonyms=["plasmodium", "malaria_parasite"],
+    reference_assemblies={
+        "ASM276v2": (40, MAX_ENSEMBL_GENOMES_RELEASE),
+    },
+    division="protists",
+    ensembl_genomes=True,
+)
+
+toxoplasma_gondii = Species.register(
+    latin_name="toxoplasma_gondii",
+    synonyms=["toxoplasma"],
+    reference_assemblies={
+        "TGA4": (40, MAX_ENSEMBL_GENOMES_RELEASE),
+    },
+    division="protists",
+    ensembl_genomes=True,
 )
 
 #BALB/c

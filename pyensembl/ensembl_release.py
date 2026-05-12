@@ -20,7 +20,17 @@ from .genome import Genome
 from .ensembl_versions import check_release_number, MAX_ENSEMBL_RELEASE
 from .species import check_species_object, human
 
-from .ensembl_url_templates import ENSEMBL_FTP_SERVER, make_gtf_url, make_fasta_url
+from .ensembl_url_templates import (
+    ENSEMBL_FTP_SERVER,
+    ENSEMBL_GENOMES_FTP_SERVER,
+    make_gtf_url,
+    make_fasta_url,
+)
+
+
+def _default_server_for_species(species):
+    """Return the Ensembl FTP server appropriate for ``species``."""
+    return ENSEMBL_GENOMES_FTP_SERVER if species.ensembl_genomes else ENSEMBL_FTP_SERVER
 
 
 class EnsemblRelease(Genome):
@@ -37,6 +47,10 @@ class EnsemblRelease(Genome):
         """
         release = check_release_number(release)
         species = check_species_object(species)
+        if server is None or server == ENSEMBL_FTP_SERVER:
+            # Promote to the Ensembl Genomes server when the species lives
+            # there; otherwise keep the main Ensembl server.
+            server = _default_server_for_species(species)
         return (release, species, server)
 
     # Using a WeakValueDictionary instead of an ordinary dict to prevent a
@@ -74,27 +88,24 @@ class EnsemblRelease(Genome):
         self.transcript_fasta_urls = [
             make_fasta_url(
                 ensembl_release=self.release,
-                species=self.species.latin_name,
+                species=self.species,
                 sequence_type="cdna",
-                server=server,
-                is_plant = self.species.is_plant,
+                server=self.server,
             ),
             make_fasta_url(
                 ensembl_release=self.release,
-                species=self.species.latin_name,
+                species=self.species,
                 sequence_type="ncrna",
-                server=server,
-                is_plant = self.species.is_plant,
+                server=self.server,
             ),
         ]
 
         self.protein_fasta_urls = [
             make_fasta_url(
                 ensembl_release=self.release,
-                species=self.species.latin_name,
+                species=self.species,
                 sequence_type="pep",
                 server=self.server,
-                is_plant = self.species.is_plant,
             )
         ]
 
