@@ -199,10 +199,15 @@ class Locus(Serializable):
         else:
             return 0
 
-    def distance_to_locus(self, other):
-        if not self.can_overlap(other.contig, other.strand):
-            # if two loci are on different contigs or strands,
-            # can't compute a distance between them
+    def distance_to_locus(self, other, ignore_strand=False):
+        """
+        Distance between two loci. Returns infinity for loci on different
+        contigs, and (by default) for loci on opposite strands of the same
+        contig. Pass ``ignore_strand=True`` to compute a strand-invariant
+        distance between loci on the same contig.
+        """
+        strand = None if ignore_strand else other.strand
+        if not self.can_overlap(other.contig, strand):
             return float("inf")
         return self.distance_to_interval(other.start, other.end)
 

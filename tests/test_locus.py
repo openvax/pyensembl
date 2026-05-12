@@ -158,3 +158,14 @@ def test_locus_distance():
     inf = float("inf")
     assert locus_chr1_10_20_pos.distance_to_locus(locus_chr2_21_25_pos) == inf
     assert locus_chr1_10_20_pos.distance_to_locus(locus_chr1_21_25_neg) == inf
+
+    # ignore_strand=True treats opposite-strand loci on the same contig as
+    # measurable, but still returns inf across contigs.
+    assert (
+        locus_chr1_10_20_pos.distance_to_locus(locus_chr1_21_25_neg, ignore_strand=True)
+        == 1
+    )
+    assert (
+        locus_chr1_10_20_pos.distance_to_locus(locus_chr2_21_25_pos, ignore_strand=True)
+        == inf
+    )
