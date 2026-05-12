@@ -189,3 +189,24 @@ def test_locus_overlap_length():
     other_neg = Locus("1", 10, 20, "-")
     assert locus.overlap_length(other_neg) == 0
     assert locus.overlap_length(other_neg, ignore_strand=True) == 11
+
+
+def test_locus_intersect():
+    a = Locus("1", 10, 20, "+")
+    # full overlap (other contained in a)
+    eq_result = a.intersect(Locus("1", 12, 15, "+"))
+    assert eq_result == Locus("1", 12, 15, "+")
+    # partial overlap (right tail of a)
+    assert a.intersect(Locus("1", 15, 30, "+")) == Locus("1", 15, 20, "+")
+    # partial overlap (left tail of a)
+    assert a.intersect(Locus("1", 1, 15, "+")) == Locus("1", 10, 15, "+")
+    # single-base boundary overlap
+    assert a.intersect(Locus("1", 20, 30, "+")) == Locus("1", 20, 20, "+")
+    # adjacent, non-overlapping
+    assert a.intersect(Locus("1", 21, 30, "+")) is None
+    # different contig
+    assert a.intersect(Locus("2", 10, 20, "+")) is None
+    # opposite strand: None by default, accepts when ignore_strand=True
+    other_neg = Locus("1", 12, 18, "-")
+    assert a.intersect(other_neg) is None
+    assert a.intersect(other_neg, ignore_strand=True) == Locus("1", 12, 18, "+")

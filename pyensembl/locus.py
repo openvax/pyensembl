@@ -240,6 +240,25 @@ class Locus(Serializable):
             return 0
         return max(0, min(self.end, other.end) - max(self.start, other.start) + 1)
 
+    def intersect(self, other, ignore_strand=False):
+        """
+        Return a new :class:`Locus` covering the inclusive-inclusive
+        overlap between this locus and ``other``, or ``None`` if they do
+        not overlap. Mirrors bedtools' ``intersect`` for a single pair.
+
+        Different contigs always return ``None``. Different strands return
+        ``None`` unless ``ignore_strand=True`` is passed, in which case the
+        result is reported on this locus's strand.
+        """
+        strand = None if ignore_strand else other.strand
+        if not self.can_overlap(other.contig, strand):
+            return None
+        start = max(self.start, other.start)
+        end = min(self.end, other.end)
+        if start > end:
+            return None
+        return Locus(contig=self.contig, start=start, end=end, strand=self.strand)
+
     def contains(self, contig, start, end, strand=None):
         return (
             self.can_overlap(contig, strand) and start >= self.start and end <= self.end
