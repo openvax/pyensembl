@@ -25,6 +25,7 @@ from .download_cache import DownloadCache
 from .database import Database
 from .exon import Exon
 from .gene import Gene
+from .search import find_nearest_locus
 from .sequence_data import SequenceData
 from .transcript import Transcript
 
@@ -566,6 +567,40 @@ class Genome(Serializable):
     def exons_at_locus(self, contig, position, end=None, strand=None):
         exon_ids = self.exon_ids_at_locus(contig, position, end=end, strand=strand)
         return [self.exon_by_id(exon_id) for exon_id in exon_ids]
+
+    def nearest_gene(self, contig, position, end=None, strand=None):
+        """
+        Find the gene on ``contig`` whose locus is nearest to the position
+        (or position..end interval), even if no gene actually overlaps.
+
+        Returns ``(distance, Gene)`` where ``distance`` is the number of
+        intervening bases (0 if the query interval falls inside the gene).
+        Returns ``(inf, None)`` when the contig has no genes on the
+        requested strand.
+
+        Pass ``strand`` to restrict the search to one strand of the contig.
+        """
+        if end is None:
+            end = position
+        return find_nearest_locus(
+            start=position,
+            end=end,
+            loci=self.genes(contig=contig, strand=strand),
+        )
+
+    def nearest_transcript(self, contig, position, end=None, strand=None):
+        """
+        Find the transcript on ``contig`` whose locus is nearest to the
+        position (or position..end interval), even if no transcript
+        overlaps. See :meth:`nearest_gene` for the return shape.
+        """
+        if end is None:
+            end = position
+        return find_nearest_locus(
+            start=position,
+            end=end,
+            loci=self.transcripts(contig=contig, strand=strand),
+        )
 
     def gene_ids_at_locus(self, contig, position, end=None, strand=None):
         return self.db.distinct_column_values_at_locus(
