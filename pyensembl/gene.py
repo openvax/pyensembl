@@ -80,6 +80,42 @@ class Gene(LocusWithGenome):
         return state_dict
 
     @memoized_property
+    def gene_version(self):
+        """
+        Ensembl annotation version for this gene (int) or None if the GTF
+        did not provide a gene_version attribute.
+        """
+        if not self.db.column_exists("gene", "gene_version"):
+            return None
+        result = self.db.query_one(
+            select_column_names=["gene_version"],
+            filter_column="gene_id",
+            filter_value=self.id,
+            feature="gene",
+            required=False,
+        )
+        if not result or not result[0]:
+            return None
+        return int(result[0])
+
+    @property
+    def version(self):
+        """Alias for :attr:`gene_version`."""
+        return self.gene_version
+
+    @property
+    def versioned_gene_id(self):
+        """``gene_id.gene_version`` when a version is available, else ``gene_id``."""
+        if self.gene_version is None:
+            return self.gene_id
+        return "%s.%d" % (self.gene_id, self.gene_version)
+
+    @property
+    def versioned_id(self):
+        """Alias for :attr:`versioned_gene_id`."""
+        return self.versioned_gene_id
+
+    @memoized_property
     def transcripts(self):
         """
         Property which dynamically construct transcript objects for all

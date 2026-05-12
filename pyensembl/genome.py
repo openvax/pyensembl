@@ -1064,14 +1064,20 @@ class Genome(Serializable):
                 "gene_name",
                 "gene_id",
             ]
+            has_exon_version = self.db.column_exists("exon", "exon_version")
+            if has_exon_version:
+                field_names.append("exon_version")
 
-            contig, start, end, strand, gene_name, gene_id = self.db.query_one(
+            row = self.db.query_one(
                 select_column_names=field_names,
                 filter_column="exon_id",
                 filter_value=exon_id,
                 feature="exon",
                 distinct=True,
             )
+            contig, start, end, strand, gene_name, gene_id = row[:6]
+            version_value = row[6] if has_exon_version else None
+            exon_version = int(version_value) if version_value else None
 
             self._exons[exon_id] = Exon(
                 exon_id=exon_id,
@@ -1081,6 +1087,7 @@ class Genome(Serializable):
                 strand=strand,
                 gene_name=gene_name,
                 gene_id=gene_id,
+                exon_version=exon_version,
             )
 
         return self._exons[exon_id]

@@ -532,6 +532,42 @@ class Transcript(LocusWithGenome):
         return self.sequence[self.last_stop_codon_spliced_offset + 1 :]
 
     @memoized_property
+    def transcript_version(self):
+        """
+        Ensembl annotation version for this transcript (int) or None if the
+        GTF did not provide a transcript_version attribute.
+        """
+        if not self.db.column_exists("transcript", "transcript_version"):
+            return None
+        result = self.db.query_one(
+            select_column_names=["transcript_version"],
+            filter_column="transcript_id",
+            filter_value=self.id,
+            feature="transcript",
+            required=False,
+        )
+        if not result or not result[0]:
+            return None
+        return int(result[0])
+
+    @property
+    def version(self):
+        """Alias for :attr:`transcript_version`."""
+        return self.transcript_version
+
+    @property
+    def versioned_transcript_id(self):
+        """``transcript_id.transcript_version`` when available, else ``transcript_id``."""
+        if self.transcript_version is None:
+            return self.transcript_id
+        return "%s.%d" % (self.transcript_id, self.transcript_version)
+
+    @property
+    def versioned_id(self):
+        """Alias for :attr:`versioned_transcript_id`."""
+        return self.versioned_transcript_id
+
+    @memoized_property
     def protein_id(self):
         result_tuple = self.db.query_one(
             select_column_names=["protein_id"],
@@ -545,6 +581,32 @@ class Transcript(LocusWithGenome):
             return result_tuple[0]
         else:
             return None
+
+    @memoized_property
+    def protein(self):
+        """
+        :class:`Protein` view object for this transcript's encoded protein,
+        or ``None`` if this transcript is non-coding.
+        """
+        from .protein import Protein
+
+        if not self.protein_id:
+            return None
+        protein_version = None
+        if self.db.column_exists("CDS", "protein_version"):
+            result = self.db.query_one(
+                select_column_names=["protein_version"],
+                filter_column="transcript_id",
+                filter_value=self.id,
+                feature="CDS",
+                distinct=True,
+                required=False,
+            )
+            if result and result[0]:
+                protein_version = int(result[0])
+        return Protein(
+            protein_id=self.protein_id, protein_version=protein_version
+        )
 
     @memoized_property
     def protein_sequence(self):
