@@ -169,3 +169,23 @@ def test_locus_distance():
         locus_chr1_10_20_pos.distance_to_locus(locus_chr2_21_25_pos, ignore_strand=True)
         == inf
     )
+
+
+def test_locus_overlap_length():
+    locus = Locus("1", 10, 20, "+")
+    # full containment
+    assert locus.overlap_length(Locus("1", 10, 20, "+")) == 11
+    # partial overlap (positions 15..20)
+    assert locus.overlap_length(Locus("1", 15, 30, "+")) == 6
+    # locus fully contains other
+    assert locus.overlap_length(Locus("1", 12, 15, "+")) == 4
+    # single-base overlap at the boundary
+    assert locus.overlap_length(Locus("1", 20, 25, "+")) == 1
+    # adjacent but non-overlapping
+    assert locus.overlap_length(Locus("1", 21, 30, "+")) == 0
+    # different contig
+    assert locus.overlap_length(Locus("2", 10, 20, "+")) == 0
+    # opposite strand: 0 by default, full overlap with ignore_strand=True
+    other_neg = Locus("1", 10, 20, "-")
+    assert locus.overlap_length(other_neg) == 0
+    assert locus.overlap_length(other_neg, ignore_strand=True) == 11

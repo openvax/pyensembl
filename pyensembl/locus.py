@@ -228,6 +228,18 @@ class Locus(Serializable):
             other_locus.contig, other_locus.start, other_locus.end, other_locus.strand
         )
 
+    def overlap_length(self, other, ignore_strand=False):
+        """
+        Number of overlapping base positions between this locus and ``other``.
+        Returns 0 when the loci do not overlap, are on different contigs, or
+        (by default) are on opposite strands. Pass ``ignore_strand=True`` to
+        count overlap regardless of strand.
+        """
+        strand = None if ignore_strand else other.strand
+        if not self.can_overlap(other.contig, strand):
+            return 0
+        return max(0, min(self.end, other.end) - max(self.start, other.start) + 1)
+
     def contains(self, contig, start, end, strand=None):
         return (
             self.can_overlap(contig, strand) and start >= self.start and end <= self.end
