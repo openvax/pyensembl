@@ -15,11 +15,22 @@ from .locus import Locus
 
 
 class Exon(Locus):
-    def __init__(self, exon_id, contig, start, end, strand, gene_name, gene_id):
+    def __init__(
+        self,
+        exon_id,
+        contig,
+        start,
+        end,
+        strand,
+        gene_name,
+        gene_id,
+        exon_version=None,
+    ):
         Locus.__init__(self, contig, start, end, strand)
         self.exon_id = exon_id
         self.gene_name = gene_name
         self.gene_id = gene_id
+        self.exon_version = exon_version
 
     @property
     def id(self):
@@ -27,6 +38,23 @@ class Exon(Locus):
         Alias for exon_id necessary for backward compatibility.
         """
         return self.exon_id
+
+    @property
+    def version(self):
+        """Alias for :attr:`exon_version`."""
+        return self.exon_version
+
+    @property
+    def versioned_exon_id(self):
+        """``exon_id.exon_version`` when available, else ``exon_id``."""
+        if self.exon_version is None:
+            return self.exon_id
+        return "%s.%d" % (self.exon_id, self.exon_version)
+
+    @property
+    def versioned_id(self):
+        """Alias for :attr:`versioned_exon_id`."""
+        return self.versioned_exon_id
 
     def __str__(self):
         return (
@@ -69,4 +97,5 @@ class Exon(Locus):
         state_dict["exon_id"] = self.id
         state_dict["gene_name"] = self.gene_name
         state_dict["gene_id"] = self.gene_id
+        state_dict["exon_version"] = self.exon_version
         return state_dict
