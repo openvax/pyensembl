@@ -166,114 +166,132 @@ combinations of the annotation features _gene_name_, _gene_id_,
 _transcript_name_, _transcript_id_, _exon_id_ as well as the location of
 these genomic elements (contig, start position, end position, strand).
 
+Method names link to their source in `pyensembl/genome.py`; class names
+([Gene][gene-class], [Transcript][transcript-class], [Exon][exon-class])
+link to the corresponding class definitions.
+
 ## Genes
 
 <dl>
-<dt>genes(contig=None, strand=None)</dt>
-<dd>Returns a list of Gene objects, optionally restricted to a particular contig
-or strand.</dd>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L742">genes(contig=None, strand=None, biotype=None)</a></dt>
+<dd>Returns a list of <a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/gene.py#L19">Gene</a> objects, optionally restricted to a particular contig,
+strand, or <code>gene_biotype</code>.</dd>
 
-<dt>genes_at_locus(contig, position, end=None, strand=None)</dt>
-<dd>Returns a list of Gene objects overlapping a particular position on a contig,
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L557">genes_at_locus(contig, position, end=None, strand=None)</a></dt>
+<dd>Returns a list of <a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/gene.py#L19">Gene</a> objects overlapping a particular position on a contig,
 optionally extend into a range with the end parameter and restrict to
 forward or backward strand by passing strand='+' or strand='-'.</dd>
 
-<dt>gene_by_id(gene_id)</dt>
-<dd>Return a Gene object for given Ensembl gene ID (e.g. "ENSG00000068793").</dd>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L762">gene_by_id(gene_id)</a></dt>
+<dd>Return a <a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/gene.py#L19">Gene</a> object for given Ensembl gene ID (e.g. "ENSG00000068793").</dd>
 
-<dt>gene_names(contig=None, strand=None)</dt>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L854">gene_names(contig=None, strand=None)</a></dt>
 <dd>Returns all gene names in the annotation database, optionally restricted
 to a particular contig or strand.</dd>
 
-<dt>genes_by_name(gene_name)</dt>
-<dd>Get all the unqiue genes with the given name (there might be multiple
-due to copies in the genome), return a list containing a Gene object for each
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L820">genes_by_name(gene_name)</a></dt>
+<dd>Get all the unique genes with the given name (there might be multiple
+due to copies in the genome), return a list containing a <a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/gene.py#L19">Gene</a> object for each
 distinct ID.</dd>
 
-<dt>gene_by_protein_id(protein_id)</dt>
-<dd>Find Gene associated with the given Ensembl protein ID (e.g. "ENSP00000350283")</dd>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L829">gene_by_protein_id(protein_id)</a></dt>
+<dd>Find <a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/gene.py#L19">Gene</a> associated with the given Ensembl protein ID (e.g. "ENSP00000350283")</dd>
 
-<dt>gene_names_at_locus(contig, position, end=None, strand=None)
-</dt>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L635">gene_names_at_locus(contig, position, end=None, strand=None)</a></dt>
 <dd>Names of genes overlapping with the given locus, optionally restricted by strand.
 (returns a list to account for overlapping genes)</dd>
 
-<dt>gene_name_of_gene_id(gene_id)
-</dt>
-<dd>Returns name of gene with given genen ID.</dd>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L863">gene_name_of_gene_id(gene_id)</a></dt>
+<dd>Returns name of gene with given gene ID.</dd>
 
-<dt>gene_name_of_transcript_id(transcript_id)
-</dt><dd>Returns name of gene associated with given transcript ID.</dd>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L866">gene_name_of_transcript_id(transcript_id)</a></dt>
+<dd>Returns name of gene associated with given transcript ID.</dd>
 
-<dt>gene_name_of_transcript_name(transcript_name)
-</dt>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L869">gene_name_of_transcript_name(transcript_name)</a></dt>
 <dd>Returns name of gene associated with given transcript name.</dd>
 
-<dt>gene_name_of_exon_id(exon_id)
-</dt><dd>Returns name of gene associated with given exon ID.</dd>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L872">gene_name_of_exon_id(exon_id)</a></dt>
+<dd>Returns name of gene associated with given exon ID.</dd>
 
-<dt>gene_ids(contig=None, strand=None)
-</dt>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L892">gene_ids(contig=None, strand=None, biotype=None)</a></dt>
 <dd>Return all gene IDs in the annotation database, optionally restricted by
-chromosome name or strand.</dd>
+chromosome name, strand, or <code>gene_biotype</code>.</dd>
 
-<dt>gene_ids_of_gene_name(gene_name)
-</dt>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L905">gene_ids_of_gene_name(gene_name)</a></dt>
 <dd>Returns all Ensembl gene IDs with the given name.</dd>
+
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L573">nearest_gene(contig, position, end=None, strand=None)</a></dt>
+<dd>Returns <code>(distance, <a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/gene.py#L19">Gene</a>)</code> for the gene whose locus is nearest to the
+position (or position..end interval) on the given contig — even when no
+gene overlaps. Returns <code>(inf, None)</code> when no candidates exist.</dd>
+
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L593">merged_gene_intervals(contig, strand=None)</a></dt>
+<dd>Returns the union of all gene loci on the contig as a sorted list of
+non-overlapping <code>(start, end)</code> tuples. Adjacent intervals
+(<code>end+1 == next start</code>) are merged into one.</dd>
 
 </dl>
 
 ## Transcripts
 
 <dl>
-<dt>transcripts(contig=None, strand=None)</dt>
-<dd>Returns a list of Transcript objects for all transcript entries in the
-Ensembl database, optionally restricted to a particular contig or strand.</dd>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L938">transcripts(contig=None, strand=None, biotype=None)</a></dt>
+<dd>Returns a list of <a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/transcript.py#L24">Transcript</a> objects for all transcript entries in the
+Ensembl database, optionally restricted to a particular contig, strand, or
+<code>transcript_biotype</code>.</dd>
 
-<dt>transcript_by_id(transcript_id)</dt>
-<dd>Construct a Transcript object for given Ensembl transcript ID (e.g. "ENST00000369985")</dd>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L951">transcript_by_id(transcript_id)</a></dt>
+<dd>Construct a <a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/transcript.py#L24">Transcript</a> object for given Ensembl transcript ID (e.g. "ENST00000369985")</dd>
 
-<dt>transcripts_by_name(transcript_name)</dt>
-<dd>Returns a list of Transcript objects for every transcript matching the given name.</dd>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L1014">transcripts_by_name(transcript_name)</a></dt>
+<dd>Returns a list of <a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/transcript.py#L24">Transcript</a> objects for every transcript matching the given name.</dd>
 
-<dt>transcript_names(contig=None, strand=None)</dt>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L1041">transcript_names(contig=None, strand=None)</a></dt>
 <dd>Returns all transcript names in the annotation database.</dd>
 
-<dt>transcript_ids(contig=None, strand=None)</dt>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L1082">transcript_ids(contig=None, strand=None, biotype=None)</a></dt>
 <dd>Returns all transcript IDs in the annotation database.</dd>
 
-<dt>transcript_ids_of_gene_id(gene_id)</dt>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L1091">transcript_ids_of_gene_id(gene_id)</a></dt>
 <dd>Return IDs of all transcripts associated with given gene ID.</dd>
 
-<dt>transcript_ids_of_gene_name(gene_name)</dt>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L1094">transcript_ids_of_gene_name(gene_name)</a></dt>
 <dd>Return IDs of all transcripts associated with given gene name.</dd>
 
-<dt>transcript_ids_of_transcript_name(transcript_name)</dt>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L1097">transcript_ids_of_transcript_name(transcript_name)</a></dt>
 <dd>Find all Ensembl transcript IDs with the given name.</dd>
 
-<dt>transcript_ids_of_exon_id(exon_id)</dt>
-<dd>Return IDs of all transcripts associatd with given exon ID.</dd>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L1100">transcript_ids_of_exon_id(exon_id)</a></dt>
+<dd>Return IDs of all transcripts associated with given exon ID.</dd>
+
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L611">nearest_transcript(contig, position, end=None, strand=None)</a></dt>
+<dd>Returns <code>(distance, <a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/transcript.py#L24">Transcript</a>)</code> to the closest transcript on the contig.
+Returns <code>(inf, None)</code> when no candidates exist.</dd>
 </dl>
 
 ## Exons
 
 <dl>
-<dt>exon_ids(contig=None, strand=None)</dt>
-<dd>Returns a list of exons IDs in the annotation database, optionally restricted
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L1193">exon_ids(contig=None, strand=None)</a></dt>
+<dd>Returns a list of exon IDs in the annotation database, optionally restricted
 by the given chromosome and strand.</dd>
 
-<dt>exon_by_id(exon_id)</dt>
-<dd>Construct an Exon object for given Ensembl exon ID (e.g. "ENSE00001209410")</dd>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L1135">exon_by_id(exon_id)</a></dt>
+<dd>Construct an <a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/exon.py#L17">Exon</a> object for given Ensembl exon ID (e.g. "ENSE00001209410")</dd>
 
-<dt>exon_ids_of_gene_id(gene_id)</dt>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L1198">exon_ids_of_gene_id(gene_id)</a></dt>
 <dd>Returns a list of exon IDs associated with a given gene ID.</dd>
 
-<dt>exon_ids_of_gene_name(gene_name)</dt>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L1201">exon_ids_of_gene_name(gene_name)</a></dt>
 <dd>Returns a list of exon IDs associated with a given gene name.</dd>
 
-<dt>exon_ids_of_transcript_id(transcript_id)</dt>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L1207">exon_ids_of_transcript_id(transcript_id)</a></dt>
 <dd>Returns a list of exon IDs associated with a given transcript ID.</dd>
 
-<dt>exon_ids_of_transcript_name(transcript_name)</dt>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#L1204">exon_ids_of_transcript_name(transcript_name)</a></dt>
 <dd>Returns a list of exon IDs associated with a given transcript name.</dd>
 </dl>
+
+[gene-class]: https://github.com/openvax/pyensembl/blob/main/pyensembl/gene.py#L19
+[transcript-class]: https://github.com/openvax/pyensembl/blob/main/pyensembl/transcript.py#L24
+[exon-class]: https://github.com/openvax/pyensembl/blob/main/pyensembl/exon.py#L17
