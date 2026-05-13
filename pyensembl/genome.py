@@ -28,7 +28,7 @@ from .exon import Exon
 from .gene import Gene
 from .normalization import normalize_chromosome, normalize_strand
 from .search import find_nearest_locus
-from .sequence_data import SequenceData
+from .sequence_data import SequenceData, sequence_lookup_with_ens_fallback
 from .transcript import Transcript
 
 
@@ -540,19 +540,25 @@ class Genome(Serializable):
 
     def transcript_sequence(self, transcript_id):
         """Return cDNA nucleotide sequence of transcript, or None if
-        transcript doesn't have cDNA sequence.
+        transcript doesn't have cDNA sequence. Accepts both versioned
+        (``ENST00000123456.7``) and unversioned identifiers.
         """
         if self.transcript_sequences is None:
             raise ValueError("No transcript FASTA supplied to this Genome: %s" % self)
-        return self.transcript_sequences.get(transcript_id)
+        return sequence_lookup_with_ens_fallback(
+            self.transcript_sequences, transcript_id
+        )
 
     def protein_sequence(self, protein_id):
-        """Return cDNA nucleotide sequence of transcript, or None if
-        transcript doesn't have cDNA sequence.
+        """Return amino-acid sequence of protein, or None if the protein is
+        absent from the FASTA. Accepts both versioned
+        (``ENSP00000123456.3``) and unversioned identifiers.
         """
         if self.protein_sequences is None:
             raise ValueError("No protein FASTA supplied to this Genome: %s" % self)
-        return self.protein_sequences.get(protein_id)
+        return sequence_lookup_with_ens_fallback(
+            self.protein_sequences, protein_id
+        )
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
         gene_ids = self.gene_ids_at_locus(contig, position, end=end, strand=strand)
