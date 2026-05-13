@@ -16,7 +16,7 @@ import sqlite3
 
 import datacache
 from typechecks import require_integer, require_string
-from gtfparse import read_gtf, create_missing_features
+from gtfparse import GENCODE_BIOTYPE_ALIASES, create_missing_features, read_gtf
 
 from .common import memoize
 from .normalization import normalize_chromosome, normalize_strand
@@ -626,6 +626,11 @@ class Database(object):
                 "seqname": normalize_chromosome,
                 "strand": normalize_strand,
             },
+            # GENCODE GTFs use gene_type / transcript_type where Ensembl uses
+            # gene_biotype / transcript_biotype. attribute_aliases (gtfparse
+            # 2.7.0+) renames the GENCODE columns onto the Ensembl names at
+            # parse time so the rest of pyensembl can stay Ensembl-centric.
+            attribute_aliases=GENCODE_BIOTYPE_ALIASES,
             infer_biotype_column=True,
             usecols=usecols,
             features=features,
