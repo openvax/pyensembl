@@ -18,7 +18,7 @@ import logging
 from collections import Counter
 import pickle
 from .common import load_pickle, dump_pickle
-from .fasta import parse_fasta_dictionary
+from .fasta import _split_ens_version, parse_fasta_dictionary
 
 
 logger = logging.getLogger(__name__)
@@ -26,23 +26,30 @@ logger = logging.getLogger(__name__)
 
 def lookup_sequence_with_version_fallback(sequence_data, identifier):
     """
-    Look up ``identifier`` in ``sequence_data``, tolerating an ENS.N version
-    suffix mismatch between the caller's ID and the FASTA's dict keys.
+    Look up ``identifier`` in ``sequence_data``, tolerating ENS ``.N``
+    version-suffix mismatches in either direction.
 
     Both Ensembl and GENCODE work with versioned IDs (e.g.
     ``ENSP00000123456.3``); the two formats just split that information
     differently. Ensembl GTFs keep the bare ID in ``protein_id`` /
     ``transcript_id`` and put the version in a separate ``*_version``
     attribute, while GENCODE GTFs embed the version directly in the ID
-    attribute. pyensembl's FASTA parser strips ``.N`` from ENS-prefix
-    headers, so the FASTA dict keys are always unversioned — meaning a
-    literal lookup of a GENCODE-style versioned ID would miss.
+    attribute. Whichever convention the FASTA on disk used, the
+    sequence dict now keys on the form that header carried — so either
+    a versioned or a bare caller-supplied ID may need a fallback.
 
-    Strategy: try ``identifier`` as-is first (covers both unversioned IDs
-    and any future FASTA that preserves versions); on miss, strip a
-    trailing ``.N`` suffix and try again, but only for ENS-prefix IDs
-    because for non-Ensembl IDs (e.g. TAIR ``AT1G01010.1``) the ``.N`` is
-    an isoform suffix and stripping would be incorrect.
+    Resolution order:
+      1. literal lookup of ``identifier``
+      2. if ``identifier`` is a versioned ENS ID, strip ``.N`` and retry
+         (handles caller-supplied versioned ID against a bare FASTA)
+      3. consult ``sequence_data._stripped_index`` for a versioned alias
+         of a bare caller-supplied ID (handles bare ID against a
+         versioned FASTA, the GENCODE case)
+      4. None
+
+    Non-Ensembl IDs (e.g. TAIR ``AT1G01010.1`` where ``.N`` is an
+    isoform suffix, not a version) skip step (2): stripping there is
+    semantically wrong.
     """
     if not identifier:
         return None
@@ -50,8 +57,16 @@ def lookup_sequence_with_version_fallback(sequence_data, identifier):
     if sequence is not None:
         return sequence
     if identifier.startswith("ENS") and "." in identifier:
-        stripped = identifier.rsplit(".", 1)[0]
-        return sequence_data.get(stripped)
+        bare, version = _split_ens_version(identifier)
+        if version is not None:
+            sequence = sequence_data.get(bare)
+            if sequence is not None:
+                return sequence
+    stripped_index = getattr(sequence_data, "_stripped_index", None)
+    if stripped_index:
+        versioned = stripped_index.get(identifier)
+        if versioned is not None:
+            return sequence_data.get(versioned)
     return None
 
 
@@ -88,6 +103,14 @@ class SequenceData(object):
     def _init_lazy_fields(self):
         self._fasta_dictionary = None
         self._fasta_keys = None
+        # Maps a bare ENS ID -> the versioned form actually keyed in
+        # _fasta_dictionary, so callers passing the unversioned form can
+        # still resolve to a versioned FASTA entry (GENCODE case).
+        self._stripped_index = None
+        # Maps a sequence identifier -> the integer version suffix the
+        # FASTA header carried, or absent for headers without a version.
+        # Lets callers sanity-check FASTA / GTF alignment.
+        self._versions = None
 
     def clear_cache(self):
         self._init_lazy_fields()
@@ -125,9 +148,25 @@ class SequenceData(object):
                 )
                 continue
             self._fasta_dictionary[identifier] = sequence
+            bare, version = _split_ens_version(identifier)
+            if version is not None:
+                if bare in self._stripped_index:
+                    # Two FASTA entries collide on the same bare ENS ID with
+                    # different versions. The newer of the two is kept as
+                    # the canonical alias since version numbers grow
+                    # monotonically.
+                    existing = self._stripped_index[bare]
+                    _, existing_version = _split_ens_version(existing)
+                    if existing_version is None or version > existing_version:
+                        self._stripped_index[bare] = identifier
+                else:
+                    self._stripped_index[bare] = identifier
+                self._versions[identifier] = version
 
     def _load_or_create_fasta_dictionary_pickle(self):
         self._fasta_dictionary = dict()
+        self._stripped_index = dict()
+        self._versions = dict()
         for fasta_path, pickle_path in zip(
             self.fasta_paths, self.fasta_dictionary_pickle_paths
         ):
@@ -169,3 +208,24 @@ class SequenceData(object):
     def get(self, sequence_id):
         """Get sequence associated with given ID or return None if missing"""
         return self.fasta_dictionary.get(sequence_id)
+
+    def fasta_version(self, sequence_id):
+        """
+        Return the integer FASTA-header version for ``sequence_id``, or
+        ``None`` if the header didn't carry a version (e.g. older Ensembl
+        releases) or the ID isn't in the FASTA.
+
+        Accepts either the versioned or bare form of an ENS ID — the
+        bare form is resolved through ``_stripped_index``.
+        """
+        if not sequence_id:
+            return None
+        # ensure lazy load
+        _ = self.fasta_dictionary
+        version = self._versions.get(sequence_id)
+        if version is not None:
+            return version
+        versioned = self._stripped_index.get(sequence_id)
+        if versioned is not None:
+            return self._versions.get(versioned)
+        return None

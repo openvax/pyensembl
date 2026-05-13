@@ -29,7 +29,17 @@ logger = logging.getLogger(__name__)
 def _parse_header_id(line):
     """
     Pull the transcript or protein identifier from the header line
-    which starts with '>'
+    which starts with '>'.
+
+    The full versioned form (e.g. ``ENSP00000123456.3``) is returned when
+    the header carries a version. Stripping happens at lookup time via
+    :func:`pyensembl.sequence_data.lookup_sequence_with_version_fallback`,
+    not here, so the FASTA-header version is preserved as the authoritative
+    identity of the sequence.
+
+    Non-ENS IDs (e.g. TAIR ``AT1G01010.1``, where ``.1`` is an isoform
+    suffix rather than a version) are returned verbatim — this function
+    does no surgery on them.
     """
     if type(line) is not bytes:
         raise TypeError(
@@ -47,20 +57,34 @@ def _parse_header_id(line):
     else:
         identifier = line[1:]
 
-    # annoyingly Ensembl83 reformatted the transcript IDs of its
-    # cDNA FASTA to include sequence version numbers
-    # .e.g.
-    # "ENST00000448914.1" instead of "ENST00000448914"
-    # So now we have to parse out the identifier
-
-    # only split name of ENSEMBL naming. In other database, such as TAIR,
-    # the '.1' notation is the isoform not the version.
-    if identifier.startswith(b"ENS"):
-        dot_index = identifier.find(b".")
-        if dot_index >= 0:
-            identifier = identifier[:dot_index]
+    # GENCODE protein/cDNA FASTAs use a pipe-delimited header packing the
+    # versioned protein ID, transcript ID, gene ID, etc., e.g.
+    #   >ENSP00000493376.2|ENST00000641515.2|ENSG00000186092.7|...
+    # The leading field is the canonical identifier for this sequence;
+    # everything after the first '|' is cross-reference metadata.
+    pipe_index = identifier.find(b"|")
+    if pipe_index >= 0:
+        identifier = identifier[:pipe_index]
 
     return identifier.decode("ascii")
+
+
+def _split_ens_version(identifier):
+    """
+    Split an ENS-prefix identifier into ``(bare_id, version_int)``.
+
+    Returns ``(identifier, None)`` for IDs that don't carry a parseable
+    ENS version. Non-ENS IDs (e.g. TAIR ``AT1G01010.1``) are always
+    returned as-is with version ``None`` — the ``.N`` in those is an
+    isoform suffix, not a version.
+    """
+    if not identifier or not identifier.startswith("ENS") or "." not in identifier:
+        return identifier, None
+    bare, _, suffix = identifier.rpartition(".")
+    try:
+        return bare, int(suffix)
+    except ValueError:
+        return identifier, None
 
 
 class FastaParser(object):
