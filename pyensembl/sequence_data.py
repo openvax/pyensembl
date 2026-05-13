@@ -24,12 +24,6 @@ from .fasta import _split_ens_version, parse_fasta_dictionary
 logger = logging.getLogger(__name__)
 
 
-# Bump the FASTA-pickle filename suffix when the on-disk layout of
-# `_fasta_dictionary` changes so stale caches get rebuilt instead of
-# silently loaded under the new code path. v2 keys versioned ENS IDs.
-FASTA_PICKLE_SCHEMA_VERSION = "v2"
-
-
 def lookup_sequence_with_version_fallback(sequence_data, identifier):
     """
     Look up ``identifier`` in ``sequence_data``, tolerating ENS ``.N``
@@ -96,8 +90,7 @@ class SequenceData(object):
             if not exists(path):
                 raise ValueError("Couldn't find FASTA file %s" % (path,))
         self.fasta_dictionary_filenames = [
-            "%s.%s.pickle" % (filename, FASTA_PICKLE_SCHEMA_VERSION)
-            for filename in self.fasta_filenames
+            filename + ".pickle" for filename in self.fasta_filenames
         ]
         self.fasta_dictionary_pickle_paths = [
             join(cache_path, filename)

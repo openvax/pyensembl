@@ -18,11 +18,9 @@ import pickle
 from os.path import join
 
 from pyensembl import SequenceData
+from pyensembl.common import dump_pickle
 from pyensembl.fasta import _parse_header_id, _split_ens_version
-from pyensembl.sequence_data import (
-    FASTA_PICKLE_SCHEMA_VERSION,
-    lookup_sequence_with_version_fallback,
-)
+from pyensembl.sequence_data import lookup_sequence_with_version_fallback
 
 from .common import TemporaryDirectory, eq_
 
@@ -157,20 +155,40 @@ def test_sequence_data_stripped_index_keeps_highest_version_on_conflict():
         eq_(sd._stripped_index["ENSPTEST00000001"], "ENSPTEST00000001.5")
 
 
-def test_sequence_data_pickle_filename_includes_schema_version():
-    """Pickles must be namespaced so the upgrade from the v1 layout
-    (bare-keyed dict) to the v2 layout (versioned-keyed dict with
-    stripped_index) doesn't load a stale cache."""
+def test_old_bare_keyed_pickle_still_loads_under_new_code():
+    """Caches written by older pyensembl (before this PR) keyed FASTA
+    entries on the bare ENS ID. The new parser preserves versions, but
+    a pre-existing pickle from the old code path must still load — its
+    bare-keyed dict gets walked through `_add_to_fasta_dictionary` which
+    leaves `_stripped_index` empty (the source dict has no versioned
+    keys to index), and lookups via the version-fallback helper still
+    resolve correctly because the version-stripped retry path handles
+    the bare-cache case.
+    """
     with TemporaryDirectory() as tmpdir:
-        fasta = join(tmpdir, "vc.fa")
-        _write_fasta(fasta, "ENSPTEST00000002.4", "MFAKE")
+        fasta = join(tmpdir, "legacy.fa")
+        # write a versioned FASTA (so the new parser would key versioned)
+        _write_fasta(fasta, "ENSPLEGACY00000001.4", "MLEGACY")
         sd = SequenceData([fasta], cache_directory_path=tmpdir)
+        # simulate an old (v1) bare-keyed pickle sitting on disk where
+        # the new parser expects its cache file
+        old_pickle_dict = {"ENSPLEGACY00000001": "MLEGACY"}
+        dump_pickle(old_pickle_dict, sd.fasta_dictionary_pickle_paths[0])
+        # index should pick up the existing pickle, NOT re-parse the FASTA
         sd.index()
-        # the actual pickle path must encode the schema version so an
-        # older cached pickle without the index is ignored, not loaded.
-        for pickle_path in sd.fasta_dictionary_pickle_paths:
-            assert FASTA_PICKLE_SCHEMA_VERSION in pickle_path, pickle_path
-            assert os.path.exists(pickle_path)
+        # bare lookup hits directly
+        eq_(sd.get("ENSPLEGACY00000001"), "MLEGACY")
+        # versioned lookup falls back via the strip-and-retry path
+        eq_(
+            lookup_sequence_with_version_fallback(sd, "ENSPLEGACY00000001.4"),
+            "MLEGACY",
+        )
+        # _stripped_index stays empty for a bare-keyed cache
+        eq_(sd._stripped_index, {})
+        # fasta_version returns None for bare-only caches (the version
+        # info was never captured at parse time)
+        eq_(sd.fasta_version("ENSPLEGACY00000001.4"), None)
+        eq_(sd.fasta_version("ENSPLEGACY00000001"), None)
 
 
 def test_sequence_data_pickle_round_trip_rebuilds_stripped_index():
@@ -303,3 +321,119 @@ def test_pickled_fasta_dictionary_uses_versioned_keys():
             data = pickle.load(f)
         assert "ENSPTEST00000008.5" in data
         assert data["ENSPTEST00000008.5"] == "MPICKLED"
+
+
+# -----------------------------
+# Transcript.fasta_version / Protein.fasta_version
+# -----------------------------
+
+
+_VERSIONED_GTF = """\
+1\ttest\ttranscript\t100\t800\t.\t+\t.\tgene_id "ENSGTEST00000010001"; gene_version "1"; transcript_id "ENSTTEST00000010001"; transcript_version "7"; gene_name "FV1"; gene_biotype "protein_coding"; transcript_biotype "protein_coding";
+1\ttest\texon\t100\t800\t.\t+\t.\tgene_id "ENSGTEST00000010001"; gene_version "1"; transcript_id "ENSTTEST00000010001"; transcript_version "7"; exon_number "1"; exon_id "ENSETEST00000010001"; exon_version "1"; gene_name "FV1"; gene_biotype "protein_coding"; transcript_biotype "protein_coding";
+1\ttest\tCDS\t100\t798\t.\t+\t0\tgene_id "ENSGTEST00000010001"; gene_version "1"; transcript_id "ENSTTEST00000010001"; transcript_version "7"; exon_number "1"; exon_id "ENSETEST00000010001"; exon_version "1"; protein_id "ENSPTEST00000010001"; protein_version "5"; gene_name "FV1"; gene_biotype "protein_coding"; transcript_biotype "protein_coding";
+1\ttest\tstart_codon\t100\t102\t.\t+\t0\tgene_id "ENSGTEST00000010001"; transcript_id "ENSTTEST00000010001"; protein_id "ENSPTEST00000010001"; gene_name "FV1"; gene_biotype "protein_coding"; transcript_biotype "protein_coding";
+1\ttest\tstop_codon\t799\t801\t.\t+\t0\tgene_id "ENSGTEST00000010001"; transcript_id "ENSTTEST00000010001"; protein_id "ENSPTEST00000010001"; gene_name "FV1"; gene_biotype "protein_coding"; transcript_biotype "protein_coding";
+"""
+
+
+def _build_versioned_genome(tmpdir, transcript_fasta=True, protein_fasta=True):
+    """Build a tiny Genome whose GTF, cDNA FASTA, and protein FASTA all
+    carry the same versioned ENS IDs."""
+    from pyensembl import Genome
+
+    gtf_path = join(tmpdir, "v.gtf")
+    with open(gtf_path, "w") as f:
+        f.write(_VERSIONED_GTF)
+    cdna_path = None
+    pep_path = None
+    if transcript_fasta:
+        cdna_path = join(tmpdir, "v.cdna.fa")
+        # Header records version 7 — same as the GTF's transcript_version
+        _write_fasta(cdna_path, "ENSTTEST00000010001.7", "ATGCCCAAATTTGGGCCCAAATTT")
+    if protein_fasta:
+        pep_path = join(tmpdir, "v.pep.fa")
+        # Header records version 5 — same as the GTF's protein_version
+        _write_fasta(pep_path, "ENSPTEST00000010001.5", "MFAKEPROTEIN")
+    g = Genome(
+        reference_name="GRCh38",
+        annotation_name="_test_fasta_versions",
+        gtf_path_or_url=gtf_path,
+        transcript_fasta_paths_or_urls=[cdna_path] if cdna_path else [],
+        protein_fasta_paths_or_urls=[pep_path] if pep_path else [],
+        cache_directory_path=tmpdir,
+    )
+    g.index()
+    return g
+
+
+def test_transcript_fasta_version_returns_header_version():
+    """`Transcript.fasta_version` returns the int the cDNA FASTA header
+    carried (7), independent of the GTF's `transcript_version` (also 7
+    in this fixture but distinct in concept)."""
+    with TemporaryDirectory() as tmpdir:
+        g = _build_versioned_genome(tmpdir)
+        t = g.transcript_by_id("ENSTTEST00000010001")
+        eq_(t.transcript_version, 7)  # from the GTF
+        eq_(t.fasta_version, 7)  # from the FASTA header
+
+
+def test_transcript_fasta_version_none_when_no_transcript_fasta():
+    with TemporaryDirectory() as tmpdir:
+        g = _build_versioned_genome(tmpdir, transcript_fasta=False)
+        t = g.transcript_by_id("ENSTTEST00000010001")
+        eq_(t.fasta_version, None)
+
+
+def test_protein_fasta_version_returns_header_version():
+    """`Transcript.protein.fasta_version` returns the int the protein
+    FASTA header carried (5), independent of the GTF's `protein_version`."""
+    with TemporaryDirectory() as tmpdir:
+        g = _build_versioned_genome(tmpdir)
+        t = g.transcript_by_id("ENSTTEST00000010001")
+        eq_(t.protein.protein_version, 5)  # from the GTF
+        eq_(t.protein.fasta_version, 5)  # from the FASTA header
+
+
+def test_protein_fasta_version_none_when_no_protein_fasta():
+    with TemporaryDirectory() as tmpdir:
+        g = _build_versioned_genome(tmpdir, protein_fasta=False)
+        t = g.transcript_by_id("ENSTTEST00000010001")
+        # protein object is still constructed (protein_id exists in CDS row)
+        # but fasta_version returns None because there's no protein FASTA
+        assert t.protein is not None
+        eq_(t.protein.fasta_version, None)
+
+
+def test_protein_fasta_version_disagrees_with_gtf_when_files_diverge():
+    """Mixing a fresh GTF (protein_version=5) with a stale FASTA
+    (header version 3) — the two accessors disagree and downstream
+    tools can detect the mismatch."""
+    with TemporaryDirectory() as tmpdir:
+        from pyensembl import Genome
+        gtf_path = join(tmpdir, "v.gtf")
+        with open(gtf_path, "w") as f:
+            f.write(_VERSIONED_GTF)  # claims protein version 5
+        pep_path = join(tmpdir, "v.pep.fa")
+        # FASTA header records version 3 — different from the GTF's 5
+        _write_fasta(pep_path, "ENSPTEST00000010001.3", "MFAKEPROTEIN")
+        g = Genome(
+            reference_name="GRCh38",
+            annotation_name="_test_fasta_versions_disagree",
+            gtf_path_or_url=gtf_path,
+            protein_fasta_paths_or_urls=[pep_path],
+            cache_directory_path=tmpdir,
+        )
+        g.index()
+        t = g.transcript_by_id("ENSTTEST00000010001")
+        eq_(t.protein.protein_version, 5)
+        eq_(t.protein.fasta_version, 3)
+
+
+def test_protein_constructed_without_genome_returns_none_fasta_version():
+    """Direct `Protein(...)` construction outside a Genome shouldn't blow
+    up if the caller asks for `fasta_version` — just returns None."""
+    from pyensembl import Protein
+
+    p = Protein(protein_id="ENSPSTANDALONE.1", protein_version=1)
+    eq_(p.fasta_version, None)

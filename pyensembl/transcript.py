@@ -591,7 +591,9 @@ class Transcript(LocusWithGenome):
             if result and result[0]:
                 protein_version = int(result[0])
         return Protein(
-            protein_id=self.protein_id, protein_version=protein_version
+            protein_id=self.protein_id,
+            protein_version=protein_version,
+            genome=self.genome,
         )
 
     @memoized_property
@@ -601,3 +603,20 @@ class Transcript(LocusWithGenome):
         return lookup_sequence_with_version_fallback(
             self.genome.protein_sequences, self.protein_id
         )
+
+    @property
+    def fasta_version(self):
+        """
+        Integer version that the cDNA FASTA header carried for this
+        transcript, or ``None`` if the FASTA didn't carry one (older
+        Ensembl releases shipped bare headers) or no transcript FASTA
+        is attached to the genome.
+
+        Differs from :attr:`transcript_version` (which comes from the
+        GTF's ``transcript_version`` attribute). When the two disagree,
+        the FASTA version is the authoritative source-of-truth for the
+        bytes returned by :attr:`sequence`.
+        """
+        if not self.genome.requires_transcript_fasta:
+            return None
+        return self.genome.transcript_sequences.fasta_version(self.transcript_id)

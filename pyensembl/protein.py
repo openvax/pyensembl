@@ -19,9 +19,14 @@ class Protein(Serializable):
     Accessed via :attr:`Transcript.protein`.
     """
 
-    def __init__(self, protein_id, protein_version=None):
+    def __init__(self, protein_id, protein_version=None, genome=None):
         self.protein_id = protein_id
         self.protein_version = protein_version
+        # Optional genome reference so ``fasta_version`` can consult the
+        # protein FASTA's :class:`SequenceData`. Defaults to ``None`` for
+        # back-compat (callers constructing ``Protein`` outside of
+        # :class:`Transcript` won't have a meaningful genome).
+        self.genome = genome
 
     @property
     def id(self):
@@ -44,6 +49,25 @@ class Protein(Serializable):
     def versioned_id(self):
         """Alias for :attr:`versioned_protein_id`."""
         return self.versioned_protein_id
+
+    @property
+    def fasta_version(self):
+        """
+        Integer version that the protein FASTA header carried for this
+        ``protein_id``, or ``None`` if the FASTA didn't carry one (older
+        Ensembl releases shipped bare headers) or the genome has no
+        protein FASTA attached.
+
+        Differs from :attr:`protein_version` (which comes from the GTF's
+        ``protein_version`` attribute). When the two disagree, the FASTA
+        version is the authoritative source-of-truth for the bytes
+        returned by :meth:`Transcript.protein_sequence`.
+        """
+        if self.genome is None:
+            return None
+        if not self.genome.requires_protein_fasta:
+            return None
+        return self.genome.protein_sequences.fasta_version(self.protein_id)
 
     def __eq__(self, other):
         return (

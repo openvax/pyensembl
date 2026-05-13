@@ -631,6 +631,14 @@ class Database(object):
             # 2.7.0+) renames the GENCODE columns onto the Ensembl names at
             # parse time so the rest of pyensembl can stay Ensembl-centric.
             attribute_aliases=GENCODE_BIOTYPE_ALIASES,
+            # Opt out of gtfparse's Int64 cast for *_version columns: when
+            # any row is missing a version (e.g. start_codon rows that
+            # don't carry transcript_version), pandas' nullable Int64
+            # routes through float on the sqlite write path and stores as
+            # "7.0" text, which then breaks our `int(result[0])` parse.
+            # pyensembl handles the string→int conversion itself on the
+            # `*.version` property side.
+            cast_version_columns=False,
             infer_biotype_column=True,
             usecols=usecols,
             features=features,
