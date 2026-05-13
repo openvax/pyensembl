@@ -15,6 +15,7 @@ from memoized_property import memoized_property
 from .common import memoize, merge_intervals
 from .exon import Exon
 from .locus_with_genome import LocusWithGenome
+from .sequence_data import sequence_lookup_with_ens_fallback
 
 
 # Back-compat alias for callers that imported the private helper.
@@ -443,10 +444,9 @@ class Transcript(LocusWithGenome):
         Spliced cDNA sequence of transcript
         (includes 5" UTR, coding sequence, and 3" UTR)
         """
-        transcript_id = self.transcript_id
-        if transcript_id.startswith("ENS"):
-            transcript_id = transcript_id.rsplit(".", 1)[0]
-        return self.genome.transcript_sequences.get(transcript_id)
+        return sequence_lookup_with_ens_fallback(
+            self.genome.transcript_sequences, self.transcript_id
+        )
 
     @memoized_property
     def first_start_codon_spliced_offset(self):
@@ -596,7 +596,8 @@ class Transcript(LocusWithGenome):
 
     @memoized_property
     def protein_sequence(self):
-        if self.protein_id:
-            return self.genome.protein_sequences.get(self.protein_id)
-        else:
+        if not self.protein_id:
             return None
+        return sequence_lookup_with_ens_fallback(
+            self.genome.protein_sequences, self.protein_id
+        )

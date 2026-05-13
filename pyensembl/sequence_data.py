@@ -24,6 +24,28 @@ from .fasta import parse_fasta_dictionary
 logger = logging.getLogger(__name__)
 
 
+def sequence_lookup_with_ens_fallback(sequence_data, identifier):
+    """
+    Look up ``identifier`` in ``sequence_data``. If the lookup misses and the
+    identifier looks like an Ensembl ID with a version suffix (e.g.
+    ``"ENSP00000123456.3"``), strip the suffix and try again.
+
+    Needed because pyensembl's FASTA parser strips ENS.N suffixes from
+    headers (so the dictionary key is the unversioned ID) but GENCODE GTFs
+    embed the version in ``protein_id`` / ``transcript_id`` attributes, so
+    a literal lookup would miss.
+    """
+    if not identifier:
+        return None
+    sequence = sequence_data.get(identifier)
+    if sequence is not None:
+        return sequence
+    if identifier.startswith("ENS") and "." in identifier:
+        stripped = identifier.rsplit(".", 1)[0]
+        return sequence_data.get(stripped)
+    return None
+
+
 class SequenceData(object):
     """
     Container for reference nucleotide and amino acid sequenes.
