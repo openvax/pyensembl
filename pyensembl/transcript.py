@@ -15,7 +15,7 @@ from memoized_property import memoized_property
 from .common import memoize, merge_intervals
 from .exon import Exon
 from .locus_with_genome import LocusWithGenome
-from .sequence_data import sequence_lookup_with_ens_fallback
+from .sequence_data import lookup_sequence_with_version_fallback
 
 
 # Back-compat alias for callers that imported the private helper.
@@ -444,7 +444,7 @@ class Transcript(LocusWithGenome):
         Spliced cDNA sequence of transcript
         (includes 5" UTR, coding sequence, and 3" UTR)
         """
-        return sequence_lookup_with_ens_fallback(
+        return lookup_sequence_with_version_fallback(
             self.genome.transcript_sequences, self.transcript_id
         )
 
@@ -598,6 +598,6 @@ class Transcript(LocusWithGenome):
     def protein_sequence(self):
         if not self.protein_id:
             return None
-        return sequence_lookup_with_ens_fallback(
+        return lookup_sequence_with_version_fallback(
             self.genome.protein_sequences, self.protein_id
         )

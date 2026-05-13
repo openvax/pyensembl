@@ -24,16 +24,25 @@ from .fasta import parse_fasta_dictionary
 logger = logging.getLogger(__name__)
 
 
-def sequence_lookup_with_ens_fallback(sequence_data, identifier):
+def lookup_sequence_with_version_fallback(sequence_data, identifier):
     """
-    Look up ``identifier`` in ``sequence_data``. If the lookup misses and the
-    identifier looks like an Ensembl ID with a version suffix (e.g.
-    ``"ENSP00000123456.3"``), strip the suffix and try again.
+    Look up ``identifier`` in ``sequence_data``, tolerating an ENS.N version
+    suffix mismatch between the caller's ID and the FASTA's dict keys.
 
-    Needed because pyensembl's FASTA parser strips ENS.N suffixes from
-    headers (so the dictionary key is the unversioned ID) but GENCODE GTFs
-    embed the version in ``protein_id`` / ``transcript_id`` attributes, so
-    a literal lookup would miss.
+    Both Ensembl and GENCODE work with versioned IDs (e.g.
+    ``ENSP00000123456.3``); the two formats just split that information
+    differently. Ensembl GTFs keep the bare ID in ``protein_id`` /
+    ``transcript_id`` and put the version in a separate ``*_version``
+    attribute, while GENCODE GTFs embed the version directly in the ID
+    attribute. pyensembl's FASTA parser strips ``.N`` from ENS-prefix
+    headers, so the FASTA dict keys are always unversioned — meaning a
+    literal lookup of a GENCODE-style versioned ID would miss.
+
+    Strategy: try ``identifier`` as-is first (covers both unversioned IDs
+    and any future FASTA that preserves versions); on miss, strip a
+    trailing ``.N`` suffix and try again, but only for ENS-prefix IDs
+    because for non-Ensembl IDs (e.g. TAIR ``AT1G01010.1``) the ``.N`` is
+    an isoform suffix and stripping would be incorrect.
     """
     if not identifier:
         return None

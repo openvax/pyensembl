@@ -28,7 +28,7 @@ from .exon import Exon
 from .gene import Gene
 from .normalization import normalize_chromosome, normalize_strand
 from .search import find_nearest_locus
-from .sequence_data import SequenceData, sequence_lookup_with_ens_fallback
+from .sequence_data import SequenceData, lookup_sequence_with_version_fallback
 from .transcript import Transcript
 
 
@@ -545,7 +545,7 @@ class Genome(Serializable):
         """
         if self.transcript_sequences is None:
             raise ValueError("No transcript FASTA supplied to this Genome: %s" % self)
-        return sequence_lookup_with_ens_fallback(
+        return lookup_sequence_with_version_fallback(
             self.transcript_sequences, transcript_id
         )
 
@@ -556,7 +556,7 @@ class Genome(Serializable):
         """
         if self.protein_sequences is None:
             raise ValueError("No protein FASTA supplied to this Genome: %s" % self)
-        return sequence_lookup_with_ens_fallback(
+        return lookup_sequence_with_version_fallback(
             self.protein_sequences, protein_id
         )
 
