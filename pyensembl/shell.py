@@ -49,8 +49,21 @@ from .genome import Genome
 from .species import Species
 from .version import __version__
 
-logging.config.fileConfig(str(resources.files("pyensembl") / "logging.conf"))
 logger = logging.getLogger(__name__)
+
+
+def configure_logging():
+    """Apply pyensembl's console logging configuration.
+
+    This is only invoked from the command-line entrypoint (``run``) so that
+    merely importing this module never reconfigures the root logger or
+    disables any loggers the host application has already created. See
+    https://github.com/openvax/pyensembl/issues/362.
+    """
+    logging.config.fileConfig(
+        str(resources.files("pyensembl") / "logging.conf"),
+        disable_existing_loggers=False,
+    )
 
 
 parser = argparse.ArgumentParser(usage=__doc__)
@@ -365,6 +378,7 @@ def format_available_species(use_color=None):
 
 
 def run():
+    configure_logging()
     args = parser.parse_args()
     if args.action == "list":
         # TODO: how do we also identify which non-Ensembl genomes are

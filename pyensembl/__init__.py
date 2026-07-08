@@ -10,6 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
+
 from .database import Database
 from .download_cache import DownloadCache
 from .ensembl_release import EnsemblRelease, cached_release
@@ -34,6 +36,12 @@ from .sequence_data import SequenceData
 from .species import find_species_by_name, check_species_object, normalize_species_name
 from .transcript import Transcript
 from .version import __version__
+
+# Per the Python logging HOWTO ("Configuring Logging for a Library"), attach a
+# no-op handler to the package logger so that library usage neither emits log
+# output nor triggers "No handlers could be found" warnings, while leaving the
+# root logger and any application-configured loggers untouched.
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = [
     "__version__",
