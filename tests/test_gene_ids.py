@@ -4,7 +4,6 @@ from some other type of name or ID.
 
 TODO: Implement tests for EnsemblRelease.gene_ids
 """
-from __future__ import absolute_import
 
 from pytest import raises
 from pyensembl import ensembl_grch38, cached_release

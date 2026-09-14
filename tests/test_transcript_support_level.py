@@ -2,7 +2,6 @@
 Tests for methods which return collections of transcript IDs that aren't
 converting from some type of name or ID.
 """
-from __future__ import absolute_import
 
 from .common import eq_
 

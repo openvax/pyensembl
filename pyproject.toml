@@ -46,9 +46,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "ruff",
-    "coveralls",
     "build",
-    "tomli; python_version < '3.11'",
 ]
 
 [tool.setuptools]

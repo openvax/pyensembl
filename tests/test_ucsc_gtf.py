@@ -1,6 +1,8 @@
+from tempfile import TemporaryDirectory
+
 from pyensembl import Genome, Database
 
-from .common import TemporaryDirectory, eq_
+from .common import eq_
 from .data import data_path
 
 UCSC_GENCODE_PATH = data_path("gencode.ucsc.small.gtf")

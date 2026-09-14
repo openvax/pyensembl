@@ -11,7 +11,6 @@
 # limitations under the License.
 
 
-from os import listdir, remove
 from os.path import join, exists, split, abspath, isdir
 from shutil import copy2, rmtree
 import logging
@@ -305,20 +304,6 @@ class DownloadCache(object):
             )
         except MissingRemoteFile:
             self._raise_missing_file_error({field_name: path_or_url})
-
-    def delete_cached_files(self, prefixes=[], suffixes=[]):
-        """
-        Deletes any cached files matching the prefixes or suffixes given
-        """
-        if isdir(self.cache_directory_path):
-            for filename in listdir():
-                delete = any([filename.endswith(ext) for ext in suffixes]) or any(
-                    [filename.startswith(pre) for pre in prefixes]
-                )
-                if delete:
-                    path = join(self.cache_directory_path, filename)
-                    logger.info("Deleting %s", path)
-                    remove(path)
 
     def delete_cache_directory(self):
         if isdir(self.cache_directory_path):

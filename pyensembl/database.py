@@ -83,7 +83,6 @@ class Database(object):
         self._connection = None
         # dictionary mapping table names to sets of columns
         self._columns = {}
-        self._query_cache = {}
 
     def __eq__(self, other):
         return other.__class__ is Database and self.gtf_path == other.gtf_path
@@ -428,10 +427,9 @@ class Database(object):
         try:
             cursor = self.connection.execute(sql, query_params)
         except sqlite3.OperationalError as e:
-            error_message = e.message if hasattr(e, "message") else str(e)
-            logger.warn(
+            logger.warning(
                 'Encountered error "%s" from query "%s" with parameters %s',
-                error_message,
+                e,
                 sql,
                 query_params,
             )
@@ -543,11 +541,6 @@ class Database(object):
 
         rows = self.run_sql_query(query, query_params=query_params)
         return [row[0] for row in rows if row is not None]
-
-    def query_distinct_on_contig(self, column_name, feature, contig):
-        return self.query_feature_values(
-            column=column_name, feature=feature, contig=contig, distinct=True
-        )
 
     def query_loci(self, filter_column, filter_value, feature):
         """

@@ -5,10 +5,9 @@ download cache rather than next to the GTF file (which may be read-only).
 """
 
 import os
+from tempfile import TemporaryDirectory
 
 from pyensembl import Genome
-
-from .common import TemporaryDirectory
 
 
 GTF_BODY = (

@@ -18,10 +18,6 @@ from .locus_with_genome import LocusWithGenome
 from .sequence_data import lookup_sequence_with_version_fallback
 
 
-# Back-compat alias for callers that imported the private helper.
-_merge_ranges = merge_intervals
-
-
 class Transcript(LocusWithGenome):
     """
     Transcript encompasses the locus, exons, and sequence of a transcript.
@@ -490,9 +486,6 @@ class Transcript(LocusWithGenome):
         # then start = 3 and end = 22.
         #
         # Adding 1 to end since Python uses non-inclusive ends in slices/ranges.
-
-        # pylint: disable=invalid-slice-index
-        # TODO(tavi) Figure out pylint is not happy with this slice
         return self.sequence[start : end + 1]
 
     @memoized_property
@@ -503,8 +496,6 @@ class Transcript(LocusWithGenome):
         """
         if self.sequence is None or not self.contains_start_codon:
             return None
-        # pylint: disable=invalid-slice-index
-        # TODO(tavi) Figure out pylint is not happy with this slice
         return self.sequence[: self.first_start_codon_spliced_offset]
 
     @memoized_property

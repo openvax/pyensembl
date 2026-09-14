@@ -11,10 +11,11 @@ returned ``None`` for GENCODE FASTAs even when the sequence was present.
 """
 
 import os
+from tempfile import TemporaryDirectory
 
 from pyensembl import Genome
 
-from .common import TemporaryDirectory, eq_
+from .common import eq_
 
 
 GENCODE_STYLE_GTF = """\

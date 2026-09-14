@@ -142,7 +142,7 @@ class SequenceData(object):
     def _add_to_fasta_dictionary(self, fasta_dictionary_tmp):
         for identifier, sequence in fasta_dictionary_tmp.items():
             if identifier in self._fasta_dictionary:
-                logger.warn(
+                logger.warning(
                     "Sequence identifier %s is duplicated in your FASTA files!"
                     % identifier
                 )
@@ -182,7 +182,7 @@ class SequenceData(object):
                     # catch either an UnpicklingError or an AttributeError
                     # resulting from pickled objects refering to classes
                     # that no longer exists
-                    logger.warn(
+                    logger.warning(
                         "Failed to load %s, attempting to read FASTA directly",
                         pickle_path,
                     )

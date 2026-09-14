@@ -20,7 +20,6 @@ Four transcripts were selected:
   * AT1G24475.1 — protein-coding fragment: no stop_codon feature.
   * AT1G42615.1 — protein-coding fragment: neither start_codon nor stop_codon.
 """
-from __future__ import absolute_import
 
 from pyensembl import Genome
 

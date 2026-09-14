@@ -1,4 +1,3 @@
-import functools
 
 from pyensembl import genome_for_reference_name, cached_release
 
@@ -21,29 +20,6 @@ def run_multiple_genomes(*versions):
     else:
         genomes = [cached_release(v) for v in versions]
     return lambda fn: pytest.mark.parametrize("genome", genomes)(fn)
-
-
-# TemporaryDirectory only got added to Python in version 3.2
-try:
-    # pylint: disable=no-name-in-module
-    from tempfile import TemporaryDirectory
-
-except ImportError:
-    # only added in Python 3.2
-    from tempfile import mkdtemp
-    from shutil import rmtree
-
-    class TemporaryDirectory(object):
-        def __init__(self):
-            self.name = mkdtemp()
-
-        def __enter__(self, *args, **kwargs):
-            return self.name
-
-        def __exit__(self, type, value, traceback):
-            rmtree(self.name)
-            # don't suppress exceptions
-            return False
 
 
 def ok_(b):
