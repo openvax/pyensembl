@@ -13,7 +13,7 @@
 """
 Manipulate pyensembl's local cache.
 
-    %(prog)s {install, delete, delete-sequence-cache} [--release XXX --species human...]
+    %(prog)s {install, delete-all-files, delete-index-files, list, available} [--release XXX --species human...]
 
 To install particular Ensembl human release(s):
     %(prog)s install --release 75 77
@@ -24,11 +24,14 @@ To install particular Ensembl mouse release(s):
 To delete all downloaded and cached data for a particular Ensembl release:
     %(prog)s delete-all-files --release 75 --species human
 
-To delete only cached data related to transcript and protein sequences:
+To delete everything except the original GTF and FASTA files:
     %(prog)s delete-index-files --release 75
 
 To list all installed genomes:
     %(prog)s list
+
+To list supported species and their Ensembl release ranges:
+    %(prog)s available
 
 To install a genome from source files:
     %(prog)s install \
@@ -57,8 +60,7 @@ def configure_logging():
 
     This is only invoked from the command-line entrypoint (``run``) so that
     merely importing this module never reconfigures the root logger or
-    disables any loggers the host application has already created. See
-    https://github.com/openvax/pyensembl/issues/362.
+    disables any loggers the host application has already created.
     """
     logging.config.fileConfig(
         str(resources.files("pyensembl") / "logging.conf"),
