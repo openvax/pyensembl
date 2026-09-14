@@ -6,7 +6,7 @@
 
 # PyEnsembl
 
-PyEnsembl is a Python interface to [Ensembl](http://www.ensembl.org) reference genome metadata such as exons and transcripts. PyEnsembl downloads [GTF](https://en.wikipedia.org/wiki/Gene_transfer_format) and [FASTA](https://en.wikipedia.org/wiki/FASTA_format) files from the [Ensembl FTP server](ftp://ftp.ensembl.org) and loads them into a local database. PyEnsembl can also work with custom reference data specified using user-supplied GTF and FASTA files.
+PyEnsembl is a Python interface to [Ensembl](http://www.ensembl.org) reference genome metadata such as exons and transcripts. PyEnsembl downloads [GTF](https://en.wikipedia.org/wiki/Gene_transfer_format) and [FASTA](https://en.wikipedia.org/wiki/FASTA_format) files from the [Ensembl FTP server](https://ftp.ensembl.org/pub/) and loads them into a local database. PyEnsembl can also work with custom reference data specified using user-supplied GTF and FASTA files.
 
 # Example Usage
 
@@ -62,10 +62,14 @@ This installs the package in development mode along with tools for testing, lint
 - `pytest-cov` for coverage reporting
 - `build` for package building
 
-Run tests with:
+Run lint and tests with:
 ```sh
-pytest
+./lint.sh
+./test.sh
 ```
+
+Most tests need Ensembl data installed first; `.github/workflows/tests.yml`
+lists the releases CI installs.
 
 ## Cache Location
 
@@ -104,6 +108,15 @@ from pyensembl.shell import collect_all_installed_ensembl_releases
 collect_all_installed_ensembl_releases()
 ```
 
+## List supported species
+
+To see every species PyEnsembl knows about, with its assemblies and supported
+Ensembl release ranges:
+
+```sh
+pyensembl available
+```
+
 ## Load genome in Python
 
 Here's an example Python snippet that loads fly genome data from Ensembl release v100:
@@ -118,7 +131,7 @@ data = EnsemblRelease(release=100, species='drosophila_melanogaster')
 ### Gene
 
 ```python
-gene = genome.gene_by_id(gene_id='FBgn0011747')
+gene = data.gene_by_id(gene_id='FBgn0011747')
 ```
 
 ### Transcript

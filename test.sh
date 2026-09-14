@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # Run the pyensembl test suite with a memory- and CPU-aware pytest-xdist
-# worker count. See ~/code/trufflepig/test.sh for the rationale: running
-# several sibling repos' suites concurrently can fork-bomb the laptop,
-# so we cap workers at min(cpu_reserve, available_RAM / PER_WORKER_GB).
+# worker count. Running several repos' suites concurrently can exhaust
+# memory, so we cap workers at min(cpu_reserve, available_RAM / PER_WORKER_GB).
 # xdist is optional — fall back to serial pytest when it isn't installed.
 #
 # Tunables (env vars):
