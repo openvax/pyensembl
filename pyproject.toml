@@ -46,9 +46,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "ruff",
-    "coveralls",
     "build",
-    "tomli; python_version < '3.11'",
 ]
 
 [tool.setuptools]
@@ -59,3 +57,7 @@ pyensembl = ["logging.conf"]
 
 [tool.setuptools.dynamic]
 version = {attr = "pyensembl.version.__version__"}
+
+[tool.ruff.lint]
+# Ruff 0.16 widened its default rule set; keep the rules this repo has always used.
+select = ["E4", "E7", "E9", "F"]

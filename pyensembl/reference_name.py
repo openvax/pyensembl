@@ -36,12 +36,6 @@ def which_reference(species_name, ensembl_release):
     return find_species_by_name(species_name).which_reference(ensembl_release)
 
 
-def max_ensembl_release(reference_name):
-    species = find_species_by_reference(reference_name)
-    (_, max_release) = species.reference_assemblies[reference_name]
-    return max_release
-
-
 def genome_for_reference_name(reference_name, allow_older_downloaded_release=True):
     """
     Given a genome reference name, such as "GRCh38", returns the
@@ -65,8 +59,6 @@ def genome_for_reference_name(reference_name, allow_older_downloaded_release=Tru
             candidate = EnsemblRelease.cached(release=release, species=species)
             if candidate.required_local_files_exist():
                 return candidate
-        # see if any of the releases between [max, min] are already locally
-        # available
     return EnsemblRelease.cached(release=max_ensembl_release, species=species)
 
 

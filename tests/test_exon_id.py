@@ -2,7 +2,6 @@
 Exon IDs of the TP53 gene and one of its transcripts (TP53-026) were copied
 from the Ensembl website, make sure same IDs are found by pyensembl.
 """
-from __future__ import absolute_import
 
 from pyensembl import cached_release
 

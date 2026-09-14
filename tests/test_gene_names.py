@@ -2,7 +2,6 @@
 Test all methods which return collections of gene names that aren't converting
 from some other type of name or ID.
 """
-from __future__ import absolute_import, print_function
 from pyensembl import genome_for_reference_name
 
 from .common import run_multiple_genomes

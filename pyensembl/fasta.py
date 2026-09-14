@@ -150,7 +150,7 @@ class FastaParser(object):
         # entry of the file then put the last one in the dictionary
         if self.current_id:
             if len(self.current_lines) == 0:
-                logger.warn("No sequence data for '%s'", self.current_id)
+                logger.warning("No sequence data for '%s'", self.current_id)
             else:
                 sequence = b"".join(self.current_lines)
                 sequence = sequence.decode("ascii")
@@ -162,7 +162,7 @@ class FastaParser(object):
         self.current_id = _parse_header_id(line)
 
         if len(self.current_id) == 0:
-            logger.warn("Unable to parse ID from header line: %s", line)
+            logger.warning("Unable to parse ID from header line: %s", line)
 
         self.current_lines = []
         return previous_entry

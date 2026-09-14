@@ -3,7 +3,6 @@ it's a sequence type which correctly implements `complement`
 and `reverse_complement`
 """
 
-from __future__ import absolute_import
 from .common import eq_
 from pyensembl import genome_for_reference_name
 

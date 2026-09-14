@@ -4,10 +4,10 @@ and that we're able to clear and regenrate its cached representation of
 a FASTA dictionary
 """
 from os.path import exists
+from tempfile import TemporaryDirectory
 
 from pyensembl import SequenceData
 
-from .common import TemporaryDirectory
 from .data import data_path
 
 

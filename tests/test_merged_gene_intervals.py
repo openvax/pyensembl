@@ -4,9 +4,11 @@ non-overlapping (start, end) tuples after merging adjacent/overlapping
 gene loci on the contig.
 """
 
+from tempfile import TemporaryDirectory
+
 from pyensembl.common import merge_intervals
 
-from .common import TemporaryDirectory, eq_
+from .common import eq_
 from pyensembl import Genome
 
 

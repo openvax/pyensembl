@@ -3,7 +3,6 @@ Tests for simple properties of an EnsemblRelease object which don't
 require database lookups.
 """
 
-from __future__ import absolute_import
 
 from .common import eq_
 from pyensembl import EnsemblRelease, MAX_ENSEMBL_RELEASE

@@ -13,16 +13,16 @@ Covers:
     versioned caller -> bare FASTA (Ensembl case) and bare caller ->
     versioned FASTA (GENCODE case).
 """
-import os
 import pickle
 from os.path import join
+from tempfile import TemporaryDirectory
 
 from pyensembl import SequenceData
 from pyensembl.common import dump_pickle
 from pyensembl.fasta import _parse_header_id, _split_ens_version
 from pyensembl.sequence_data import lookup_sequence_with_version_fallback
 
-from .common import TemporaryDirectory, eq_
+from .common import eq_
 
 
 # -----------------------------
