@@ -58,7 +58,7 @@ pip install -e .[dev]
 
 This installs the package in development mode along with tools for testing, linting, and building:
 - `pytest` for running tests
-- `ruff` and `flake8` for code linting
+- `ruff` for code linting
 - `pytest-cov` for coverage reporting
 - `build` for package building
 

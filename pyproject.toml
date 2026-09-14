@@ -42,7 +42,6 @@ pyensembl = "pyensembl.shell:run"
 
 [project.optional-dependencies]
 dev = [
-    "flake8",
     "pytest",
     "pytest-cov",
     "ruff",
