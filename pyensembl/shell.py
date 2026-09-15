@@ -47,12 +47,20 @@ import os
 
 from .ensembl_release import EnsemblRelease
 from .ensembl_versions import MAX_ENSEMBL_RELEASE
-from .download_cache import MissingLocalFile
+from .download_cache import MissingGenomeDataFile, MissingLocalFile
 from .genome import Genome
 from .species import Species
 from .version import __version__
 
 logger = logging.getLogger(__name__)
+
+
+class CommandLineError(ValueError):
+    """
+    A mistake in the command line itself, e.g. an unusable combination of
+    flags. Subclasses ValueError so that library callers of the functions in
+    this module see no change.
+    """
 
 
 def configure_logging():
@@ -241,17 +249,17 @@ def collect_selected_genomes(args):
     # If specific genome source URLs are provided, use those
     if args.gtf or args.transcript_fasta or args.protein_fasta:
         if args.release:
-            raise ValueError(
+            raise CommandLineError(
                 "--release cannot be combined with "
                 "--gtf, --transcript-fasta or --protein-fasta"
             )
         if not args.reference_name:
-            raise ValueError(
+            raise CommandLineError(
                 "--reference-name is required with "
                 "--gtf, --transcript-fasta or --protein-fasta"
             )
         if not args.annotation_name:
-            raise ValueError(
+            raise CommandLineError(
                 "--annotation-name is required with "
                 "--gtf, --transcript-fasta or --protein-fasta"
             )
@@ -390,6 +398,26 @@ def format_available_species(use_color=None):
     return "\n".join(lines)
 
 
+def select_genomes(args):
+    """
+    collect_selected_genomes() with any ValueError turned into a
+    CommandLineError.
+
+    Everything reachable from here only interprets the command line --
+    validating release numbers and species names and building Genome objects --
+    so a ValueError raised in this phase is always a mistake in the arguments,
+    never a failure while reading genome data. Errors raised later, while
+    downloading or indexing, are deliberately left alone so that a malformed
+    GTF or a corrupt database still shows where it came from.
+    """
+    try:
+        return collect_selected_genomes(args)
+    except CommandLineError:
+        raise
+    except ValueError as e:
+        raise CommandLineError(str(e)) from e
+
+
 def run(args_list=None):
     configure_logging()
     args = parser.parse_args(args_list)
@@ -397,7 +425,7 @@ def run(args_list=None):
         run_action(args)
     except MissingLocalFile as e:
         parser.exit(1, "%s: error: file not found: %s\n" % (parser.prog, e.path))
-    except ValueError as e:
+    except (CommandLineError, MissingGenomeDataFile) as e:
         parser.exit(1, "%s: error: %s\n" % (parser.prog, e))
 
 
@@ -415,7 +443,7 @@ def run_action(args):
     elif args.action == "available":
         print(format_available_species())
     else:
-        genomes = collect_selected_genomes(args)
+        genomes = select_genomes(args)
 
         if len(genomes) == 0:
             logger.error("ERROR: No genomes selected!")

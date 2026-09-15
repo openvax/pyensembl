@@ -188,3 +188,57 @@ def test_cli_errors_are_one_line(args, message, tmp_path):
     assert "Traceback" not in result.stderr
     assert message in result.stderr
     assert result.stderr.strip().splitlines()[-1].startswith("-c: error: ")
+
+
+def _gtf_line(feature, attributes):
+    return "\t".join(
+        ["1", "ensembl", feature, "10", "100", ".", "+", ".", attributes]
+    )
+
+
+_GENE_ATTRIBUTES = 'gene_id "ENSG1"; gene_name "A"; gene_biotype "protein_coding";'
+_TRANSCRIPT_ATTRIBUTES = (
+    'gene_id "ENSG1"; transcript_id "ENST1"; gene_name "A"; '
+    'transcript_name "A-201"; gene_biotype "protein_coding"; '
+    'transcript_biotype "protein_coding";'
+)
+_EXON_ATTRIBUTES = (
+    'gene_id "ENSG1"; transcript_id "ENST1"; exon_id "ENSE1"; exon_number "1"; '
+    'gene_name "A"; transcript_name "A-201"; gene_biotype "protein_coding"; '
+    'transcript_biotype "protein_coding";'
+)
+
+# An otherwise valid GTF whose "gene" rows repeat one gene_id.
+# Database._get_primary_key rejects this while building the index, which is an
+# integrity problem in the GTF rather than a mistake in the command line.
+_DUPLICATE_GENE_ID_GTF = (
+    "\n".join(
+        [
+            _gtf_line("gene", _GENE_ATTRIBUTES),
+            _gtf_line("transcript", _TRANSCRIPT_ATTRIBUTES),
+            _gtf_line("exon", _EXON_ATTRIBUTES),
+            _gtf_line("gene", _GENE_ATTRIBUTES),
+        ]
+    )
+    + "\n"
+)
+
+
+def test_errors_from_indexing_keep_their_traceback(tmp_path):
+    # Only mistakes in the command line become one-liners. A failure while
+    # reading or indexing genome data has to keep its traceback, otherwise a
+    # malformed GTF (or a bug in pyensembl) is indistinguishable from a typo.
+    gtf_path = tmp_path / "duplicate_gene_id.gtf"
+    gtf_path.write_text(_DUPLICATE_GENE_ID_GTF)
+    result = _run_cli(
+        [
+            "install",
+            "--reference-name", "GRCh38",
+            "--annotation-name", "test",
+            "--gtf", str(gtf_path),
+        ],
+        tmp_path,
+    )
+    assert result.returncode != 0
+    assert "can't be primary key" in result.stderr
+    assert "Traceback" in result.stderr

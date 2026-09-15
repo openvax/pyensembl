@@ -56,6 +56,16 @@ class MissingLocalFile(Exception):
         return "MissingFile(%s)" % self.path
 
 
+class MissingGenomeDataFile(ValueError):
+    """
+    A genome's source GTF or FASTA is not in the local cache.
+
+    Subclasses ValueError so that code which already catches ValueError keeps
+    working, while letting the command line tell a missing download apart from
+    an internal failure such as a malformed GTF or a corrupt database.
+    """
+
+
 class DownloadCache(object):
     """
     Downloads remote files to cache, optionally copies local files into cache,
@@ -291,7 +301,7 @@ class DownloadCache(object):
         if self.install_string_function:
             install_string = self.install_string_function()
             error_message += " Run %s" % install_string
-        raise ValueError(error_message)
+        raise MissingGenomeDataFile(error_message)
 
     def local_path_or_install_error(
         self, field_name, path_or_url, download_if_missing=False, overwrite=False
