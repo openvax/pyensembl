@@ -23,11 +23,11 @@ import sys
 
 from .database import is_complete_database
 from .dated_releases import AVAILABLE_EXPIRE_AFTER, UnpublishedDateError, fetch_all_dated_releases
-from .download_cache import cache_root
+from .download_cache import MissingGenomeDataFile, MissingLocalFile, cache_root
 from .ensembl_release import EnsemblRelease
 from .ensembl_versions import is_dated_release, normalize_release
 from .genome import Genome
-from .genome_fasta import GenomeFasta
+from .genome_fasta import GenomeFasta, MissingGenomeFastaError
 from .genome_fasta_cache import (
     canonical_source_options,
     dna_cache_lock,
@@ -971,5 +971,12 @@ def run():
                     )
                 except UnpublishedDateError as error:
                     parser.error(str(error))
+                except (MissingLocalFile, MissingGenomeDataFile, MissingGenomeFastaError) as error:
+                    # Missing remote cache entries are converted to the narrow
+                    # MissingGenomeDataFile type by DownloadCache. Parser,
+                    # integrity and database failures keep their tracebacks.
+                    message = ("file not found: %s" % error.path
+                               if isinstance(error, MissingLocalFile) else str(error))
+                    parser.exit(1, "%s: error: %s\n" % (parser.prog, message))
             else:
                 raise ValueError("Invalid action: %s" % args.action)
