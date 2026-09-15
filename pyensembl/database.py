@@ -92,9 +92,24 @@ class Database(object):
 
     def close(self):
         """Close the active SQLite connection, if any."""
-        if self._connection is not None:
-            self._connection.close()
+        connection = getattr(self, "_connection", None)
+        if connection is not None:
+            connection.close()
             self._connection = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception:
+            # Destructors must not raise during interpreter shutdown. Explicit
+            # close() and context-manager use still surface closure failures.
+            pass
 
     def __eq__(self, other):
         return other.__class__ is Database and self.gtf_path == other.gtf_path

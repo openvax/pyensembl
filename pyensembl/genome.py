@@ -483,6 +483,17 @@ class Genome(Serializable):
         if self._protein_sequences is not None:
             self._protein_sequences.clear_cache()
 
+    def close(self):
+        """Close resources opened by this genome."""
+        if self._db is not None:
+            self._db.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
     def delete_index_files(self):
         """
         Delete all data aside from source GTF and FASTA files
