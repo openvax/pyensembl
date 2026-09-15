@@ -16,8 +16,8 @@ around an arbitrary genomic database.
 """
 
 
-from os import remove
-from os.path import exists, getsize
+from os import lstat, remove
+from os.path import basename, exists, getsize, join, lexists, splitext
 
 from serializable import Serializable
 
@@ -494,21 +494,52 @@ class Genome(Serializable):
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
+    def _index_file_paths(self):
+        """Locate indexes without resolving or loading their source files."""
+        cache = self.download_cache
+
+        def source_filename(path_or_url):
+            if cache.is_url_format(path_or_url) or cache.copy_local_files_to_cache:
+                return basename(cache.cached_path(path_or_url))
+            # Uncopied local sources retain their compression suffix even when
+            # downloaded files would be decompressed.
+            return basename(path_or_url)
+
+        paths = []
+        if self.requires_gtf:
+            if self._db is not None:
+                paths.append(self._db.local_db_path)
+            else:
+                filename = splitext(source_filename(self._gtf_path_or_url))[0] + ".db"
+                paths.append(join(cache.cache_directory_path, filename))
+        for sequences, sources in (
+            (self._transcript_sequences, self._transcript_fasta_paths_or_urls),
+            (self._protein_sequences, self._protein_fasta_paths_or_urls),
+        ):
+            if sequences is not None:
+                paths.extend(sequences.fasta_dictionary_pickle_paths)
+            else:
+                paths.extend(
+                    join(cache.cache_directory_path, source_filename(source) + ".pickle")
+                    for source in sources
+                )
+        return paths
+
     def delete_index_files(self):
-        """
-        Delete all data aside from source GTF and FASTA files
+        """Delete SQLite and FASTA indexes, preserving source files.
+
+        Missing sources and indexes are allowed; nothing is downloaded or
+        copied. Return ``(path, size_in_bytes)`` pairs for the removed files.
         """
         self.clear_cache()
-        if self.requires_transcript_fasta:
-            self.transcript_sequences.delete_index_files()
-        if self.requires_protein_fasta:
-            self.protein_sequences.delete_index_files()
-        if self.requires_gtf:
-            database = self.db
-            db_path = database.local_db_path
-            database.close()
-            if exists(db_path):
-                remove(db_path)
+        self.close()
+        deleted = []
+        for path in self._index_file_paths():
+            if lexists(path):
+                size = lstat(path).st_size
+                remove(path)
+                deleted.append((path, size))
+        return deleted
 
     def _all_feature_values(
         self,
