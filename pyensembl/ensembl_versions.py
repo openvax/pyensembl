@@ -27,7 +27,7 @@ def check_release_number(release):
     try:
         release = int(release)
     except (ValueError, TypeError):
-        raise ValueError("Invalid Ensembl release: %s" % release)
+        raise ValueError("Invalid Ensembl release: %s" % (release,))
 
     if release < MIN_ENSEMBL_RELEASE:
         raise ValueError(

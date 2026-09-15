@@ -466,7 +466,7 @@ class Genome(Serializable):
         )
 
     def __eq__(self, other):
-        return other.__class__ is Genome and self._fields() == other._fields()
+        return type(self) is type(other) and self._fields() == other._fields()
 
     def __hash__(self):
         return hash(self._fields())

@@ -112,7 +112,7 @@ class Database(object):
             pass
 
     def __eq__(self, other):
-        return other.__class__ is Database and self.gtf_path == other.gtf_path
+        return type(self) is type(other) and self.gtf_path == other.gtf_path
 
     def __str__(self):
         return "Database(gtf_path=%s)" % (self.gtf_path,)

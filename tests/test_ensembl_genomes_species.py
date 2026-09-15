@@ -4,6 +4,10 @@ Tests for #298: more species support across Ensembl Genomes divisions
 routes them through ``ftp.ensemblgenomes.ebi.ac.uk``.
 """
 
+from weakref import WeakValueDictionary
+
+import pytest
+
 from pyensembl import EnsemblRelease
 from pyensembl.ensembl_url_templates import (
     ENSEMBL_FTP_SERVER,
@@ -33,6 +37,53 @@ GENOMES_SPECIES_BY_DIVISION = {
     "metazoa": [anopheles_gambiae],
     "protists": [plasmodium_falciparum, toxoplasma_gondii],
 }
+
+
+@pytest.mark.parametrize("changed_routing", [
+    {"division": "protists"},
+    {"ensembl_genomes": False},
+])
+def test_species_routing_distinguishes_dictionary_keys(changed_routing):
+    fields = dict(
+        latin_name="test_routing_species",
+        reference_assemblies={"TestAssembly": (40, 58)},
+        division="fungi",
+        ensembl_genomes=True,
+    )
+    first = Species(**fields)
+    equal = Species(**fields)
+    other = Species(**dict(fields, **changed_routing))
+
+    assert first == equal
+    assert hash(first) == hash(equal)
+    assert first != other
+    cached = {first: "first", other: "other"}
+    assert len(cached) == 2
+    assert cached[equal] == "first"
+
+
+def test_cached_release_preserves_species_division(tmp_path, monkeypatch):
+    monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
+    monkeypatch.setattr(EnsemblRelease, "_genome_cache", WeakValueDictionary())
+    fields = dict(
+        latin_name="test_routing_species",
+        reference_assemblies={"TestAssembly": (40, 58)},
+        ensembl_genomes=True,
+    )
+    fungi = Species(division="fungi", **fields)
+    protists = Species(division="protists", **fields)
+    fungal_release = EnsemblRelease.cached(58, species=fungi)
+    protist_release = EnsemblRelease.cached(58, species=protists)
+
+    assert fungal_release is not protist_release
+    assert fungal_release != protist_release
+    for release, division in [(fungal_release, "fungi"), (protist_release, "protists")]:
+        assert release.species.division == division
+        assert "/%s/gtf/" % division in release.gtf_url
+        for url in release.transcript_fasta_urls + release.protein_fasta_urls:
+            assert "/%s/fasta/" % division in url
+        equal_species = Species(division=division, **fields)
+        assert EnsemblRelease.cached(58, species=equal_species) is release
 
 
 def test_ensembl_genomes_species_have_expected_divisions():

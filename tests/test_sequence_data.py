@@ -6,12 +6,42 @@ a FASTA dictionary
 from os.path import exists
 from tempfile import TemporaryDirectory
 
+import pytest
+
 from pyensembl import SequenceData
 
 from .data import data_path
 
 
 FASTA_PATH = data_path("mouse.ensembl.81.partial.ENSMUSG00000017167.fa")
+
+
+@pytest.mark.parametrize("path_indices", [[], [0], [0, 1], [0, 0, 1]])
+def test_sequence_data_as_dictionary_key(tmp_path, path_indices):
+    paths = [tmp_path / "first.fa", tmp_path / "second.fa"]
+    for path in paths:
+        path.write_text(">sequence\nACGT\n")
+    selected = [str(paths[index]) for index in path_indices]
+    first = SequenceData(selected)
+    reordered = SequenceData(list(reversed(selected)))
+
+    assert first == reordered
+    assert hash(first) == hash(reordered)
+    assert {first: "cached"}[reordered] == "cached"
+    assert len({first, reordered}) == 1
+
+
+def test_sequence_data_path_multiplicity_distinguishes_keys(tmp_path):
+    path = tmp_path / "sequence.fa"
+    path.write_text(">sequence\nACGT\n")
+    single = SequenceData(str(path))
+    repeated = SequenceData([str(path), str(path)])
+
+    assert single != repeated
+    cached = {single: "once", repeated: "twice"}
+    assert len(cached) == 2
+    assert cached[SequenceData([str(path)])] == "once"
+    assert cached[SequenceData([str(path), str(path)])] == "twice"
 
 
 def test_sequence_type():

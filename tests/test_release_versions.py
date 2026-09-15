@@ -1,6 +1,21 @@
+import pytest
+
 from pyensembl import EnsemblRelease, MAX_ENSEMBL_RELEASE
+from pyensembl.ensembl_versions import check_release_number
 
 from pytest import raises
+
+
+@pytest.mark.parametrize("release", [(), (81,), (81, 82), "invalid", None])
+def test_invalid_release_preserves_validation_error(release):
+    with raises(ValueError) as error:
+        check_release_number(release)
+    assert str(error.value) == "Invalid Ensembl release: %s" % (release,)
+
+
+@pytest.mark.parametrize("release", [81, "81"])
+def test_valid_release_normalization(release):
+    assert check_release_number(release) == 81
 
 
 def test_version_too_old_1():

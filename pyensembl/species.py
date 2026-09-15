@@ -201,10 +201,12 @@ class Species(Serializable):
 
     def __eq__(self, other):
         return (
-            other.__class__ is Species
+            type(self) is type(other)
             and self.latin_name == other.latin_name
             and self.synonyms == other.synonyms
             and self.reference_assemblies == other.reference_assemblies
+            and self.division == other.division
+            and self.ensembl_genomes == other.ensembl_genomes
         )
 
     def to_dict(self):
@@ -220,6 +222,8 @@ class Species(Serializable):
                 self.latin_name,
                 tuple(self.synonyms),
                 frozenset(self.reference_assemblies.items()),
+                self.division,
+                self.ensembl_genomes,
             )
         )
 
