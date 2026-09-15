@@ -472,23 +472,32 @@ class Genome(Serializable):
         return hash(self._fields())
 
     def clear_cache(self):
-        """
-        Clear any in-memory cached values
-        """
-        for maybe_fn in self.__dict__.values():
-            # clear cache associated with all memoization decorators,
-            # GTF and SequenceData objects
-            if hasattr(maybe_fn, "clear_cache"):
-                maybe_fn.clear_cache()
+        """Clear values cached in memory without deleting index files."""
+        self._genes.clear()
+        self._transcripts.clear()
+        self._exons.clear()
+        if self._db is not None:
+            self._db.clear_cache()
+        if self._transcript_sequences is not None:
+            self._transcript_sequences.clear_cache()
+        if self._protein_sequences is not None:
+            self._protein_sequences.clear_cache()
 
     def delete_index_files(self):
         """
         Delete all data aside from source GTF and FASTA files
         """
         self.clear_cache()
-        db_path = self.db.local_db_path()
-        if exists(db_path):
-            remove(db_path)
+        if self.requires_transcript_fasta:
+            self.transcript_sequences.delete_index_files()
+        if self.requires_protein_fasta:
+            self.protein_sequences.delete_index_files()
+        if self.requires_gtf:
+            database = self.db
+            db_path = database.local_db_path
+            database.close()
+            if exists(db_path):
+                remove(db_path)
 
     def _all_feature_values(
         self,
@@ -500,9 +509,8 @@ class Genome(Serializable):
         biotype=None,
     ):
         """
-        Cached lookup of all values for a particular feature property from
-        the database, caches repeated queries in memory and
-        stores them as a CSV.
+        Lookup of all values for a particular feature property from the
+        database. Repeated queries are cached in memory by the database.
 
         Parameters
         ----------

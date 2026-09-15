@@ -70,31 +70,28 @@ def merge_intervals(ranges):
 
 
 def memoize(fn):
-    """Simple reset-able memoization decorator for functions and methods,
-    assumes that all arguments to the function can be hashed and
-    compared.
+    """Resettable memoization decorator for instance methods.
+
+    Cached values are stored on each instance instead of in the decorator
+    closure. This keeps unrelated instances isolated and prevents the cache
+    from extending an instance's lifetime.
     """
-    cache = {}
+    cache_attribute = "_memoize_cache_%s" % fn.__name__
 
     @wraps(fn)
-    def wrapped_fn(*args, **kwargs):
+    def wrapped_fn(self, *args, **kwargs):
+        cache = self.__dict__.setdefault(cache_attribute, {})
         cache_key = _memoize_cache_key(args, kwargs)
         try:
             return cache[cache_key]
         except KeyError:
-            value = fn(*args, **kwargs)
+            value = fn(self, *args, **kwargs)
             cache[cache_key] = value
             return value
 
-    def clear_cache():
-        cache.clear()
+    def clear_cache(instance):
+        instance.__dict__.pop(cache_attribute, None)
 
-    # Needed to ensure that EnsemblRelease.clear_cache
-    # is able to clear memoized values from each of its methods
     wrapped_fn.clear_cache = clear_cache
-    # expose the cache so we can check if an item has already been computed
-    wrapped_fn.cache = cache
-    # if we want to check whether an item is in the cache, first need
-    # to construct the same cache key as used by wrapped_fn
     wrapped_fn.make_cache_key = _memoize_cache_key
     return wrapped_fn
