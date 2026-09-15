@@ -10,10 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
+r"""
 Manipulate pyensembl's local cache.
-
-    %(prog)s {install, delete-all-files, delete-index-files, list, available} [--release XXX --species human...]
 
 To install particular Ensembl human release(s):
     %(prog)s install --release 75 77
@@ -35,10 +33,11 @@ To list supported species and their Ensembl release ranges:
 
 To install a genome from source files:
     %(prog)s install \
- --reference-name "GRCh38" \
- --gtf URL_OR_PATH \
- --transcript-fasta URL_OR_PATH \
- --protein-fasta URL_OR_PATH
+        --reference-name GRCh38 \
+        --annotation-name refseq \
+        --gtf URL_OR_PATH \
+        --transcript-fasta URL_OR_PATH \
+        --protein-fasta URL_OR_PATH
 """
 
 import argparse
@@ -48,6 +47,7 @@ import os
 
 from .ensembl_release import EnsemblRelease
 from .ensembl_versions import MAX_ENSEMBL_RELEASE
+from .download_cache import MissingLocalFile
 from .genome import Genome
 from .species import Species
 from .version import __version__
@@ -68,7 +68,10 @@ def configure_logging():
     )
 
 
-parser = argparse.ArgumentParser(usage=__doc__)
+parser = argparse.ArgumentParser(
+    description=__doc__,
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+)
 
 parser.add_argument(
     "--version", 
@@ -239,20 +242,28 @@ def collect_selected_genomes(args):
     if args.gtf or args.transcript_fasta or args.protein_fasta:
         if args.release:
             raise ValueError(
-                "An Ensembl release cannot be specified if "
-                "specific paths are also given"
+                "--release cannot be combined with "
+                "--gtf, --transcript-fasta or --protein-fasta"
             )
         if not args.reference_name:
-            raise ValueError("Must specify a reference name")
+            raise ValueError(
+                "--reference-name is required with "
+                "--gtf, --transcript-fasta or --protein-fasta"
+            )
         if not args.annotation_name:
-            raise ValueError("Must specify the name of the annotation source")
+            raise ValueError(
+                "--annotation-name is required with "
+                "--gtf, --transcript-fasta or --protein-fasta"
+            )
 
         return [
             Genome(
                 reference_name=args.reference_name,
                 annotation_name=args.annotation_name,
                 annotation_version=args.annotation_version,
-                gtf_path_or_url=os.path.join(args.shared_prefix, args.gtf),
+                gtf_path_or_url=(
+                    os.path.join(args.shared_prefix, args.gtf) if args.gtf else None
+                ),
                 transcript_fasta_paths_or_urls=[
                     os.path.join(args.shared_prefix, transcript_fasta)
                     for transcript_fasta in args.transcript_fasta
@@ -379,9 +390,18 @@ def format_available_species(use_color=None):
     return "\n".join(lines)
 
 
-def run():
+def run(args_list=None):
     configure_logging()
-    args = parser.parse_args()
+    args = parser.parse_args(args_list)
+    try:
+        run_action(args)
+    except MissingLocalFile as e:
+        parser.exit(1, "%s: error: file not found: %s\n" % (parser.prog, e.path))
+    except ValueError as e:
+        parser.exit(1, "%s: error: %s\n" % (parser.prog, e))
+
+
+def run_action(args):
     if args.action == "list":
         # TODO: how do we also identify which non-Ensembl genomes are
         # installed?

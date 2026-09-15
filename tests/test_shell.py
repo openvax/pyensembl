@@ -1,6 +1,9 @@
 import logging
+import os
 import subprocess
 import sys
+
+import pytest
 
 from pyensembl.shell import (
     all_combinations_of_ensembl_genomes,
@@ -144,3 +147,44 @@ def test_configure_logging_preserves_existing_loggers():
         root.handlers[:] = saved_root_handlers
         root.level = saved_root_level
         pyensembl_logger.handlers[:] = saved_pyensembl_handlers
+
+
+def _run_cli(args, cache_dir):
+    env = dict(os.environ, PYENSEMBL_CACHE_DIR=str(cache_dir))
+    return subprocess.run(
+        [sys.executable, "-c", "import sys; from pyensembl.shell import run; sys.exit(run())"]
+        + args,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+
+@pytest.mark.parametrize(
+    "args, message",
+    [
+        (["install", "--release", "999"], "No genome for homo_sapiens in Ensembl release 999"),
+        (["install", "--species", "martian"], "Species not found: martian"),
+        (["install", "--gtf", "x.gtf"], "--reference-name is required"),
+        (
+            ["install", "--reference-name", "GRCh38", "--gtf", "x.gtf"],
+            "--annotation-name is required",
+        ),
+        (
+            ["install", "--release", "81", "--reference-name", "GRCh38",
+             "--annotation-name", "test", "--gtf", "x.gtf"],
+            "--release cannot be combined",
+        ),
+        (
+            ["install", "--reference-name", "GRCh38", "--annotation-name", "test",
+             "--transcript-fasta", "/nonexistent/transcripts.fa"],
+            "file not found: /nonexistent/transcripts.fa",
+        ),
+    ],
+)
+def test_cli_errors_are_one_line(args, message, tmp_path):
+    result = _run_cli(args, tmp_path)
+    assert result.returncode == 1
+    assert "Traceback" not in result.stderr
+    assert message in result.stderr
+    assert result.stderr.strip().splitlines()[-1].startswith("-c: error: ")
