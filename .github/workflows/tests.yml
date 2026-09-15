@@ -3,7 +3,10 @@
 
 # TODO: cache $HOME/.cache/pyensembl/
 name: Tests
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 jobs:
   build:
