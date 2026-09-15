@@ -135,7 +135,7 @@ class EnsemblRelease(Genome):
 
     def __eq__(self, other):
         return (
-            other.__class__ is EnsemblRelease
+            type(self) is type(other)
             and self.release == other.release
             and self.species == other.species
         )

@@ -65,7 +65,7 @@ class Gene(LocusWithGenome):
 
     def __eq__(self, other):
         return (
-            other.__class__ is Gene
+            type(self) is type(other)
             and self.id == other.id
             and self.genome == other.genome
         )

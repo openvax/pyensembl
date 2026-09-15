@@ -71,7 +71,7 @@ class Protein(Serializable):
 
     def __eq__(self, other):
         return (
-            other.__class__ is Protein
+            type(self) is type(other)
             and self.protein_id == other.protein_id
             and self.protein_version == other.protein_version
         )

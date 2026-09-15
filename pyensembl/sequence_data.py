@@ -137,12 +137,13 @@ class SequenceData(object):
     def __eq__(self, other):
         # test to see if self.fasta_paths and other.fasta_paths contain
         # the same list of paths, regardless of order
-        return (other.__class__ is SequenceData) and Counter(
+        return (type(self) is type(other)) and Counter(
             self.fasta_paths
         ) == Counter(other.fasta_paths)
 
     def __hash__(self):
-        return hash(self.fasta_paths)
+        # Match equality: ignore path order but retain duplicate counts.
+        return hash(tuple(sorted(self.fasta_paths)))
 
     def _add_to_fasta_dictionary(self, fasta_dictionary_tmp):
         for identifier, sequence in fasta_dictionary_tmp.items():
