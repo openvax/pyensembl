@@ -1,4 +1,5 @@
 from pyensembl.locus import Locus
+from pyensembl.exon import Exon
 from pyensembl.normalization import normalize_chromosome
 
 from pytest import raises as assert_raises
@@ -210,3 +211,49 @@ def test_locus_intersect():
     other_neg = Locus("1", 12, 18, "-")
     assert a.intersect(other_neg) is None
     assert a.intersect(other_neg, ignore_strand=True) == Locus("1", 12, 18, "+")
+
+
+def test_locus_comparison_with_non_locus_raises_type_error_not_attribute_error():
+    """Regression test: __eq__/__lt__/__gt__ built their TypeError message with
+    the mangled name ``other.__class`` instead of ``other.__class__``, so
+    comparing a Locus with any non-Locus object raised AttributeError before
+    the intended TypeError was ever constructed.
+    """
+    locus = Locus("1", 10, 20, "+")
+
+    with assert_raises(TypeError) as exc_info:
+        locus == None  # noqa: E711
+    assert "NoneType" in str(exc_info.value)
+
+    with assert_raises(TypeError):
+        locus < None
+
+    with assert_raises(TypeError):
+        locus > None
+
+    with assert_raises(TypeError):
+        locus == 42
+
+
+def test_exon_comparison_with_non_exon_raises_type_error_not_attribute_error():
+    """Regression test: Exon.__eq__ built its TypeError message with the
+    mangled name ``other.__class`` instead of ``other.__class__``, so
+    comparing an Exon with any non-Exon object raised AttributeError before
+    the intended TypeError was ever constructed.
+    """
+    exon = Exon(
+        exon_id="ENSE00001",
+        contig="1",
+        start=10,
+        end=20,
+        strand="+",
+        gene_name="TEST",
+        gene_id="ENSG00000000001",
+    )
+
+    with assert_raises(TypeError) as exc_info:
+        exon == None  # noqa: E711
+    assert "NoneType" in str(exc_info.value)
+
+    with assert_raises(TypeError):
+        exon == "not an exon"
