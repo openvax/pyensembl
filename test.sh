@@ -98,10 +98,10 @@ XDIST_FLAGS=()
 if python -c "import xdist" 2>/dev/null; then
     XDIST_FLAGS=(-n "$WORKERS")
     log "platform=${OS} cpus=${CPUS} cpu_cap=${CPU_CAP} ${mem_note} per_worker=${PER_WORKER_GB}GB"
-    log "workers=${WORKERS} → exec pytest -n ${WORKERS} --cov=pyensembl/ --cov-report=term-missing tests $*"
+    log "workers=${WORKERS} → exec python -m pytest -n ${WORKERS} --cov=pyensembl/ --cov-report=term-missing tests $*"
 else
     log "platform=${OS} cpus=${CPUS} (pytest-xdist not installed; running serial)"
-    log "→ exec pytest --cov=pyensembl/ --cov-report=term-missing tests $*"
+    log "→ exec python -m pytest --cov=pyensembl/ --cov-report=term-missing tests $*"
 fi
 
-exec pytest "${XDIST_FLAGS[@]}" --cov=pyensembl/ --cov-report=term-missing tests "$@"
+exec python -m pytest "${XDIST_FLAGS[@]}" --cov=pyensembl/ --cov-report=term-missing tests "$@"
