@@ -69,7 +69,7 @@ class Locus(Serializable):
         if not isinstance(other, Locus):
             raise TypeError(
                 "Cannot compare %s and %s"
-                % (self.__class__.__name__, other.__class.__name__)
+                % (self.__class__.__name__, other.__class__.__name__)
             )
         return (
             self.contig == other.contig
@@ -85,7 +85,7 @@ class Locus(Serializable):
         if not isinstance(other, Locus):
             raise TypeError(
                 "Cannot compare %s and %s"
-                % (self.__class__.__name__, other.__class.__name__)
+                % (self.__class__.__name__, other.__class__.__name__)
             )
         return self.to_tuple() < other.to_tuple()
 
@@ -96,7 +96,7 @@ class Locus(Serializable):
         if not isinstance(other, Locus):
             raise TypeError(
                 "Cannot compare %s and %s"
-                % (self.__class__.__name__, other.__class.__name__)
+                % (self.__class__.__name__, other.__class__.__name__)
             )
         return self.to_tuple() > other.to_tuple()
 
