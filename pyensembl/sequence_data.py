@@ -113,7 +113,12 @@ class SequenceData(object):
         self._versions = None
 
     def clear_cache(self):
+        """Clear parsed sequence data held in memory."""
         self._init_lazy_fields()
+
+    def delete_index_files(self):
+        """Delete cached FASTA dictionaries while preserving source files."""
+        self.clear_cache()
         for path in self.fasta_dictionary_pickle_paths:
             if exists(path):
                 remove(path)
@@ -196,7 +201,7 @@ class SequenceData(object):
 
     def index(self, overwrite=False):
         if overwrite:
-            self.clear_cache()
+            self.delete_index_files()
         self._load_or_create_fasta_dictionary_pickle()
 
     @property

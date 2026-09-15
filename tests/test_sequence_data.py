@@ -45,9 +45,15 @@ def test_clear_cache():
             not seqs._fasta_dictionary
         ), "Expected FASTA dictionary to be empty after clear_cache()"
         for pickle_path in seqs.fasta_dictionary_pickle_paths:
+            assert exists(
+                pickle_path
+            ), "Cached pickle file should be preserved by clear_cache()"
+
+        seqs.delete_index_files()
+        for pickle_path in seqs.fasta_dictionary_pickle_paths:
             assert not exists(
                 pickle_path
-            ), "Cached pickle file should have been deleted"
+            ), "Cached pickle file should be deleted by delete_index_files()"
 
         seqs._load_or_create_fasta_dictionary_pickle()
         for pickle_path in seqs.fasta_dictionary_pickle_paths:

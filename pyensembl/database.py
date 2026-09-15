@@ -84,6 +84,18 @@ class Database(object):
         # dictionary mapping table names to sets of columns
         self._columns = {}
 
+    def clear_cache(self):
+        """Clear query results and schema metadata cached in memory."""
+        self._columns.clear()
+        type(self).query.clear_cache(self)
+        type(self).query_feature_values.clear_cache(self)
+
+    def close(self):
+        """Close the active SQLite connection, if any."""
+        if self._connection is not None:
+            self._connection.close()
+            self._connection = None
+
     def __eq__(self, other):
         return other.__class__ is Database and self.gtf_path == other.gtf_path
 
