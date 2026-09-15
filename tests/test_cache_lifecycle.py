@@ -1,9 +1,14 @@
 import gc
 from os.path import exists
+import sqlite3
 from tempfile import TemporaryDirectory
+import warnings
 import weakref
 
+import pytest
+
 from pyensembl import Genome
+from pyensembl.database import Database
 
 from .data import (
     MOUSE_ENSMUSG00000017167_PATH,
@@ -114,3 +119,42 @@ def test_memoized_methods_do_not_keep_genome_alive():
         gc.collect()
 
         assert genome_reference() is None
+
+
+def test_genome_and_database_context_managers_close_connections():
+    with TemporaryDirectory() as cache_directory_path:
+        with make_genome(cache_directory_path) as genome:
+            genome.index()
+            first_connection = genome.db.connection
+            assert first_connection.execute("SELECT 1").fetchone() == (1,)
+
+        assert genome.db._connection is None
+        with pytest.raises(sqlite3.ProgrammingError):
+            first_connection.execute("SELECT 1")
+
+        with genome.db as database:
+            second_connection = database.connection
+            assert second_connection is not first_connection
+            assert second_connection.execute("SELECT 1").fetchone() == (1,)
+
+        assert genome.db._connection is None
+        genome.close()
+
+
+def test_database_collection_closes_connection_without_resource_warning():
+    with warnings.catch_warnings(record=True) as caught_warnings:
+        warnings.simplefilter("always", ResourceWarning)
+        database = Database("unused.gtf")
+        database._connection = sqlite3.connect(":memory:")
+        database_reference = weakref.ref(database)
+
+        del database
+        gc.collect()
+
+    assert database_reference() is None
+    resource_warnings = [
+        warning
+        for warning in caught_warnings
+        if issubclass(warning.category, ResourceWarning)
+    ]
+    assert not resource_warnings
