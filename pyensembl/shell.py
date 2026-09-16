@@ -90,7 +90,10 @@ release_group.add_argument(
     type=int,
     nargs="+",
     default=[],
-    help="Ensembl release version(s) (default=%d)" % MAX_ENSEMBL_RELEASE,
+    help=(
+        "Ensembl release version(s); required for deletion "
+        "(install default=%d)" % MAX_ENSEMBL_RELEASE
+    ),
 )
 
 release_group.add_argument(
@@ -379,9 +382,54 @@ def format_available_species(use_color=None):
     return "\n".join(lines)
 
 
+def _genome_description(genome):
+    if isinstance(genome, EnsemblRelease):
+        species = genome.species
+        name = species.synonyms[0] if species.synonyms else species.latin_name
+        return "%s %s release %d" % (name, genome.reference_name, genome.release)
+    description = "%s %s" % (genome.reference_name, genome.annotation_name)
+    if genome.annotation_version is not None:
+        description += " %s" % genome.annotation_version
+    return description
+
+
+def _directory_size(path):
+    """Sum file sizes without following links outside the cache directory."""
+    size = 0
+    for root, directories, files in os.walk(path):
+        for name in files + directories:
+            entry = os.path.join(root, name)
+            if os.path.isfile(entry) or os.path.islink(entry):
+                size += os.lstat(entry).st_size
+    return size
+
+
+def _delete_genome_files(genome, action):
+    if action == "delete-index-files":
+        deleted = genome.delete_index_files()
+    else:
+        directory = genome.download_cache.cache_directory_path
+        deleted = []
+        if os.path.isdir(directory):
+            genome.close()
+            size = _directory_size(directory)
+            genome.download_cache.delete_cache_directory()
+            deleted.append((directory, size))
+    for path, size in deleted:
+        print("Deleted %s (%s bytes)" % (path, format(size, ",")))
+    if not deleted:
+        print("Nothing to delete for %s" % _genome_description(genome))
+
+
 def run():
     configure_logging()
     args = parser.parse_args()
+    if (
+        args.action in ("delete-all-files", "delete-index-files")
+        and not args.release
+        and not (args.gtf or args.transcript_fasta or args.protein_fasta)
+    ):
+        parser.error("%s requires an explicit --release" % args.action)
     if args.action == "list":
         # TODO: how do we also identify which non-Ensembl genomes are
         # installed?
@@ -403,10 +451,8 @@ def run():
 
         for genome in genomes:
             logger.info("Running '%s' for %s", args.action, genome)
-            if args.action == "delete-all-files":
-                genome.download_cache.delete_cache_directory()
-            elif args.action == "delete-index-files":
-                genome.delete_index_files()
+            if args.action in ("delete-all-files", "delete-index-files"):
+                _delete_genome_files(genome, args.action)
             elif args.action == "install":
                 genome.download(overwrite=args.overwrite)
                 genome.index(overwrite=args.overwrite)
