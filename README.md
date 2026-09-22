@@ -43,6 +43,18 @@ pyensembl install --release <list of Ensembl release numbers> --species <species
 For example, `pyensembl install --release 75 76 --species human` will download and install all
 human reference data from Ensembl releases 75 and 76.
 
+To install the newest supported Ensembl release for a reference assembly:
+
+```sh
+pyensembl install --reference-name GRCh37
+```
+
+Reference names are case-insensitive. This selects human release 75 for GRCh37;
+the species is inferred from the reference. You can also specify `--release`
+to select older releases for that assembly. Conflicting `--species` or
+`--release` selections are rejected before downloading data. Deletion commands
+still require an explicit `--release`.
+
 Alternatively, you can create the `EnsemblRelease` object from inside a Python
 process and call `ensembl_object.download()` followed by `ensembl_object.index()`.
 

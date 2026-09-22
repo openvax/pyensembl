@@ -21,6 +21,9 @@ To install particular Ensembl human release(s):
 To install particular Ensembl mouse release(s):
     %(prog)s install --release 75 77 --species mouse
 
+To install the newest supported Ensembl release for a reference assembly:
+    %(prog)s install --reference-name GRCh37
+
 To delete all downloaded and cached data for a particular Ensembl release:
     %(prog)s delete-all-files --release 75 --species human
 
@@ -49,7 +52,8 @@ import os
 from .ensembl_release import EnsemblRelease
 from .ensembl_versions import MAX_ENSEMBL_RELEASE
 from .genome import Genome
-from .species import Species
+from .reference_name import find_species_by_reference, normalize_reference_name
+from .species import Species, find_species_by_name
 from .version import __version__
 
 logger = logging.getLogger(__name__)
@@ -92,7 +96,8 @@ release_group.add_argument(
     default=[],
     help=(
         "Ensembl release version(s); required for deletion "
-        "(install default=%d)" % MAX_ENSEMBL_RELEASE
+        "(install default=newest supported release for --reference-name, "
+        "otherwise %d)" % MAX_ENSEMBL_RELEASE
     ),
 )
 
@@ -100,7 +105,10 @@ release_group.add_argument(
     "--species",
     default=[],
     nargs="+",
-    help="Which species to download Ensembl data for (default=human)",
+    help=(
+        "Which species to download Ensembl data for "
+        "(default=inferred from --reference-name, otherwise human)"
+    ),
 )
 
 release_group.add_argument(
@@ -109,14 +117,18 @@ release_group.add_argument(
     help="URL and directory to use instead of the default Ensembl FTP server",
 )
 
-path_group = parser.add_argument_group("Custom genome options")
-
-path_group.add_argument(
+parser.add_argument(
     "--reference-name",
     type=str,
     default=None,
-    help="Name of the reference, e.g. GRCh38",
+    help=(
+        "Reference assembly, e.g. GRCh37 (case-insensitive for Ensembl). "
+        "Selects its newest supported release unless --release is given; "
+        "with custom source files, names the custom reference."
+    ),
 )
+
+path_group = parser.add_argument_group("Custom genome options")
 
 path_group.add_argument(
     "--annotation-name", default=None, help="Name of annotation source (e.g. refseq)"
@@ -192,11 +204,32 @@ def all_combinations_of_ensembl_genomes(args):
     """
     Use all combinations of species and release versions specified by the
     commandline arguments to return a list of EnsemblRelease or Genome objects.
+    A reference name constrains the species and releases; omitted values are
+    inferred from that reference's newest supported release.
     The results will typically be of type EnsemblRelease unless the
     --custom-mirror argument was given.
     """
     species_list = args.species if args.species else ["human"]
     release_list = args.release if args.release else [MAX_ENSEMBL_RELEASE]
+    if args.reference_name is not None:
+        reference_name = normalize_reference_name(args.reference_name)
+        reference_species = find_species_by_reference(reference_name)
+        species_list = args.species or [reference_species.latin_name]
+        for species_name in species_list:
+            species = find_species_by_name(species_name)
+            if species != reference_species:
+                raise ValueError(
+                    "Reference %s belongs to %s, not %s"
+                    % (reference_name, reference_species.latin_name, species.latin_name)
+                )
+        first_release, last_release = reference_species.reference_assemblies[reference_name]
+        release_list = args.release or [last_release]
+        for version in release_list:
+            if not first_release <= version <= last_release:
+                raise ValueError(
+                    "Reference %s supports Ensembl releases %d-%d, not --release %d"
+                    % (reference_name, first_release, last_release, version)
+                )
     genomes = []
     for species in species_list:
         # Otherwise, use Ensembl release information
@@ -443,7 +476,10 @@ def run():
     elif args.action == "available":
         print(format_available_species())
     else:
-        genomes = collect_selected_genomes(args)
+        try:
+            genomes = collect_selected_genomes(args)
+        except ValueError as error:
+            parser.error(str(error))
 
         if len(genomes) == 0:
             logger.error("ERROR: No genomes selected!")
