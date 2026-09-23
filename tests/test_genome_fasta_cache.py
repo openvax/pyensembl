@@ -63,6 +63,17 @@ def test_same_patch_reuses_file_and_index_then_works_offline(shared_cache, monke
     assert second._genome_fasta.index_path.stat().st_mtime_ns == first_index.st_mtime_ns
     assert first.sequence("MT", 1, 4) == second.sequence("MT", 1, 4) == "GCTA"
     assert first._genome_fasta.identity["assembly"] == "GCA_000001405.18"
+    relative = Path(first.genome_fasta_path).relative_to(cache.dna_cache_root())
+    assert relative.parts[:-2] == (
+        "homo_sapiens",
+        "ftp.ensembl.org",
+        "GRCh38-GCA_000001405.18",
+        "toplevel",
+        "unmasked",
+        "fasta",
+    )
+    assert len(relative.parts[-2]) == 16
+    assert relative.name == "sequence.fa"
     first.close()
     second.close()
 
@@ -90,6 +101,9 @@ def test_patch_mask_and_flavor_separate_objects(shared_cache):
         genome.close()
     assert len(shared_cache) == 4
     assert len({genome.genome_fasta_path for genome in genomes}) == 4
+    assert "GRCh38-GCA_000001405.20" in Path(genomes[1].genome_fasta_path).parts
+    assert "softmasked" in Path(genomes[2].genome_fasta_path).parts
+    assert "primary_assembly" in Path(genomes[3].genome_fasta_path).parts
     # All installed flavors remain referenced, not just the most recent one.
     assert prune_genome_fastas() == []
     assert Path(release(81).genome_fasta_path).exists()
@@ -110,6 +124,10 @@ def test_changed_upstream_file_metadata_separates_same_patch(shared_cache, monke
     second = release(82)
     second.download_genome_fasta()
     assert first.genome_fasta_path != second.genome_fasta_path
+    assert (
+        Path(first.genome_fasta_path).parent.parent
+        == Path(second.genome_fasta_path).parent.parent
+    )
     assert len(shared_cache) == 2
 
 
@@ -121,6 +139,7 @@ def test_incomplete_metadata_uses_release_specific_cache(shared_cache, monkeypat
     first.download_genome_fasta()
     second.download_genome_fasta()
     assert first.genome_fasta_path != second.genome_fasta_path
+    assert "GRCh38-unverified" in Path(first.genome_fasta_path).parts
     assert len(shared_cache) == 2
 
 
@@ -193,7 +212,7 @@ def test_prune_ignores_unowned_entries_and_external_symlinks(shared_cache, tmp_p
     genome = release()
     genome.download_genome_fasta()
     shutil.rmtree(genome.download_cache.cache_directory_path)
-    objects = cache.dna_cache_root() / "objects"
+    objects = genome._genome_fasta.directory.parent
     foreign = objects / ("a" * 64)
     foreign.mkdir()
     (foreign / "precious.fa").write_bytes(DNA)
@@ -205,6 +224,85 @@ def test_prune_ignores_unowned_entries_and_external_symlinks(shared_cache, tmp_p
     assert len(pruned) == 1
     assert (foreign / "precious.fa").read_bytes() == DNA
     assert (external / "precious.fa").read_bytes() == DNA
+
+
+def test_prune_ignores_symlinked_semantic_directories(shared_cache, tmp_path):
+    genome = release()
+    genome.download_genome_fasta()
+    shutil.rmtree(genome.download_cache.cache_directory_path)
+    species_directory = cache.dna_cache_root() / "homo_sapiens"
+    external = tmp_path / "moved_species_cache"
+    species_directory.rename(external)
+    species_directory.symlink_to(external, target_is_directory=True)
+    assert prune_genome_fastas() == []
+    assert Path(genome.genome_fasta_path).read_bytes() == DNA
+
+
+def test_misplaced_object_descriptor_does_not_authorize_deletion(
+    shared_cache, tmp_path
+):
+    genome = release()
+    genome.download_genome_fasta()
+    shutil.rmtree(genome.download_cache.cache_directory_path)
+    foreign = genome._genome_fasta.directory.parent / "my-data"
+    shutil.copytree(genome._genome_fasta.directory, foreign)
+    pruned = prune_genome_fastas()
+    assert [path for path, _ in pruned] == [str(genome._genome_fasta.directory)]
+    assert (foreign / "sequence.fa").read_bytes() == DNA
+
+
+def test_short_key_collision_does_not_reuse_or_overwrite_data(
+    shared_cache, monkeypatch
+):
+    original_key = cache._identity_key
+    monkeypatch.setattr(
+        cache, "_identity_key", lambda identity: "a" * 16 + original_key(identity)[16:]
+    )
+    first = release(81)
+    first.download_genome_fasta()
+    original_metadata = cache.urlopen
+
+    def changed(request, **kwargs):
+        response = original_metadata(request, **kwargs)
+        if isinstance(request, str) and request.endswith("CHECKSUMS"):
+            response = io.BytesIO(response.read().replace(b"17918", b"17919"))
+        return response
+
+    monkeypatch.setattr(cache, "urlopen", changed)
+    second = release(82)
+    with pytest.raises(ValueError, match="Conflicting shared genome FASTA identity"):
+        second.download_genome_fasta()
+    assert len(shared_cache) == 1
+    assert first.sequence("MT", 1, 4) == "GCTA"
+    assert not second._genome_fasta.reference_path.exists()
+    first.close()
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("species", "../outside"),
+        ("assembly", "../../GCA_000001405.18"),
+        ("provider", "../outside"),
+        ("filename", "Homo_sapiens.../outside.dna.toplevel.fa.gz"),
+    ],
+)
+def test_invalid_semantic_path_components_are_rejected(
+    shared_cache, monkeypatch, field, value
+):
+    original_identity = cache._remote_identity
+
+    def invalid(source):
+        identity = original_identity(source)
+        identity[field] = value
+        return identity
+
+    monkeypatch.setattr(cache, "_remote_identity", invalid)
+    genome = release()
+    with pytest.raises(ValueError, match="Invalid .+ in shared genome FASTA identity"):
+        genome.download_genome_fasta()
+    assert shared_cache == []
+    assert not genome._genome_fasta.reference_path.exists()
 
 
 def test_failed_shared_download_leaves_only_prunable_owned_object(

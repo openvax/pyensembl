@@ -215,13 +215,40 @@ Custom `Genome` sources also accept a FASTA URL.
 
 ### Shared DNA cache and cleanup
 
-Canonical Ensembl downloads use `pyensembl/dna_cache/objects/` under the cache
-location described above. Compatible releases reuse one uncompressed FASTA and
-FAI index. Sharing uses the **versioned assembly accession**, species, provider,
-file flavor/masking, and Ensembl file metadata (Unix checksum and compressed
-size). A major assembly name alone is insufficient. Local FASTAs and custom
-mirrors remain separate. If upstream identity metadata is incomplete, storage
-is isolated by source URL. Ensembl's Unix checksums are not cryptographic hashes.
+Canonical Ensembl downloads use a readable hierarchy under `pyensembl/dna_cache/`:
+
+```text
+<species>/<provider>/<reference>-<assembly-accession>/<coverage>/<masking>/fasta/<file-key>/
+```
+
+For example, compatible human releases 81 and 82 share a directory shaped like:
+
+```text
+pyensembl/dna_cache/
+  homo_sapiens/ftp.ensembl.org/GRCh38-GCA_000001405.18/
+    toplevel/unmasked/fasta/<file-key>/
+      sequence.fa
+      sequence.fa.fai
+      object.json
+      index.json
+```
+
+Coverage is `toplevel` or `primary_assembly`; masking is `unmasked`, `softmasked`,
+or `hardmasked`. `fasta` describes the stored encoding: the cached sequence is
+uncompressed, even when downloaded from a `.fa.gz` file. The familiar reference
+name and **versioned assembly accession** distinguish assembly patches.
+
+The 16-character file key distinguishes upstream file revisions within those
+semantic directories. It is a prefix of the SHA-256 of the complete identity
+metadata, including the Ensembl Unix checksum and compressed size. `object.json`
+retains the full readable identity; conflicting identities are rejected before
+reuse or overwrite. The hash covers metadata, not the FASTA bytes, and Ensembl's
+Unix checksums are not cryptographic hashes.
+
+Compatible releases reuse both the FASTA and FAI through per-release JSON
+references. Local FASTAs and custom mirrors remain separate. If upstream
+identity metadata is incomplete, the assembly directory ends in `-unverified`
+and the file key uses the full source URL, keeping releases isolated.
 
 A new release installation fetches small metadata files before deciding whether
 DNA can be reused. Registered releases work offline. Each release retains its
