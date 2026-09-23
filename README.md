@@ -58,6 +58,24 @@ still require an explicit `--release`.
 Alternatively, you can create the `EnsemblRelease` object from inside a Python
 process and call `ensembl_object.download()` followed by `ensembl_object.index()`.
 
+## Annotation coverage
+
+PyEnsembl uses Ensembl's complete `chr_patch_hapl_scaff` GTF for human GRCh38
+from release 82, mouse GRCm38 releases 82–102, and zebrafish GRCz11 from release
+92. These files include additional genes on assembly patches and haplotypes.
+Other assemblies and earlier releases use the standard GTF filename.
+
+Patch and haplotype contig names are preserved, for example
+`CHR_HG2263_PATCH`. Gene-name searches can return additional genes on these
+contigs; use stable gene IDs or a contig filter when selecting a particular locus.
+
+After upgrading from versions before 2.10.17, rerun installation for each affected
+release you use, for example `pyensembl install --release 97 --species human`.
+The complete GTF creates a separate index, so an older index cannot hide the
+additional genes. Existing source files and indexes are retained, and unchanged
+FASTA files are reused. Custom mirrors must provide the complete GTF filename;
+to use a deliberately restricted annotation, supply its GTF as custom data.
+
 ## Development Setup
 
 For development, install PyEnsembl in editable mode with development dependencies:

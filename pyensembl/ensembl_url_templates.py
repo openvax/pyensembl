@@ -59,6 +59,9 @@ def normalize_release_properties(ensembl_release, species):
 
 # GTF annotation file example: Homo_sapiens.GRCh38.gtf.gz
 GTF_FILENAME_TEMPLATE = "%(Species)s.%(reference)s.%(release)d.gtf.gz"
+GTF_FILENAME_TEMPLATE_WITH_PATCHES = (
+    "%(Species)s.%(reference)s.%(release)d.chr_patch_hapl_scaff.gtf.gz"
+)
 
 
 def make_gtf_filename(ensembl_release, species):
@@ -69,7 +72,14 @@ def make_gtf_filename(ensembl_release, species):
     ensembl_release, species_name, reference_name = normalize_release_properties(
         ensembl_release, species
     )
-    return GTF_FILENAME_TEMPLATE % {
+    # Ensembl split off patch/haplotype annotations in release 82. The full
+    # variant exists for GRCh38, GRCm38 (through release 102), and GRCz11
+    # (from release 92). Other assemblies, including GRCm39, use the standard
+    # file. Resolve the assembly first so transitions retain valid filenames.
+    template = GTF_FILENAME_TEMPLATE
+    if ensembl_release >= 82 and reference_name in ("GRCh38", "GRCm38", "GRCz11"):
+        template = GTF_FILENAME_TEMPLATE_WITH_PATCHES
+    return template % {
         "Species": species_name.capitalize(),
         "reference": reference_name,
         "release": ensembl_release,
