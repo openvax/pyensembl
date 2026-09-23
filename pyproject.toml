@@ -35,6 +35,8 @@ dependencies = [
     "gtfparse>=2.7.0,<3.0.0",
     "serializable>=0.2.1,<2.0.0",
     "numpy>=2.0.0,<3.0.0",
+    "pyfaidx>=0.8.1,<1.0.0",
+    "filelock>=3.12,<4.0.0",
 ]
 
 [project.scripts]

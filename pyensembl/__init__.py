@@ -18,6 +18,8 @@ from .ensembl_release import EnsemblRelease, cached_release
 from .ensembl_versions import MAX_ENSEMBL_RELEASE
 from .exon import Exon
 from .genome import Genome
+from .genome_fasta import MissingGenomeFastaError
+from .genome_fasta_cache import prune_genome_fastas
 from .gene import Gene
 from .locus import Locus
 from .reference_name import (
@@ -64,6 +66,8 @@ __all__ = [
     "normalize_reference_name",
     "normalize_species_name",
     "Genome",
+    "MissingGenomeFastaError",
+    "prune_genome_fastas",
     "Locus",
     "Exon",
     "ensembl_grch36",

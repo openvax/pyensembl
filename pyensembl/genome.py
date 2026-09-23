@@ -16,8 +16,11 @@ around an arbitrary genomic database.
 """
 
 
+from numbers import Integral
 from os import lstat, remove
 from os.path import basename, exists, getsize, join, lexists, splitext
+from pathlib import Path
+import warnings
 
 from serializable import Serializable
 
@@ -26,6 +29,7 @@ from .common import merge_intervals
 from .database import Database
 from .exon import Exon
 from .gene import Gene
+from .genome_fasta import GenomeFasta, MissingGenomeFastaError
 from .normalization import normalize_chromosome, normalize_strand
 from .search import find_nearest_locus
 from .sequence_data import SequenceData, lookup_sequence_with_version_fallback
@@ -69,6 +73,7 @@ class Genome(Serializable):
         decompress_on_download=False,
         copy_local_files_to_cache=False,
         cache_directory_path=None,
+        genome_fasta_path_or_url=None,
     ):
         """
         Parameters
@@ -102,6 +107,10 @@ class Genome(Serializable):
             Where to place downloaded and cached files for this genome,
             by default inferred from reference name, annotation name,
             annotation version, and global cache dir for pyensembl.
+
+        genome_fasta_path_or_url : str or Path, optional
+            Combined reference DNA FASTA. Supports plain or gzip input;
+            indexes and decompressed copies are stored in the cache.
         """
         if transcript_fasta_paths_or_urls is None:
             transcript_fasta_paths_or_urls = []
@@ -132,11 +141,83 @@ class Genome(Serializable):
             install_string_function=self.install_string,
             cache_directory_path=cache_directory_path,
         )
+        self._genome_fasta = (
+            GenomeFasta(genome_fasta_path_or_url, self.download_cache.cache_directory_path)
+            if genome_fasta_path_or_url is not None else None
+        )
+        self._genome_fasta_path_or_url = (
+            self._genome_fasta.source if self._genome_fasta is not None else None
+        )
         self._init_lazy_fields()
 
     @property
     def requires_gtf(self):
         return self._gtf_path_or_url is not None
+
+    @property
+    def requires_genome_fasta(self):
+        return self._genome_fasta is not None
+
+    @property
+    def genome_fasta_path(self):
+        """Existing uncompressed DNA path, or None; never downloads data."""
+        return self._genome_fasta.installed_path if self.requires_genome_fasta else None
+
+    @property
+    def fasta(self):
+        """Lazy pyfaidx reader, or None when reference DNA is unconfigured.
+
+        The reader uses zero-based, half-open slices. Prefer ``sequence`` for
+        PyEnsembl's one-based, inclusive coordinates. This property never
+        downloads missing remote data.
+        """
+        return self._genome_fasta.open() if self.requires_genome_fasta else None
+
+    def _get_genome_fasta_paths(self, download_if_missing=False, overwrite=False):
+        if not self.requires_genome_fasta:
+            raise MissingGenomeFastaError(
+                "No genome FASTA configured. Supply genome_fasta_path_or_url to Genome, "
+                "or genome_fasta_path / download_genome_fasta=True to EnsemblRelease."
+            )
+        return [self._genome_fasta.prepare(download=download_if_missing, overwrite=overwrite)]
+
+    def download_genome_fasta(self, overwrite=False):
+        """Download only configured reference DNA, leaving annotation files alone."""
+        self._get_genome_fasta_paths(download_if_missing=True, overwrite=overwrite)
+        self._genome_fasta.remember()
+
+    def index_genome_fasta(self, overwrite=False):
+        """Index configured local DNA without downloading other genome data."""
+        self._get_genome_fasta_paths()
+        self._genome_fasta.open(overwrite=overwrite)
+        self._genome_fasta.remember()
+
+    def sequence(self, contig, start, end, mask="upper"):
+        """Return plus-strand DNA using one-based, inclusive coordinates.
+
+        Contig names must match the FASTA (integer chromosome names are
+        converted to strings). Invalid intervals and absent contigs raise
+        ValueError; unconfigured or uninstalled DNA raises
+        MissingGenomeFastaError. Use mask='raw' to preserve soft masking.
+        """
+        if mask not in ("upper", "raw"):
+            raise ValueError("mask must be 'upper' or 'raw'")
+        if any(isinstance(x, bool) or not isinstance(x, Integral) for x in (start, end)):
+            raise ValueError("Genome sequence coordinates must be integers")
+        if start < 1 or end < start:
+            raise ValueError("Genome sequence requires 1 <= start <= end")
+        self._get_genome_fasta_paths()
+        fasta = self.fasta
+        try:
+            record = fasta[str(contig)]
+        except KeyError:
+            raise ValueError("Contig %r is absent from genome FASTA %s" % (
+                contig, self._genome_fasta_path_or_url
+            )) from None
+        if end > len(record):
+            raise ValueError("End %d exceeds contig %s length %d" % (end, contig, len(record)))
+        bases = record[int(start) - 1:int(end)].seq
+        return bases.upper() if mask == "upper" else bases
 
     @property
     def requires_transcript_fasta(self):
@@ -166,6 +247,7 @@ class Genome(Serializable):
             decompress_on_download=self.decompress_on_download,
             copy_local_files_to_cache=self.copy_local_files_to_cache,
             cache_directory_path=self.cache_directory_path,
+            genome_fasta_path_or_url=self._genome_fasta_path_or_url,
         )
 
     def _init_lazy_fields(self):
@@ -254,6 +336,8 @@ class Genome(Serializable):
 
     def required_local_files(self):
         paths = []
+        if self.requires_genome_fasta:
+            paths.append(self._genome_fasta.expected_path)
         if self._gtf_path_or_url:
             paths.append(self.download_cache.cached_path(self._gtf_path_or_url))
         if self._transcript_fasta_paths_or_urls:
@@ -273,6 +357,8 @@ class Genome(Serializable):
         return paths
 
     def required_local_files_exist(self, empty_files_ok=False):
+        if self.requires_genome_fasta and self.genome_fasta_path is None:
+            return False
         for path in self.required_local_files():
             if not exists(path):
                 return False
@@ -291,6 +377,8 @@ class Genome(Serializable):
             Download files regardless whether local copy already exists.
         """
         self._set_local_paths(download_if_missing=True, overwrite=overwrite)
+        if self.requires_genome_fasta:
+            self.download_genome_fasta(overwrite=overwrite)
 
     def index(self, overwrite=False):
         """
@@ -304,6 +392,19 @@ class Genome(Serializable):
             self.transcript_sequences.index(overwrite=overwrite)
         if self.requires_protein_fasta:
             self.protein_sequences.index(overwrite=overwrite)
+        if self.requires_genome_fasta:
+            self.index_genome_fasta(overwrite=overwrite)
+            if self.requires_gtf and not self._genome_fasta.remote:
+                missing = set(self.contigs()) - set(self.fasta.keys())
+                if missing:
+                    warnings.warn(
+                        "Local genome FASTA lacks %d annotation contigs (e.g. %s). "
+                        "Check assembly and contig naming; matching names alone "
+                        "do not verify assembly identity."
+                        % (len(missing), ", ".join(sorted(missing)[:5])),
+                        UserWarning,
+                        stacklevel=2,
+                    )
 
     @property
     def db(self):
@@ -422,6 +523,8 @@ class Genome(Serializable):
                 '--transcript-fasta "%s"' % path
                 for path in self._transcript_fasta_paths_or_urls
             ]
+        if self.requires_genome_fasta:
+            args += ['--genome-fasta-path "%s"' % self._genome_fasta_path_or_url]
         return "pyensembl install %s" % " ".join(args)
 
     def __str__(self):
@@ -463,6 +566,7 @@ class Genome(Serializable):
             self._gtf_path_or_url,
             tuple(self._protein_fasta_paths_or_urls),
             tuple(self._transcript_fasta_paths_or_urls),
+            self._genome_fasta_path_or_url,
         )
 
     def __eq__(self, other):
@@ -482,11 +586,15 @@ class Genome(Serializable):
             self._transcript_sequences.clear_cache()
         if self._protein_sequences is not None:
             self._protein_sequences.clear_cache()
+        if self.requires_genome_fasta:
+            self._genome_fasta.close()
 
     def close(self):
         """Close resources opened by this genome."""
         if self._db is not None:
             self._db.close()
+        if self.requires_genome_fasta:
+            self._genome_fasta.close()
 
     def __enter__(self):
         return self
@@ -506,6 +614,10 @@ class Genome(Serializable):
             return basename(path_or_url)
 
         paths = []
+        # Include persisted DNA indexes even when this instance did not opt in.
+        # Only our cache is searched; attached user files are never removed.
+        paths.extend(str(path) for path in
+                     (Path(cache.cache_directory_path) / "genome_fasta").glob("*/sequence.fa.fai"))
         if self.requires_gtf:
             if self._db is not None:
                 paths.append(self._db.local_db_path)
