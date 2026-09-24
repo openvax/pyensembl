@@ -270,8 +270,9 @@ def all_combinations_of_ensembl_genomes(args):
         for version in release_list:
             ensembl_release = EnsemblRelease(
                 version, species=species,
-                download_genome_fasta=args.with_genome_fasta or args.only_genome_fasta,
-                genome_fasta_path=args.genome_fasta_path,
+                genome_fasta=args.genome_fasta_path
+                or args.with_genome_fasta
+                or args.only_genome_fasta,
                 genome_fasta_type=args.genome_fasta_type,
                 genome_fasta_mask=args.masked,
             )

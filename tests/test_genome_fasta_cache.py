@@ -4,6 +4,7 @@ import gzip
 import io
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import stat
@@ -59,7 +60,7 @@ def shared_cache(tmp_path, monkeypatch):
 
 
 def release(number=81, **kwargs):
-    return EnsemblRelease(number, download_genome_fasta=True, **kwargs)
+    return EnsemblRelease(number, **{"genome_fasta": True, **kwargs})
 
 
 def test_same_patch_reuses_file_and_index_then_works_offline(shared_cache, monkeypatch):
@@ -158,7 +159,7 @@ def test_incomplete_metadata_uses_release_specific_cache(shared_cache, monkeypat
 def test_local_and_mirror_sources_do_not_enter_shared_cache(shared_cache, tmp_path):
     path = tmp_path / "custom.fa"
     path.write_bytes(DNA)
-    local = release(81, genome_fasta_path=path)
+    local = release(81, genome_fasta=path)
     mirror = release(81, server="https://example.test")
     for genome in (local, mirror):
         genome.download_genome_fasta()
@@ -460,7 +461,7 @@ def set_tree_writable(root, writable):
 
 def test_ensembl_genomes_identity_shares_dna_across_releases(shared_cache):
     genomes = [
-        EnsemblRelease(number, species="arabidopsis_thaliana", download_genome_fasta=True)
+        EnsemblRelease(number, species="arabidopsis_thaliana", genome_fasta=True)
         for number in (57, 58)
     ]
     for genome in genomes:
@@ -598,3 +599,29 @@ def test_unnested_cache_layout_keeps_dna_release_private(
     assert genome.sequence("MT", 1, 4) == "GCTA"
     assert not elsewhere.exists()
     genome.close()
+
+
+def test_unconfigured_release_explains_how_to_use_installed_dna(
+    shared_cache, tmp_path, monkeypatch
+):
+    with pytest.raises(MissingGenomeFastaError, match=re.escape(
+        "Use EnsemblRelease(81, genome_fasta=True) for Ensembl DNA"
+    )):
+        EnsemblRelease(81).sequence("MT", 1, 4)
+    installed(81, genome_fasta_type="primary_assembly", genome_fasta_mask="soft")
+    with pytest.raises(MissingGenomeFastaError) as error:
+        EnsemblRelease(81).sequence("MT", 1, 4)
+    call = (
+        "EnsemblRelease(81, genome_fasta=True, "
+        "genome_fasta_type='primary_assembly', genome_fasta_mask='soft')"
+    )
+    assert "installed for this release; use " + call in str(error.value)
+    assert eval(call, {"EnsemblRelease": EnsemblRelease}).sequence("MT", 1, 4) == "GCTA"
+    local = tmp_path / "local.fa"
+    local.write_bytes(DNA)
+    run_cli(monkeypatch, "install", "--release", "82", "--only-genome-fasta",
+            "--genome-fasta-path", str(local))
+    with pytest.raises(MissingGenomeFastaError, match=re.escape(
+        "attached to this release; use EnsemblRelease(82, genome_fasta=%r)" % str(local)
+    )):
+        EnsemblRelease(82).sequence("MT", 1, 4)

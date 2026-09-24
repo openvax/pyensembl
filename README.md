@@ -147,16 +147,18 @@ needs roughly 1 GB compressed and several GB of disk space after decompression.
 ```python
 from pyensembl import EnsemblRelease
 
-release = EnsemblRelease(81, download_genome_fasta=True)
+release = EnsemblRelease(81, genome_fasta=True)  # use Ensembl's DNA; nothing downloads yet
 release.download_genome_fasta()  # DNA only; reuses an existing compatible cache
-release.index_genome_fasta()
 with release:
     bases = release.sequence("7", 117_480_000, 117_480_100)
+    tp53 = release.genes_by_name("TP53")[0]  # annotated on the minus strand
+    tp53_dna = release.sequence(tp53.contig, tp53.start, tp53.end, strand=tp53.strand)
 ```
 
-`sequence(contig, start, end)` returns **plus-strand, one-based inclusive** bases,
-including for loci annotated on the minus strand. Contig names must match the
-FASTA exactly (`"1"` and `"chr1"` are distinct). Coordinates must be integers with
+`sequence(contig, start, end)` returns **one-based inclusive** bases from the
+plus strand; `strand="-"` returns the reverse complement. Contigs may be named
+as in the FASTA or as pyensembl reports them (`gene.contig`), and a `"chr"`
+prefix mismatch is pointed out in the error. Coordinates must be integers with
 `1 <= start <= end <= contig length`. Missing contigs and invalid ranges raise
 `ValueError`. Unconfigured or uninstalled DNA raises `MissingGenomeFastaError`,
 a `ValueError` subclass whose message includes the install command. Reads never
@@ -190,12 +192,15 @@ chromosomes and unplaced/unlocalized sequences, but excludes patches and
 haplotypes. It is unavailable for some older releases and species. Mask choices
 are `none`, `soft` (lowercase repeats), and `hard` (repeats replaced with N).
 The corresponding Python options are `genome_fasta_type` and `genome_fasta_mask`.
+DNA installed with the CLI is used only by objects constructed with matching
+options; a plain `EnsemblRelease(81)` does not pick it up implicitly, and its
+error message gives the constructor call that does.
 See Ensembl's [DNA file definitions](https://ftp.ensembl.org/pub/release-81/fasta/homo_sapiens/dna/README).
 
 ### Attach a local FASTA
 
 ```python
-release = EnsemblRelease(81, genome_fasta_path="/data/my_reference.fa.gz")
+release = EnsemblRelease(81, genome_fasta="/data/my_reference.fa.gz")
 bases = release.sequence("7", 117_480_000, 117_480_100)
 
 # Custom annotations can also attach DNA:
@@ -208,8 +213,9 @@ pyensembl install --release 81 --genome-fasta-path /data/my_reference.fa
 # Add --only-genome-fasta to skip annotation installation.
 ```
 
-Local FASTAs take precedence over canonical downloads. Plain FASTAs are read
-in place; gzip/BGZF files are decompressed into an uncompressed cache copy on
+In 2.11.0 these options were `download_genome_fasta=True` and
+`genome_fasta_path=`; both still work with a `DeprecationWarning`. Plain FASTAs
+are read in place; gzip/BGZF files are decompressed into an uncompressed cache copy on
 first use.
 Indexes always live in PyEnsembl's cache, so read-only source directories work
 and user-owned files/indexes remain untouched. Full indexing warns about

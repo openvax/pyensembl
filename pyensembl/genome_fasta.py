@@ -13,6 +13,8 @@ from uuid import uuid4
 
 from datacache import fetch_file
 
+from .normalization import normalize_chromosome
+
 logger = logging.getLogger(__name__)
 _CHUNK_SIZE = 1024 * 1024
 
@@ -288,10 +290,39 @@ class GenomeFasta:
         self._reader_fingerprints = fingerprints
         return self._reader
 
+    def record(self, contig):
+        """The pyfaidx record for a contig, or None if absent.
+
+        Accepts the FASTA's own names and pyensembl's normalized contig names:
+        annotations store e.g. ``Pt`` as ``PT`` and ``Mito`` as ``MITO``.
+        """
+        fasta = self.open()
+        name = str(contig)
+        if name in fasta:
+            return fasta[name]
+        if self._names_by_normalized is None:
+            self._names_by_normalized = {}
+            for record in fasta.keys():
+                try:
+                    key = normalize_chromosome(record)
+                except (TypeError, ValueError):
+                    continue
+                self._names_by_normalized.setdefault(key, []).append(record)
+        try:
+            matches = self._names_by_normalized.get(normalize_chromosome(contig), [])
+        except (TypeError, ValueError):
+            return None
+        if len(matches) > 1:
+            raise ValueError(
+                "Contig %r matches several FASTA records: %s" % (contig, ", ".join(matches))
+            )
+        return fasta[matches[0]] if matches else None
+
     def _forget_reader(self):
         self._reader = None
         self._reader_paths = ()
         self._reader_fingerprints = None
+        self._names_by_normalized = None
 
     def clear_cache(self):
         """Stop reusing the current reader without closing it for other holders."""
