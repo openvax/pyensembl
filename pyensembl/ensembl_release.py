@@ -19,7 +19,7 @@ import os
 import shlex
 
 from .genome import Genome
-from .genome_fasta_cache import SharedGenomeFasta, is_canonical_source
+from .genome_fasta_cache import release_genome_fasta
 from .ensembl_versions import check_release_number, MAX_ENSEMBL_RELEASE
 from .species import check_species_object, human
 
@@ -35,6 +35,16 @@ from .ensembl_url_templates import (
 def _default_server_for_species(species):
     """Return the Ensembl FTP server appropriate for ``species``."""
     return ENSEMBL_GENOMES_FTP_SERVER if species.ensembl_genomes else ENSEMBL_FTP_SERVER
+
+
+def _local_genome_fasta_path(path):
+    """Absolute local DNA path, or None; URLs belong to custom Genome objects."""
+    if path is None:
+        return None
+    path = os.fspath(path)
+    if "://" in path:
+        raise ValueError("genome_fasta_path must be a local path; use Genome for custom URLs")
+    return os.path.abspath(path)
 
 
 class EnsemblRelease(Genome):
@@ -74,13 +84,9 @@ class EnsemblRelease(Genome):
         return an old instance.
         """
         init_args_tuple = cls.normalize_init_values(release, species, server)
-        if genome_fasta_path is not None:
-            if "://" in os.fspath(genome_fasta_path):
-                raise ValueError("genome_fasta_path must be a local path; use Genome for custom URLs")
-            genome_fasta_path = os.path.abspath(os.fspath(genome_fasta_path))
         options = dict(
             download_genome_fasta=download_genome_fasta,
-            genome_fasta_path=genome_fasta_path,
+            genome_fasta_path=_local_genome_fasta_path(genome_fasta_path),
             genome_fasta_type=genome_fasta_type,
             genome_fasta_mask=genome_fasta_mask,
         )
@@ -100,11 +106,7 @@ class EnsemblRelease(Genome):
             release=release, species=species, server=server
         )
         self._download_genome_fasta = download_genome_fasta
-        if genome_fasta_path is not None:
-            genome_fasta_path = os.fspath(genome_fasta_path)
-            if "://" in genome_fasta_path:
-                raise ValueError("genome_fasta_path must be a local path; use Genome for custom URLs")
-            genome_fasta_path = os.path.abspath(genome_fasta_path)
+        genome_fasta_path = _local_genome_fasta_path(genome_fasta_path)
         self._local_genome_fasta_path = genome_fasta_path
         self.genome_fasta_type = genome_fasta_type
         self.genome_fasta_mask = genome_fasta_mask
@@ -155,20 +157,33 @@ class EnsemblRelease(Genome):
             protein_fasta_paths_or_urls=self.protein_fasta_urls,
             genome_fasta_path_or_url=genome_fasta_source,
         )
-        if self.genome_fasta_urls and is_canonical_source(genome_fasta_source):
-            self._genome_fasta = SharedGenomeFasta(
-                genome_fasta_source, self.download_cache.cache_directory_path
-            )
+
+    def _make_genome_fasta(self, source):
+        return release_genome_fasta(
+            source,
+            self.download_cache.cache_directory_path,
+            install_string_function=self.genome_fasta_install_string,
+        )
 
     def install_string(self):
+        return self._install_command(only_genome_fasta=False)
+
+    def genome_fasta_install_string(self):
+        return self._install_command(only_genome_fasta=True)
+
+    def _install_command(self, only_genome_fasta):
         command = "pyensembl install --release %d --species %s" % (
             self.release,
             self.species.latin_name,
         )
+        if only_genome_fasta:
+            command += " --only-genome-fasta"
         if self._local_genome_fasta_path:
             command += " --genome-fasta-path " + shlex.quote(self._local_genome_fasta_path)
         elif self.requires_genome_fasta:
-            command += " --with-genome-fasta --genome-fasta-type %s --masked %s" % (
+            if not only_genome_fasta:
+                command += " --with-genome-fasta"
+            command += " --genome-fasta-type %s --masked %s" % (
                 self.genome_fasta_type, self.genome_fasta_mask,
             )
         return command
@@ -180,15 +195,15 @@ class EnsemblRelease(Genome):
         )
 
     def __eq__(self, other):
+        # Attached reference DNA does not change annotation identity.
         return (
             type(self) is type(other)
             and self.release == other.release
             and self.species == other.species
-            and self._genome_fasta_path_or_url == other._genome_fasta_path_or_url
         )
 
     def __hash__(self):
-        return hash((self.release, self.species, self._genome_fasta_path_or_url))
+        return hash((self.release, self.species))
 
     def to_dict(self):
         return {

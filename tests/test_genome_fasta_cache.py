@@ -3,35 +3,48 @@
 import gzip
 import io
 import json
+import os
 from pathlib import Path
 import shutil
+import stat
 import threading
 
 import pytest
 
-from pyensembl import EnsemblRelease, Genome, prune_genome_fastas
+from pyensembl import EnsemblRelease, Genome, MissingGenomeFastaError, prune_genome_fastas
 from pyensembl import genome_fasta_cache as cache
-from .test_genome_fasta import DNA, run_cli
+from pyensembl.genome_fasta import GenomeFasta
+from .test_genome_fasta import DNA, forbid_downloads, run_cli, serve_downloads
+
+# README preambles as published: Ensembl labels the accession, while Ensembl
+# Genomes puts it alone on the next line.
+ENSEMBL_README = (
+    "#### README ####\n\nThe genome assembly represented here corresponds to "
+    "GenBank Assembly ID \n%s\n\n#######################\nFasta DNA dumps\n"
+)
+ENSEMBL_GENOMES_README = (
+    "#### README ####\n\nThe genome assembly represented here corresponds to  \n"
+    "%s\n\n#######################\nFasta DNA dumps\n"
+)
 
 
 @pytest.fixture
 def shared_cache(tmp_path, monkeypatch):
     monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
-    calls = []
-
-    def download(url, **kwargs):
-        calls.append(url)
-        return io.BytesIO(gzip.compress(DNA))
+    calls = serve_downloads(monkeypatch, tmp_path, lambda url: gzip.compress(DNA))
 
     def metadata(request, **kwargs):
         url = request if isinstance(request, str) else request.full_url
         release = int(url.split("release-")[1].split("/")[0])
         if url.endswith("README"):
+            if "ensemblgenomes" in url:
+                return io.BytesIO((ENSEMBL_GENOMES_README % "GCA_000001735.1").encode())
             assembly = "GCA_000001405.18" if release <= 82 else "GCA_000001405.20"
-            return io.BytesIO(("GenBank Assembly ID\n" + assembly).encode())
+            return io.BytesIO((ENSEMBL_README % assembly).encode())
         if url.endswith("CHECKSUMS"):
             lines = [
-                "17918 1010762 Homo_sapiens.GRCh38.%s.%s.fa.gz" % (mask, flavor)
+                "17918 1010762 %s.%s.%s.fa.gz" % (prefix, mask, flavor)
+                for prefix in ("Homo_sapiens.GRCh38", "Arabidopsis_thaliana.TAIR10")
                 for mask in ("dna", "dna_sm", "dna_rm")
                 for flavor in ("toplevel", "primary_assembly")
             ]
@@ -41,7 +54,6 @@ def shared_cache(tmp_path, monkeypatch):
         response.headers = {"Content-Length": str(len(gzip.compress(DNA)))}
         return response
 
-    monkeypatch.setattr("pyensembl.genome_fasta.urlopen", download)
     monkeypatch.setattr(cache, "urlopen", metadata)
     return calls
 
@@ -81,7 +93,7 @@ def test_same_patch_reuses_file_and_index_then_works_offline(shared_cache, monke
         pytest.fail("Installed shared DNA should work offline")
 
     monkeypatch.setattr(cache, "urlopen", offline)
-    monkeypatch.setattr("pyensembl.genome_fasta.urlopen", offline)
+    forbid_downloads(monkeypatch, "Installed shared DNA should work offline")
     restored = release(82)
     restored.download_genome_fasta()
     assert restored.sequence("1", 3, 10) == "GTNNTTAA"
@@ -306,59 +318,68 @@ def test_invalid_semantic_path_components_are_rejected(
 
 
 def test_failed_shared_download_leaves_only_prunable_owned_object(
-    shared_cache, monkeypatch
+    shared_cache, monkeypatch, tmp_path
 ):
-    monkeypatch.setattr(
-        "pyensembl.genome_fasta.urlopen", lambda *a, **k: io.BytesIO(b"bad FASTA")
-    )
+    serve_downloads(monkeypatch, tmp_path, lambda url: b"bad FASTA")
     genome = release()
-    with pytest.raises(ValueError, match="FASTA header|download size differs"):
+    with pytest.raises(ValueError, match="FASTA header|size mismatch"):
         genome.download_genome_fasta()
     assert not genome._genome_fasta.reference_path.exists()
     assert not genome._genome_fasta.manifest_path.exists()
     assert len(prune_genome_fastas()) == 1
 
 
-def test_install_registration_and_prune_are_serialized(shared_cache, monkeypatch):
+def test_download_blocks_neither_other_objects_nor_prune(
+    shared_cache, monkeypatch, tmp_path
+):
+    installed = release(81, genome_fasta_mask="soft")
+    installed.download_genome_fasta()
+    installed.close()
     entered = threading.Event()
     finish_download = threading.Event()
-    prune_started = threading.Event()
-    prune_finished = threading.Event()
-    results = []
+    errors = []
 
-    def slow_download(*args, **kwargs):
+    def slow_payload(url):
         entered.set()
         assert finish_download.wait(10)
-        return io.BytesIO(gzip.compress(DNA))
+        return gzip.compress(DNA)
 
-    monkeypatch.setattr("pyensembl.genome_fasta.urlopen", slow_download)
-    genome = release()
+    serve_downloads(monkeypatch, tmp_path, slow_payload)
+    downloading = release(81)
 
     def install():
         try:
-            genome.download_genome_fasta()
+            downloading.download_genome_fasta()
         except Exception as error:
-            results.append(error)
+            errors.append(error)
 
-    def prune():
-        prune_started.set()
-        results.append(prune_genome_fastas())
-        prune_finished.set()
+    def meanwhile():
+        # A long download must not hold any lock other work needs.
+        try:
+            other = release(81, genome_fasta_mask="soft")
+            other.index_genome_fasta(overwrite=True)
+            assert other.sequence("MT", 1, 4) == "GCTA"
+            other.close()
+            # The unregistered object being downloaded is busy, not orphaned.
+            assert prune_genome_fastas() == []
+        except BaseException as error:
+            errors.append(error)
 
     worker = threading.Thread(target=install)
-    pruner = threading.Thread(target=prune)
     worker.start()
-    assert entered.wait(10)
-    pruner.start()
-    assert prune_started.wait(10)
-    assert not prune_finished.is_set()
-    finish_download.set()
-    worker.join(10)
-    pruner.join(10)
-    assert not worker.is_alive() and not pruner.is_alive()
-    assert results == [[]]
-    assert genome.sequence("MT", 1, 4) == "GCTA"
-    genome.close()
+    try:
+        assert entered.wait(10)
+        checker = threading.Thread(target=meanwhile)
+        checker.start()
+        checker.join(10)
+        assert not checker.is_alive(), "work waited for an unrelated download"
+    finally:
+        finish_download.set()
+        worker.join(10)
+    assert not worker.is_alive() and errors == []
+    assert downloading.sequence("MT", 1, 4) == "GCTA"
+    assert prune_genome_fastas() == []
+    downloading.close()
 
 
 def test_shared_reader_uses_same_downstream_fasta_protocol(shared_cache):
@@ -397,7 +418,8 @@ def test_shared_index_rebuild_after_another_instance_overwrites(shared_cache):
     second.download_genome_fasta(overwrite=True)
     assert first.sequence("MT", 1, 4) == "GCTA"
     assert first.fasta is not old_reader
-    assert old_reader.faidx.file.closed
+    # Atomic replacement keeps a reader held elsewhere consistent.
+    assert old_reader["MT"][0:4].seq == "GCTA"
     first.close()
     second.close()
 
@@ -415,7 +437,164 @@ def test_download_must_match_recorded_identity_size(shared_cache, monkeypatch):
 
     monkeypatch.setattr(cache, "urlopen", wrong_size)
     genome = release()
-    with pytest.raises(ValueError, match="download size differs"):
+    with pytest.raises(ValueError, match="size mismatch"):
         genome.download_genome_fasta()
     assert genome.genome_fasta_path is None
     assert not genome._genome_fasta.reference_path.exists()
+
+
+def installed(number=81, **kwargs):
+    genome = release(number, **kwargs)
+    genome.download_genome_fasta()
+    genome.index_genome_fasta()
+    genome.close()
+    return genome
+
+
+def set_tree_writable(root, writable):
+    for current, _, files in os.walk(root):
+        os.chmod(current, 0o755 if writable else 0o555)
+        for name in files:
+            os.chmod(os.path.join(current, name), 0o644 if writable else 0o444)
+
+
+def test_ensembl_genomes_identity_shares_dna_across_releases(shared_cache):
+    genomes = [
+        EnsemblRelease(number, species="arabidopsis_thaliana", download_genome_fasta=True)
+        for number in (57, 58)
+    ]
+    for genome in genomes:
+        genome.download_genome_fasta()
+    assert len(shared_cache) == 1
+    assert genomes[0].genome_fasta_path == genomes[1].genome_fasta_path
+    assert "TAIR10-GCA_000001735.1" in Path(genomes[0].genome_fasta_path).parts
+    assert genomes[1].sequence("MT", 1, 4) == "GCTA"
+    genomes[1].close()
+
+
+def test_published_files_follow_the_umask(shared_cache):
+    previous = os.umask(0o002)
+    try:
+        genome = installed()
+    finally:
+        os.umask(previous)
+    dna = genome._genome_fasta
+    for path in (
+        dna.materialized_path,
+        dna.index_path,
+        dna.index_state_path,
+        dna.directory / "object.json",
+        dna.reference_path,
+        dna.manifest_path,
+    ):
+        assert stat.S_IMODE(path.stat().st_mode) == 0o664, path
+
+
+def test_installed_cache_serves_readers_without_write_access(shared_cache, tmp_path):
+    installed()
+    cache_root = tmp_path / "pyensembl"
+    set_tree_writable(cache_root, False)
+    try:
+        genome = release(81)
+        assert genome.sequence("MT", 1, 4) == "GCTA"
+        assert genome.fasta["1"][2:10].seq == "gtNNTTaa"
+        # Repeating completed installation steps writes nothing.
+        genome.download_genome_fasta()
+        genome.index_genome_fasta()
+        genome.close()
+    finally:
+        set_tree_writable(cache_root, True)
+
+
+def test_warm_lookups_only_stat_files(shared_cache, monkeypatch):
+    genome = release(81)
+    genome.download_genome_fasta()
+    assert genome.sequence("MT", 1, 4) == "GCTA"
+
+    def unexpected(*args, **kwargs):
+        pytest.fail("A warm lookup re-resolved files, read JSON, or locked")
+
+    monkeypatch.setattr(GenomeFasta, "prepare", unexpected)
+    monkeypatch.setattr(cache.SharedGenomeFasta, "prepare", unexpected)
+    monkeypatch.setattr("pyensembl.genome_fasta._read_json", unexpected)
+    monkeypatch.setattr(cache, "_read_json", unexpected)
+    monkeypatch.setattr(cache, "FileLock", unexpected)
+    for _ in range(3):
+        assert genome.sequence("1", 3, 10) == "GTNNTTAA"
+        assert genome.fasta["MT"][0:4].seq == "GCTA"
+    genome.close()
+
+
+def test_release_private_copy_never_stands_in_for_shared_dna(shared_cache):
+    shared = release(81)
+    private = Genome(
+        "GRCh38",
+        "ensembl",
+        annotation_version=81,
+        genome_fasta_path_or_url=shared.genome_fasta_urls[0],
+    )
+    assert private.download_cache.cache_directory_path == (
+        shared.download_cache.cache_directory_path
+    )
+    private.download_genome_fasta()
+    assert type(private._genome_fasta) is GenomeFasta
+    assert shared.fasta is None and shared.genome_fasta_path is None
+    with pytest.raises(MissingGenomeFastaError):
+        shared.sequence("MT", 1, 4)
+    assert not shared._genome_fasta.reference_path.exists()
+    shared.download_genome_fasta()
+    assert release(81).sequence("MT", 1, 4) == "GCTA"
+    assert prune_genome_fastas() == []
+
+
+def test_symlinked_dna_cache_root_is_supported(
+    shared_cache, tmp_path, monkeypatch, capsys
+):
+    moved = tmp_path / "bigger_disk" / "dna_cache"
+    moved.mkdir(parents=True)
+    root = cache.dna_cache_root()
+    root.parent.mkdir(parents=True)
+    root.symlink_to(moved, target_is_directory=True)
+    genome = installed()
+    assert Path(genome.genome_fasta_path).resolve().is_relative_to(moved.resolve())
+    assert release(81).sequence("MT", 1, 4) == "GCTA"
+    run_cli(monkeypatch, "list")
+    assert "Genome FASTA: downloaded, indexed" in capsys.readouterr().out
+    assert prune_genome_fastas() == []
+    run_cli(monkeypatch, "delete-all-files", "--release", "81")
+    assert len(prune_genome_fastas()) == 1
+    assert not list(moved.rglob("sequence.fa"))
+
+
+def test_list_reports_bad_reference_without_hiding_other_releases(
+    shared_cache, monkeypatch, capsys
+):
+    first, _ = installed(81), installed(82)
+    reference = first._genome_fasta.reference_path
+    state = json.loads(reference.read_text())
+    state["shared_key"] = "a" * 64
+    reference.write_text(json.dumps(state))
+    run_cli(monkeypatch, "list")
+    lines = capsys.readouterr().out.splitlines()
+    statuses = {
+        line.split("release=")[1].split(",")[0]: lines[number + 1]
+        for number, line in enumerate(lines)
+        if "EnsemblRelease(release=" in line
+    }
+    assert "invalid reference" in statuses["81"]
+    assert "downloaded, indexed" in statuses["82"]
+
+
+def test_unnested_cache_layout_keeps_dna_release_private(
+    shared_cache, tmp_path, monkeypatch
+):
+    # Windows appdirs defaults do not place release caches beside dna_cache,
+    # where pruning looks for references.
+    elsewhere = tmp_path / "elsewhere" / "pyensembl" / "dna_cache"
+    monkeypatch.setattr(cache, "dna_cache_root", lambda: elsewhere)
+    genome = release(81)
+    assert type(genome._genome_fasta) is GenomeFasta
+    genome.download_genome_fasta()
+    assert genome.sequence("MT", 1, 4) == "GCTA"
+    assert not elsewhere.exists()
+    genome.close()

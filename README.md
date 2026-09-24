@@ -159,14 +159,18 @@ including for loci annotated on the minus strand. Contig names must match the
 FASTA exactly (`"1"` and `"chr1"` are distinct). Coordinates must be integers with
 `1 <= start <= end <= contig length`. Missing contigs and invalid ranges raise
 `ValueError`. Unconfigured or uninstalled DNA raises `MissingGenomeFastaError`,
-a `ValueError` subclass. Reads never download missing remote data implicitly.
-The default result is uppercase; `mask="raw"` preserves soft-masked lowercase.
+a `ValueError` subclass whose message includes the install command. Reads never
+download missing remote data implicitly. The default result is uppercase;
+`mask="raw"` preserves soft-masked lowercase.
 
 The lazy `.fasta` reader also supports `fasta[contig][start-1:end].seq` for
-consumers such as Varcode. `.fasta` is `None` when DNA is unconfigured.
-`genome_fasta_path` reports the existing uncompressed file, or `None`.
-`download()` and `index()` include DNA when configured, alongside annotation,
-transcript, and protein files.
+consumers such as Varcode. `.fasta` is `None` when DNA is unconfigured or not
+installed. Readers already handed out stay usable after `clear_cache()`;
+`close()` closes them. `genome_fasta_path` reports the existing uncompressed
+file, or `None`. `download()` and `index()` include DNA when configured,
+alongside annotation, transcript, and protein files. Attached DNA does not
+affect equality: genes and transcripts from the same release compare equal
+with or without it.
 
 ```sh
 # Install all data, including DNA.
@@ -205,7 +209,8 @@ pyensembl install --release 81 --genome-fasta-path /data/my_reference.fa
 ```
 
 Local FASTAs take precedence over canonical downloads. Plain FASTAs are read
-in place; gzip/BGZF files are streamed into an uncompressed cache copy.
+in place; gzip/BGZF files are decompressed into an uncompressed cache copy on
+first use.
 Indexes always live in PyEnsembl's cache, so read-only source directories work
 and user-owned files/indexes remain untouched. Full indexing warns about
 annotation contigs missing from a local FASTA. Matching contig names alone do
@@ -252,8 +257,18 @@ and the file key uses the full source URL, keeping releases isolated.
 
 A new release installation fetches small metadata files before deciding whether
 DNA can be reused. Registered releases work offline. Each release retains its
-references, including different installed masking/flavor choices. Install,
-index publication, release removal, and pruning use a shared lock.
+references, including different installed masking/flavor choices. Downloads
+retry transient HTTP failures and are checked against the upstream size.
+
+Reads take no locks and write nothing, so a fully installed and indexed cache
+can be read-only for other users. A download or index build locks only the
+DNA file it writes, so other species and releases stay usable. Registering
+references, removing releases, and pruning briefly lock the whole cache.
+Files follow your umask, as do lock files on Python 3.10+ (use `umask 002`
+or default ACLs for a group-shared cache). `dna_cache` itself may be a
+symlink, e.g. to a larger disk. Sharing requires release caches beside `dna_cache`; this holds on Linux,
+macOS, and with `PYENSEMBL_CACHE_DIR`. Windows' default cache layout differs,
+so there DNA stays per release unless `PYENSEMBL_CACHE_DIR` is set.
 
 ```sh
 pyensembl list --check-genome-fasta  # inspect source, presence, and index
@@ -265,10 +280,11 @@ pyensembl prune --orphan-genome-fastas
 `list` includes DNA-only installations and shows the most recently installed
 DNA choice for each release. Inspection does not download or rebuild files.
 Deleting a release preserves shared DNA still referenced by any release.
-Pruning removes only cache-owned objects with no release references; malformed
-reference metadata aborts pruning. `delete-index-files` preserves shared DNA
-indexes to keep other releases usable; call `index_genome_fasta(overwrite=True)`
-to rebuild one. Local source files are never pruned. Python callers can use
+Pruning removes only cache-owned objects with no release references and skips
+objects being downloaded or indexed; malformed reference metadata aborts
+pruning, while `list` reports it for the affected release.
+`delete-index-files` preserves shared DNA indexes to keep other releases
+usable; call `index_genome_fasta(overwrite=True)` to rebuild one. Local source files are never pruned. Python callers can use
 `prune_genome_fastas(dry_run=True)` to inspect `(path, bytes)` candidates.
 
 ## List supported species

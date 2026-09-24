@@ -212,13 +212,24 @@ parser.add_argument(
 )
 
 
+def genome_fasta_status(genome, check=False):
+    """Describe DNA recorded for a genome's cache, or None if there is none.
+
+    A broken reference is reported rather than raised, so one bad release
+    cannot hide the others.
+    """
+    try:
+        dna = GenomeFasta.installed_source(genome.download_cache.cache_directory_path)
+    except ValueError as error:
+        return "invalid reference: %s" % error
+    return None if dna is None else dna.status(check=check)
+
+
 def collect_all_installed_ensembl_releases():
     genomes = []
     for species, release in Species.all_species_release_pairs():
         genome = EnsemblRelease(release, species=species)
-        if genome.required_local_files_exist() or GenomeFasta.installed_source(
-            genome.download_cache.cache_directory_path
-        ) is not None:
+        if genome.required_local_files_exist() or genome_fasta_status(genome) is not None:
             genomes.append(genome)
     return sorted(genomes, key=lambda g: (g.species.latin_name, g.release))
 
@@ -537,10 +548,8 @@ def run():
             filepaths = genome.required_local_files()
             directories = {os.path.split(path)[0] for path in filepaths}
             print("-- %s: %s" % (genome, ", ".join(directories)))
-            dna = GenomeFasta.installed_source(genome.download_cache.cache_directory_path)
-            print("   Genome FASTA: %s" % (
-                dna.status(check=args.check_genome_fasta) if dna else "not installed"
-            ))
+            status = genome_fasta_status(genome, check=args.check_genome_fasta)
+            print("   Genome FASTA: %s" % (status or "not installed"))
     elif args.action == "available":
         print(format_available_species())
     else:

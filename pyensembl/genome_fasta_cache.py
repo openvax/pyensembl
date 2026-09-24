@@ -3,6 +3,10 @@
 The versioned assembly accession and file metadata identify an upstream
 artifact. Ensembl CHECKSUMS are Unix checksums, not cryptographic digests.
 Custom sources are deliberately excluded from this namespace.
+
+Reads take no locks and write nothing. Downloads and index builds hold a
+lock for their object only; the cache-wide lock covers the brief updates
+of release references, release removal, and pruning.
 """
 
 from contextlib import contextmanager
@@ -17,10 +21,10 @@ from urllib.error import URLError
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
-from filelock import FileLock
+from filelock import FileLock, Timeout
 
 from .download_cache import DownloadCache
-from .genome_fasta import GenomeFasta, _fingerprint, _read_json, _write_json
+from .genome_fasta import GenomeFasta, _read_json, _remove, _write_json
 
 logger = logging.getLogger(__name__)
 _KEY = re.compile(r"^[0-9a-f]{64}$")
@@ -28,6 +32,11 @@ _SOURCE_PATH = re.compile(r"^/pub/release-(\d+)/(?:[^/]+/)?fasta/([^/]+)/dna/([^
 _PROVIDERS = {"ftp.ensembl.org", "ftp.ensemblgenomes.ebi.ac.uk"}
 _COMPONENT = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
 _ACCESSION = re.compile(r"GCA_\d+\.\d+")
+# Ensembl says "corresponds to GenBank Assembly ID"; Ensembl Genomes omits
+# the label and puts the accession on the next line.
+_README_ACCESSION = re.compile(
+    r"represented here corresponds to(?:\s+GenBank Assembly ID)?\s+(GCA_\d+\.\d+)"
+)
 _DNA_FILENAME = re.compile(
     r"(.+)\.(dna|dna_sm|dna_rm)\.(toplevel|primary_assembly)\.fa\.gz"
 )
@@ -38,6 +47,17 @@ def dna_cache_root():
     return Path(DownloadCache(None, None).cache_directory_path) / "dna_cache"
 
 
+def shared_dna_root(cache_directory):
+    """The shared DNA root for a release cache, or None if sharing is unsafe.
+
+    Pruning finds references by scanning release caches beside the root, so
+    sharing requires the <cache>/<reference>/<annotation> layout. Windows
+    default (appdirs) paths are not nested this way.
+    """
+    root = dna_cache_root()
+    return root if Path(cache_directory).parent.parent == root.parent else None
+
+
 def is_canonical_source(source):
     url = urlsplit(source)
     return (
@@ -45,6 +65,15 @@ def is_canonical_source(source):
         and url.netloc in _PROVIDERS
         and _SOURCE_PATH.fullmatch(url.path) is not None
     )
+
+
+def release_genome_fasta(source, cache_directory, install_string_function=None):
+    """Shared storage for canonical Ensembl DNA, otherwise release-private."""
+    if is_canonical_source(source) and shared_dna_root(cache_directory) is not None:
+        cls = SharedGenomeFasta
+    else:
+        cls = GenomeFasta
+    return cls(source, cache_directory, install_string_function)
 
 
 def _identity_key(identity):
@@ -98,18 +127,21 @@ def _object_directory(root, identity):
 
 def _check_object_identity(root, directory, identity):
     # Metadata-derived paths may never traverse links out of the owned tree.
+    # The root itself may be a link, e.g. to a larger disk.
     for path in (directory, *directory.parents):
-        if path.is_symlink():
-            raise ValueError("Symlink in shared genome FASTA path: %s" % path)
         if path == root:
             break
+        if path.is_symlink():
+            raise ValueError("Symlink in shared genome FASTA path: %s" % path)
     if not directory.exists():
         return
     if not directory.is_dir() or (directory / "object.json").is_symlink():
         raise ValueError("Invalid shared genome FASTA object: %s" % directory)
     state = _read_json(directory / "object.json")
-    if state is None and not any(directory.iterdir()):
-        return  # An interrupted mkdir has not published any files yet.
+    if state is None and not any(
+        not path.name.startswith(".") for path in directory.iterdir()
+    ):
+        return  # An interrupted install has not published any files yet.
     if not isinstance(state, dict) or state.get("identity") != identity:
         # Keep the full identity authoritative, even if short leaf keys collide.
         raise ValueError("Conflicting shared genome FASTA identity: %s" % directory)
@@ -126,7 +158,7 @@ def _remote_identity(source):
     try:
         with urlopen(directory + "/README", timeout=60) as response:
             readme = response.read(1024 * 1024).decode("utf-8")
-        assembly = re.search(r"GenBank Assembly ID\s+(GCA_\d+\.\d+)", readme)
+        assembly = _README_ACCESSION.search(readme)
         if assembly is None:
             raise ValueError("No versioned assembly accession")
         with urlopen(directory + "/CHECKSUMS", timeout=60) as response:
@@ -146,7 +178,7 @@ def _remote_identity(source):
             raise ValueError("No checksum for this FASTA")
         with urlopen(Request(source, method="HEAD"), timeout=60) as response:
             length = int(response.headers["Content-Length"])
-        if assembly is not None and checksum is not None and length > 0:
+        if length > 0:
             return {
                 "provider": url.netloc,
                 "species": species,
@@ -172,15 +204,33 @@ def dna_cache_lock(root=None):
         yield root
 
 
+def _object_lock(root, directory, timeout=-1):
+    """Serialize writes to one object; its leaf key names the lock."""
+    locks = Path(root) / ".locks"
+    locks.mkdir(parents=True, exist_ok=True)
+    return FileLock(str(locks / (Path(directory).name + ".lock")), timeout=timeout)
+
+
+def _remove_staging_files(directory):
+    # Only call with the object lock held: nothing else is writing here.
+    for path in directory.iterdir():
+        if path.name.startswith(".") and not path.is_dir():
+            _remove(path)
+
+
 class SharedGenomeFasta(GenomeFasta):
     """Canonical DNA with a per-release reference and a shared immutable key."""
 
-    def __init__(self, source, cache_directory):
+    def __init__(self, source, cache_directory, install_string_function=None):
         if not is_canonical_source(source):
             raise ValueError("Only official Ensembl DNA can use the shared cache")
-        super().__init__(source, cache_directory)
-        # Native Ensembl annotations live at cache_root/reference/ensemblN.
-        self.root = Path(cache_directory).parent.parent / "dna_cache"
+        self.root = shared_dna_root(cache_directory)
+        if self.root is None:
+            raise ValueError(
+                "Release cache %s is outside the shared DNA cache layout"
+                % cache_directory
+            )
+        super().__init__(source, cache_directory, install_string_function)
         source_key = hashlib.sha256(self.source.encode()).hexdigest()
         self.reference_path = (
             Path(cache_directory) / "genome_fasta_refs" / (source_key + ".json")
@@ -213,52 +263,66 @@ class SharedGenomeFasta(GenomeFasta):
         directory = _object_directory(self.root, identity)
         _check_object_identity(self.root, directory, identity)
         if self.key != key:
-            self.close()
+            self._forget_reader()
         self.key = key
         self.identity = identity
         self._use_directory(directory)
 
-    def _remember_unlocked(self):
-        state = {
-            "source": self.source,
-            "shared_key": self.key,
-            "identity": self.identity,
-        }
-        _write_json(self.reference_path, state)
-        _write_json(self.manifest_path, state)
+    @property
+    def installed_path(self):
+        # Without a registered identity there is nothing shared to read, and a
+        # release-private copy must not stand in for it.
+        return super().installed_path if self.key is not None else None
+
+    def _reference_state(self):
+        return {"source": self.source, "shared_key": self.key, "identity": self.identity}
+
+    def _register(self):
+        """Record this release's reference; the caller holds the object lock."""
+        with dna_cache_lock(self.root):
+            _write_json(self.reference_path, self._reference_state())
+            _write_json(self.manifest_path, self._reference_state())
 
     def prepare(self, download=False, overwrite=False):
-        # A read of an already registered object does not need a writer lock.
-        # Its release manifest protects it from pruning.
-        if not download:
+        self._load_reference()  # Another process may have registered it.
+        if not download or (not overwrite and self._is_registered()):
+            # Installed and registered DNA needs no lock or write, so a
+            # read-only cache can repeat downloads like annotation downloads.
             return super().prepare()
-        with dna_cache_lock(self.root):
-            self._load_reference()
-            if self.key is None or overwrite:
-                identity = _remote_identity(self.source)
-                self._select(_identity_key(identity), identity)
-            self.directory.mkdir(parents=True, exist_ok=True)
-            _write_json(self.directory / "object.json", {"identity": self.identity})
-            path = super().prepare(download=True, overwrite=overwrite)
-            self._remember_unlocked()
-            return path
+        if self.key is None or overwrite:
+            identity = _remote_identity(self.source)
+            self._select(_identity_key(identity), identity)
+        with _object_lock(self.root, self.directory):
+            # Re-check now that no other installer can write this object.
+            _check_object_identity(self.root, self.directory, self.identity)
+            if overwrite or self.installed_path is None:
+                self.directory.mkdir(parents=True, exist_ok=True)
+                _remove_staging_files(self.directory)
+                _write_json(self.directory / "object.json", {"identity": self.identity})
+                self._download(expected_size=self.identity.get("compressed_size"))
+            # Register before releasing the object lock so pruning cannot
+            # remove the object in between.
+            self._register()
+        return super().prepare()
+
+    def _is_registered(self):
+        return (
+            self.installed_path is not None
+            and _read_json(self.reference_path) == self._reference_state()
+        )
 
     def remember(self):
-        with dna_cache_lock(self.root):
-            if self.key is not None and self.installed_path is not None:
-                self._remember_unlocked()
+        if self.key is None or self._is_registered():
+            return  # Leave an up-to-date (possibly read-only) cache untouched.
+        with _object_lock(self.root, self.directory):
+            if self.installed_path is not None:  # Not pruned meanwhile.
+                self._register()
 
-    def _materialize(self, stream):
-        super()._materialize(stream, expected_size=self.identity.get("compressed_size"))
-
-    def open(self, overwrite=False):
-        if self._reader is not None and not overwrite:
-            if self._reader_fingerprint == _fingerprint(self.prepare()):
-                return self._reader
-        with dna_cache_lock(self.root):
-            reader = super().open(overwrite=overwrite)
-            self._remember_unlocked()
-            return reader
+    def _ensure_index(self, path, fingerprint, overwrite=False):
+        if overwrite or not self._index_is_current(fingerprint):
+            with _object_lock(self.root, self.directory):
+                _remove_staging_files(self.directory)
+                super()._ensure_index(path, fingerprint, overwrite=overwrite)
 
 
 def _reference_manifests(root):
@@ -292,14 +356,13 @@ def _reference_manifests(root):
 
 def _owned_objects(root):
     """Find semantic object leaves without following symlinked directories."""
-    if root.is_symlink():
-        raise ValueError("Refusing to prune a symlinked DNA cache")
 
     def inaccessible(error):
         raise ValueError(
             "Cannot safely prune: unable to inspect DNA objects"
         ) from error
 
+    # os.walk lists a symlinked root itself but no symlinks below it.
     for current, directories, files in os.walk(
         root, followlinks=False, onerror=inaccessible
     ):
@@ -326,7 +389,8 @@ def prune_genome_fastas(dry_run=False, cache_root=None):
 
     Return (path, bytes) pairs. Malformed manifests abort the entire operation;
     dry_run performs the same reference checks without removing anything.
-    Attached local files, private downloads, and symlinks are never candidates.
+    Objects being downloaded or indexed are skipped. Attached local files,
+    private downloads, and symlinks are never candidates.
     """
     root = Path(cache_root) if cache_root is not None else dna_cache_root()
     if not root.exists():
@@ -362,14 +426,17 @@ def prune_genome_fastas(dry_run=False, cache_root=None):
         for directory, key in sorted(_owned_objects(root)):
             if key in referenced:
                 continue
-            # Never traverse symlinked entries or report external file sizes.
-            size = sum(
-                path.lstat().st_size
-                for path in directory.iterdir()
-                if not path.is_dir()
-            )
+            try:
+                with _object_lock(root, directory, timeout=0):
+                    # Never traverse symlinked entries or report external sizes.
+                    size = sum(
+                        path.lstat().st_size
+                        for path in directory.iterdir()
+                        if not path.is_dir()
+                    )
+                    if not dry_run:
+                        shutil.rmtree(directory)
+            except Timeout:
+                continue  # An install or index build is using it.
             candidates.append((str(directory), size))
-        if not dry_run:
-            for path, _ in candidates:
-                shutil.rmtree(path)
         return candidates

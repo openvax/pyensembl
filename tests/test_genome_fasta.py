@@ -1,13 +1,16 @@
 """Reference DNA tests use real indexed FASTA files and synthetic known bases."""
 
 import gzip
-import io
 import json
 import os
 from pathlib import Path
 import pickle
+import shlex
 import sys
+from urllib.parse import urlsplit
+from uuid import uuid4
 
+import datacache
 import pytest
 
 from pyensembl import EnsemblRelease, Genome, MissingGenomeFastaError
@@ -17,6 +20,32 @@ from pyensembl import shell
 
 
 DNA = b">1 chromosome\nACgtNN\nTTaacc\nGGTA\n>MT mitochondrion\nGCTA\n>CHR_PATCH\nNNacGT\n"
+
+
+def serve_downloads(monkeypatch, directory, payload):
+    """Route DNA downloads through real datacache staging and validation.
+
+    payload(url) returns the bytes to serve. Returns the requested URLs.
+    """
+    calls = []
+
+    def fetch(url, **kwargs):
+        calls.append(url)
+        served = Path(directory) / "served" / uuid4().hex
+        served.mkdir(parents=True)
+        path = served / os.path.basename(urlsplit(url).path)
+        path.write_bytes(payload(url))
+        return datacache.fetch_file(path.as_uri(), **kwargs)
+
+    monkeypatch.setattr("pyensembl.genome_fasta.fetch_file", fetch)
+    return calls
+
+
+def forbid_downloads(monkeypatch, message):
+    def unexpected(*args, **kwargs):
+        pytest.fail(message)
+
+    monkeypatch.setattr("pyensembl.genome_fasta.fetch_file", unexpected)
 
 
 @pytest.fixture
@@ -87,10 +116,7 @@ def test_absent_contig_and_invalid_mask(tmp_path, dna_path):
 def test_missing_and_default_configuration_never_download(
     tmp_path, dna_path, monkeypatch
 ):
-    def unexpected(*args, **kwargs):
-        pytest.fail("Default or lazy sequence lookup accessed the network")
-
-    monkeypatch.setattr("pyensembl.genome_fasta.urlopen", unexpected)
+    forbid_downloads(monkeypatch, "Default or lazy sequence lookup accessed the network")
     for genome in (custom_genome(tmp_path, None), EnsemblRelease(81)):
         assert not genome.requires_genome_fasta
         assert genome.genome_fasta_path is None
@@ -105,6 +131,36 @@ def test_missing_and_default_configuration_never_download(
     missing = custom_genome(tmp_path, dna_path.parent / "missing.fa")
     with pytest.raises(MissingGenomeFastaError, match="Missing local"):
         missing.sequence("1", 1, 2)
+    # Duck-typed consumers (Varcode) fall back when .fasta is None.
+    for genome in (remote, missing):
+        assert genome.fasta is None
+        assert getattr(genome, "fasta", "absent") is None
+
+
+def test_missing_dna_error_gives_a_runnable_dna_only_command(dna_path):
+    release = EnsemblRelease(
+        81,
+        download_genome_fasta=True,
+        genome_fasta_type="primary_assembly",
+        genome_fasta_mask="soft",
+    )
+    with pytest.raises(MissingGenomeFastaError) as error:
+        release.sequence("1", 1, 2)
+    command = release.genome_fasta_install_string()
+    assert command in str(error.value)
+    assert command == (
+        "pyensembl install --release 81 --species homo_sapiens --only-genome-fasta "
+        "--genome-fasta-type primary_assembly --masked soft"
+    )
+    args = shell.parser.parse_args(shlex.split(command)[1:])
+    assert args.only_genome_fasta
+    (selected,) = shell.collect_selected_genomes(args)
+    assert selected.genome_fasta_urls == release.genome_fasta_urls
+    local = EnsemblRelease(81, genome_fasta_path=dna_path)
+    assert local.genome_fasta_install_string().endswith(
+        "--only-genome-fasta --genome-fasta-path %s" % shlex.quote(str(dna_path))
+    )
+    assert "--with-genome-fasta" in release.install_string()
 
 
 @pytest.mark.parametrize("compressed", [False, True])
@@ -154,17 +210,22 @@ def test_changed_local_source_rebuilds_reader_and_index(tmp_path, dna_path, comp
         # A preserved/older mtime must not cause a stale FAI to be reused.
         os.utime(dna_path, ns=(old_stat.st_atime_ns, old_stat.st_mtime_ns))
         assert genome.sequence("MT", 1, 6) == "AACCGG"
-        assert old_reader.faidx.file.closed
         assert genome.fasta is not old_reader
 
 
 def test_close_clear_and_context_manager_reopen(tmp_path, dna_path):
     genome = custom_genome(tmp_path, dna_path)
-    for close in (genome.close, genome.clear_cache):
-        reader = genome.fasta
-        close()
-        assert reader.faidx.file.closed
-        assert genome.sequence("MT", 1, 4) == "GCTA"
+    reader = genome.fasta
+    genome.close()
+    assert reader.faidx.file.closed
+    assert genome.sequence("MT", 1, 4) == "GCTA"
+    # Clearing in-memory caches must not break readers callers still hold,
+    # e.g. varcode.Genome stores genome.fasta.
+    held = genome.fasta
+    genome.clear_cache()
+    assert held["MT"][0:4].seq == "GCTA"
+    assert genome.fasta is not held
+    assert genome.sequence("MT", 1, 4) == "GCTA"
     with genome:
         reader = genome.fasta
     assert reader.faidx.file.closed
@@ -181,19 +242,12 @@ def test_same_basename_sources_do_not_reuse_each_others_index(tmp_path, dna_path
         assert first.sequence("1", 1, 2) == "AC"
         assert second.sequence("1", 1, 2) == "TT"
         assert first._genome_fasta.index_path != second._genome_fasta.index_path
-        assert first != second
 
 
 def test_remote_gzip_download_is_explicit_reusable_and_independent(
     tmp_path, dna_path, monkeypatch
 ):
-    calls = []
-
-    def fetch(url, **kwargs):
-        calls.append(url)
-        return io.BytesIO(gzip.compress(DNA))
-
-    monkeypatch.setattr("pyensembl.genome_fasta.urlopen", fetch)
+    calls = serve_downloads(monkeypatch, tmp_path, lambda url: gzip.compress(DNA))
     genome = EnsemblRelease(81, download_genome_fasta=True)
     genome.download_genome_fasta()
     genome.index_genome_fasta()
@@ -216,9 +270,7 @@ def test_remote_gzip_download_is_explicit_reusable_and_independent(
 def test_failed_download_does_not_publish_partial_data(
     tmp_path, dna_path, monkeypatch, payload
 ):
-    monkeypatch.setattr(
-        "pyensembl.genome_fasta.urlopen", lambda *a, **k: io.BytesIO(payload)
-    )
+    serve_downloads(monkeypatch, tmp_path, lambda url: payload)
     genome = custom_genome(tmp_path, "https://example.test/genome.fa.gz")
     with pytest.raises((ValueError, EOFError)):
         genome.download_genome_fasta()
@@ -229,9 +281,7 @@ def test_failed_download_does_not_publish_partial_data(
 
 def test_failed_overwrite_preserves_previous_download(tmp_path, dna_path, monkeypatch):
     payload = [gzip.compress(DNA)]
-    monkeypatch.setattr(
-        "pyensembl.genome_fasta.urlopen", lambda *a, **k: io.BytesIO(payload[0])
-    )
+    serve_downloads(monkeypatch, tmp_path, lambda url: payload[0])
     genome = custom_genome(tmp_path, "https://example.test/genome.fa.gz")
     genome.download_genome_fasta()
     assert genome.sequence("MT", 1, 4) == "GCTA"
@@ -240,6 +290,28 @@ def test_failed_overwrite_preserves_previous_download(tmp_path, dna_path, monkey
         genome.download_genome_fasta(overwrite=True)
     assert genome.sequence("MT", 1, 4) == "GCTA"
     genome.close()
+
+
+def test_published_files_reach_disk_before_rename(tmp_path, dna_path, monkeypatch):
+    dna_path.write_bytes(gzip.compress(DNA))
+    synced, replaced = set(), []
+    real_fsync, real_replace = os.fsync, os.replace
+
+    def fsync(descriptor):
+        synced.add(os.fstat(descriptor).st_ino)
+        real_fsync(descriptor)
+
+    def replace(source, destination):
+        replaced.append((os.stat(source).st_ino, Path(destination).name))
+        real_replace(source, destination)
+
+    monkeypatch.setattr(os, "fsync", fsync)
+    monkeypatch.setattr(os, "replace", replace)
+    with custom_genome(tmp_path, dna_path) as genome:
+        genome.index_genome_fasta()
+    names = {name for _, name in replaced}
+    assert {"sequence.fa", "sequence.fa.fai", "source.json", "index.json"} <= names
+    assert all(inode in synced for inode, _ in replaced)
 
 
 def test_duplicate_contigs_are_rejected(tmp_path, dna_path):
@@ -267,13 +339,23 @@ def test_serialization_and_cached_releases_preserve_dna_configuration(
     local = EnsemblRelease.cached(81, genome_fasta_path=dna_path)
     remote = EnsemblRelease.cached(81, download_genome_fasta=True)
     assert plain is not local and local is not remote
-    assert plain != local and local != remote
     assert EnsemblRelease.cached(81, genome_fasta_path=str(dna_path)) is local
     assert local.sequence("MT", 1, 4) == "GCTA"
     for genome in (plain, local, remote):
         assert pickle.loads(pickle.dumps(genome)) is genome
         assert EnsemblRelease.from_json(genome.to_json()) is genome
         genome.close()
+
+
+def test_attached_dna_does_not_change_annotation_equality(tmp_path, dna_path):
+    plain = EnsemblRelease(81)
+    with_dna = EnsemblRelease(81, download_genome_fasta=True)
+    assert plain == with_dna and hash(plain) == hash(with_dna)
+    assert plain.to_dict() != with_dna.to_dict()  # Serialization keeps DNA.
+    # Gene and Transcript equality compare genomes.
+    assert {plain: "annotation"}[with_dna] == "annotation"
+    assert custom_genome(tmp_path, dna_path) == custom_genome(tmp_path, None)
+    assert EnsemblRelease(82) != plain
 
 
 @pytest.mark.parametrize(
@@ -353,7 +435,7 @@ def test_cli_only_local_dna_and_inspection_are_offline(
     def unexpected(*args, **kwargs):
         pytest.fail("DNA-only local install tried to download")
 
-    monkeypatch.setattr("pyensembl.genome_fasta.urlopen", unexpected)
+    forbid_downloads(monkeypatch, "DNA-only local install tried to download")
     monkeypatch.setattr(
         "pyensembl.download_cache.DownloadCache._download_if_necessary", unexpected
     )
