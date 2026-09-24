@@ -138,6 +138,155 @@ from pyensembl.shell import collect_all_installed_ensembl_releases
 collect_all_installed_ensembl_releases()
 ```
 
+## Reference DNA sequences (optional)
+
+Reference DNA enables intronic, intergenic, and flanking sequence queries. It is
+**opt-in**: a normal installation does not download a whole genome. Human DNA
+needs roughly 1 GB compressed and several GB of disk space after decompression.
+
+```python
+from pyensembl import EnsemblRelease
+
+release = EnsemblRelease(81, download_genome_fasta=True)
+release.download_genome_fasta()  # DNA only; reuses an existing compatible cache
+release.index_genome_fasta()
+with release:
+    bases = release.sequence("7", 117_480_000, 117_480_100)
+```
+
+`sequence(contig, start, end)` returns **plus-strand, one-based inclusive** bases,
+including for loci annotated on the minus strand. Contig names must match the
+FASTA exactly (`"1"` and `"chr1"` are distinct). Coordinates must be integers with
+`1 <= start <= end <= contig length`. Missing contigs and invalid ranges raise
+`ValueError`. Unconfigured or uninstalled DNA raises `MissingGenomeFastaError`,
+a `ValueError` subclass whose message includes the install command. Reads never
+download missing remote data implicitly. The default result is uppercase;
+`mask="raw"` preserves soft-masked lowercase.
+
+The lazy `.fasta` reader also supports `fasta[contig][start-1:end].seq` for
+consumers such as Varcode. `.fasta` is `None` when DNA is unconfigured or not
+installed. Readers already handed out stay usable after `clear_cache()`;
+`close()` closes them. `genome_fasta_path` reports the existing uncompressed
+file, or `None`. `download()` and `index()` include DNA when configured,
+alongside annotation, transcript, and protein files. Attached DNA does not
+affect equality: genes and transcripts from the same release compare equal
+with or without it.
+
+```sh
+# Install all data, including DNA.
+pyensembl install --release 81 --with-genome-fasta
+
+# Install DNA alone; annotation/transcript/protein data are not needed.
+pyensembl install --release 81 --only-genome-fasta
+
+# An optional subset and soft masking.
+pyensembl install --release 81 --only-genome-fasta \
+    --genome-fasta-type primary_assembly --masked soft
+```
+
+The default downloaded DNA is unmasked **toplevel**, covering the patch and
+haplotype contigs included in Ensembl annotations. `primary_assembly` includes
+chromosomes and unplaced/unlocalized sequences, but excludes patches and
+haplotypes. It is unavailable for some older releases and species. Mask choices
+are `none`, `soft` (lowercase repeats), and `hard` (repeats replaced with N).
+The corresponding Python options are `genome_fasta_type` and `genome_fasta_mask`.
+See Ensembl's [DNA file definitions](https://ftp.ensembl.org/pub/release-81/fasta/homo_sapiens/dna/README).
+
+### Attach a local FASTA
+
+```python
+release = EnsemblRelease(81, genome_fasta_path="/data/my_reference.fa.gz")
+bases = release.sequence("7", 117_480_000, 117_480_100)
+
+# Custom annotations can also attach DNA:
+from pyensembl import Genome
+custom = Genome("custom", "my_annotations", genome_fasta_path_or_url="/data/reference.fa")
+```
+
+```sh
+pyensembl install --release 81 --genome-fasta-path /data/my_reference.fa
+# Add --only-genome-fasta to skip annotation installation.
+```
+
+Local FASTAs take precedence over canonical downloads. Plain FASTAs are read
+in place; gzip/BGZF files are decompressed into an uncompressed cache copy on
+first use.
+Indexes always live in PyEnsembl's cache, so read-only source directories work
+and user-owned files/indexes remain untouched. Full indexing warns about
+annotation contigs missing from a local FASTA. Matching contig names alone do
+not verify assembly identity. Supply the same local path when constructing
+subsequent Python objects; CLI metadata does not silently change constructors.
+Custom `Genome` sources also accept a FASTA URL.
+
+### Shared DNA cache and cleanup
+
+Canonical Ensembl downloads use a readable hierarchy under `pyensembl/dna_cache/`:
+
+```text
+<species>/<provider>/<reference>-<assembly-accession>/<coverage>/<masking>/fasta/<file-key>/
+```
+
+For example, compatible human releases 81 and 82 share a directory shaped like:
+
+```text
+pyensembl/dna_cache/
+  homo_sapiens/ftp.ensembl.org/GRCh38-GCA_000001405.18/
+    toplevel/unmasked/fasta/<file-key>/
+      sequence.fa
+      sequence.fa.fai
+      object.json
+      index.json
+```
+
+Coverage is `toplevel` or `primary_assembly`; masking is `unmasked`, `softmasked`,
+or `hardmasked`. `fasta` describes the stored encoding: the cached sequence is
+uncompressed, even when downloaded from a `.fa.gz` file. The familiar reference
+name and **versioned assembly accession** distinguish assembly patches.
+
+The 16-character file key distinguishes upstream file revisions within those
+semantic directories. It is a prefix of the SHA-256 of the complete identity
+metadata, including the Ensembl Unix checksum and compressed size. `object.json`
+retains the full readable identity; conflicting identities are rejected before
+reuse or overwrite. The hash covers metadata, not the FASTA bytes, and Ensembl's
+Unix checksums are not cryptographic hashes.
+
+Compatible releases reuse both the FASTA and FAI through per-release JSON
+references. Local FASTAs and custom mirrors remain separate. If upstream
+identity metadata is incomplete, the assembly directory ends in `-unverified`
+and the file key uses the full source URL, keeping releases isolated.
+
+A new release installation fetches small metadata files before deciding whether
+DNA can be reused. Registered releases work offline. Each release retains its
+references, including different installed masking/flavor choices. Downloads
+retry transient HTTP failures and are checked against the upstream size.
+
+Reads take no locks and write nothing, so a fully installed and indexed cache
+can be read-only for other users. A download or index build locks only the
+DNA file it writes, so other species and releases stay usable. Registering
+references, removing releases, and pruning briefly lock the whole cache.
+Files follow your umask, as do lock files on Python 3.10+ (use `umask 002`
+or default ACLs for a group-shared cache). `dna_cache` itself may be a
+symlink, e.g. to a larger disk. Sharing requires release caches beside `dna_cache`; this holds on Linux,
+macOS, and with `PYENSEMBL_CACHE_DIR`. Windows' default cache layout differs,
+so there DNA stays per release unless `PYENSEMBL_CACHE_DIR` is set.
+
+```sh
+pyensembl list --check-genome-fasta  # inspect source, presence, and index
+pyensembl delete-all-files --release 81  # remove this release's references
+pyensembl prune --orphan-genome-fastas --dry-run
+pyensembl prune --orphan-genome-fastas
+```
+
+`list` includes DNA-only installations and shows the most recently installed
+DNA choice for each release. Inspection does not download or rebuild files.
+Deleting a release preserves shared DNA still referenced by any release.
+Pruning removes only cache-owned objects with no release references and skips
+objects being downloaded or indexed; malformed reference metadata aborts
+pruning, while `list` reports it for the affected release.
+`delete-index-files` preserves shared DNA indexes to keep other releases
+usable; call `index_genome_fasta(overwrite=True)` to rebuild one. Local source files are never pruned. Python callers can use
+`prune_genome_fastas(dry_run=True)` to inspect `(path, bytes)` candidates.
+
 ## List supported species
 
 To see every species PyEnsembl knows about, with its assemblies and supported

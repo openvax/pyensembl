@@ -52,6 +52,8 @@ import os
 from .ensembl_release import EnsemblRelease
 from .ensembl_versions import MAX_ENSEMBL_RELEASE
 from .genome import Genome
+from .genome_fasta import GenomeFasta
+from .genome_fasta_cache import dna_cache_lock, prune_genome_fastas
 from .reference_name import find_species_by_reference, normalize_reference_name
 from .species import Species, find_species_by_name
 from .version import __version__
@@ -169,6 +171,24 @@ path_group.add_argument(
     help="Add this prefix to URLs or paths specified by --gtf, --transcript-fasta, --protein-fasta",
 )
 
+dna_group = parser.add_argument_group("Optional reference DNA")
+dna_group.add_argument("--with-genome-fasta", action="store_true",
+                       help="Also download and index reference DNA (several GB for human)")
+dna_group.add_argument("--only-genome-fasta", action="store_true",
+                       help="Download/index only reference DNA, without annotation or transcript data")
+dna_group.add_argument("--genome-fasta-path", default=None,
+                       help="Attach a local reference FASTA; custom Genome sources also accept a URL")
+dna_group.add_argument("--genome-fasta-type", choices=("toplevel", "primary_assembly"),
+                       default="toplevel", help="Toplevel includes patch/haplotype contigs (default)")
+dna_group.add_argument("--masked", choices=("none", "soft", "hard"), default="none",
+                       help="Masking of downloaded reference DNA (default: none)")
+dna_group.add_argument("--check-genome-fasta", action="store_true",
+                       help="With list, check existing DNA indexes without downloading or rebuilding")
+dna_group.add_argument("--orphan-genome-fastas", action="store_true",
+                       help="With prune, remove shared DNA with no installed release references")
+dna_group.add_argument("--dry-run", action="store_true",
+                       help="With prune, report candidates without deleting files")
+
 parser.add_argument(
     "action",
     type=lambda arg: arg.lower().strip(),
@@ -178,6 +198,7 @@ parser.add_argument(
         "delete-index-files",
         "list",
         "available",
+        "prune",
     ),
     help=(
         '"install" will download and index any data that is  not '
@@ -191,11 +212,24 @@ parser.add_argument(
 )
 
 
+def genome_fasta_status(genome, check=False):
+    """Describe DNA recorded for a genome's cache, or None if there is none.
+
+    A broken reference is reported rather than raised, so one bad release
+    cannot hide the others.
+    """
+    try:
+        dna = GenomeFasta.installed_source(genome.download_cache.cache_directory_path)
+    except ValueError as error:
+        return "invalid reference: %s" % error
+    return None if dna is None else dna.status(check=check)
+
+
 def collect_all_installed_ensembl_releases():
     genomes = []
     for species, release in Species.all_species_release_pairs():
         genome = EnsemblRelease(release, species=species)
-        if genome.required_local_files_exist():
+        if genome.required_local_files_exist() or genome_fasta_status(genome) is not None:
             genomes.append(genome)
     return sorted(genomes, key=lambda g: (g.species.latin_name, g.release))
 
@@ -234,7 +268,13 @@ def all_combinations_of_ensembl_genomes(args):
     for species in species_list:
         # Otherwise, use Ensembl release information
         for version in release_list:
-            ensembl_release = EnsemblRelease(version, species=species)
+            ensembl_release = EnsemblRelease(
+                version, species=species,
+                download_genome_fasta=args.with_genome_fasta or args.only_genome_fasta,
+                genome_fasta_path=args.genome_fasta_path,
+                genome_fasta_type=args.genome_fasta_type,
+                genome_fasta_mask=args.masked,
+            )
 
             if not args.custom_mirror:
                 genomes.append(ensembl_release)
@@ -258,6 +298,11 @@ def all_combinations_of_ensembl_genomes(args):
                     for protein_fasta_url in ensembl_release.protein_fasta_urls
                 ]
                 reference_name = ensembl_release.reference_name
+                genome_fasta_source = args.genome_fasta_path
+                if genome_fasta_source is None and ensembl_release.genome_fasta_urls:
+                    genome_fasta_source = os.path.join(
+                        args.custom_mirror, os.path.basename(ensembl_release.genome_fasta_urls[0])
+                    )
                 genome = Genome(
                     reference_name=reference_name,
                     annotation_name="ensembl",
@@ -265,6 +310,7 @@ def all_combinations_of_ensembl_genomes(args):
                     gtf_path_or_url=gtf_url,
                     transcript_fasta_paths_or_urls=transcript_fasta_urls,
                     protein_fasta_paths_or_urls=protein_fasta_urls,
+                    genome_fasta_path_or_url=genome_fasta_source,
                 )
                 genomes.append(genome)
     return genomes
@@ -272,7 +318,9 @@ def all_combinations_of_ensembl_genomes(args):
 
 def collect_selected_genomes(args):
     # If specific genome source URLs are provided, use those
-    if args.gtf or args.transcript_fasta or args.protein_fasta:
+    if args.gtf or args.transcript_fasta or args.protein_fasta or (
+        args.genome_fasta_path and args.annotation_name
+    ):
         if args.release:
             raise ValueError(
                 "An Ensembl release cannot be specified if "
@@ -282,13 +330,15 @@ def collect_selected_genomes(args):
             raise ValueError("Must specify a reference name")
         if not args.annotation_name:
             raise ValueError("Must specify the name of the annotation source")
+        if (args.with_genome_fasta or args.only_genome_fasta) and not args.genome_fasta_path:
+            raise ValueError("Custom genomes require --genome-fasta-path for reference DNA")
 
         return [
             Genome(
                 reference_name=args.reference_name,
                 annotation_name=args.annotation_name,
                 annotation_version=args.annotation_version,
-                gtf_path_or_url=os.path.join(args.shared_prefix, args.gtf),
+                gtf_path_or_url=os.path.join(args.shared_prefix, args.gtf) if args.gtf else None,
                 transcript_fasta_paths_or_urls=[
                     os.path.join(args.shared_prefix, transcript_fasta)
                     for transcript_fasta in args.transcript_fasta
@@ -297,6 +347,10 @@ def collect_selected_genomes(args):
                     os.path.join(args.shared_prefix, protein_fasta)
                     for protein_fasta in args.protein_fasta
                 ],
+                genome_fasta_path_or_url=(
+                    os.path.join(args.shared_prefix, args.genome_fasta_path)
+                    if args.genome_fasta_path else None
+                ),
             )
         ]
     else:
@@ -443,11 +497,15 @@ def _delete_genome_files(genome, action):
     else:
         directory = genome.download_cache.cache_directory_path
         deleted = []
+        # Serialize reference removal with shared-DNA install/prune. Shared
+        # objects themselves are removed only by the explicit prune action.
         if os.path.isdir(directory):
-            genome.close()
-            size = _directory_size(directory)
-            genome.download_cache.delete_cache_directory()
-            deleted.append((directory, size))
+            with dna_cache_lock():
+                if os.path.isdir(directory):
+                    genome.close()
+                    size = _directory_size(directory)
+                    genome.download_cache.delete_cache_directory()
+                    deleted.append((directory, size))
     for path, size in deleted:
         print("Deleted %s (%s bytes)" % (path, format(size, ",")))
     if not deleted:
@@ -457,10 +515,27 @@ def _delete_genome_files(genome, action):
 def run():
     configure_logging()
     args = parser.parse_args()
+    if args.action == "prune":
+        if not args.orphan_genome_fastas:
+            parser.error("prune requires --orphan-genome-fastas")
+        try:
+            candidates = prune_genome_fastas(dry_run=args.dry_run)
+        except ValueError as error:
+            parser.error(str(error))
+        for path, size in candidates:
+            print("%s %s (%s bytes)" % (
+                "Would delete" if args.dry_run else "Deleted", path, format(size, ",")
+            ))
+        if not candidates:
+            print("No orphan genome FASTAs")
+        return
+    if args.orphan_genome_fastas or args.dry_run:
+        parser.error("--orphan-genome-fastas and --dry-run require prune")
     if (
         args.action in ("delete-all-files", "delete-index-files")
         and not args.release
-        and not (args.gtf or args.transcript_fasta or args.protein_fasta)
+        and not (args.gtf or args.transcript_fasta or args.protein_fasta or
+                 (args.genome_fasta_path and args.annotation_name))
     ):
         parser.error("%s requires an explicit --release" % args.action)
     if args.action == "list":
@@ -473,6 +548,8 @@ def run():
             filepaths = genome.required_local_files()
             directories = {os.path.split(path)[0] for path in filepaths}
             print("-- %s: %s" % (genome, ", ".join(directories)))
+            status = genome_fasta_status(genome, check=args.check_genome_fasta)
+            print("   Genome FASTA: %s" % (status or "not installed"))
     elif args.action == "available":
         print(format_available_species())
     else:
@@ -490,7 +567,11 @@ def run():
             if args.action in ("delete-all-files", "delete-index-files"):
                 _delete_genome_files(genome, args.action)
             elif args.action == "install":
-                genome.download(overwrite=args.overwrite)
-                genome.index(overwrite=args.overwrite)
+                if args.only_genome_fasta:
+                    genome.download_genome_fasta(overwrite=args.overwrite)
+                    genome.index_genome_fasta(overwrite=args.overwrite)
+                else:
+                    genome.download(overwrite=args.overwrite)
+                    genome.index(overwrite=args.overwrite)
             else:
                 raise ValueError("Invalid action: %s" % args.action)

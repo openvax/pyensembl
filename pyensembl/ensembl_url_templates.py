@@ -204,3 +204,28 @@ def make_fasta_url(
         sequence_type=sequence_type,
     )
     return server + subdir + filename
+
+
+def make_genome_fasta_url(
+    ensembl_release, species, fasta_type="toplevel", mask="none", server=None
+):
+    """URL for combined reference DNA, including historical/division layouts.
+
+    Toplevel includes patches and haplotypes. Primary assembly excludes them
+    and is not available for every species/release. Masked files live in the
+    same ``dna`` directory as unmasked files.
+    """
+    if fasta_type not in ("toplevel", "primary_assembly"):
+        raise ValueError("genome_fasta_type must be 'toplevel' or 'primary_assembly'")
+    if mask not in ("none", "soft", "hard"):
+        raise ValueError("genome_fasta_mask must be 'none', 'soft', or 'hard'")
+    species = _resolve_species(species)
+    release, species_name, reference = normalize_release_properties(ensembl_release, species)
+    prefix = "%s.%s" % (species_name.capitalize(), reference)
+    if release <= 75 and not species.ensembl_genomes:
+        prefix += ".%d" % release
+    sequence_type = {"none": "dna", "soft": "dna_sm", "hard": "dna_rm"}[mask]
+    filename = "%s.%s.%s.fa.gz" % (prefix, sequence_type, fasta_type)
+    # Reuse the established division routing without treating DNA as cDNA.
+    directory = make_fasta_url(release, species, "dna", server=server).rsplit("/", 1)[0]
+    return directory + "/" + filename

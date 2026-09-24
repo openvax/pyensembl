@@ -29,12 +29,16 @@ classifiers = [
 ]
 dependencies = [
     "typechecks>=0.0.2,<1.0.0",
-    "datacache>=1.4.0,<2.0.0",
+    "datacache>=1.9.1,<2.0.0",
     "memoized-property>=1.0.2",
     "tinytimer>=0.0.0,<1.0.0",
     "gtfparse>=2.7.0,<3.0.0",
     "serializable>=0.2.1,<2.0.0",
     "numpy>=2.0.0,<3.0.0",
+    "pyfaidx>=0.8.1,<1.0.0",
+    # 3.24+ lets umask and default ACLs set lock file modes (shared caches).
+    "filelock>=3.24,<4.0.0; python_version>='3.10'",
+    "filelock>=3.12,<4.0.0; python_version<'3.10'",
 ]
 
 [project.scripts]
