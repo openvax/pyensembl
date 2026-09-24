@@ -1,4 +1,4 @@
-__version__ = "2.10.17"
+__version__ = "2.10.18"
 
 def print_version():
     print(f"v{__version__}")
