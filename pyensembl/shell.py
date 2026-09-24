@@ -288,7 +288,10 @@ def collect_selected_genomes(args):
                 reference_name=args.reference_name,
                 annotation_name=args.annotation_name,
                 annotation_version=args.annotation_version,
-                gtf_path_or_url=os.path.join(args.shared_prefix, args.gtf),
+                gtf_path_or_url=(
+                    os.path.join(args.shared_prefix, args.gtf)
+                    if args.gtf else None
+                ),
                 transcript_fasta_paths_or_urls=[
                     os.path.join(args.shared_prefix, transcript_fasta)
                     for transcript_fasta in args.transcript_fasta

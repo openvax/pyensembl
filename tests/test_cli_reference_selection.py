@@ -82,6 +82,22 @@ def test_custom_source_reference_is_not_resolved_as_ensembl():
     assert genome.annotation_name == "custom"
 
 
+def test_custom_source_install_without_gtf():
+    # A FASTA-only (or protein-only) custom install must get past argument
+    # handling even when no GTF is supplied (issue #400): the Genome class
+    # supports omitted GTF sources, so the CLI must not crash on a None
+    # --gtf value before the install begins.
+    genome, = select(
+        "--reference-name", "MyAssembly", "--annotation-name", "custom",
+        "--transcript-fasta", "/tmp/transcripts.fa",
+    )
+    assert type(genome) is Genome
+    assert not genome.requires_gtf
+    sources = genome.to_dict()
+    assert sources["gtf_path_or_url"] is None
+    assert sources["transcript_fasta_paths_or_urls"] == ["/tmp/transcripts.fa"]
+
+
 def test_no_reference_preserves_species_release_combinations():
     genomes = select("--species", "human", "mouse", "--release", "75", "76")
     assert [(g.species.latin_name, g.release) for g in genomes] == [
