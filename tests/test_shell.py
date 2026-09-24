@@ -1,11 +1,16 @@
 import logging
+import os
 import subprocess
 import sys
 
+import pytest
+
+from pyensembl import EnsemblRelease, shell
 from pyensembl.shell import (
     all_combinations_of_ensembl_genomes,
     configure_logging,
     format_available_species,
+    format_installed_genomes,
     parser,
 )
 from .common import eq_
@@ -120,6 +125,105 @@ def test_import_does_not_reconfigure_root_logger():
     )
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip().endswith("ok")
+
+
+# Regression tests for https://github.com/openvax/pyensembl/issues/388:
+# `pyensembl list` printed raw reprs, counted unindexed downloads as
+# installed, and printed nothing for an empty cache.
+
+
+def _touch(path, contents="x"):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        f.write(contents)
+
+
+@pytest.fixture
+def list_cli_cache(monkeypatch, tmp_path):
+    """Fake PYENSEMBL_CACHE_DIR with one fully indexed release and one
+    downloaded-but-unindexed release (only the four .gz source files)."""
+    monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
+    indexed = EnsemblRelease(100, species="human")
+    unindexed = EnsemblRelease(101, species="mouse")
+    for genome in (indexed, unindexed):
+        for path in genome.required_local_files():
+            _touch(path, "fake-source")
+    for path in indexed._index_file_paths():
+        _touch(path, "fake-index")
+    return indexed, unindexed
+
+
+def test_index_files_exist(list_cli_cache):
+    indexed, unindexed = list_cli_cache
+    assert indexed.index_files_exist()
+    assert not unindexed.index_files_exist()
+
+
+def test_format_installed_genomes_table(list_cli_cache):
+    indexed, unindexed = list_cli_cache
+    output = format_installed_genomes([indexed, unindexed], use_color=False)
+    lines = output.splitlines()
+    # header row carries the column names in the style of `pyensembl available`
+    header = lines[0]
+    for column in ("Species", "Assembly", "Release", "Status", "Path"):
+        assert column in header
+    # no raw Python reprs anywhere in the output
+    assert "EnsemblRelease(" not in output
+    # species common names, assemblies, and releases are shown
+    assert "human" in output
+    assert indexed.reference_name in output
+    assert "mouse" in output
+    assert unindexed.reference_name in output
+    indexed_row = next(line for line in lines if indexed.reference_name in line)
+    unindexed_row = next(line for line in lines if unindexed.reference_name in line)
+    assert str(indexed.release) in indexed_row
+    assert str(unindexed.release) in unindexed_row
+    # cache directory is shown
+    assert str(list_cli_cache[0].download_cache.cache_directory_path) in output
+    # data rows are aligned with each other
+    assert len({len(line) for line in lines[2:]}) == 1
+
+
+def test_format_installed_genomes_marks_not_indexed(list_cli_cache):
+    indexed, unindexed = list_cli_cache
+    output = format_installed_genomes([indexed, unindexed], use_color=False)
+    lines = output.splitlines()
+    indexed_row = next(line for line in lines if indexed.reference_name in line)
+    unindexed_row = next(line for line in lines if unindexed.reference_name in line)
+    assert "indexed" in indexed_row
+    assert "not indexed" not in indexed_row
+    assert "not indexed" in unindexed_row
+
+
+def test_format_installed_genomes_empty_cache():
+    output = format_installed_genomes([], use_color=False)
+    assert "No Ensembl genomes are installed yet." in output
+    assert "pyensembl install" in output
+    assert "pyensembl available" in output
+
+
+def _run_list_action(monkeypatch, capsys):
+    monkeypatch.setattr(shell, "configure_logging", lambda: None)
+    monkeypatch.setattr(sys, "argv", ["pyensembl", "list"])
+    shell.run()
+    return capsys.readouterr().out
+
+
+def test_list_action_prints_table(list_cli_cache, monkeypatch, capsys):
+    output = _run_list_action(monkeypatch, capsys)
+    assert "Species" in output
+    assert "Assembly" in output
+    assert "Release" in output
+    assert "not indexed" in output
+    assert "EnsemblRelease(" not in output
+
+
+def test_list_action_empty_cache_prints_friendly_message(
+    monkeypatch, capsys, tmp_path
+):
+    monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
+    output = _run_list_action(monkeypatch, capsys)
+    assert "No Ensembl genomes are installed yet." in output
 
 
 def test_configure_logging_preserves_existing_loggers():

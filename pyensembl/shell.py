@@ -415,6 +415,99 @@ def format_available_species(use_color=None):
     return "\n".join(lines)
 
 
+def format_installed_genomes(genomes, use_color=None):
+    """
+    Render the table printed by the "list" CLI action: one row per cached
+    Ensembl genome with its species common name, assembly, release, index
+    status, and cache directory, in the style of the "available" table.
+
+    Genomes whose source files were downloaded but never indexed are marked
+    "not indexed" so users know the first query will spend time indexing.
+    When no genomes are cached, returns a friendly message instead of an
+    empty table.
+
+    When ``use_color`` is ``None`` (the default), ANSI styling is applied if
+    stdout is a TTY and suppressed otherwise.
+    """
+    import sys
+
+    if use_color is None:
+        use_color = sys.stdout.isatty()
+    BOLD = "\x1b[1m" if use_color else ""
+    RESET = "\x1b[0m" if use_color else ""
+
+    if not genomes:
+        return (
+            "No Ensembl genomes are installed yet.\n"
+            "\n"
+            "Use `pyensembl install --reference-name <assembly>` to download\n"
+            "and index a genome, or `pyensembl available` to see the\n"
+            "supported species and their Ensembl release ranges."
+        )
+
+    rows = []
+    for genome in genomes:
+        if isinstance(genome, EnsemblRelease):
+            species = _species_display_name(genome.species)
+            assembly = genome.reference_name
+            release = str(genome.release)
+        else:
+            species = ""
+            assembly = genome.reference_name
+            release = (
+                "" if genome.annotation_version is None
+                else str(genome.annotation_version)
+            )
+        status = "indexed" if genome.index_files_exist() else "not indexed"
+        rows.append(
+            (
+                species,
+                assembly,
+                release,
+                status,
+                genome.download_cache.cache_directory_path,
+            )
+        )
+
+    def _w(values, fallback):
+        return max((len(value) for value in values), default=fallback)
+
+    name_w = _w([row[0] for row in rows], len("Species"))
+    asm_w = _w([row[1] for row in rows], len("Assembly"))
+    rel_w = _w([row[2] for row in rows], len("Release"))
+    status_w = _w([row[3] for row in rows], len("Status"))
+    path_w = _w([row[4] for row in rows], len("Path"))
+
+    col_name = max(name_w, len("Species")) + 2
+    col_asm = max(asm_w, len("Assembly")) + 2
+    col_rel = max(rel_w, len("Release")) + 2
+    col_status = max(status_w, len("Status")) + 2
+    total_w = col_name + col_asm + col_rel + col_status + path_w
+
+    lines = []
+    header_row = "%-*s%-*s%-*s%-*s%s" % (
+        col_name, "Species",
+        col_asm, "Assembly",
+        col_rel, "Release",
+        col_status, "Status",
+        "Path",
+    )
+    lines.append("%s%s%s" % (BOLD, header_row, RESET))
+    lines.append("─" * total_w)
+    for species, assembly, release, status, path in rows:
+        lines.append(
+            "%-*s%-*s%-*s%-*s%s"
+            % (
+                col_name, species,
+                col_asm, assembly,
+                col_rel, release,
+                col_status, status,
+                path,
+            )
+        )
+    return "\n".join(lines)
+
+
 def _genome_description(genome):
     if isinstance(genome, EnsemblRelease):
         species = genome.species
@@ -467,12 +560,7 @@ def run():
         # TODO: how do we also identify which non-Ensembl genomes are
         # installed?
         genomes = collect_all_installed_ensembl_releases()
-        for genome in genomes:
-            # print every directory in which downloaded files are located
-            # in most case this will be only one directory
-            filepaths = genome.required_local_files()
-            directories = {os.path.split(path)[0] for path in filepaths}
-            print("-- %s: %s" % (genome, ", ".join(directories)))
+        print(format_installed_genomes(genomes))
     elif args.action == "available":
         print(format_available_species())
     else:
