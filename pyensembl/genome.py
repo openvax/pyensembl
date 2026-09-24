@@ -525,6 +525,17 @@ class Genome(Serializable):
                 )
         return paths
 
+    def index_files_exist(self):
+        """Check whether all index files exist locally.
+
+        Reports whether this genome has been indexed without downloading
+        or creating anything.
+        """
+        for path in self._index_file_paths():
+            if not exists(path):
+                return False
+        return True
+
     def delete_index_files(self):
         """Delete SQLite and FASTA indexes, preserving source files.
 
