@@ -82,10 +82,10 @@ def test_exon_basic_properties_str():
 
 def test_exon_basic_properties_hash():
     exon = ensembl.exon_by_id("ENSE00001817013")
-    assert isinstance(hash(exon), int), \
-        "Hash function returns %s instead of int" % (
-            type(hash(exon),))
-    assert hash(exon) == hash(exon), "Hash function is non-deterministic!"
+    # Equal exons must hash equally for dict and set membership.
+    same_exon = ensembl.exon_by_id("ENSE00001817013")
+    assert exon == same_exon
+    assert hash(exon) == hash(same_exon)
     other_exon = ensembl.exon_by_id("ENSE00003464041")
     assert exon != other_exon
     assert hash(exon) != hash(other_exon)

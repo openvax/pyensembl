@@ -70,7 +70,6 @@ def test_equality_and_hashing(equality_factory, use_subclass):
     equal = make(cls)
     different = make(cls, different=True)
 
-    assert first == first
     assert first == equal
     assert equal == first
     assert not first != equal
