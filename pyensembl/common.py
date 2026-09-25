@@ -10,13 +10,65 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pickle
-
+from contextlib import contextmanager
 from functools import wraps
+import os
+from pathlib import Path
+import pickle
+from uuid import uuid4
+
+
+def _staging_path(directory, name):
+    # Dot files in cache directories are always staging files.
+    return Path(directory) / (".%s.%s.tmp" % (name, uuid4().hex))
+
+
+def _remove(path):
+    try:
+        os.unlink(path)
+    except FileNotFoundError:
+        pass
+
+
+def _publish(staged, path):
+    """Durably replace path with a complete staged file."""
+    with open(staged, "r+b") as handle:
+        os.fsync(handle.fileno())
+    os.replace(staged, path)
+    try:
+        directory = os.open(os.path.dirname(path), os.O_RDONLY)
+    except OSError:
+        return  # Directories cannot be opened for fsync on some platforms.
+    try:
+        os.fsync(directory)
+    except OSError:
+        pass
+    finally:
+        os.close(directory)
+
+
+@contextmanager
+def _atomic_output(path, mode="wb"):
+    """Write a file that appears complete or not at all.
+
+    The staging file is created like any new file (0o666 less umask), so a
+    group-shared cache stays readable by other users.
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    staged = _staging_path(path.parent, path.name)
+    try:
+        descriptor = os.open(staged, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666)
+        with open(descriptor, mode) as handle:
+            yield handle
+        _publish(staged, path)
+    finally:
+        _remove(staged)
 
 
 def dump_pickle(obj, filepath):
-    with open(filepath, "wb") as f:
+    # Atomic, so an interrupted write never leaves a truncated index behind.
+    with _atomic_output(filepath) as f:
         # use lower protocol for compatibility between Python 2 and Python 3
         pickle.dump(obj, file=f, protocol=2)
 

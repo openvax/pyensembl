@@ -10,8 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from contextlib import closing
 import logging
 from os.path import split, join, exists, splitext
+from pathlib import Path
 import sqlite3
 
 import datacache
@@ -27,6 +29,22 @@ DATABASE_SCHEMA_VERSION = 3
 
 
 logger = logging.getLogger(__name__)
+
+
+def is_complete_database(path):
+    """Whether a GTF database finished building; reads without writing.
+
+    datacache stores the schema version last, so it marks a complete build.
+    """
+    try:
+        uri = Path(path).absolute().as_uri() + "?mode=ro"
+        with closing(sqlite3.connect(uri, uri=True)) as connection:
+            row = connection.execute(
+                'SELECT "version" FROM "_datacache_metadata"'
+            ).fetchone()
+        return row is not None and int(row[0]) == DATABASE_SCHEMA_VERSION
+    except (sqlite3.Error, OSError, TypeError, ValueError):
+        return False
 
 
 class Database(object):
@@ -161,7 +179,7 @@ class Database(object):
                 # are not available in all releases of Ensembl (or
                 # other GTFs)
                 if column_name not in column_set:
-                    logger.info(
+                    logger.debug(
                         "Skipping database index for {%s}", ", ".join(column_group)
                     )
                     skip = True
@@ -685,7 +703,7 @@ class Database(object):
                 },
                 missing_value="",
             )
-            logger.info("Done.")
+            logger.debug("Done.")
 
         if expect_transcript_feature and "transcript" not in observed_features:
             logger.info("Creating missing transcript features...")
@@ -704,6 +722,6 @@ class Database(object):
                 },
                 missing_value="",
             )
-            logger.info("Done.")
+            logger.debug("Done.")
 
         return df

@@ -10,50 +10,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Manipulate pyensembl's local cache.
-
-    %(prog)s {install, delete-all-files, delete-index-files, list, available} [--release XXX --species human...]
-
-To install particular Ensembl human release(s):
-    %(prog)s install --release 75 77
-
-To install particular Ensembl mouse release(s):
-    %(prog)s install --release 75 77 --species mouse
-
-To install the newest supported Ensembl release for a reference assembly:
-    %(prog)s install --reference-name GRCh37
-
-To delete all downloaded and cached data for a particular Ensembl release:
-    %(prog)s delete-all-files --release 75 --species human
-
-To delete everything except the original GTF and FASTA files:
-    %(prog)s delete-index-files --release 75
-
-To list all installed genomes:
-    %(prog)s list
-
-To list supported species and their Ensembl release ranges:
-    %(prog)s available
-
-To install a genome from source files:
-    %(prog)s install \
- --reference-name "GRCh38" \
- --gtf URL_OR_PATH \
- --transcript-fasta URL_OR_PATH \
- --protein-fasta URL_OR_PATH
-"""
+"""Command-line tool for installing and managing PyEnsembl data."""
 
 import argparse
-import logging.config
-from importlib import resources
+import logging
 import os
+from pathlib import Path
+import re
+import sys
 
+from .database import is_complete_database
+from .download_cache import DownloadCache
 from .ensembl_release import EnsemblRelease
 from .ensembl_versions import MAX_ENSEMBL_RELEASE
 from .genome import Genome
 from .genome_fasta import GenomeFasta
-from .genome_fasta_cache import dna_cache_lock, prune_genome_fastas
+from .genome_fasta_cache import (
+    canonical_source_options,
+    dna_cache_lock,
+    dna_cache_root,
+    prune_genome_fastas,
+    shared_dna_root,
+)
 from .reference_name import find_species_by_reference, normalize_reference_name
 from .species import Species, find_species_by_name
 from .version import __version__
@@ -61,25 +39,87 @@ from .version import __version__
 logger = logging.getLogger(__name__)
 
 
-def configure_logging():
-    """Apply pyensembl's console logging configuration.
+class _ConciseFormatter(logging.Formatter):
+    """Plain progress messages; warnings and errors keep their level."""
 
-    This is only invoked from the command-line entrypoint (``run``) so that
-    merely importing this module never reconfigures the root logger or
-    disables any loggers the host application has already created.
+    def format(self, record):
+        message = super().format(record)
+        if record.levelno >= logging.WARNING:
+            return "%s: %s" % (record.levelname.lower(), message)
+        return message
+
+
+_cli_handler = None
+
+
+def configure_logging(verbose=False):
+    """Show progress on stderr: one line per step, or every detail if verbose.
+
+    Only the command-line entrypoint (``run``) calls this, so importing
+    pyensembl never changes the host application's logging.
     """
-    logging.config.fileConfig(
-        str(resources.files("pyensembl") / "logging.conf"),
-        disable_existing_loggers=False,
+    global _cli_handler
+    handler = logging.StreamHandler()  # stderr; stdout carries results
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s %(name)s %(levelname)s: %(message)s")
+        if verbose
+        else _ConciseFormatter()
     )
+    for name, level in (
+        ("pyensembl", logging.DEBUG if verbose else logging.INFO),
+        # datacache reports each download step and SQL statement.
+        ("datacache", logging.DEBUG if verbose else logging.WARNING),
+    ):
+        package_logger = logging.getLogger(name)
+        if _cli_handler is not None:
+            package_logger.removeHandler(_cli_handler)
+        package_logger.setLevel(level)
+        package_logger.addHandler(handler)
+        # Our handler prints; a host application's root handler must not too.
+        package_logger.propagate = False
+    _cli_handler = handler
 
 
-parser = argparse.ArgumentParser(usage=__doc__)
+_ACTIONS_AND_EXAMPLES = """\
+actions:
+  install             download and index genome data (skips what is already done)
+  list                show installed genomes, whether they are indexed, and their DNA
+  available           show supported species, assemblies, and Ensembl releases
+  delete-index-files  delete indexes, keeping downloaded files (needs --release)
+  delete-all-files    delete all of a genome's local data (needs --release)
+  prune               delete shared reference DNA that no installed release uses
+
+examples:
+  pyensembl install --release 75 77                     human releases 75 and 77
+  pyensembl install --release 110 --species mouse       a mouse release
+  pyensembl install --reference-name GRCh37             newest release for GRCh37
+  pyensembl install --release 110 --with-genome-fasta   also install reference DNA
+  pyensembl install --reference-name GRCh38 --annotation-name my_genes \\
+      --gtf URL_OR_PATH --transcript-fasta URL_OR_PATH  a custom genome
+  pyensembl list
+  pyensembl delete-all-files --release 75
+  pyensembl prune --dry-run
+"""
+
+parser = argparse.ArgumentParser(
+    prog="pyensembl",
+    usage="%(prog)s ACTION [options]",
+    description="Install and manage the genome data PyEnsembl uses.",
+    epilog=_ACTIONS_AND_EXAMPLES,
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+)
 
 parser.add_argument(
     "--version", 
     action="version",
     version='%(prog)s {version}'.format(version=__version__)
+)
+
+parser.add_argument(
+    "-v",
+    "--verbose",
+    action="store_true",
+    help="Show detailed progress, including download and database steps",
 )
 
 parser.add_argument(
@@ -184,8 +224,8 @@ dna_group.add_argument("--masked", choices=("none", "soft", "hard"), default="no
                        help="Masking of downloaded reference DNA (default: none)")
 dna_group.add_argument("--check-genome-fasta", action="store_true",
                        help="With list, check existing DNA indexes without downloading or rebuilding")
-dna_group.add_argument("--orphan-genome-fastas", action="store_true",
-                       help="With prune, remove shared DNA with no installed release references")
+# Accepted for 2.11.0 scripts; unused DNA is what prune removes.
+dna_group.add_argument("--orphan-genome-fastas", action="store_true", help=argparse.SUPPRESS)
 dna_group.add_argument("--dry-run", action="store_true",
                        help="With prune, report candidates without deleting files")
 
@@ -194,44 +234,210 @@ parser.add_argument(
     type=lambda arg: arg.lower().strip(),
     choices=(
         "install",
-        "delete-all-files",
-        "delete-index-files",
         "list",
         "available",
+        "delete-index-files",
+        "delete-all-files",
         "prune",
     ),
-    help=(
-        '"install" will download and index any data that is  not '
-        'currently downloaded or indexed. "delete-all-files" will delete all data '
-        'associated with a genome annotation. "delete-index-files" deletes '
-        "all files other than the original GTF and FASTA files for a genome. "
-        '"list" will show you all installed Ensembl genomes. '
-        '"available" prints every species and the Ensembl release ranges '
-        "supported by pyensembl."
-    ),
+    metavar="ACTION",
+    help="one of the actions listed below",
 )
 
 
-def genome_fasta_status(genome, check=False):
-    """Describe DNA recorded for a genome's cache, or None if there is none.
+def _dna_status(cache_directory, check=False):
+    """Describe DNA recorded in a genome cache directory, or None if none.
 
     A broken reference is reported rather than raised, so one bad release
     cannot hide the others.
     """
     try:
-        dna = GenomeFasta.installed_source(genome.download_cache.cache_directory_path)
-    except ValueError as error:
-        return "invalid reference: %s" % error
-    return None if dna is None else dna.status(check=check)
+        dna = GenomeFasta.installed_source(cache_directory)
+    except (OSError, ValueError) as error:
+        logger.warning("Invalid reference DNA record in %s: %s", cache_directory, error)
+        return "invalid reference"
+    if dna is None:
+        return None
+    if not dna.remote:
+        kind = "local " + os.path.basename(dna.source)
+    else:
+        options = canonical_source_options(dna.source)
+        kind = "downloaded"
+        if options is not None:
+            fasta_type, mask = options
+            kind = fasta_type if mask == "none" else "%s, %s-masked" % (fasta_type, mask)
+    return "%s, %s" % (kind, dna.status(check=check))
+
+
+def genome_fasta_status(genome, check=False):
+    """Describe the reference DNA recorded for a genome's cache, or None."""
+    return _dna_status(genome.download_cache.cache_directory_path, check=check)
+
+
+def _index_is_complete(path):
+    if path.endswith(".db"):
+        return is_complete_database(path)
+    try:
+        return os.path.getsize(path) > 0
+    except OSError:
+        return False
+
+
+def _annotation_status(genome):
+    """How far a genome's annotation data is installed.
+
+    None if it has none configured, else 'missing', 'incomplete' (some files
+    but not every download), 'not indexed', or 'indexed': every source is
+    downloaded and every index complete, so queries need no network or setup.
+    """
+    sources = genome._annotation_source_paths()
+    indexes = genome._annotation_index_paths()
+    if not sources and not indexes:
+        return None
+    if not all(os.path.exists(path) for path in sources):
+        present = any(os.path.exists(path) for path in sources + indexes)
+        return "incomplete" if present else "missing"
+    return "indexed" if all(map(_index_is_complete, indexes)) else "not indexed"
+
+
+# Reference DNA bookkeeping in a genome's cache directory.
+_DNA_ENTRIES = {"genome_fasta", "genome_fasta.json", "genome_fasta_refs"}
+
+
+def _directory_annotation_status(directory):
+    """Best-effort status for a cache directory whose genome is unknown."""
+    try:
+        names = [
+            name for name in os.listdir(directory)
+            if not name.startswith(".") and name not in _DNA_ENTRIES
+        ]
+    except OSError:
+        return None
+    if not names:
+        return None
+    databases = [name for name in names if name.endswith(".db")]
+    if databases:
+        complete = all(
+            is_complete_database(os.path.join(directory, name)) for name in databases
+        )
+        return "indexed" if complete else "not indexed"
+    if any(name.endswith((".gtf", ".gtf.gz")) for name in names):
+        return "not indexed"
+    return "indexed" if any(name.endswith(".pickle") for name in names) else "not indexed"
+
+
+def _subdirectories(path):
+    try:
+        return sorted(
+            entry for entry in Path(path).iterdir()
+            if not entry.name.startswith(".") and entry.is_dir()
+        )
+    except FileNotFoundError:
+        return []
+    except OSError as error:
+        logger.warning("Cannot read %s: %s", path, error)
+        return []
+
+
+def _other_genome_labels(reference, annotation):
+    """(species, release) cells for a cache directory pyensembl did not match."""
+    match = re.fullmatch(r"ensembl(\d+)", annotation)
+    if match is None:
+        return "custom", annotation
+    try:
+        species = _species_display_name(find_species_by_reference(reference))
+    except (KeyError, ValueError):
+        species = "unknown"
+    return species, match.group(1)  # e.g. installed by a newer pyensembl
+
+
+def _display_path(path):
+    home = os.path.expanduser("~")
+    path = os.fspath(path)
+    return "~" + path[len(home):] if path == home or path.startswith(home + os.sep) else path
+
+
+def _format_table(header, rows, use_color=None):
+    if use_color is None:
+        use_color = sys.stdout.isatty()
+    widths = [max(len(cell) for cell in column) for column in zip(header, *rows)]
+
+    def line(cells):
+        return "  ".join(cell.ljust(width) for cell, width in zip(cells, widths)).rstrip()
+
+    bold, reset = ("\x1b[1m", "\x1b[0m") if use_color else ("", "")
+    return "\n".join([bold + line(header) + reset] + [line(row) for row in rows])
+
+
+def _ensembl_releases():
+    return [
+        EnsemblRelease(release, species=species)
+        for species, release in Species.all_species_release_pairs()
+    ]
+
+
+def _has_data(annotation, dna):
+    return annotation not in (None, "missing") or dna is not None
 
 
 def collect_all_installed_ensembl_releases():
-    genomes = []
-    for species, release in Species.all_species_release_pairs():
-        genome = EnsemblRelease(release, species=species)
-        if genome.required_local_files_exist() or genome_fasta_status(genome) is not None:
-            genomes.append(genome)
-    return sorted(genomes, key=lambda g: (g.species.latin_name, g.release))
+    """Ensembl releases with annotation data or reference DNA in the cache."""
+    return sorted(
+        (
+            genome for genome in _ensembl_releases()
+            if _has_data(_annotation_status(genome), genome_fasta_status(genome))
+        ),
+        key=lambda genome: (genome.species.latin_name, genome.release),
+    )
+
+
+def format_installed_genomes(check_genome_fasta=False, use_color=None):
+    """A table of genomes in the local cache, or a note that there are none."""
+    rows = []
+    ensembl_directories = set()
+    for genome in _ensembl_releases():
+        directory = genome.download_cache.cache_directory_path
+        ensembl_directories.add(os.path.normpath(directory))
+        annotation = _annotation_status(genome)
+        dna = _dna_status(directory, check=check_genome_fasta)
+        if not _has_data(annotation, dna):
+            continue
+        rows.append((
+            _species_display_name(genome.species),
+            genome.reference_name,
+            str(genome.release),
+            annotation if annotation not in (None, "missing") else "-",
+            dna or "-",
+            _display_path(directory),
+        ))
+    rows.sort(key=lambda row: (row[0], row[1], int(row[2])))
+    # Custom genomes (e.g. install --gtf ...) live beside Ensembl releases,
+    # except in Windows' default layout, where each cache has its own root.
+    root = dna_cache_root().parent
+    nested = shared_dna_root(DownloadCache("r", "a").cache_directory_path) is not None
+    for reference in _subdirectories(root) if nested else []:
+        if reference.name == "dna_cache":
+            continue
+        for directory in _subdirectories(reference):
+            if os.path.normpath(directory) in ensembl_directories:
+                continue
+            annotation = _directory_annotation_status(directory)
+            dna = _dna_status(directory, check=check_genome_fasta)
+            if not _has_data(annotation, dna):
+                continue
+            species, release = _other_genome_labels(reference.name, directory.name)
+            rows.append((
+                species,
+                reference.name,
+                release,
+                annotation or "-",
+                dna or "-",
+                _display_path(directory),
+            ))
+    if not rows:
+        return "No genomes installed" + (" in %s" % _display_path(root) if nested else "")
+    header = ("Species", "Assembly", "Release", "Annotation", "Reference DNA", "Location")
+    return _format_table(header, rows, use_color)
 
 
 def all_combinations_of_ensembl_genomes(args):
@@ -398,8 +604,6 @@ def format_available_species(use_color=None):
     When ``use_color`` is ``None`` (the default), ANSI styling is applied if
     stdout is a TTY and suppressed otherwise.
     """
-    import sys
-
     if use_color is None:
         use_color = sys.stdout.isatty()
     BOLD = "\x1b[1m" if use_color else ""
@@ -501,6 +705,24 @@ def _directory_size(path):
     return size
 
 
+def _install(genome, only_genome_fasta=False, overwrite=False):
+    description = _genome_description(genome)
+    installed = (
+        not genome.requires_genome_fasta or genome._genome_fasta.status() == "indexed"
+    ) and (only_genome_fasta or _annotation_status(genome) in (None, "indexed"))
+    if installed and not overwrite:
+        # The steps below then only confirm that everything is in place.
+        logger.info("%s is already installed", description)
+    else:
+        logger.info("Installing %s", description)
+    if only_genome_fasta:
+        genome.download_genome_fasta(overwrite=overwrite)
+        genome.index_genome_fasta(overwrite=overwrite)
+    else:
+        genome.download(overwrite=overwrite)
+        genome.index(overwrite=overwrite)
+
+
 def _delete_genome_files(genome, action):
     if action == "delete-index-files":
         deleted = genome.delete_index_files()
@@ -523,11 +745,9 @@ def _delete_genome_files(genome, action):
 
 
 def run():
-    configure_logging()
     args = parser.parse_args()
+    configure_logging(verbose=args.verbose)
     if args.action == "prune":
-        if not args.orphan_genome_fastas:
-            parser.error("prune requires --orphan-genome-fastas")
         try:
             candidates = prune_genome_fastas(dry_run=args.dry_run)
         except ValueError as error:
@@ -549,17 +769,7 @@ def run():
     ):
         parser.error("%s requires an explicit --release" % args.action)
     if args.action == "list":
-        # TODO: how do we also identify which non-Ensembl genomes are
-        # installed?
-        genomes = collect_all_installed_ensembl_releases()
-        for genome in genomes:
-            # print every directory in which downloaded files are located
-            # in most case this will be only one directory
-            filepaths = genome.required_local_files()
-            directories = {os.path.split(path)[0] for path in filepaths}
-            print("-- %s: %s" % (genome, ", ".join(directories)))
-            status = genome_fasta_status(genome, check=args.check_genome_fasta)
-            print("   Genome FASTA: %s" % (status or "not installed"))
+        print(format_installed_genomes(check_genome_fasta=args.check_genome_fasta))
     elif args.action == "available":
         print(format_available_species())
     else:
@@ -573,15 +783,9 @@ def run():
             parser.print_help()
 
         for genome in genomes:
-            logger.info("Running '%s' for %s", args.action, genome)
             if args.action in ("delete-all-files", "delete-index-files"):
                 _delete_genome_files(genome, args.action)
             elif args.action == "install":
-                if args.only_genome_fasta:
-                    genome.download_genome_fasta(overwrite=args.overwrite)
-                    genome.index_genome_fasta(overwrite=args.overwrite)
-                else:
-                    genome.download(overwrite=args.overwrite)
-                    genome.index(overwrite=args.overwrite)
+                _install(genome, args.only_genome_fasta, args.overwrite)
             else:
                 raise ValueError("Invalid action: %s" % args.action)
