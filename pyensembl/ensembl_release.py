@@ -214,9 +214,10 @@ class EnsemblRelease(Genome):
         elif self.requires_genome_fasta:
             if not only_genome_fasta:
                 command += " --with-genome-fasta"
-            command += " --genome-fasta-type %s --masked %s" % (
-                self.genome_fasta_type, self.genome_fasta_mask,
-            )
+            if self.genome_fasta_type != "toplevel":
+                command += " --genome-fasta-type " + self.genome_fasta_type
+            if self.genome_fasta_mask != "none":
+                command += " --masked " + self.genome_fasta_mask
         return command
 
     def __str__(self):

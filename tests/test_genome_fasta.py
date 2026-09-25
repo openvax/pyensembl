@@ -193,6 +193,10 @@ def test_missing_dna_error_gives_a_runnable_dna_only_command(dna_path):
         "--only-genome-fasta --genome-fasta-path %s" % shlex.quote(str(dna_path))
     )
     assert "--with-genome-fasta" in release.install_string()
+    # Defaults are left out of suggested commands.
+    assert EnsemblRelease(81, genome_fasta=True).genome_fasta_install_string() == (
+        "pyensembl install --release 81 --species homo_sapiens --only-genome-fasta"
+    )
 
 
 @pytest.mark.parametrize("compressed", [False, True])

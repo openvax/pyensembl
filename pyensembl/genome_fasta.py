@@ -151,7 +151,7 @@ class GenomeFasta:
         return path
 
     def _not_installed(self):
-        message = "Genome FASTA is not installed: %s. Call download_genome_fasta()" % (
+        message = "Reference DNA is not installed: %s. Call download_genome_fasta()" % (
             self.source
         )
         if self.install_string_function is not None:
