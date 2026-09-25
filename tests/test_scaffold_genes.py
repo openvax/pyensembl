@@ -69,7 +69,7 @@ def test_reported_patch_gene_survives_selection_indexing_and_cached_upgrade(
     def no_network(*args, **kwargs):
         pytest.fail("The source-grounded regression fixture must work offline")
 
-    monkeypatch.setattr(datacache.download, "_download_and_decompress_if_necessary", no_network)
+    monkeypatch.setattr(datacache, "fetch_file", no_network)
     release = EnsemblRelease(97)
     cache = Path(release.download_cache.cache_directory_path)
     cache.mkdir(parents=True)

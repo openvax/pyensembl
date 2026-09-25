@@ -10,10 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from contextlib import closing
 import logging
 from os.path import split, join, exists, splitext
-from pathlib import Path
 import sqlite3
 
 import datacache
@@ -37,14 +35,15 @@ def is_complete_database(path):
     datacache stores the schema version last, so it marks a complete build.
     """
     try:
-        uri = Path(path).absolute().as_uri() + "?mode=ro"
-        with closing(sqlite3.connect(uri, uri=True)) as connection:
-            row = connection.execute(
-                'SELECT "version" FROM "_datacache_metadata"'
-            ).fetchone()
-        return row is not None and int(row[0]) == DATABASE_SCHEMA_VERSION
-    except (sqlite3.Error, OSError, TypeError, ValueError):
+        connection = datacache.connect_if_correct_version(
+            path, DATABASE_SCHEMA_VERSION, read_only=True
+        )
+    except (sqlite3.Error, OSError, ValueError):
         return False
+    if connection is None:
+        return False
+    connection.close()
+    return True
 
 
 class Database(object):

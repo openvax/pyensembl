@@ -29,7 +29,7 @@ classifiers = [
 ]
 dependencies = [
     "typechecks>=0.0.2,<1.0.0",
-    "datacache>=1.9.1,<2.0.0",
+    "datacache>=1.10.0,<2.0.0",
     "memoized-property>=1.0.2",
     "tinytimer>=0.0.0,<1.0.0",
     "gtfparse>=2.7.0,<3.0.0",
