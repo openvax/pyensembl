@@ -104,6 +104,13 @@ Run lint and tests with:
 Most tests need Ensembl data installed first; `.github/workflows/tests.yml`
 lists the releases CI installs.
 
+Species assembly ranges are checked against Ensembl's archive. After raising
+`MAX_ENSEMBL_RELEASE`, recheck every assembly boundary on the live FTP servers:
+
+```sh
+PYENSEMBL_NETWORK_TESTS=1 ./test.sh tests/test_species_assemblies.py
+```
+
 ## Cache Location
 
 By default, PyEnsembl uses the platform-specific `Cache` folder
