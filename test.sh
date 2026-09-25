@@ -86,8 +86,9 @@ if avail=$(available_bytes 2>/dev/null) && [[ -n "$avail" ]]; then
     AVAIL_GB=$(awk -v b="$avail" 'BEGIN { printf "%.1f", b / 1024^3 }')
     mem_note="ram_free=${AVAIL_GB}GB mem_cap=${MEM_CAP}"
 else
-    MEM_CAP=$CPU_CAP
-    mem_note="ram_free=? (probe unavailable) mem_cap=cpu_cap"
+    # Without a memory reading, don't assume one worker per CPU fits (#392).
+    MEM_CAP=2
+    mem_note="ram_free=? (probe unavailable) mem_cap=2"
 fi
 
 if (( CPU_CAP < MEM_CAP )); then WORKERS=$CPU_CAP; else WORKERS=$MEM_CAP; fi

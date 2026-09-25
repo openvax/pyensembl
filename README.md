@@ -111,6 +111,13 @@ Species assembly ranges are checked against Ensembl's archive. After raising
 PYENSEMBL_NETWORK_TESTS=1 ./test.sh tests/test_species_assemblies.py
 ```
 
+Timed benchmarks are opt-in because wall-clock limits depend on the machine
+and its load. Run them on an otherwise idle machine:
+
+```sh
+PYENSEMBL_BENCHMARKS=1 ./test.sh tests/test_timings.py -s
+```
+
 ## Cache Location
 
 By default, PyEnsembl uses the platform-specific `Cache` folder

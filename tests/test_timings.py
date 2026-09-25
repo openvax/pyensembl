@@ -1,6 +1,19 @@
+"""Locus lookups across every human chromosome.
+
+By default each lookup runs once per locus as a correctness check. Wall-clock
+limits depend on the machine and its load, so the timed benchmark runs only
+with PYENSEMBL_BENCHMARKS=1, ideally on an otherwise idle machine:
+
+    PYENSEMBL_BENCHMARKS=1 ./test.sh tests/test_timings.py -s
+"""
+
+import os
+
 from pyensembl import genome_for_reference_name
 
 from tinytimer import benchmark
+
+BENCHMARKS = bool(os.environ.get("PYENSEMBL_BENCHMARKS"))
 
 ensembl = genome_for_reference_name("GRCh38")
 contigs = [str(i + 1) for i in range(22)] + ["X", "Y"]
@@ -26,8 +39,12 @@ def run_benchmark(lookup_fn, n_positions_per_contig=20, time_limit=60.0):
     time how long it takes across multiple loci.
     """
     repeat_lookup_fn = make_repeat_lookup_fn(lookup_fn, n_positions_per_contig)
+    if not BENCHMARKS:
+        repeat_lookup_fn()
+        return None
     n_loci = n_positions_per_contig * len(contigs)
     name = lookup_fn.__name__
+    # benchmark() excludes a warm-up call, so cold caches don't count.
     average_time = benchmark(repeat_lookup_fn, name="%s for %d loci" % (name, n_loci))
     print("-- %s : %0.4fs" % (name, average_time))
     assert average_time < time_limit, "%s took too long for %s loci: %0.4fs" % (
