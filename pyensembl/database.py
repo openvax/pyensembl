@@ -10,8 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from contextlib import closing
 import logging
 from os.path import split, join, exists, splitext
+from pathlib import Path
 import sqlite3
 
 import datacache
@@ -27,6 +29,22 @@ DATABASE_SCHEMA_VERSION = 3
 
 
 logger = logging.getLogger(__name__)
+
+
+def is_complete_database(path):
+    """Whether a GTF database finished building; reads without writing.
+
+    datacache stores the schema version last, so it marks a complete build.
+    """
+    try:
+        uri = Path(path).absolute().as_uri() + "?mode=ro"
+        with closing(sqlite3.connect(uri, uri=True)) as connection:
+            row = connection.execute(
+                'SELECT "version" FROM "_datacache_metadata"'
+            ).fetchone()
+        return row is not None and int(row[0]) == DATABASE_SCHEMA_VERSION
+    except (sqlite3.Error, OSError, TypeError, ValueError):
+        return False
 
 
 class Database(object):
@@ -675,7 +693,7 @@ class Database(object):
             # if we have to reconstruct gene feature rows then
             # fill in values for 'gene_name' and 'gene_biotype'
             # but only if they're actually present in the GTF
-            logger.debug("Creating missing gene features...")
+            logger.info("Creating missing gene features...")
 
             df = create_missing_features(
                 dataframe=df,
@@ -688,7 +706,7 @@ class Database(object):
             logger.debug("Done.")
 
         if expect_transcript_feature and "transcript" not in observed_features:
-            logger.debug("Creating missing transcript features...")
+            logger.info("Creating missing transcript features...")
             df = create_missing_features(
                 dataframe=df,
                 unique_keys={"transcript": "transcript_id"},

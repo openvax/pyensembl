@@ -24,7 +24,8 @@ from urllib.request import Request, urlopen
 from filelock import FileLock, Timeout
 
 from .download_cache import DownloadCache
-from .genome_fasta import GenomeFasta, _read_json, _remove, _write_json
+from .common import _remove
+from .genome_fasta import GenomeFasta, _read_json, _write_json
 
 logger = logging.getLogger(__name__)
 _KEY = re.compile(r"^[0-9a-f]{64}$")

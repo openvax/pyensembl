@@ -130,18 +130,21 @@ def test_configure_logging_preserves_existing_loggers():
     root = logging.getLogger()
     pyensembl_logger = logging.getLogger("pyensembl")
     configured = [root, pyensembl_logger, logging.getLogger("datacache")]
-    saved = [(each, each.level, each.handlers[:]) for each in configured]
+    saved = [(each, each.level, each.handlers[:], each.propagate) for each in configured]
     try:
-        created_before = logging.getLogger("test_configure_logging_preexisting")
-        created_before.disabled = False
+        root_handlers = root.handlers[:]
+        other = logging.getLogger("test_configure_logging_preexisting")
+        other_state = (other.level, other.handlers[:], other.propagate)
         configure_logging()
         # The CLI entrypoint configures only pyensembl's and datacache's
-        # loggers, leaving other loggers alone.
-        assert created_before.disabled is False
+        # loggers, leaving the root and other loggers alone.
+        assert root.handlers == root_handlers
+        assert (other.level, other.handlers, other.propagate) == other_state
         # pyensembl's own logger should be wired up to a handler for CLI output.
         assert pyensembl_logger.handlers
     finally:
-        for each, level, handlers in saved:
+        for each, level, handlers, propagate in saved:
             each.setLevel(level)
             each.handlers[:] = handlers
+            each.propagate = propagate
         shell._cli_handler = None

@@ -1,6 +1,5 @@
 """Disk-backed reference DNA, with indexes owned by PyEnsembl."""
 
-from contextlib import contextmanager
 import gzip
 import hashlib
 import json
@@ -13,6 +12,7 @@ from uuid import uuid4
 
 from datacache import fetch_file
 
+from .common import _atomic_output, _publish, _remove, _staging_path
 from .normalization import normalize_chromosome
 
 logger = logging.getLogger(__name__)
@@ -29,54 +29,6 @@ def _read_json(path):
             return json.load(handle)
     except (OSError, ValueError):
         return None
-
-
-def _staging_path(directory, name):
-    # Dot files in cache directories are always staging files.
-    return Path(directory) / (".%s.%s.tmp" % (name, uuid4().hex))
-
-
-def _remove(path):
-    try:
-        os.unlink(path)
-    except FileNotFoundError:
-        pass
-
-
-def _publish(staged, path):
-    """Durably replace path with a complete staged file."""
-    with open(staged, "r+b") as handle:
-        os.fsync(handle.fileno())
-    os.replace(staged, path)
-    try:
-        directory = os.open(os.path.dirname(path), os.O_RDONLY)
-    except OSError:
-        return  # Directories cannot be opened for fsync on some platforms.
-    try:
-        os.fsync(directory)
-    except OSError:
-        pass
-    finally:
-        os.close(directory)
-
-
-@contextmanager
-def _atomic_output(path, mode="wb"):
-    """Write a file that appears complete or not at all.
-
-    The staging file is created like any new file (0o666 less umask), so a
-    group-shared cache stays readable by other users.
-    """
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    staged = _staging_path(path.parent, path.name)
-    try:
-        descriptor = os.open(staged, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666)
-        with open(descriptor, mode) as handle:
-            yield handle
-        _publish(staged, path)
-    finally:
-        _remove(staged)
 
 
 def _write_json(path, value):

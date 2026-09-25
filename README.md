@@ -128,8 +128,8 @@ os.environ['PYENSEMBL_CACHE_DIR'] = '/custom/cache/dir'
 
 ## List installed genomes
 
-To see which genomes are in the local cache, whether each is indexed (ready to
-use without a long first query), and any reference DNA:
+To see which genomes are in the local cache, whether each is ready to use, and
+any reference DNA:
 
 ```sh
 pyensembl list
@@ -142,9 +142,16 @@ human    GRCh38    82       not indexed  -                  ~/Library/Caches/pye
 custom   GRCm38    mine1    indexed      -                  ~/Library/Caches/pyensembl/GRCm38/mine1
 ```
 
-`pyensembl install` finishes indexing a release shown as `not indexed`.
-Progress messages go to stderr; add `--verbose` (`-v`) to see every download
-and database step.
+**Annotation** is `indexed` when everything is downloaded and indexed, so
+queries need no network access or setup. `not indexed` means the files are
+downloaded but the first query would spend minutes indexing them, and
+`incomplete` means some downloads are missing. Run `pyensembl install` for
+that release to finish (add `--species` for non-human genomes; custom
+genomes need their original install options). Custom genomes are listed on
+Linux and macOS, or wherever `PYENSEMBL_CACHE_DIR` is set.
+
+`install` prints progress on stderr, one line per step; add `--verbose` (`-v`)
+to see every download and database step.
 
 To get the installed Ensembl releases in Python:
 

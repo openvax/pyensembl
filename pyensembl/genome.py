@@ -18,7 +18,7 @@ around an arbitrary genomic database.
 
 from numbers import Integral
 from os import lstat, remove
-from os.path import basename, exists, getsize, join, lexists, splitext
+from os.path import abspath, basename, exists, getsize, join, lexists, splitext
 from pathlib import Path
 import warnings
 
@@ -369,27 +369,28 @@ class Genome(Serializable):
                 download_if_missing=download_if_missing, overwrite=overwrite
             )
 
+    def _local_source_path(self, path_or_url):
+        """Where a source file is, or will be, on disk; never downloads or copies.
+
+        Downloads and copied files live in the cache; other local files are
+        used in place.
+        """
+        cache = self.download_cache
+        if cache.is_url_format(path_or_url) or cache.copy_local_files_to_cache:
+            return cache.cached_path(path_or_url)
+        return abspath(path_or_url)
+
+    def _annotation_source_paths(self):
+        sources = [self._gtf_path_or_url] if self._gtf_path_or_url else []
+        sources += self._transcript_fasta_paths_or_urls or []
+        sources += self._protein_fasta_paths_or_urls or []
+        return [self._local_source_path(source) for source in sources]
+
     def required_local_files(self):
         paths = []
         if self.requires_genome_fasta:
             paths.append(self._genome_fasta.expected_path)
-        if self._gtf_path_or_url:
-            paths.append(self.download_cache.cached_path(self._gtf_path_or_url))
-        if self._transcript_fasta_paths_or_urls:
-            paths.extend(
-                [
-                    self.download_cache.cached_path(path_or_url)
-                    for path_or_url in self._transcript_fasta_paths_or_urls
-                ]
-            )
-        if self._protein_fasta_paths_or_urls:
-            paths.extend(
-                [
-                    self.download_cache.cached_path(path_or_url)
-                    for path_or_url in self._protein_fasta_paths_or_urls
-                ]
-            )
-        return paths
+        return paths + self._annotation_source_paths()
 
     def required_local_files_exist(self, empty_files_ok=False):
         if self.requires_genome_fasta and self.genome_fasta_path is None:
@@ -663,11 +664,9 @@ class Genome(Serializable):
         cache = self.download_cache
 
         def source_filename(path_or_url):
-            if cache.is_url_format(path_or_url) or cache.copy_local_files_to_cache:
-                return basename(cache.cached_path(path_or_url))
             # Uncopied local sources retain their compression suffix even when
             # downloaded files would be decompressed.
-            return basename(path_or_url)
+            return basename(self._local_source_path(path_or_url))
 
         paths = []
         if self.requires_gtf:

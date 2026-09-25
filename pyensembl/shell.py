@@ -15,8 +15,12 @@
 import argparse
 import logging
 import os
+from pathlib import Path
+import re
 import sys
 
+from .database import is_complete_database
+from .download_cache import DownloadCache
 from .ensembl_release import EnsemblRelease
 from .ensembl_versions import MAX_ENSEMBL_RELEASE
 from .genome import Genome
@@ -26,6 +30,7 @@ from .genome_fasta_cache import (
     dna_cache_lock,
     dna_cache_root,
     prune_genome_fastas,
+    shared_dna_root,
 )
 from .reference_name import find_species_by_reference, normalize_reference_name
 from .species import Species, find_species_by_name
@@ -70,6 +75,8 @@ def configure_logging(verbose=False):
             package_logger.removeHandler(_cli_handler)
         package_logger.setLevel(level)
         package_logger.addHandler(handler)
+        # Our handler prints; a host application's root handler must not too.
+        package_logger.propagate = False
     _cli_handler = handler
 
 
@@ -238,7 +245,7 @@ parser.add_argument(
 )
 
 
-def genome_fasta_status(cache_directory, check=False):
+def _dna_status(cache_directory, check=False):
     """Describe DNA recorded in a genome cache directory, or None if none.
 
     A broken reference is reported rather than raised, so one bad release
@@ -246,7 +253,7 @@ def genome_fasta_status(cache_directory, check=False):
     """
     try:
         dna = GenomeFasta.installed_source(cache_directory)
-    except ValueError as error:
+    except (OSError, ValueError) as error:
         logger.warning("Invalid reference DNA record in %s: %s", cache_directory, error)
         return "invalid reference"
     if dna is None:
@@ -262,26 +269,86 @@ def genome_fasta_status(cache_directory, check=False):
     return "%s, %s" % (kind, dna.status(check=check))
 
 
-def _has_files(directory):
+def genome_fasta_status(genome, check=False):
+    """Describe the reference DNA recorded for a genome's cache, or None."""
+    return _dna_status(genome.download_cache.cache_directory_path, check=check)
+
+
+def _index_is_complete(path):
+    if path.endswith(".db"):
+        return is_complete_database(path)
     try:
-        return any(os.scandir(directory))
+        return os.path.getsize(path) > 0
     except OSError:
         return False
 
 
-def _annotation_is_indexed(genome):
-    return all(os.path.exists(path) for path in genome._annotation_index_paths())
-
-
 def _annotation_status(genome):
-    """'indexed', 'not indexed' (downloads or partial indexes), or None."""
-    if _annotation_is_indexed(genome):
-        return "indexed"
-    dna = genome._genome_fasta.expected_path if genome.requires_genome_fasta else None
-    paths = genome._annotation_index_paths() + [
-        path for path in genome.required_local_files() if path != dna
-    ]
-    return "not indexed" if any(os.path.exists(path) for path in paths) else None
+    """How far a genome's annotation data is installed.
+
+    None if it has none configured, else 'missing', 'incomplete' (some files
+    but not every download), 'not indexed', or 'indexed': every source is
+    downloaded and every index complete, so queries need no network or setup.
+    """
+    sources = genome._annotation_source_paths()
+    indexes = genome._annotation_index_paths()
+    if not sources and not indexes:
+        return None
+    if not all(os.path.exists(path) for path in sources):
+        present = any(os.path.exists(path) for path in sources + indexes)
+        return "incomplete" if present else "missing"
+    return "indexed" if all(map(_index_is_complete, indexes)) else "not indexed"
+
+
+# Reference DNA bookkeeping in a genome's cache directory.
+_DNA_ENTRIES = {"genome_fasta", "genome_fasta.json", "genome_fasta_refs"}
+
+
+def _directory_annotation_status(directory):
+    """Best-effort status for a cache directory whose genome is unknown."""
+    try:
+        names = [
+            name for name in os.listdir(directory)
+            if not name.startswith(".") and name not in _DNA_ENTRIES
+        ]
+    except OSError:
+        return None
+    if not names:
+        return None
+    databases = [name for name in names if name.endswith(".db")]
+    if databases:
+        complete = all(
+            is_complete_database(os.path.join(directory, name)) for name in databases
+        )
+        return "indexed" if complete else "not indexed"
+    if any(name.endswith((".gtf", ".gtf.gz")) for name in names):
+        return "not indexed"
+    return "indexed" if any(name.endswith(".pickle") for name in names) else "not indexed"
+
+
+def _subdirectories(path):
+    try:
+        return sorted(
+            entry for entry in Path(path).iterdir()
+            if not entry.name.startswith(".") and entry.is_dir()
+        )
+    except FileNotFoundError:
+        return []
+    except OSError as error:
+        logger.warning("Cannot read %s: %s", path, error)
+        return []
+
+
+def _other_genome_labels(reference, annotation):
+    """(species, release) cells for a cache directory pyensembl did not match."""
+    match = re.fullmatch(r"ensembl(\d+)", annotation)
+    if match is None:
+        return "custom", annotation
+    try:
+        species = _species_display_name(find_species_by_reference(reference))
+    except (KeyError, ValueError):
+        species = "unknown"
+    return species, match.group(1)  # e.g. installed by a newer pyensembl
 
 
 def _display_path(path):
@@ -302,15 +369,25 @@ def _format_table(header, rows, use_color=None):
     return "\n".join([bold + line(header) + reset] + [line(row) for row in rows])
 
 
-def collect_all_installed_ensembl_releases():
-    """Ensembl releases with files in the local cache, indexed or not."""
-    genomes = [
+def _ensembl_releases():
+    return [
         EnsemblRelease(release, species=species)
         for species, release in Species.all_species_release_pairs()
     ]
+
+
+def _has_data(annotation, dna):
+    return annotation not in (None, "missing") or dna is not None
+
+
+def collect_all_installed_ensembl_releases():
+    """Ensembl releases with annotation data or reference DNA in the cache."""
     return sorted(
-        (g for g in genomes if _has_files(g.download_cache.cache_directory_path)),
-        key=lambda g: (g.species.latin_name, g.release),
+        (
+            genome for genome in _ensembl_releases()
+            if _has_data(_annotation_status(genome), genome_fasta_status(genome))
+        ),
+        key=lambda genome: (genome.species.latin_name, genome.release),
     )
 
 
@@ -318,42 +395,47 @@ def format_installed_genomes(check_genome_fasta=False, use_color=None):
     """A table of genomes in the local cache, or a note that there are none."""
     rows = []
     ensembl_directories = set()
-    for genome in collect_all_installed_ensembl_releases():
+    for genome in _ensembl_releases():
         directory = genome.download_cache.cache_directory_path
         ensembl_directories.add(os.path.normpath(directory))
+        annotation = _annotation_status(genome)
+        dna = _dna_status(directory, check=check_genome_fasta)
+        if not _has_data(annotation, dna):
+            continue
         rows.append((
             _species_display_name(genome.species),
             genome.reference_name,
             str(genome.release),
-            _annotation_status(genome) or "-",
-            genome_fasta_status(directory, check=check_genome_fasta) or "-",
+            annotation if annotation not in (None, "missing") else "-",
+            dna or "-",
             _display_path(directory),
         ))
     rows.sort(key=lambda row: (row[0], row[1], int(row[2])))
-    # Custom genomes (e.g. install --gtf ...) live beside Ensembl releases.
+    # Custom genomes (e.g. install --gtf ...) live beside Ensembl releases,
+    # except in Windows' default layout, where each cache has its own root.
     root = dna_cache_root().parent
-    references = sorted(root.iterdir()) if root.is_dir() else []
-    for reference in references:
-        if reference.name == "dna_cache" or not reference.is_dir():
+    nested = shared_dna_root(DownloadCache("r", "a").cache_directory_path) is not None
+    for reference in _subdirectories(root) if nested else []:
+        if reference.name == "dna_cache":
             continue
-        for directory in sorted(reference.iterdir()):
-            if (
-                os.path.normpath(directory) in ensembl_directories
-                or not directory.is_dir()
-                or not _has_files(directory)
-            ):
+        for directory in _subdirectories(reference):
+            if os.path.normpath(directory) in ensembl_directories:
                 continue
-            indexed = any(directory.glob("*.db")) or any(directory.glob("*.pickle"))
+            annotation = _directory_annotation_status(directory)
+            dna = _dna_status(directory, check=check_genome_fasta)
+            if not _has_data(annotation, dna):
+                continue
+            species, release = _other_genome_labels(reference.name, directory.name)
             rows.append((
-                "custom",
+                species,
                 reference.name,
-                directory.name,
-                "indexed" if indexed else "not indexed",
-                genome_fasta_status(directory, check=check_genome_fasta) or "-",
+                release,
+                annotation or "-",
+                dna or "-",
                 _display_path(directory),
             ))
     if not rows:
-        return "No genomes installed in %s" % _display_path(root)
+        return "No genomes installed" + (" in %s" % _display_path(root) if nested else "")
     header = ("Species", "Assembly", "Release", "Annotation", "Reference DNA", "Location")
     return _format_table(header, rows, use_color)
 
@@ -627,7 +709,7 @@ def _install(genome, only_genome_fasta=False, overwrite=False):
     description = _genome_description(genome)
     installed = (
         not genome.requires_genome_fasta or genome._genome_fasta.status() == "indexed"
-    ) and (only_genome_fasta or _annotation_is_indexed(genome))
+    ) and (only_genome_fasta or _annotation_status(genome) in (None, "indexed"))
     if installed and not overwrite:
         # Still run the idempotent steps below: they finish partial work.
         logger.info("%s is already installed", description)
