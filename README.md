@@ -300,10 +300,10 @@ but matching contig names don't prove that the assembly matches.
 ## Managing disk space
 
 ```sh
-pyensembl list --check-genome-fasta      # DNA for each release, verifying indexes
-pyensembl delete-all-files --release 81  # release 81's files and DNA references
-pyensembl prune --dry-run                # shared DNA that no installed release uses
-pyensembl prune
+pyensembl list --check-genome-fasta               # DNA for each release, verifying indexes
+pyensembl delete-all-files --release 81           # release 81's files and DNA references
+pyensembl prune --orphan-genome-fastas --dry-run  # shared DNA no release uses
+pyensembl prune --orphan-genome-fastas
 ```
 
 Compatible releases share one copy of Ensembl DNA, so deleting a release keeps
