@@ -711,7 +711,7 @@ def _install(genome, only_genome_fasta=False, overwrite=False):
         not genome.requires_genome_fasta or genome._genome_fasta.status() == "indexed"
     ) and (only_genome_fasta or _annotation_status(genome) in (None, "indexed"))
     if installed and not overwrite:
-        # Still run the idempotent steps below: they finish partial work.
+        # The steps below then only confirm that everything is in place.
         logger.info("%s is already installed", description)
     else:
         logger.info("Installing %s", description)
