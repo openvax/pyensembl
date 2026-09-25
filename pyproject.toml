@@ -55,9 +55,6 @@ dev = [
 [tool.setuptools]
 packages = ["pyensembl"]
 
-[tool.setuptools.package-data]
-pyensembl = ["logging.conf"]
-
 [tool.setuptools.dynamic]
 version = {attr = "pyensembl.version.__version__"}
 

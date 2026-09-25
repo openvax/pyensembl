@@ -128,13 +128,25 @@ os.environ['PYENSEMBL_CACHE_DIR'] = '/custom/cache/dir'
 
 ## List installed genomes
 
-To see the genomes for which PyEnsembl has already downloaded and indexed metadata you can run:
+To see which genomes are in the local cache, whether each is indexed (ready to
+use without a long first query), and any reference DNA:
 
 ```sh
 pyensembl list
 ```
 
-Or equivalently do this in Python:
+```text
+Species  Assembly  Release  Annotation   Reference DNA      Location
+human    GRCh38    81       indexed      toplevel, indexed  ~/Library/Caches/pyensembl/GRCh38/ensembl81
+human    GRCh38    82       not indexed  -                  ~/Library/Caches/pyensembl/GRCh38/ensembl82
+custom   GRCm38    mine1    indexed      -                  ~/Library/Caches/pyensembl/GRCm38/mine1
+```
+
+`pyensembl install` finishes indexing a release shown as `not indexed`.
+Progress messages go to stderr; add `--verbose` (`-v`) to see every download
+and database step.
+
+To get the installed Ensembl releases in Python:
 
 ```python
 from pyensembl.shell import collect_all_installed_ensembl_releases
@@ -301,10 +313,10 @@ but matching contig names don't prove that the assembly matches.
 ## Managing disk space
 
 ```sh
-pyensembl list --check-genome-fasta               # DNA for each release, verifying indexes
-pyensembl delete-all-files --release 81           # release 81's files and DNA references
-pyensembl prune --orphan-genome-fastas --dry-run  # shared DNA no release uses
-pyensembl prune --orphan-genome-fastas
+pyensembl list --check-genome-fasta      # DNA for each release, verifying indexes
+pyensembl delete-all-files --release 81  # release 81's files and DNA references
+pyensembl prune --dry-run                # shared DNA that no installed release uses
+pyensembl prune
 ```
 
 Compatible releases share one copy of Ensembl DNA, so deleting a release keeps

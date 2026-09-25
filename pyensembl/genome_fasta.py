@@ -363,10 +363,10 @@ class GenomeFasta:
         return None
 
     def status(self, check=False):
+        """'indexed', 'needs index', 'invalid index' (check=True), or 'missing'."""
         path = self.installed_path
-        origin = "downloaded" if self.remote else "local"
         if path is None:
-            return "%s, missing" % origin
+            return "missing"
         indexed = self._index_is_current(self._file_fingerprint(path))
         if check and indexed:
             from pyfaidx import Fasta
@@ -385,5 +385,5 @@ class GenomeFasta:
                         if len(record) and len(record[-1:].seq) != 1:
                             raise ValueError("truncated FASTA")
             except (OSError, ValueError, IndexError, KeyError):
-                return "%s, invalid index: %s" % (origin, path)
-        return "%s, %s: %s" % (origin, "indexed" if indexed else "needs index", path)
+                return "invalid index"
+        return "indexed" if indexed else "needs index"

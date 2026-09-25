@@ -651,6 +651,15 @@ class Genome(Serializable):
 
     def _index_file_paths(self):
         """Locate indexes without resolving or loading their source files."""
+        # Include persisted DNA indexes even when this instance did not opt in.
+        # Only our cache is searched; attached user files are never removed.
+        genome_fasta_indexes = (
+            Path(self.download_cache.cache_directory_path) / "genome_fasta"
+        ).glob("*/sequence.fa.fai")
+        return [str(path) for path in genome_fasta_indexes] + self._annotation_index_paths()
+
+    def _annotation_index_paths(self):
+        """The SQLite and FASTA indexes this genome's annotation data needs."""
         cache = self.download_cache
 
         def source_filename(path_or_url):
@@ -661,10 +670,6 @@ class Genome(Serializable):
             return basename(path_or_url)
 
         paths = []
-        # Include persisted DNA indexes even when this instance did not opt in.
-        # Only our cache is searched; attached user files are never removed.
-        paths.extend(str(path) for path in
-                     (Path(cache.cache_directory_path) / "genome_fasta").glob("*/sequence.fa.fai"))
         if self.requires_gtf:
             if self._db is not None:
                 paths.append(self._db.local_db_path)

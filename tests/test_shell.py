@@ -2,6 +2,7 @@ import logging
 import subprocess
 import sys
 
+from pyensembl import shell
 from pyensembl.shell import (
     all_combinations_of_ensembl_genomes,
     configure_logging,
@@ -86,8 +87,8 @@ created_before = logging.getLogger("created_before")
 import pyensembl
 import pyensembl.shell
 
-# pyensembl's logging.conf attaches a CRITICAL-level StreamHandler to the root
-# logger; it must not be applied merely by importing the package.
+# CLI logging setup must not be applied merely by importing the package
+# (older versions attached a CRITICAL-level handler to the root logger).
 root = logging.getLogger()
 pyensembl_root_handlers = [
     h for h in root.handlers if getattr(h, "level", None) == logging.CRITICAL
@@ -123,24 +124,24 @@ def test_import_does_not_reconfigure_root_logger():
 
 
 def test_configure_logging_preserves_existing_loggers():
-    # configure_logging() applies logging.conf, which mutates process-global
-    # logging state (root + pyensembl loggers). Snapshot and restore it so this
-    # test doesn't leak a live console handler into sibling tests.
+    # configure_logging() mutates process-global logging state. Snapshot and
+    # restore it so this test doesn't leak a live console handler into
+    # sibling tests.
     root = logging.getLogger()
     pyensembl_logger = logging.getLogger("pyensembl")
-    saved_root_handlers = root.handlers[:]
-    saved_root_level = root.level
-    saved_pyensembl_handlers = pyensembl_logger.handlers[:]
+    configured = [root, pyensembl_logger, logging.getLogger("datacache")]
+    saved = [(each, each.level, each.handlers[:]) for each in configured]
     try:
         created_before = logging.getLogger("test_configure_logging_preexisting")
         created_before.disabled = False
         configure_logging()
-        # The CLI entrypoint applies logging.conf, but with
-        # disable_existing_loggers=False so it leaves other loggers alone.
+        # The CLI entrypoint configures only pyensembl's and datacache's
+        # loggers, leaving other loggers alone.
         assert created_before.disabled is False
         # pyensembl's own logger should be wired up to a handler for CLI output.
         assert pyensembl_logger.handlers
     finally:
-        root.handlers[:] = saved_root_handlers
-        root.level = saved_root_level
-        pyensembl_logger.handlers[:] = saved_pyensembl_handlers
+        for each, level, handlers in saved:
+            each.setLevel(level)
+            each.handlers[:] = handlers
+        shell._cli_handler = None

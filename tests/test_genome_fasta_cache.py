@@ -15,7 +15,7 @@ import pytest
 from pyensembl import EnsemblRelease, Genome, MissingGenomeFastaError, prune_genome_fastas
 from pyensembl import genome_fasta_cache as cache
 from pyensembl.genome_fasta import GenomeFasta
-from .test_genome_fasta import DNA, forbid_downloads, run_cli, serve_downloads
+from .test_genome_fasta import DNA, forbid_downloads, list_rows, run_cli, serve_downloads
 
 # README preambles as published: Ensembl labels the accession, while Ensembl
 # Genomes puts it alone on the next line.
@@ -191,10 +191,10 @@ def test_prune_preserves_live_references_and_supports_preview(
     preview = prune_genome_fastas(dry_run=True)
     assert len(preview) == 1 and preview[0][0] == str(object_path) and preview[0][1] > 0
     assert object_path.exists()
-    run_cli(monkeypatch, "prune", "--orphan-genome-fastas", "--dry-run")
+    run_cli(monkeypatch, "prune", "--dry-run")
     assert "Would delete" in capsys.readouterr().out
     assert object_path.exists()
-    run_cli(monkeypatch, "prune", "--orphan-genome-fastas")
+    run_cli(monkeypatch, "prune", "--orphan-genome-fastas")  # 2.11.0 spelling
     assert "Deleted" in capsys.readouterr().out
     assert not object_path.exists()
     assert prune_genome_fastas() == []
@@ -559,8 +559,7 @@ def test_symlinked_dna_cache_root_is_supported(
     genome = installed()
     assert Path(genome.genome_fasta_path).resolve().is_relative_to(moved.resolve())
     assert release(81).sequence("MT", 1, 4) == "GCTA"
-    run_cli(monkeypatch, "list")
-    assert "Genome FASTA: downloaded, indexed" in capsys.readouterr().out
+    assert list_rows(monkeypatch, capsys)["81"]["Reference DNA"] == "toplevel, indexed"
     assert prune_genome_fastas() == []
     run_cli(monkeypatch, "delete-all-files", "--release", "81")
     assert len(prune_genome_fastas()) == 1
@@ -575,15 +574,9 @@ def test_list_reports_bad_reference_without_hiding_other_releases(
     state = json.loads(reference.read_text())
     state["shared_key"] = "a" * 64
     reference.write_text(json.dumps(state))
-    run_cli(monkeypatch, "list")
-    lines = capsys.readouterr().out.splitlines()
-    statuses = {
-        line.split("release=")[1].split(",")[0]: lines[number + 1]
-        for number, line in enumerate(lines)
-        if "EnsemblRelease(release=" in line
-    }
-    assert "invalid reference" in statuses["81"]
-    assert "downloaded, indexed" in statuses["82"]
+    rows = list_rows(monkeypatch, capsys)
+    assert rows["81"]["Reference DNA"] == "invalid reference"
+    assert rows["82"]["Reference DNA"] == "toplevel, indexed"
 
 
 def test_unnested_cache_layout_keeps_dna_release_private(

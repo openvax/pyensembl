@@ -161,7 +161,7 @@ class Database(object):
                 # are not available in all releases of Ensembl (or
                 # other GTFs)
                 if column_name not in column_set:
-                    logger.info(
+                    logger.debug(
                         "Skipping database index for {%s}", ", ".join(column_group)
                     )
                     skip = True
@@ -675,7 +675,7 @@ class Database(object):
             # if we have to reconstruct gene feature rows then
             # fill in values for 'gene_name' and 'gene_biotype'
             # but only if they're actually present in the GTF
-            logger.info("Creating missing gene features...")
+            logger.debug("Creating missing gene features...")
 
             df = create_missing_features(
                 dataframe=df,
@@ -685,10 +685,10 @@ class Database(object):
                 },
                 missing_value="",
             )
-            logger.info("Done.")
+            logger.debug("Done.")
 
         if expect_transcript_feature and "transcript" not in observed_features:
-            logger.info("Creating missing transcript features...")
+            logger.debug("Creating missing transcript features...")
             df = create_missing_features(
                 dataframe=df,
                 unique_keys={"transcript": "transcript_id"},
@@ -704,6 +704,6 @@ class Database(object):
                 },
                 missing_value="",
             )
-            logger.info("Done.")
+            logger.debug("Done.")
 
         return df

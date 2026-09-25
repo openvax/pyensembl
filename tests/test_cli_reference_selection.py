@@ -93,7 +93,7 @@ def test_no_reference_preserves_species_release_combinations():
 @pytest.fixture
 def cli_calls(monkeypatch, tmp_path):
     monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
-    monkeypatch.setattr(shell, "configure_logging", lambda: None)
+    monkeypatch.setattr(shell, "configure_logging", lambda **kwargs: None)
     calls = []
     monkeypatch.setattr(Genome, "download", lambda self, **kw: calls.append(("download", self)))
     monkeypatch.setattr(Genome, "index", lambda self, **kw: calls.append(("index", self)))

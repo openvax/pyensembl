@@ -182,7 +182,7 @@ class SequenceData(object):
                 try:
                     fasta_dictionary_tmp = load_pickle(pickle_path)
                     self._add_to_fasta_dictionary(fasta_dictionary_tmp)
-                    logger.info("Loaded sequence dictionary from %s", pickle_path)
+                    logger.debug("Loaded sequence dictionary from %s", pickle_path)
                     continue
                 except (pickle.UnpicklingError, AttributeError):
                     # catch either an UnpicklingError or an AttributeError
@@ -196,7 +196,7 @@ class SequenceData(object):
 
             fasta_dictionary_tmp = parse_fasta_dictionary(fasta_path)
             self._add_to_fasta_dictionary(fasta_dictionary_tmp)
-            logger.info("Saving sequence dictionary to %s", pickle_path)
+            logger.debug("Saving sequence dictionary to %s", pickle_path)
             datacache.ensure_dir(dirname(pickle_path))
             dump_pickle(fasta_dictionary_tmp, pickle_path)
 

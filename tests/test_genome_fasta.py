@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import pickle
+import re
 import shlex
 import sys
 from urllib.parse import urlsplit
@@ -520,8 +521,18 @@ def test_cli_dna_paths_for_releases_and_mirrors(dna_path):
 
 def run_cli(monkeypatch, *args):
     monkeypatch.setattr(sys, "argv", ["pyensembl", *args])
-    monkeypatch.setattr(shell, "configure_logging", lambda: None)
+    monkeypatch.setattr(shell, "configure_logging", lambda **kwargs: None)
     shell.run()
+
+
+def list_rows(monkeypatch, capsys, *args):
+    """Rows of `pyensembl list` as {column: cell} dicts, keyed by release."""
+    capsys.readouterr()  # Drop earlier commands' output.
+    run_cli(monkeypatch, "list", *args)
+    lines = capsys.readouterr().out.splitlines()
+    header = re.split(r"\s{2,}", lines[0])
+    rows = [dict(zip(header, re.split(r"\s{2,}", line))) for line in lines[1:]]
+    return {row["Release"]: row for row in rows}
 
 
 def test_cli_only_local_dna_and_inspection_are_offline(
@@ -545,18 +556,16 @@ def test_cli_only_local_dna_and_inspection_are_offline(
     )
     # Listing must discover DNA-only installations and not index/download.
     monkeypatch.setattr(GenomeFasta, "open", unexpected)
-    run_cli(monkeypatch, "list", "--check-genome-fasta")
-    output = capsys.readouterr().out
-    assert "release=81" in output
-    assert "Genome FASTA: local, indexed" in output
-    assert str(dna_path) in output
+    row = list_rows(monkeypatch, capsys, "--check-genome-fasta")["81"]
+    assert row["Annotation"] == "-"
+    assert row["Reference DNA"] == "local dna.fa, indexed"
     genome = EnsemblRelease(81)  # No DNA constructor flag needed for deletion.
     installed = GenomeFasta.installed_source(genome.download_cache.cache_directory_path)
     assert installed.index_path.exists()
     run_cli(monkeypatch, "delete-index-files", "--release", "81")
     assert not installed.index_path.exists()
-    run_cli(monkeypatch, "list", "--check-genome-fasta")
-    assert "needs index" in capsys.readouterr().out
+    rows = list_rows(monkeypatch, capsys, "--check-genome-fasta")
+    assert rows["81"]["Reference DNA"] == "local dna.fa, needs index"
     assert not installed.index_path.exists()
     run_cli(monkeypatch, "delete-all-files", "--release", "81")
     assert dna_path.read_bytes() == DNA
