@@ -40,19 +40,11 @@ class Species(Serializable):
         reference_assemblies,
         division="vertebrates",
         ensembl_genomes=False,
-        is_plant=False,
     ):
         """
         Create a Species object from the given arguments and enter into
         all the dicts used to look the species up by its fields.
-
-        ``is_plant`` is retained for backward compatibility and implies
-        ``division="plants"`` and ``ensembl_genomes=True``. New callers
-        should pass ``division`` and ``ensembl_genomes`` directly.
         """
-        if is_plant:
-            division = "plants"
-            ensembl_genomes = True
         species = Species(
             latin_name=latin_name,
             synonyms=synonyms,

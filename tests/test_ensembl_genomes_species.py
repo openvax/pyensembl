@@ -160,21 +160,7 @@ def test_xenopus_picks_assembly_by_release():
     assert "UCB_Xtro_10.0" in r107.gtf_url
 
 
-def test_is_plant_kwarg_back_compat_implies_ensembl_genomes():
-    species = Species.register(
-        latin_name="_test_legacy_is_plant_species",
-        synonyms=["_test_legacy"],
-        reference_assemblies={"FakeAsm": (40, MAX_ENSEMBL_GENOMES_RELEASE)},
-        is_plant=True,
-    )
-    try:
-        assert species.is_plant is True
-        assert species.division == "plants"
-        assert species.ensembl_genomes is True
-    finally:
-        # Remove the test fixture so it doesn't leak into other tests.
-        Species._latin_names_to_species.pop(species.latin_name, None)
-        for synonym in species.synonyms:
-            Species._common_names_to_species.pop(synonym, None)
-        for ref in species.reference_assemblies:
-            Species._reference_names_to_species.pop(ref, None)
+
+def test_is_plant_follows_the_division():
+    assert arabidopsis_thaliana.is_plant
+    assert not fission_yeast.is_plant

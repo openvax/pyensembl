@@ -24,8 +24,6 @@ from .ensembl_versions import check_release_number
 
 ENSEMBL_FTP_SERVER = "https://ftp.ensembl.org"
 ENSEMBL_GENOMES_FTP_SERVER = "https://ftp.ensemblgenomes.ebi.ac.uk"
-# Back-compat alias; new code should use ENSEMBL_GENOMES_FTP_SERVER.
-ENSEMBL_PLANTS_FTP_SERVER = ENSEMBL_GENOMES_FTP_SERVER
 
 # Path layouts:
 #   main Ensembl:    /pub/release-N/{gtf,fasta}/{species}/...
@@ -130,10 +128,9 @@ NEW_FASTA_FILENAME_TEMPLATE = (
 NEW_FASTA_FILENAME_TEMPLATE_NCRNA = "%(Species)s.%(reference)s.ncrna.fa.gz"
 
 
-def make_fasta_filename(ensembl_release, species, sequence_type, is_plant=None):
-    """
-    ``is_plant`` is accepted for backward compatibility but ignored; the
-    layout is now derived from ``species.ensembl_genomes``.
+def make_fasta_filename(ensembl_release, species, sequence_type):
+    """Filename of a cDNA, ncRNA, or protein FASTA; the layout depends on
+    the release and whether the species is on Ensembl Genomes.
     """
     species = _resolve_species(species)
     ensembl_release, species_name, reference_name = normalize_release_properties(
@@ -169,13 +166,11 @@ def make_fasta_url(
     ensembl_release,
     species,
     sequence_type,
-    is_plant=None,
     server=None,
 ):
     """Construct URL to FASTA file with cDNA transcript or protein sequences.
 
-    ``is_plant`` is accepted for backward compatibility but ignored; routing
-    is derived from ``species.ensembl_genomes`` and ``species.division``.
+    Routing is derived from ``species.ensembl_genomes`` and ``species.division``.
     """
     species = _resolve_species(species)
     ensembl_release, species_name, _ = normalize_release_properties(
