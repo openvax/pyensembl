@@ -35,6 +35,11 @@ from .search import find_nearest_locus
 from .sequence_data import SequenceData, lookup_sequence_with_version_fallback
 from .transcript import Transcript
 
+# IUPAC complements, preserving case so soft masking survives.
+_COMPLEMENT = str.maketrans(
+    "ACGTRYKMBVDHNSWacgtrykmbvdhnsw", "TGCAYRMKVBHDNSWtgcayrmkvbhdnsw"
+)
+
 
 def _parse_transcript_support_level(value):
     """
@@ -188,11 +193,14 @@ class Genome(Serializable):
         except MissingGenomeFastaError:
             return None
 
+    def _genome_fasta_setup_hint(self):
+        return "Pass genome_fasta_path_or_url to Genome."
+
     def _require_genome_fasta(self):
         if not self.requires_genome_fasta:
             raise MissingGenomeFastaError(
-                "No genome FASTA configured. Supply genome_fasta_path_or_url to Genome, "
-                "or genome_fasta_path / download_genome_fasta=True to EnsemblRelease."
+                "No reference DNA configured for %s. %s"
+                % (self, self._genome_fasta_setup_hint())
             )
         return self._genome_fasta
 
@@ -208,30 +216,42 @@ class Genome(Serializable):
         genome_fasta.open(overwrite=overwrite)
         genome_fasta.remember()
 
-    def sequence(self, contig, start, end, mask="upper"):
-        """Return plus-strand DNA using one-based, inclusive coordinates.
+    def sequence(self, contig, start, end, mask="upper", *, strand="+"):
+        """Return DNA using one-based, inclusive coordinates.
 
-        Contig names must match the FASTA (integer chromosome names are
-        converted to strings). Invalid intervals and absent contigs raise
+        Contigs may be named as in the FASTA or as pyensembl reports them
+        (e.g. ``gene.contig``). ``strand="-"`` returns the reverse complement,
+        so ``sequence(t.contig, t.start, t.end, strand=t.strand)`` reads a
+        transcript's locus 5' to 3'. Invalid intervals and absent contigs raise
         ValueError; unconfigured or uninstalled DNA raises
         MissingGenomeFastaError. Use mask='raw' to preserve soft masking.
         """
         if mask not in ("upper", "raw"):
             raise ValueError("mask must be 'upper' or 'raw'")
+        if isinstance(strand, bool):
+            raise ValueError("Invalid strand: %s" % (strand,))
+        strand = normalize_strand(strand)
         if any(isinstance(x, bool) or not isinstance(x, Integral) for x in (start, end)):
             raise ValueError("Genome sequence coordinates must be integers")
         if start < 1 or end < start:
             raise ValueError("Genome sequence requires 1 <= start <= end")
-        fasta = self._require_genome_fasta().open()
-        try:
-            record = fasta[str(contig)]
-        except KeyError:
-            raise ValueError("Contig %r is absent from genome FASTA %s" % (
-                contig, self._genome_fasta_path_or_url
-            )) from None
+        genome_fasta = self._require_genome_fasta()
+        record = genome_fasta.record(contig)
+        if record is None:
+            similar = genome_fasta.similar_names(contig)[:3]
+            hint = (
+                " (did you mean %s?)" % " or ".join(repr(name) for name in similar)
+                if similar
+                else ""
+            )
+            raise ValueError("Contig %r is absent from genome FASTA %s%s" % (
+                contig, self._genome_fasta_path_or_url, hint
+            ))
         if end > len(record):
             raise ValueError("End %d exceeds contig %s length %d" % (end, contig, len(record)))
         bases = record[int(start) - 1:int(end)].seq
+        if strand == "-":
+            bases = bases.translate(_COMPLEMENT)[::-1]
         return bases.upper() if mask == "upper" else bases
 
     @property
@@ -410,7 +430,13 @@ class Genome(Serializable):
         if self.requires_genome_fasta:
             self.index_genome_fasta(overwrite=overwrite)
             if self.requires_gtf and not self._genome_fasta.remote:
-                missing = set(self.contigs()) - set(self._genome_fasta.open().keys())
+                missing = set()
+                for contig in self.contigs():
+                    try:
+                        if self._genome_fasta.record(contig) is None:
+                            missing.add(contig)
+                    except ValueError:
+                        pass  # Several FASTA records match; not missing.
                 if missing:
                     warnings.warn(
                         "Local genome FASTA lacks %d annotation contigs (e.g. %s). "

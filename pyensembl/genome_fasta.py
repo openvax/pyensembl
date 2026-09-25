@@ -13,6 +13,8 @@ from uuid import uuid4
 
 from datacache import fetch_file
 
+from .normalization import normalize_chromosome
+
 logger = logging.getLogger(__name__)
 _CHUNK_SIZE = 1024 * 1024
 
@@ -149,7 +151,7 @@ class GenomeFasta:
         return path
 
     def _not_installed(self):
-        message = "Genome FASTA is not installed: %s. Call download_genome_fasta()" % (
+        message = "Reference DNA is not installed: %s. Call download_genome_fasta()" % (
             self.source
         )
         if self.install_string_function is not None:
@@ -288,10 +290,53 @@ class GenomeFasta:
         self._reader_fingerprints = fingerprints
         return self._reader
 
+    def record(self, contig):
+        """The pyfaidx record for a contig, or None if absent.
+
+        Accepts the FASTA's own names and pyensembl's normalized contig names:
+        annotations store e.g. ``Pt`` as ``PT`` and ``Mito`` as ``MITO``.
+        Raises ValueError if a normalized name matches several records.
+        """
+        fasta = self.open()
+        name = str(contig)
+        if name in fasta:
+            return fasta[name]
+        names_by_normalized = self._names_by_normalized
+        if names_by_normalized is None:
+            # Build fully before publishing, for concurrent readers.
+            names_by_normalized = {}
+            for record in fasta.keys():
+                try:
+                    key = normalize_chromosome(record)
+                except (TypeError, ValueError):
+                    continue
+                names_by_normalized.setdefault(key, []).append(record)
+            self._names_by_normalized = names_by_normalized
+        try:
+            matches = names_by_normalized.get(normalize_chromosome(contig), [])
+        except (TypeError, ValueError):
+            return None
+        if len(matches) > 1:
+            raise ValueError(
+                "Contig %r matches several FASTA records: %s" % (contig, ", ".join(matches))
+            )
+        return fasta[matches[0]] if matches else None
+
+    def similar_names(self, contig):
+        """FASTA records matching a contig up to case and a ``chr`` prefix."""
+
+        def key(name):
+            name = name.lower()
+            return name[3:] if name.startswith("chr") else name
+
+        target = key(str(contig))
+        return [name for name in self.open().keys() if key(name) == target]
+
     def _forget_reader(self):
         self._reader = None
         self._reader_paths = ()
         self._reader_fingerprints = None
+        self._names_by_normalized = None
 
     def clear_cache(self):
         """Stop reusing the current reader without closing it for other holders."""

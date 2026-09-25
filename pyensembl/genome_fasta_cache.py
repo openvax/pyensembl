@@ -67,6 +67,19 @@ def is_canonical_source(source):
     )
 
 
+def canonical_source_options(source):
+    """(genome_fasta_type, genome_fasta_mask) of official Ensembl DNA, or None."""
+    if not is_canonical_source(source):
+        return None
+    _, species, filename = _SOURCE_PATH.fullmatch(urlsplit(source).path).groups()
+    prefix = species.capitalize() + "."
+    match = filename.startswith(prefix) and _DNA_FILENAME.fullmatch(filename[len(prefix):])
+    if not match:
+        return None
+    _, sequence_type, coverage = match.groups()
+    return coverage, {"dna": "none", "dna_sm": "soft", "dna_rm": "hard"}[sequence_type]
+
+
 def release_genome_fasta(source, cache_directory, install_string_function=None):
     """Shared storage for canonical Ensembl DNA, otherwise release-private."""
     if is_canonical_source(source) and shared_dna_root(cache_directory) is not None:

@@ -9,6 +9,7 @@ import shlex
 import sys
 from urllib.parse import urlsplit
 from uuid import uuid4
+import warnings
 
 import datacache
 import pytest
@@ -105,6 +106,40 @@ def test_invalid_intervals_fail_without_truncation(tmp_path, dna_path, start, en
             genome.sequence("1", start, end)
 
 
+def test_contigs_resolve_like_pyensembl_annotations(tmp_path, dna_path):
+    dna_path.write_bytes(
+        b">Pt chloroplast\nACGTAC\n>Mito\nGGCC\n>X\nTTTT\n>chr2\nAC\n"
+        b">Mt\nA\n>MT\nC\n>iupac\nRYKMBVDHSWN\n"
+    )
+    with custom_genome(tmp_path, dna_path) as genome:
+        # Annotations store GTF seqnames normalized: Pt -> PT, Mito -> MITO.
+        assert genome.sequence("PT", 1, 4) == "ACGT"
+        assert genome.sequence("Pt", 2, 3) == "CG"
+        assert genome.sequence("MITO", 1, 2) == "GG"
+        assert genome.sequence("x", 1, 1) == "T"
+        assert genome.sequence("MT", 1, 1) == "C"  # Exact names win.
+        with pytest.raises(ValueError, match="several FASTA records: Mt, MT"):
+            genome.sequence("mt", 1, 1)
+        with pytest.raises(ValueError, match=r"absent .*did you mean 'X'"):
+            genome.sequence("chrX", 1, 1)
+        with pytest.raises(ValueError, match=r"absent .*did you mean 'chr2'"):
+            genome.sequence(2, 1, 1)
+        with pytest.raises(ValueError, match=r"absent .*did you mean 'chr2'"):
+            genome.sequence("CHR2", 1, 1)
+        assert genome.sequence("IUPAC", 1, 11, strand="-") == "NWSDHBVKMRY"
+
+
+def test_minus_strand_is_the_reverse_complement(tmp_path, dna_path):
+    with custom_genome(tmp_path, dna_path) as genome:
+        assert genome.sequence("1", 3, 10) == "GTNNTTAA"
+        assert genome.sequence("1", 3, 10, strand="-") == "TTAANNAC"
+        assert genome.sequence("1", 3, 10, "raw", strand=-1) == "ttAANNac"
+        assert genome.sequence("1", 3, 10, strand="+") == genome.sequence("1", 3, 10)
+        for strand in ("reverse", True):
+            with pytest.raises(ValueError, match="strand"):
+                genome.sequence("1", 1, 2, strand=strand)
+
+
 def test_absent_contig_and_invalid_mask(tmp_path, dna_path):
     with custom_genome(tmp_path, dna_path) as genome:
         with pytest.raises(ValueError, match="Contig 'chr1' is absent"):
@@ -121,9 +156,9 @@ def test_missing_and_default_configuration_never_download(
         assert not genome.requires_genome_fasta
         assert genome.genome_fasta_path is None
         assert genome.fasta is None
-        with pytest.raises(MissingGenomeFastaError, match="No genome FASTA"):
+        with pytest.raises(MissingGenomeFastaError, match="No reference DNA configured"):
             genome.sequence("1", 1, 2)
-    remote = EnsemblRelease(81, download_genome_fasta=True)
+    remote = EnsemblRelease(81, genome_fasta=True)
     assert remote.requires_genome_fasta
     assert remote.genome_fasta_path is None
     with pytest.raises(MissingGenomeFastaError, match="download_genome_fasta"):
@@ -140,7 +175,7 @@ def test_missing_and_default_configuration_never_download(
 def test_missing_dna_error_gives_a_runnable_dna_only_command(dna_path):
     release = EnsemblRelease(
         81,
-        download_genome_fasta=True,
+        genome_fasta=True,
         genome_fasta_type="primary_assembly",
         genome_fasta_mask="soft",
     )
@@ -156,11 +191,15 @@ def test_missing_dna_error_gives_a_runnable_dna_only_command(dna_path):
     assert args.only_genome_fasta
     (selected,) = shell.collect_selected_genomes(args)
     assert selected.genome_fasta_urls == release.genome_fasta_urls
-    local = EnsemblRelease(81, genome_fasta_path=dna_path)
+    local = EnsemblRelease(81, genome_fasta=dna_path)
     assert local.genome_fasta_install_string().endswith(
         "--only-genome-fasta --genome-fasta-path %s" % shlex.quote(str(dna_path))
     )
     assert "--with-genome-fasta" in release.install_string()
+    # Defaults are left out of suggested commands.
+    assert EnsemblRelease(81, genome_fasta=True).genome_fasta_install_string() == (
+        "pyensembl install --release 81 --species homo_sapiens --only-genome-fasta"
+    )
 
 
 @pytest.mark.parametrize("compressed", [False, True])
@@ -248,7 +287,7 @@ def test_remote_gzip_download_is_explicit_reusable_and_independent(
     tmp_path, dna_path, monkeypatch
 ):
     calls = serve_downloads(monkeypatch, tmp_path, lambda url: gzip.compress(DNA))
-    genome = EnsemblRelease(81, download_genome_fasta=True)
+    genome = EnsemblRelease(81, genome_fasta=True)
     genome.download_genome_fasta()
     genome.index_genome_fasta()
     assert genome.sequence("1", 3, 10) == "GTNNTTAA"
@@ -256,12 +295,12 @@ def test_remote_gzip_download_is_explicit_reusable_and_independent(
     assert not Path(genome.download_cache.cached_path(genome.gtf_url)).exists()
     assert not genome.required_local_files_exist()
     genome.close()
-    reloaded = EnsemblRelease(81, download_genome_fasta=True)
+    reloaded = EnsemblRelease(81, genome_fasta=True)
     reloaded.download_genome_fasta()
     assert reloaded.sequence("MT", 1, 4) == "GCTA"
     assert len(calls) == 1
     reloaded.close()
-    different_release = EnsemblRelease(82, download_genome_fasta=True)
+    different_release = EnsemblRelease(82, genome_fasta=True)
     with pytest.raises(MissingGenomeFastaError):
         different_release.sequence("1", 1, 2)
 
@@ -336,10 +375,10 @@ def test_serialization_and_cached_releases_preserve_dna_configuration(
         restored.close()
     genome.close()
     plain = EnsemblRelease.cached(81)
-    local = EnsemblRelease.cached(81, genome_fasta_path=dna_path)
-    remote = EnsemblRelease.cached(81, download_genome_fasta=True)
+    local = EnsemblRelease.cached(81, genome_fasta=dna_path)
+    remote = EnsemblRelease.cached(81, genome_fasta=True)
     assert plain is not local and local is not remote
-    assert EnsemblRelease.cached(81, genome_fasta_path=str(dna_path)) is local
+    assert EnsemblRelease.cached(81, genome_fasta=str(dna_path)) is local
     assert local.sequence("MT", 1, 4) == "GCTA"
     for genome in (plain, local, remote):
         assert pickle.loads(pickle.dumps(genome)) is genome
@@ -347,9 +386,49 @@ def test_serialization_and_cached_releases_preserve_dna_configuration(
         genome.close()
 
 
+def test_genome_fasta_option_and_deprecated_211_keywords(dna_path, monkeypatch):
+    monkeypatch.chdir(dna_path.parent)
+    assert EnsemblRelease(81, genome_fasta="dna.fa").to_dict()["genome_fasta"] == str(dna_path)
+    assert EnsemblRelease(81, genome_fasta=False).to_dict()["genome_fasta"] is None
+    with pytest.raises(ValueError, match="use Genome for custom URLs"):
+        EnsemblRelease(81, genome_fasta="https://example.test/dna.fa.gz")
+    with pytest.raises(TypeError, match="genome_fasta must be"):
+        EnsemblRelease(81, genome_fasta=3)
+    with pytest.raises(ValueError, match="must not be empty"):
+        EnsemblRelease(81, genome_fasta="")
+    for old, new in (
+        (dict(download_genome_fasta=True), True),
+        # 2.11.0 accepted any truthy flag, e.g. a config string.
+        (dict(download_genome_fasta="yes"), True),
+        (dict(download_genome_fasta=1), True),
+        (dict(genome_fasta_path=dna_path), str(dna_path)),
+        # 2.11.0 let a local path win over the download flag.
+        (dict(download_genome_fasta=True, genome_fasta_path=dna_path), str(dna_path)),
+    ):
+        with pytest.warns(DeprecationWarning, match="genome_fasta="):
+            release = EnsemblRelease(81, **old)
+        assert release.to_dict()["genome_fasta"] == new
+        with pytest.warns(DeprecationWarning):
+            assert EnsemblRelease.cached(81, **old) is EnsemblRelease.cached(
+                81, genome_fasta=new
+            )
+    with pytest.raises(ValueError, match="only as genome_fasta"), pytest.warns(
+        DeprecationWarning
+    ):
+        EnsemblRelease(81, genome_fasta=True, download_genome_fasta=True)
+    # State saved by 2.11.0 (pickle or JSON) still loads, without warnings.
+    old_state = dict(release=81, species="human", server=None,
+                     download_genome_fasta=False, genome_fasta_path=str(dna_path),
+                     genome_fasta_type="toplevel", genome_fasta_mask="none")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        restored = EnsemblRelease.from_dict(old_state)
+    assert restored is EnsemblRelease.cached(81, genome_fasta=dna_path)
+
+
 def test_attached_dna_does_not_change_annotation_equality(tmp_path, dna_path):
     plain = EnsemblRelease(81)
-    with_dna = EnsemblRelease(81, download_genome_fasta=True)
+    with_dna = EnsemblRelease(81, genome_fasta=True)
     assert plain == with_dna and hash(plain) == hash(with_dna)
     assert plain.to_dict() != with_dna.to_dict()  # Serialization keeps DNA.
     # Gene and Transcript equality compare genomes.
@@ -400,8 +479,8 @@ def test_official_archive_layouts(release, species, flavor, mask, expected):
         assert url.startswith("https://ftp.ensembl.org/")
 
 
-def test_local_file_takes_precedence_and_mirrors_remain_flat(tmp_path, dna_path):
-    release = EnsemblRelease(81, download_genome_fasta=True, genome_fasta_path=dna_path)
+def test_local_file_and_custom_mirror_sources(tmp_path, dna_path):
+    release = EnsemblRelease(81, genome_fasta=dna_path)
     assert release.genome_fasta_urls == []
     assert release.sequence("MT", 1, 4) == "GCTA"
     release.close()
@@ -421,6 +500,22 @@ def test_local_file_takes_precedence_and_mirrors_remain_flat(tmp_path, dna_path)
     assert genome._genome_fasta_path_or_url == (
         "https://example.test/files/Homo_sapiens.GRCh38.dna_sm.toplevel.fa.gz"
     )
+
+
+def test_cli_dna_paths_for_releases_and_mirrors(dna_path):
+    for path in ("https://example.test/dna.fa.gz", ""):
+        args = shell.parser.parse_args(
+            ["install", "--release", "81", "--genome-fasta-path", path]
+        )
+        with pytest.raises(ValueError, match="--genome-fasta-path must be a local file"):
+            shell.collect_selected_genomes(args)
+    url = "https://example.test/dna.fa.gz"
+    args = shell.parser.parse_args([
+        "install", "--release", "81", "--custom-mirror", "https://example.test/mirror",
+        "--genome-fasta-path", url,
+    ])
+    (genome,) = shell.collect_selected_genomes(args)
+    assert genome._genome_fasta_path_or_url == url
 
 
 def run_cli(monkeypatch, *args):
@@ -506,11 +601,15 @@ def test_local_annotation_coverage_warning_and_intronic_sequence(tmp_path, dna_p
         '1\ttest\texon\t1\t2\t.\t-\t.\tgene_id "g"; transcript_id "t"; exon_id "e1";\n'
         '1\ttest\texon\t11\t12\t.\t-\t.\tgene_id "g"; transcript_id "t"; exon_id "e2";\n'
         'absent\ttest\tgene\t1\t2\t.\t+\t.\tgene_id "missing"; gene_name "missing";\n'
+        # Stored as PT; the FASTA's Pt record must count as present.
+        'Pt\ttest\tgene\t1\t2\t.\t+\t.\tgene_id "chloroplast"; gene_name "c";\n'
     )
+    dna_path.write_bytes(DNA + b">Pt\nACGT\n")
     with custom_genome(tmp_path, dna_path, gtf_path_or_url=str(gtf)) as genome:
-        with pytest.warns(UserWarning, match="lacks 1 annotation contigs"):
+        with pytest.warns(UserWarning, match=r"lacks 1 annotation contigs \(e.g. ABSENT\)"):
             genome.index()
         assert genome.transcript_by_id("t").strand == "-"
+        assert genome.sequence(genome.gene_by_id("chloroplast").contig, 1, 2) == "AC"
         assert genome.sequence("1", 3, 10) == "GTNNTTAA"  # Intron, always plus strand.
         assert genome.sequence("1", 13, 16) == "GGTA"  # Outside the annotated gene.
 
