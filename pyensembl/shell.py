@@ -10,43 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Manipulate pyensembl's local cache.
-
-    %(prog)s {install, delete-all-files, delete-index-files, list, available, prune} [--release XXX --species human...]
-
-To install particular Ensembl human release(s):
-    %(prog)s install --release 75 77
-
-To install particular Ensembl mouse release(s):
-    %(prog)s install --release 75 77 --species mouse
-
-To install the newest supported Ensembl release for a reference assembly:
-    %(prog)s install --reference-name GRCh37
-
-To delete all downloaded and cached data for a particular Ensembl release:
-    %(prog)s delete-all-files --release 75 --species human
-
-To delete everything except the original GTF and FASTA files:
-    %(prog)s delete-index-files --release 75
-
-To list installed genomes, whether they are indexed, and their reference DNA:
-    %(prog)s list
-
-To also install reference DNA, or to remove DNA no installed release uses:
-    %(prog)s install --release 75 --with-genome-fasta
-    %(prog)s prune --dry-run
-
-To list supported species and their Ensembl release ranges:
-    %(prog)s available
-
-To install a genome from source files:
-    %(prog)s install \
- --reference-name "GRCh38" \
- --gtf URL_OR_PATH \
- --transcript-fasta URL_OR_PATH \
- --protein-fasta URL_OR_PATH
-"""
+"""Command-line tool for installing and managing PyEnsembl data."""
 
 import argparse
 import logging
@@ -109,7 +73,34 @@ def configure_logging(verbose=False):
     _cli_handler = handler
 
 
-parser = argparse.ArgumentParser(usage=__doc__)
+_ACTIONS_AND_EXAMPLES = """\
+actions:
+  install             download and index genome data (skips what is already done)
+  list                show installed genomes, whether they are indexed, and their DNA
+  available           show supported species, assemblies, and Ensembl releases
+  delete-index-files  delete indexes, keeping downloaded files (needs --release)
+  delete-all-files    delete all of a genome's local data (needs --release)
+  prune               delete shared reference DNA that no installed release uses
+
+examples:
+  pyensembl install --release 75 77                     human releases 75 and 77
+  pyensembl install --release 110 --species mouse       a mouse release
+  pyensembl install --reference-name GRCh37             newest release for GRCh37
+  pyensembl install --release 110 --with-genome-fasta   also install reference DNA
+  pyensembl install --reference-name GRCh38 --annotation-name my_genes \\
+      --gtf URL_OR_PATH --transcript-fasta URL_OR_PATH  a custom genome
+  pyensembl list
+  pyensembl delete-all-files --release 75
+  pyensembl prune --dry-run
+"""
+
+parser = argparse.ArgumentParser(
+    prog="pyensembl",
+    usage="%(prog)s ACTION [options]",
+    description="Install and manage the genome data PyEnsembl uses.",
+    epilog=_ACTIONS_AND_EXAMPLES,
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+)
 
 parser.add_argument(
     "--version", 
@@ -226,8 +217,8 @@ dna_group.add_argument("--masked", choices=("none", "soft", "hard"), default="no
                        help="Masking of downloaded reference DNA (default: none)")
 dna_group.add_argument("--check-genome-fasta", action="store_true",
                        help="With list, check existing DNA indexes without downloading or rebuilding")
-dna_group.add_argument("--orphan-genome-fastas", action="store_true",
-                       help="With prune: the default and only target; accepted for compatibility")
+# Accepted for 2.11.0 scripts; unused DNA is what prune removes.
+dna_group.add_argument("--orphan-genome-fastas", action="store_true", help=argparse.SUPPRESS)
 dna_group.add_argument("--dry-run", action="store_true",
                        help="With prune, report candidates without deleting files")
 
@@ -236,22 +227,14 @@ parser.add_argument(
     type=lambda arg: arg.lower().strip(),
     choices=(
         "install",
-        "delete-all-files",
-        "delete-index-files",
         "list",
         "available",
+        "delete-index-files",
+        "delete-all-files",
         "prune",
     ),
-    help=(
-        '"install" will download and index any data that is  not '
-        'currently downloaded or indexed. "delete-all-files" will delete all data '
-        'associated with a genome annotation. "delete-index-files" deletes '
-        "all files other than the original GTF and FASTA files for a genome. "
-        '"list" shows installed genomes and whether they are indexed. '
-        '"available" prints every species and the Ensembl release ranges '
-        'supported by pyensembl. "prune" removes shared reference DNA that '
-        "no installed release uses."
-    ),
+    metavar="ACTION",
+    help="one of the actions listed below",
 )
 
 
