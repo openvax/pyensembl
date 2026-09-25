@@ -291,7 +291,8 @@ mouse = Species.register(
 dog = Species.register(
     latin_name="canis_familiaris",
     synonyms=["dog"],
-    reference_assemblies={"CanFam3.1": (75, MAX_ENSEMBL_RELEASE)},
+    # Later releases publish dog as canis_lupus_familiaris.
+    reference_assemblies={"CanFam3.1": (75, 99)},
 )
 
 cat = Species.register(
@@ -300,7 +301,8 @@ cat = Species.register(
     reference_assemblies={
         "Felis_catus_6.2": (75, 90),
         "Felis_catus_8.0": (91, 92),
-        "Felis_catus_9.0": (93, MAX_ENSEMBL_RELEASE),
+        "Felis_catus_9.0": (93, 113),
+        "F.catus_Fca126_mat1.0": (114, MAX_ENSEMBL_RELEASE),
     },
 )
 
@@ -309,7 +311,9 @@ chicken = Species.register(
     synonyms=["chicken"],
     reference_assemblies={
         "Galgal4": (75, 85),
-        "Gallus_gallus-5.0": (86, MAX_ENSEMBL_RELEASE),
+        "Gallus_gallus-5.0": (86, 94),
+        "GRCg6a": (95, 106),
+        "bGalGal1.mat.broiler.GRCg7b": (107, MAX_ENSEMBL_RELEASE),
     },
 )
 
@@ -344,7 +348,11 @@ green_monkey = Species.register(
 rhesus = Species.register(
     latin_name="macaca_mulatta",
     synonyms=["rhesus"],
-    reference_assemblies={"Mmul_10": (75, MAX_ENSEMBL_RELEASE)},
+    reference_assemblies={
+        "MMUL_1": (75, 85),
+        "Mmul_8.0.1": (86, 97),
+        "Mmul_10": (98, MAX_ENSEMBL_RELEASE),
+    },
 )
 
 rabbit = Species.register(
@@ -356,44 +364,53 @@ rabbit = Species.register(
 gerbil = Species.register(
     latin_name="meriones_unguiculatus",
     synonyms=["gerbil"],
-    reference_assemblies={"MunDraft-v1.0": (75, MAX_ENSEMBL_RELEASE)},
+    reference_assemblies={"MunDraft-v1.0": (96, MAX_ENSEMBL_RELEASE)},
 )
 
 syrian_hamster = Species.register(
     latin_name="mesocricetus_auratus",
     synonyms=["syrian_hamster"],
-    reference_assemblies={"MesAur1.0": (75, MAX_ENSEMBL_RELEASE)},
+    reference_assemblies={"MesAur1.0": (90, MAX_ENSEMBL_RELEASE)},
 )
 
 chinese_hamster = Species.register(
     latin_name="cricetulus_griseus_chok1gshd",
     synonyms=["chinese_hamster"],
-    reference_assemblies={"CHOK1GS_HDv1": (75, MAX_ENSEMBL_RELEASE)},
+    reference_assemblies={"CHOK1GS_HDv1": (90, MAX_ENSEMBL_RELEASE)},
 )
 
 naked_mole_rat = Species.register(
     latin_name="heterocephalus_glaber_female",
     synonyms=["naked_mole_rat"],
-    reference_assemblies={"HetGla_female_1.0": (75, MAX_ENSEMBL_RELEASE)},
+    reference_assemblies={
+        "HetGla_female_1.0": (90, 109),
+        "Naked_mole-rat_maternal": (110, MAX_ENSEMBL_RELEASE),
+    },
 )
 
 guinea_pig = Species.register(
     latin_name="cavia_porcellus",
     synonyms=["guinea_pig"],
-    reference_assemblies={"Cavpor3.0": (75, MAX_ENSEMBL_RELEASE)},
+    reference_assemblies={
+        "cavPor3": (75, 89),
+        "Cavpor3.0": (90, MAX_ENSEMBL_RELEASE),
+    },
 )
 
 pig = Species.register(
     latin_name="sus_scrofa",
     synonyms=["pig"],
-    reference_assemblies={"Sscrofa11.1": (75, MAX_ENSEMBL_RELEASE)},
+    reference_assemblies={
+        "Sscrofa10.2": (75, 89),
+        "Sscrofa11.1": (90, MAX_ENSEMBL_RELEASE),
+    },
 )
 
 zebrafish = Species.register(
     latin_name="danio_rerio",
     synonyms=["zebrafish"],
     reference_assemblies={
-        "ZFISH7": (47, 53),
+        "ZFISH7": (48, 53),
         "Zv8": (54, 59),
         "Zv9": (60, 79),
         "GRCz10": (80, 91),
@@ -418,7 +435,10 @@ fly = Species.register(
         "BDGP6": (79, 95),
         "BDGP6.22": (96, 98),
         "BDGP6.28": (99, 102),
-        "BDGP6.32": (103, MAX_ENSEMBL_RELEASE),
+        # Release 110 also offers BDGP6.46; keep existing 110 installs valid.
+        "BDGP6.32": (103, 110),
+        "BDGP6.46": (111, 113),
+        "BDGP6.54": (114, MAX_ENSEMBL_RELEASE),
     },
     division="metazoa",
 )
@@ -427,10 +447,10 @@ nematode = Species.register(
     latin_name="caenorhabditis_elegans",
     synonyms=["nematode", "C_elegans"],
     reference_assemblies={
-        "WS180": (47, 49),
+        "WS180": (48, 49),
         "WS190": (50, 54),
         "WS200": (55, 57),
-        "WS210": (58, 59),
+        "WS210": (58, 60),
         "WS220": (61, 66),
         "WBcel215": (67, 70),
         "WBcel235": (71, MAX_ENSEMBL_RELEASE),
@@ -538,7 +558,7 @@ candida_albicans = Species.register(
     latin_name="candida_albicans",
     synonyms=["candida"],
     reference_assemblies={
-        "GCA000182965v3": (40, MAX_ENSEMBL_GENOMES_RELEASE),
+        "GCA000182965v3": (52, MAX_ENSEMBL_GENOMES_RELEASE),
     },
     division="fungi",
     ensembl_genomes=True,
@@ -558,7 +578,8 @@ plasmodium_falciparum = Species.register(
     latin_name="plasmodium_falciparum",
     synonyms=["plasmodium", "malaria_parasite"],
     reference_assemblies={
-        "ASM276v2": (40, MAX_ENSEMBL_GENOMES_RELEASE),
+        "EPr1": (40, 44),
+        "ASM276v2": (45, MAX_ENSEMBL_GENOMES_RELEASE),
     },
     division="protists",
     ensembl_genomes=True,
@@ -574,12 +595,14 @@ toxoplasma_gondii = Species.register(
     ensembl_genomes=True,
 )
 
+# Mouse strain GTFs in releases 87-91 kept release 86's filenames, so
+# supported releases start at 92.
 #BALB/c
 mus_musculus_balbc = Species.register(
     latin_name='mus_musculus_balbcj',
     synonyms=['mus_balbc', 'BALB/c'],
     reference_assemblies = {
-        'BALB_cJ_v1':(76, 113),
+        'BALB_cJ_v1':(92, 113),
         'BALB_cJ_v3':(114, MAX_ENSEMBL_RELEASE),
     })
 #129
@@ -587,7 +610,7 @@ mus_musculus_129 = Species.register(
     latin_name='mus_musculus_129s1svimj',
     synonyms=['mus_129', '129'],
     reference_assemblies = {
-        '129S1_SvImJ_v1':(76, 113),
+        '129S1_SvImJ_v1':(92, 113),
         '129S1_SvImJ_v3':(114, MAX_ENSEMBL_RELEASE),
     })
 #FVB
@@ -595,7 +618,7 @@ mus_musculus_fvb = Species.register(
     latin_name='mus_musculus_fvbnj',
     synonyms=['mus_fvb', 'FVB'],
     reference_assemblies = {
-        'FVB_NJ_v1':(76, 113),
+        'FVB_NJ_v1':(92, 113),
         'FVB_NJ_v3':(114, MAX_ENSEMBL_RELEASE),
     })
 #NOD
@@ -603,7 +626,7 @@ mus_musculus_nod = Species.register(
     latin_name='mus_musculus_nodshiltj',
     synonyms=['mus_nod', 'NOD'],
     reference_assemblies = {
-        'NOD_ShiLtJ_v1':(76, 113),
+        'NOD_ShiLtJ_v1':(92, 113),
         'NOD_ShiLtJ_v3':(114, MAX_ENSEMBL_RELEASE),
     })
 #6NJ
@@ -611,6 +634,6 @@ mus_musculus_c57bl6nj = Species.register(
     latin_name='mus_musculus_c57bl6nj',
     synonyms=['mus_6nj', '6NJ'],
     reference_assemblies = {
-        'C57BL_6NJ_v1':(76, 113),
+        'C57BL_6NJ_v1':(92, 113),
         'C57BL_6NJ_v3':(114, MAX_ENSEMBL_RELEASE),
     })

@@ -306,7 +306,13 @@ def test_remote_gzip_download_is_explicit_reusable_and_independent(
         different_release.sequence("1", 1, 2)
 
 
-@pytest.mark.parametrize("payload", [b"not FASTA", gzip.compress(DNA)[:-7]])
+@pytest.mark.parametrize(
+    # Named, since gzip output embeds a timestamp that would vary test IDs
+    # between pytest-xdist workers.
+    "payload",
+    [b"not FASTA", gzip.compress(DNA, mtime=0)[:-7]],
+    ids=["not-fasta", "truncated-gzip"],
+)
 def test_failed_download_does_not_publish_partial_data(
     tmp_path, dna_path, monkeypatch, payload
 ):
