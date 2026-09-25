@@ -264,15 +264,24 @@ def all_combinations_of_ensembl_genomes(args):
                     "Reference %s supports Ensembl releases %d-%d, not --release %d"
                     % (reference_name, first_release, last_release, version)
                 )
+    dna_requested = args.with_genome_fasta or args.only_genome_fasta
+    if args.genome_fasta_path is not None and not args.custom_mirror:
+        if not args.genome_fasta_path or "://" in args.genome_fasta_path:
+            raise ValueError(
+                "--genome-fasta-path must be a local file for an Ensembl release; "
+                "use --annotation-name to install a custom genome with a DNA URL"
+            )
+        genome_fasta = args.genome_fasta_path
+    else:
+        # A mirror serves Ensembl's filenames; the release only names them.
+        genome_fasta = dna_requested
     genomes = []
     for species in species_list:
         # Otherwise, use Ensembl release information
         for version in release_list:
             ensembl_release = EnsemblRelease(
                 version, species=species,
-                genome_fasta=args.genome_fasta_path
-                or args.with_genome_fasta
-                or args.only_genome_fasta,
+                genome_fasta=genome_fasta,
                 genome_fasta_type=args.genome_fasta_type,
                 genome_fasta_mask=args.masked,
             )

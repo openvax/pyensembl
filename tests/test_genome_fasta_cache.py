@@ -617,11 +617,24 @@ def test_unconfigured_release_explains_how_to_use_installed_dna(
     )
     assert "installed for this release; use " + call in str(error.value)
     assert eval(call, {"EnsemblRelease": EnsemblRelease}).sequence("MT", 1, 4) == "GCTA"
+    # Building the hint never replaces the original error.
+    def unreadable(cache_directory):
+        raise PermissionError(cache_directory)
+
+    with monkeypatch.context() as patched:
+        patched.setattr(GenomeFasta, "installed_source", unreadable)
+        with pytest.raises(MissingGenomeFastaError, match="Use EnsemblRelease"):
+            EnsemblRelease(81).sequence("MT", 1, 4)
     local = tmp_path / "local.fa"
     local.write_bytes(DNA)
     run_cli(monkeypatch, "install", "--release", "82", "--only-genome-fasta",
             "--genome-fasta-path", str(local))
     with pytest.raises(MissingGenomeFastaError, match=re.escape(
         "attached to this release; use EnsemblRelease(82, genome_fasta=%r)" % str(local)
+    )):
+        EnsemblRelease(82).sequence("MT", 1, 4)
+    local.unlink()  # Recorded DNA that is gone is not suggested.
+    with pytest.raises(MissingGenomeFastaError, match=re.escape(
+        "Use EnsemblRelease(82, genome_fasta=True) for Ensembl DNA"
     )):
         EnsemblRelease(82).sequence("MT", 1, 4)

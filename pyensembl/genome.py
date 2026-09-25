@@ -228,6 +228,8 @@ class Genome(Serializable):
         """
         if mask not in ("upper", "raw"):
             raise ValueError("mask must be 'upper' or 'raw'")
+        if isinstance(strand, bool):
+            raise ValueError("Invalid strand: %s" % (strand,))
         strand = normalize_strand(strand)
         if any(isinstance(x, bool) or not isinstance(x, Integral) for x in (start, end)):
             raise ValueError("Genome sequence coordinates must be integers")
@@ -236,11 +238,10 @@ class Genome(Serializable):
         genome_fasta = self._require_genome_fasta()
         record = genome_fasta.record(contig)
         if record is None:
-            name = str(contig)
-            alternative = name[3:] if name.lower().startswith("chr") else "chr" + name
+            similar = genome_fasta.similar_names(contig)[:3]
             hint = (
-                " (did you mean %r?)" % alternative
-                if genome_fasta.record(alternative) is not None
+                " (did you mean %s?)" % " or ".join(repr(name) for name in similar)
+                if similar
                 else ""
             )
             raise ValueError("Contig %r is absent from genome FASTA %s%s" % (
@@ -429,7 +430,13 @@ class Genome(Serializable):
         if self.requires_genome_fasta:
             self.index_genome_fasta(overwrite=overwrite)
             if self.requires_gtf and not self._genome_fasta.remote:
-                missing = set(self.contigs()) - set(self._genome_fasta.open().keys())
+                missing = set()
+                for contig in self.contigs():
+                    try:
+                        if self._genome_fasta.record(contig) is None:
+                            missing.add(contig)
+                    except ValueError:
+                        pass  # Several FASTA records match; not missing.
                 if missing:
                     warnings.warn(
                         "Local genome FASTA lacks %d annotation contigs (e.g. %s). "

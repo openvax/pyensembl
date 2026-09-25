@@ -295,21 +295,25 @@ class GenomeFasta:
 
         Accepts the FASTA's own names and pyensembl's normalized contig names:
         annotations store e.g. ``Pt`` as ``PT`` and ``Mito`` as ``MITO``.
+        Raises ValueError if a normalized name matches several records.
         """
         fasta = self.open()
         name = str(contig)
         if name in fasta:
             return fasta[name]
-        if self._names_by_normalized is None:
-            self._names_by_normalized = {}
+        names_by_normalized = self._names_by_normalized
+        if names_by_normalized is None:
+            # Build fully before publishing, for concurrent readers.
+            names_by_normalized = {}
             for record in fasta.keys():
                 try:
                     key = normalize_chromosome(record)
                 except (TypeError, ValueError):
                     continue
-                self._names_by_normalized.setdefault(key, []).append(record)
+                names_by_normalized.setdefault(key, []).append(record)
+            self._names_by_normalized = names_by_normalized
         try:
-            matches = self._names_by_normalized.get(normalize_chromosome(contig), [])
+            matches = names_by_normalized.get(normalize_chromosome(contig), [])
         except (TypeError, ValueError):
             return None
         if len(matches) > 1:
@@ -317,6 +321,16 @@ class GenomeFasta:
                 "Contig %r matches several FASTA records: %s" % (contig, ", ".join(matches))
             )
         return fasta[matches[0]] if matches else None
+
+    def similar_names(self, contig):
+        """FASTA records matching a contig up to case and a ``chr`` prefix."""
+
+        def key(name):
+            name = name.lower()
+            return name[3:] if name.startswith("chr") else name
+
+        target = key(str(contig))
+        return [name for name in self.open().keys() if key(name) == target]
 
     def _forget_reader(self):
         self._reader = None

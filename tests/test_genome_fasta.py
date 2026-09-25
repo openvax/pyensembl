@@ -124,6 +124,8 @@ def test_contigs_resolve_like_pyensembl_annotations(tmp_path, dna_path):
             genome.sequence("chrX", 1, 1)
         with pytest.raises(ValueError, match=r"absent .*did you mean 'chr2'"):
             genome.sequence(2, 1, 1)
+        with pytest.raises(ValueError, match=r"absent .*did you mean 'chr2'"):
+            genome.sequence("CHR2", 1, 1)
         assert genome.sequence("IUPAC", 1, 11, strand="-") == "NWSDHBVKMRY"
 
 
@@ -133,8 +135,9 @@ def test_minus_strand_is_the_reverse_complement(tmp_path, dna_path):
         assert genome.sequence("1", 3, 10, strand="-") == "TTAANNAC"
         assert genome.sequence("1", 3, 10, "raw", strand=-1) == "ttAANNac"
         assert genome.sequence("1", 3, 10, strand="+") == genome.sequence("1", 3, 10)
-        with pytest.raises(ValueError, match="strand"):
-            genome.sequence("1", 1, 2, strand="reverse")
+        for strand in ("reverse", True):
+            with pytest.raises(ValueError, match="strand"):
+                genome.sequence("1", 1, 2, strand=strand)
 
 
 def test_absent_contig_and_invalid_mask(tmp_path, dna_path):
@@ -391,8 +394,13 @@ def test_genome_fasta_option_and_deprecated_211_keywords(dna_path, monkeypatch):
         EnsemblRelease(81, genome_fasta="https://example.test/dna.fa.gz")
     with pytest.raises(TypeError, match="genome_fasta must be"):
         EnsemblRelease(81, genome_fasta=3)
+    with pytest.raises(ValueError, match="must not be empty"):
+        EnsemblRelease(81, genome_fasta="")
     for old, new in (
         (dict(download_genome_fasta=True), True),
+        # 2.11.0 accepted any truthy flag, e.g. a config string.
+        (dict(download_genome_fasta="yes"), True),
+        (dict(download_genome_fasta=1), True),
         (dict(genome_fasta_path=dna_path), str(dna_path)),
         # 2.11.0 let a local path win over the download flag.
         (dict(download_genome_fasta=True, genome_fasta_path=dna_path), str(dna_path)),
@@ -494,6 +502,22 @@ def test_local_file_and_custom_mirror_sources(tmp_path, dna_path):
     )
 
 
+def test_cli_dna_paths_for_releases_and_mirrors(dna_path):
+    for path in ("https://example.test/dna.fa.gz", ""):
+        args = shell.parser.parse_args(
+            ["install", "--release", "81", "--genome-fasta-path", path]
+        )
+        with pytest.raises(ValueError, match="--genome-fasta-path must be a local file"):
+            shell.collect_selected_genomes(args)
+    url = "https://example.test/dna.fa.gz"
+    args = shell.parser.parse_args([
+        "install", "--release", "81", "--custom-mirror", "https://example.test/mirror",
+        "--genome-fasta-path", url,
+    ])
+    (genome,) = shell.collect_selected_genomes(args)
+    assert genome._genome_fasta_path_or_url == url
+
+
 def run_cli(monkeypatch, *args):
     monkeypatch.setattr(sys, "argv", ["pyensembl", *args])
     monkeypatch.setattr(shell, "configure_logging", lambda: None)
@@ -577,11 +601,15 @@ def test_local_annotation_coverage_warning_and_intronic_sequence(tmp_path, dna_p
         '1\ttest\texon\t1\t2\t.\t-\t.\tgene_id "g"; transcript_id "t"; exon_id "e1";\n'
         '1\ttest\texon\t11\t12\t.\t-\t.\tgene_id "g"; transcript_id "t"; exon_id "e2";\n'
         'absent\ttest\tgene\t1\t2\t.\t+\t.\tgene_id "missing"; gene_name "missing";\n'
+        # Stored as PT; the FASTA's Pt record must count as present.
+        'Pt\ttest\tgene\t1\t2\t.\t+\t.\tgene_id "chloroplast"; gene_name "c";\n'
     )
+    dna_path.write_bytes(DNA + b">Pt\nACGT\n")
     with custom_genome(tmp_path, dna_path, gtf_path_or_url=str(gtf)) as genome:
-        with pytest.warns(UserWarning, match="lacks 1 annotation contigs"):
+        with pytest.warns(UserWarning, match=r"lacks 1 annotation contigs \(e.g. ABSENT\)"):
             genome.index()
         assert genome.transcript_by_id("t").strand == "-"
+        assert genome.sequence(genome.gene_by_id("chloroplast").contig, 1, 2) == "AC"
         assert genome.sequence("1", 3, 10) == "GTNNTTAA"  # Intron, always plus strand.
         assert genome.sequence("1", 13, 16) == "GGTA"  # Outside the annotated gene.
 

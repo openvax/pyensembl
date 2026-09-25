@@ -256,7 +256,8 @@ Related attributes and methods:
 
 - `fasta` is a [pyfaidx](https://github.com/mdshw5/pyfaidx) reader with
   zero-based, half-open slices (`fasta[contig][start - 1:end].seq`), as used by
-  Varcode. It is `None` when DNA is not configured or not installed.
+  Varcode. It needs the FASTA's own contig names, and is `None` when DNA is not
+  configured or not installed.
 - `genome_fasta_path` is the uncompressed FASTA on disk, or `None`.
 - `download()` and `index()` include DNA when it is configured.
   `index_genome_fasta()` builds the DNA index before the first query needs it.

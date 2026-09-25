@@ -53,7 +53,8 @@ def _genome_fasta_option(genome_fasta, download_genome_fasta=None, genome_fasta_
         )
         if genome_fasta is not None:
             raise ValueError("Pass reference DNA only as genome_fasta")
-        genome_fasta = genome_fasta_path or download_genome_fasta
+        # 2.11.0 let a local path win and accepted any truthy download flag.
+        genome_fasta = genome_fasta_path or bool(download_genome_fasta)
     if genome_fasta is None or genome_fasta is False:
         return None
     if genome_fasta is True:
@@ -62,8 +63,10 @@ def _genome_fasta_option(genome_fasta, download_genome_fasta=None, genome_fasta_
         path = os.fspath(genome_fasta)
     except TypeError:
         path = None
-    if not isinstance(path, str) or not path:
+    if not isinstance(path, str):
         raise TypeError("genome_fasta must be True, a local FASTA path, or None")
+    if not path:
+        raise ValueError("genome_fasta path must not be empty")
     if "://" in path:
         raise ValueError("genome_fasta must be True or a local path; use Genome for custom URLs")
     return os.path.abspath(path)
@@ -250,8 +253,10 @@ class EnsemblRelease(Genome):
 
         try:
             installed = GenomeFasta.installed_source(self.download_cache.cache_directory_path)
-        except ValueError:
-            installed = None
+            if installed is not None and installed.installed_path is None:
+                installed = None  # Recorded, but since moved or deleted.
+        except (OSError, ValueError):
+            installed = None  # The hint must not replace the original error.
         if installed is not None and not installed.remote:
             return "Reference DNA is attached to this release; use %s." % call(
                 repr(installed.source)
@@ -289,7 +294,7 @@ class EnsemblRelease(Genome):
         genome_fasta_path = state_dict.pop("genome_fasta_path", None)
         download_genome_fasta = state_dict.pop("download_genome_fasta", False)
         if "genome_fasta" not in state_dict:
-            state_dict["genome_fasta"] = genome_fasta_path or download_genome_fasta
+            state_dict["genome_fasta"] = genome_fasta_path or bool(download_genome_fasta)
         return cls.cached(**state_dict)
 
 
