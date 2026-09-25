@@ -13,10 +13,8 @@
 MIN_ENSEMBL_RELEASE = 40
 MAX_ENSEMBL_RELEASE = 115
 # Ensembl Genomes (plants, fungi, metazoa, protists, bacteria) has its own
-# release numbering that runs separately from the main Ensembl release. The
-# `MAX_PLANTS_ENSEMBL_RELEASE` alias is preserved for backward compatibility.
+# release numbering that runs separately from the main Ensembl release.
 MAX_ENSEMBL_GENOMES_RELEASE = 58
-MAX_PLANTS_ENSEMBL_RELEASE = MAX_ENSEMBL_GENOMES_RELEASE
 
 
 def check_release_number(release):
