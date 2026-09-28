@@ -204,10 +204,14 @@ class Genome(Serializable):
             )
         return self._genome_fasta
 
-    def download_genome_fasta(self, overwrite=False):
-        """Download only configured reference DNA, leaving annotation files alone."""
+    def download_genome_fasta(self, overwrite=False, show_progress=False):
+        """Download only configured reference DNA, leaving annotation files alone.
+
+        show_progress displays a progress bar; it requires tqdm, installed
+        with ``pip install pyensembl[progress]``.
+        """
         genome_fasta = self._require_genome_fasta()
-        genome_fasta.prepare(download=True, overwrite=overwrite)
+        genome_fasta.prepare(download=True, overwrite=overwrite, show_progress=show_progress)
         genome_fasta.remember()
 
     def index_genome_fasta(self, overwrite=False):
@@ -302,7 +306,8 @@ class Genome(Serializable):
         self._exons = {}
 
     def _get_cached_path(
-        self, field_name, path_or_url, download_if_missing=False, overwrite=False
+        self, field_name, path_or_url, download_if_missing=False, overwrite=False,
+        show_progress=False,
     ):
         """
         Get the local path for a possibly remote file, invoking either
@@ -317,17 +322,21 @@ class Genome(Serializable):
             path_or_url=path_or_url,
             download_if_missing=download_if_missing,
             overwrite=overwrite,
+            show_progress=show_progress,
         )
 
-    def _get_gtf_path(self, download_if_missing=False, overwrite=False):
+    def _get_gtf_path(self, download_if_missing=False, overwrite=False, show_progress=False):
         return self._get_cached_path(
             field_name="gtf",
             path_or_url=self._gtf_path_or_url,
             download_if_missing=download_if_missing,
             overwrite=overwrite,
+            show_progress=show_progress,
         )
 
-    def _get_transcript_fasta_paths(self, download_if_missing=False, overwrite=False):
+    def _get_transcript_fasta_paths(
+        self, download_if_missing=False, overwrite=False, show_progress=False
+    ):
         if not self.requires_transcript_fasta:
             raise ValueError("No transcript FASTA source for %s" % self)
         return [
@@ -336,11 +345,14 @@ class Genome(Serializable):
                 path_or_url=path,
                 download_if_missing=download_if_missing,
                 overwrite=overwrite,
+                show_progress=show_progress,
             )
             for path in self._transcript_fasta_paths_or_urls
         ]
 
-    def _get_protein_fasta_paths(self, download_if_missing=False, overwrite=False):
+    def _get_protein_fasta_paths(
+        self, download_if_missing=False, overwrite=False, show_progress=False
+    ):
         # get the path for peptide FASTA files containing
         # this genome's protein sequences
         if not self.requires_protein_fasta:
@@ -351,23 +363,23 @@ class Genome(Serializable):
                 path_or_url=path,
                 download_if_missing=download_if_missing,
                 overwrite=overwrite,
+                show_progress=show_progress,
             )
             for path in self._protein_fasta_paths_or_urls
         ]
 
-    def _set_local_paths(self, download_if_missing=True, overwrite=False):
+    def _set_local_paths(self, download_if_missing=True, overwrite=False, show_progress=False):
+        options = dict(
+            download_if_missing=download_if_missing,
+            overwrite=overwrite,
+            show_progress=show_progress,
+        )
         if self.requires_gtf:
-            self.gtf_path = self._get_gtf_path(
-                download_if_missing=download_if_missing, overwrite=overwrite
-            )
+            self.gtf_path = self._get_gtf_path(**options)
         if self.requires_transcript_fasta:
-            self.transcript_fasta_paths = self._get_transcript_fasta_paths(
-                download_if_missing=download_if_missing, overwrite=overwrite
-            )
+            self.transcript_fasta_paths = self._get_transcript_fasta_paths(**options)
         if self.requires_protein_fasta:
-            self.protein_fasta_paths = self._get_protein_fasta_paths(
-                download_if_missing=download_if_missing, overwrite=overwrite
-            )
+            self.protein_fasta_paths = self._get_protein_fasta_paths(**options)
 
     def _local_source_path(self, path_or_url):
         """Where a source file is, or will be, on disk; never downloads or copies.
@@ -403,7 +415,7 @@ class Genome(Serializable):
                     return False
         return True
 
-    def download(self, overwrite=False):
+    def download(self, overwrite=False, show_progress=False):
         """
         Download data files needed by this Genome instance.
 
@@ -411,19 +423,28 @@ class Genome(Serializable):
         ----------
         overwrite : bool, optional
             Download files regardless whether local copy already exists.
-        """
-        self._set_local_paths(download_if_missing=True, overwrite=overwrite)
-        if self.requires_genome_fasta:
-            self.download_genome_fasta(overwrite=overwrite)
 
-    def index(self, overwrite=False):
+        show_progress : bool, optional
+            Display download progress bars; requires tqdm, installed with
+            ``pip install pyensembl[progress]``.
+        """
+        self._set_local_paths(
+            download_if_missing=True, overwrite=overwrite, show_progress=show_progress
+        )
+        if self.requires_genome_fasta:
+            self.download_genome_fasta(overwrite=overwrite, show_progress=show_progress)
+
+    def index(self, overwrite=False, show_progress=False):
         """
         Assuming that all necessary data for this Genome has been downloaded,
         generate the GTF database and save efficient representation of
         FASTA sequence files.
+
+        show_progress displays progress while the GTF database is filled;
+        it requires tqdm, installed with ``pip install pyensembl[progress]``.
         """
         if self.requires_gtf:
-            self.db.connect_or_create(overwrite=overwrite)
+            self.db.connect_or_create(overwrite=overwrite, show_progress=show_progress)
         if self.requires_transcript_fasta:
             self.transcript_sequences.index(overwrite=overwrite)
         if self.requires_protein_fasta:

@@ -216,7 +216,7 @@ class DownloadCache(object):
 
         return join(self.cache_directory_path, local_filename)
 
-    def _download_if_necessary(self, url, download_if_missing, overwrite):
+    def _download_if_necessary(self, url, download_if_missing, overwrite, show_progress=False):
         """
         Return local cached path to a remote file, download it if necessary.
         """
@@ -225,7 +225,13 @@ class DownloadCache(object):
         if (missing or overwrite) and download_if_missing:
             logger.info("Fetching %s from URL %s", cached_path, url)
             # Decompresses exactly when cached_path drops the URL's .gz suffix.
-            datacache.fetch_file(url, destination=cached_path, force=True, timeout=3600)
+            datacache.fetch_file(
+                url,
+                destination=cached_path,
+                force=True,
+                timeout=3600,
+                show_progress=show_progress,
+            )
         elif missing:
             raise MissingRemoteFile(url)
         return cached_path
@@ -248,7 +254,7 @@ class DownloadCache(object):
             return cached_path
 
     def download_or_copy_if_necessary(
-        self, path_or_url, download_if_missing=False, overwrite=False
+        self, path_or_url, download_if_missing=False, overwrite=False, show_progress=False
     ):
         """
         Download a remote file or copy
@@ -275,7 +281,7 @@ class DownloadCache(object):
             raise ValueError("Expected non-empty string for path_or_url")
         if self.is_url_format(path_or_url):
             return self._download_if_necessary(
-                path_or_url, download_if_missing, overwrite
+                path_or_url, download_if_missing, overwrite, show_progress=show_progress
             )
         else:
             return self._copy_if_necessary(path_or_url, overwrite)
@@ -292,13 +298,15 @@ class DownloadCache(object):
         raise ValueError(error_message)
 
     def local_path_or_install_error(
-        self, field_name, path_or_url, download_if_missing=False, overwrite=False
+        self, field_name, path_or_url, download_if_missing=False, overwrite=False,
+        show_progress=False,
     ):
         try:
             return self.download_or_copy_if_necessary(
                 path_or_url,
                 download_if_missing=download_if_missing,
                 overwrite=overwrite,
+                show_progress=show_progress,
             )
         except MissingRemoteFile:
             self._raise_missing_file_error({field_name: path_or_url})

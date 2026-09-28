@@ -125,7 +125,7 @@ class GenomeFasta:
                     output.write(first)
                     shutil.copyfileobj(reader, output, length=_CHUNK_SIZE)
 
-    def _download(self, expected_size=None):
+    def _download(self, expected_size=None, show_progress=False):
         """Fetch with datacache retries, then publish the decompressed FASTA.
 
         expected_size describes the downloaded (possibly compressed) bytes.
@@ -142,18 +142,19 @@ class GenomeFasta:
                 force=True,
                 timeout=3600,
                 expected_size=expected_size,
+                show_progress=show_progress,
             )
             self._write_uncompressed(raw, self.materialized_path)
         finally:
             _remove(raw)
 
-    def prepare(self, download=False, overwrite=False):
+    def prepare(self, download=False, overwrite=False, show_progress=False):
         """Resolve local data; only an explicit download may access the network."""
         if self.remote:
             if overwrite or self.installed_path is None:
                 if not download:
                     raise self._not_installed()
-                self._download()
+                self._download(show_progress=show_progress)
         else:
             if not os.path.isfile(self.source):
                 raise MissingGenomeFastaError(
