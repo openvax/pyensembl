@@ -705,7 +705,18 @@ def _directory_size(path):
     return size
 
 
-def _install(genome, only_genome_fasta=False, overwrite=False):
+def _progress_available():
+    """Show progress bars when someone watches stderr and tqdm is installed."""
+    if not sys.stderr.isatty():
+        return False
+    try:
+        import tqdm  # noqa: F401  (pyensembl[progress])
+    except ImportError:
+        return False
+    return True
+
+
+def _install(genome, only_genome_fasta=False, overwrite=False, show_progress=False):
     description = _genome_description(genome)
     installed = (
         not genome.requires_genome_fasta or genome._genome_fasta.status() == "indexed"
@@ -716,11 +727,11 @@ def _install(genome, only_genome_fasta=False, overwrite=False):
     else:
         logger.info("Installing %s", description)
     if only_genome_fasta:
-        genome.download_genome_fasta(overwrite=overwrite)
+        genome.download_genome_fasta(overwrite=overwrite, show_progress=show_progress)
         genome.index_genome_fasta(overwrite=overwrite)
     else:
-        genome.download(overwrite=overwrite)
-        genome.index(overwrite=overwrite)
+        genome.download(overwrite=overwrite, show_progress=show_progress)
+        genome.index(overwrite=overwrite, show_progress=show_progress)
 
 
 def _delete_genome_files(genome, action):
@@ -786,6 +797,9 @@ def run():
             if args.action in ("delete-all-files", "delete-index-files"):
                 _delete_genome_files(genome, args.action)
             elif args.action == "install":
-                _install(genome, args.only_genome_fasta, args.overwrite)
+                _install(
+                    genome, args.only_genome_fasta, args.overwrite,
+                    show_progress=_progress_available(),
+                )
             else:
                 raise ValueError("Invalid action: %s" % args.action)

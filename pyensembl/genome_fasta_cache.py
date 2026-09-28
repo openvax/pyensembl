@@ -297,7 +297,7 @@ class SharedGenomeFasta(GenomeFasta):
             _write_json(self.reference_path, self._reference_state())
             _write_json(self.manifest_path, self._reference_state())
 
-    def prepare(self, download=False, overwrite=False):
+    def prepare(self, download=False, overwrite=False, show_progress=False):
         self._load_reference()  # Another process may have registered it.
         if not download or (not overwrite and self._is_registered()):
             # Installed and registered DNA needs no lock or write, so a
@@ -313,7 +313,10 @@ class SharedGenomeFasta(GenomeFasta):
                 self.directory.mkdir(parents=True, exist_ok=True)
                 _remove_staging_files(self.directory)
                 _write_json(self.directory / "object.json", {"identity": self.identity})
-                self._download(expected_size=self.identity.get("compressed_size"))
+                self._download(
+                    expected_size=self.identity.get("compressed_size"),
+                    show_progress=show_progress,
+                )
             # Register before releasing the object lock so pruning cannot
             # remove the object in between.
             self._register()

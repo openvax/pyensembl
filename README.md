@@ -32,6 +32,8 @@ pip install pyensembl
 ```
 
 This should also install any required packages such as [datacache](https://github.com/openvax/datacache).
+To see progress bars while `pyensembl install` downloads and indexes data,
+install the optional extra: `pip install "pyensembl[progress]"`.
 
 Before using PyEnsembl, run the following command to download and install
 Ensembl data:
@@ -138,6 +140,12 @@ os.environ['PYENSEMBL_CACHE_DIR'] = '/custom/cache/dir'
 # ... PyEnsembl API usage
 ```
 
+To share a cache with a group, set a group-friendly umask such as `umask 002`
+before installing: new files follow it. Files downloaded before PyEnsembl
+2.13.1 (datacache 1.10.0) were readable only by the user who installed them;
+share an existing cache with `chmod -R g+rX "$PYENSEMBL_CACHE_DIR/pyensembl"`
+(or the platform cache directory).
+
 # Usage tips
 
 ## List installed genomes
@@ -165,7 +173,10 @@ genomes need their original install options). Custom genomes are listed on
 Linux and macOS, or wherever `PYENSEMBL_CACHE_DIR` is set.
 
 `install` prints progress on stderr, one line per step; add `--verbose` (`-v`)
-to see every download and database step.
+to see every download and database step. With `pyensembl[progress]` installed,
+downloads and database builds also show progress bars in a terminal. In Python,
+pass `show_progress=True` to `download()`, `index()`, or
+`download_genome_fasta()`.
 
 To get the installed Ensembl releases in Python:
 
@@ -536,8 +547,8 @@ These need reference DNA; see [Reference DNA](#reference-dna-optional).
 <dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#:~:text=def%20sequence(">sequence(contig, start, end, mask="upper", strand="+")</a></dt>
 <dd>Returns the bases from <code>start</code> to <code>end</code> (one-based, inclusive) on the plus strand, or their reverse complement with <code>strand="-"</code>. <code>mask="raw"</code> keeps soft-masked lowercase.</dd>
 
-<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#:~:text=def%20download_genome_fasta(">download_genome_fasta(overwrite=False)</a></dt>
-<dd>Downloads the configured reference DNA without annotation data; does nothing if it is already installed.</dd>
+<dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#:~:text=def%20download_genome_fasta(">download_genome_fasta(overwrite=False, show_progress=False)</a></dt>
+<dd>Downloads the configured reference DNA without annotation data; does nothing if it is already installed. <code>show_progress=True</code> shows a progress bar (needs <code>pyensembl[progress]</code>).</dd>
 
 <dt><a href="https://github.com/openvax/pyensembl/blob/main/pyensembl/genome.py#:~:text=def%20index_genome_fasta(">index_genome_fasta(overwrite=False)</a></dt>
 <dd>Builds the DNA index now rather than on the first query.</dd>

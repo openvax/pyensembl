@@ -16,7 +16,6 @@ import sqlite3
 
 import datacache
 from typechecks import require_integer, require_string
-from gtfparse import GENCODE_BIOTYPE_ALIASES, create_missing_features, read_gtf
 
 from .common import memoize
 from .normalization import normalize_chromosome, normalize_strand
@@ -235,11 +234,12 @@ class Database(object):
             result.append(index_group)
         return result
 
-    def create(self, overwrite=False):
+    def create(self, overwrite=False, show_progress=False):
         """
         Create the local database (including indexing) if it's not
         already set up. If `overwrite` is True, always re-create
-        the database from scratch.
+        the database from scratch. `show_progress` displays row insertion
+        progress (requires tqdm).
 
         Returns a connection to the database.
         """
@@ -286,6 +286,7 @@ class Database(object):
             table_names_to_indices=indices_dict,
             overwrite=overwrite,
             version=DATABASE_SCHEMA_VERSION,
+            show_progress=show_progress,
         )
         return self._connection
 
@@ -317,7 +318,7 @@ class Database(object):
                 message += ", run: %s" % self.install_string
             raise ValueError(message)
 
-    def connect_or_create(self, overwrite=False):
+    def connect_or_create(self, overwrite=False, show_progress=False):
         """
         Return a connection to the database if it exists, otherwise create it.
         Overwrite the existing database if `overwrite` is True.
@@ -326,7 +327,7 @@ class Database(object):
         if connection:
             return connection
         else:
-            return self.create(overwrite=overwrite)
+            return self.create(overwrite=overwrite, show_progress=show_progress)
 
     def columns(self, table_name):
         if self._columns.get(table_name) is None:
@@ -656,6 +657,10 @@ class Database(object):
         """
         Parse this genome source's GTF file and load it as a Pandas DataFrame
         """
+        # Imported here: gtfparse loads pandas and polars, which only index
+        # builds need, so importing pyensembl and querying stay fast.
+        from gtfparse import GENCODE_BIOTYPE_ALIASES, create_missing_features, read_gtf
+
         logger.info("Reading GTF from %s", self.gtf_path)
         df = read_gtf(
             self.gtf_path,
