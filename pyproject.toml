@@ -29,7 +29,8 @@ classifiers = [
 ]
 dependencies = [
     "typechecks>=0.0.2,<1.0.0",
-    "datacache>=1.12.0,<2.0.0",
+    # [progress] brings tqdm: progress bars are part of pyensembl.
+    "datacache[progress]>=1.13.0,<2.0.0",
     "memoized-property>=1.0.2",
     "tinytimer>=0.0.0,<1.0.0",
     "gtfparse>=2.7.0,<3.0.0",
@@ -45,10 +46,9 @@ dependencies = [
 pyensembl = "pyensembl.shell:run"
 
 [project.optional-dependencies]
-# Progress bars for downloads and database builds (tqdm).
-progress = [
-    "datacache[progress]>=1.12.0,<2.0.0",
-]
+# Progress bars are always included; this empty extra keeps
+# `pip install "pyensembl[progress]"` from 2.15 working without a warning.
+progress = []
 dev = [
     "pytest",
     "pytest-cov",

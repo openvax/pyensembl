@@ -207,17 +207,16 @@ class Genome(Serializable):
     def download_genome_fasta(self, overwrite=False, show_progress=False):
         """Download only configured reference DNA, leaving annotation files alone.
 
-        show_progress displays a progress bar; it requires tqdm, installed
-        with ``pip install pyensembl[progress]``.
+        show_progress displays progress bars for the download and decompression.
         """
         genome_fasta = self._require_genome_fasta()
         genome_fasta.prepare(download=True, overwrite=overwrite, show_progress=show_progress)
         genome_fasta.remember()
 
-    def index_genome_fasta(self, overwrite=False):
+    def index_genome_fasta(self, overwrite=False, show_progress=False):
         """Index configured local DNA without downloading other genome data."""
         genome_fasta = self._require_genome_fasta()
-        genome_fasta.open(overwrite=overwrite)
+        genome_fasta.open(overwrite=overwrite, show_progress=show_progress)
         genome_fasta.remember()
 
     def sequence(self, contig, start, end, mask="upper", *, strand="+"):
@@ -425,8 +424,7 @@ class Genome(Serializable):
             Download files regardless whether local copy already exists.
 
         show_progress : bool, optional
-            Display download progress bars; requires tqdm, installed with
-            ``pip install pyensembl[progress]``.
+            Display download progress bars.
         """
         self._set_local_paths(
             download_if_missing=True, overwrite=overwrite, show_progress=show_progress
@@ -440,19 +438,19 @@ class Genome(Serializable):
         generate the GTF database and save efficient representation of
         FASTA sequence files.
 
-        show_progress displays progress while the GTF database is filled;
-        it requires tqdm, installed with ``pip install pyensembl[progress]``.
+        show_progress displays progress bars while the GTF database is filled
+        and sequence files are read.
         """
         if overwrite:
             self.clear_cache()  # Genes etc. may come from the old indexes.
         if self.requires_gtf:
             self.db.connect_or_create(overwrite=overwrite, show_progress=show_progress)
         if self.requires_transcript_fasta:
-            self.transcript_sequences.index(overwrite=overwrite)
+            self.transcript_sequences.index(overwrite=overwrite, show_progress=show_progress)
         if self.requires_protein_fasta:
-            self.protein_sequences.index(overwrite=overwrite)
+            self.protein_sequences.index(overwrite=overwrite, show_progress=show_progress)
         if self.requires_genome_fasta:
-            self.index_genome_fasta(overwrite=overwrite)
+            self.index_genome_fasta(overwrite=overwrite, show_progress=show_progress)
             if self.requires_gtf and not self._genome_fasta.remote:
                 missing = set()
                 for contig in self.contigs():

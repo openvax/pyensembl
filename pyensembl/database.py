@@ -239,7 +239,7 @@ class Database(object):
         Create the local database (including indexing) if it's not
         already set up. If `overwrite` is True, always re-create
         the database from scratch. `show_progress` displays row insertion
-        progress (requires tqdm).
+        progress.
 
         Returns a connection to the database.
         """

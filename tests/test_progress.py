@@ -1,4 +1,4 @@
-"""Progress display and import cost, via datacache's optional features."""
+"""Progress bars for long installation steps, and import cost."""
 
 import gzip
 import subprocess
@@ -8,6 +8,7 @@ import datacache
 
 from pyensembl import EnsemblRelease, Genome
 from pyensembl import genome_fasta, shell
+from pyensembl.fasta import parse_fasta_dictionary
 from .test_cli_output import install_arguments
 from .test_genome_fasta import DNA, run_cli, serve_downloads
 
@@ -19,7 +20,7 @@ GTF = (
 
 
 def record_progress(monkeypatch):
-    """Record show_progress passed to datacache; run without tqdm installed."""
+    """Record show_progress passed to datacache, keeping test output quiet."""
     seen = []
     for name in ("fetch_file", "db_from_dataframes_with_absolute_path"):
         real = getattr(datacache, name)
@@ -92,4 +93,28 @@ def test_cli_shows_progress_only_when_someone_can_see_it(tmp_path, monkeypatch, 
     seen = record_progress(monkeypatch)
     run_cli(monkeypatch, *install_arguments())
     assert seen == [("db_from_dataframes_with_absolute_path", True)]
+    # Reading transcript and protein FASTA files shows bars too.
+    errors = capsys.readouterr().err
+    assert "Reading mouse.ensembl.81.partial.ENSMUSG00000017167.fa" in errors
+    assert "Reading mouse.ensembl.81.partial.ENSMUSG00000017167.pep" in errors
+
+
+def test_fasta_reading_and_dna_decompression_show_progress(tmp_path, capsys):
+    fasta = tmp_path / "transcripts.fa.gz"
+    fasta.write_bytes(gzip.compress(b">t1\nACGT\n>t2\nGGCC\n"))
+    assert parse_fasta_dictionary(str(fasta), show_progress=True) == {
+        "t1": "ACGT", "t2": "GGCC",
+    }
+    assert "Reading transcripts.fa.gz" in capsys.readouterr().err
+    dna = tmp_path / "dna.fa.gz"
+    dna.write_bytes(gzip.compress(DNA))
+    genome = Genome(
+        "synthetic", "progress",
+        genome_fasta_path_or_url=str(dna),
+        cache_directory_path=str(tmp_path / "cache"),
+    )
+    genome.index_genome_fasta(show_progress=True)
+    assert "Decompressing dna.fa.gz" in capsys.readouterr().err
+    assert genome.sequence("MT", 1, 4) == "GCTA"
+    genome.close()
 
