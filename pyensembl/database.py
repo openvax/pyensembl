@@ -321,13 +321,17 @@ class Database(object):
     def connect_or_create(self, overwrite=False, show_progress=False):
         """
         Return a connection to the database if it exists, otherwise create it.
-        Overwrite the existing database if `overwrite` is True.
+        With `overwrite`, rebuild it from the GTF even if it exists.
         """
-        connection = self._get_connection()
-        if connection:
-            return connection
-        else:
-            return self.create(overwrite=overwrite, show_progress=show_progress)
+        if not overwrite:
+            connection = self._get_connection()
+            if connection:
+                return connection
+        # datacache rebuilds in place; don't hold our own reader open meanwhile,
+        # and don't answer later queries from results cached before the rebuild.
+        self.close()
+        self.clear_cache()
+        return self.create(overwrite=overwrite, show_progress=show_progress)
 
     def columns(self, table_name):
         if self._columns.get(table_name) is None:
