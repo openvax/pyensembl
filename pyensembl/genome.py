@@ -443,6 +443,8 @@ class Genome(Serializable):
         show_progress displays progress while the GTF database is filled;
         it requires tqdm, installed with ``pip install pyensembl[progress]``.
         """
+        if overwrite:
+            self.clear_cache()  # Genes etc. may come from the old indexes.
         if self.requires_gtf:
             self.db.connect_or_create(overwrite=overwrite, show_progress=show_progress)
         if self.requires_transcript_fasta:

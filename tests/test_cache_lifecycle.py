@@ -158,3 +158,34 @@ def test_database_collection_closes_connection_without_resource_warning():
         if issubclass(warning.category, ResourceWarning)
     ]
     assert not resource_warnings
+
+
+OVERWRITE_GTF = (
+    '1\ttest\tgene\t1\t12\t.\t+\t.\tgene_id "g"; gene_name "g";\n'
+    '1\ttest\ttranscript\t1\t12\t.\t+\t.\tgene_id "g"; transcript_id "t";\n'
+    '1\ttest\texon\t1\t12\t.\t+\t.\tgene_id "g"; transcript_id "t"; exon_id "e";\n'
+)
+
+
+def test_index_overwrite_rebuilds_the_database(tmp_path):
+    gtf = tmp_path / "annotation.gtf"
+    gtf.write_text(OVERWRITE_GTF)
+
+    def genome():
+        return Genome(
+            "synthetic", "overwrite",
+            gtf_path_or_url=str(gtf),
+            cache_directory_path=str(tmp_path / "cache"),
+        )
+
+    first = genome()
+    first.index()
+    assert first.gene_names() == ["g"]
+    first.close()
+    gtf.write_text(OVERWRITE_GTF.replace('gene_name "g"', 'gene_name "renamed"'))
+    second = genome()
+    second.index()  # An existing complete database is reused.
+    assert second.gene_names() == ["g"]
+    second.index(overwrite=True)  # #412: overwrite rebuilds it from the GTF.
+    assert second.gene_names() == ["renamed"]
+    second.close()

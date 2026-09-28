@@ -92,3 +92,4 @@ def test_cli_shows_progress_only_when_someone_can_see_it(tmp_path, monkeypatch, 
     seen = record_progress(monkeypatch)
     run_cli(monkeypatch, *install_arguments())
     assert seen == [("db_from_dataframes_with_absolute_path", True)]
+
