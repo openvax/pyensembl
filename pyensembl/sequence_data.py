@@ -169,7 +169,7 @@ class SequenceData(object):
                     self._stripped_index[bare] = identifier
                 self._versions[identifier] = version
 
-    def _load_or_create_fasta_dictionary_pickle(self):
+    def _load_or_create_fasta_dictionary_pickle(self, show_progress=False):
         self._fasta_dictionary = dict()
         self._stripped_index = dict()
         self._versions = dict()
@@ -194,16 +194,16 @@ class SequenceData(object):
                     )
             logger.info("Parsing sequences from FASTA file at %s", fasta_path)
 
-            fasta_dictionary_tmp = parse_fasta_dictionary(fasta_path)
+            fasta_dictionary_tmp = parse_fasta_dictionary(fasta_path, show_progress)
             self._add_to_fasta_dictionary(fasta_dictionary_tmp)
             logger.debug("Saving sequence dictionary to %s", pickle_path)
             datacache.ensure_dir(dirname(pickle_path))
             dump_pickle(fasta_dictionary_tmp, pickle_path)
 
-    def index(self, overwrite=False):
+    def index(self, overwrite=False, show_progress=False):
         if overwrite:
             self.delete_index_files()
-        self._load_or_create_fasta_dictionary_pickle()
+        self._load_or_create_fasta_dictionary_pickle(show_progress=show_progress)
 
     @property
     def fasta_dictionary(self):

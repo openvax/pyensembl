@@ -706,14 +706,8 @@ def _directory_size(path):
 
 
 def _progress_available():
-    """Show progress bars when someone watches stderr and tqdm is installed."""
-    if not sys.stderr.isatty():
-        return False
-    try:
-        import tqdm  # noqa: F401  (pyensembl[progress])
-    except ImportError:
-        return False
-    return True
+    """Show progress bars when someone is watching stderr."""
+    return sys.stderr.isatty()
 
 
 def _install(genome, only_genome_fasta=False, overwrite=False, show_progress=False):
@@ -728,7 +722,7 @@ def _install(genome, only_genome_fasta=False, overwrite=False, show_progress=Fal
         logger.info("Installing %s", description)
     if only_genome_fasta:
         genome.download_genome_fasta(overwrite=overwrite, show_progress=show_progress)
-        genome.index_genome_fasta(overwrite=overwrite)
+        genome.index_genome_fasta(overwrite=overwrite, show_progress=show_progress)
     else:
         genome.download(overwrite=overwrite, show_progress=show_progress)
         genome.index(overwrite=overwrite, show_progress=show_progress)

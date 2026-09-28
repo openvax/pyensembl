@@ -6,13 +6,12 @@ import json
 import logging
 import os
 from pathlib import Path
-import shutil
 from urllib.parse import urlsplit
 from uuid import uuid4
 
 from datacache import fetch_file
 
-from .common import _atomic_output, _publish, _remove, _staging_path
+from .common import _atomic_output, _publish, _read_progress, _remove, _staging_path
 from .normalization import normalize_chromosome
 
 logger = logging.getLogger(__name__)
@@ -110,9 +109,12 @@ class GenomeFasta:
             message += " or run: %s" % self.install_string_function()
         return MissingGenomeFastaError(message)
 
-    def _write_uncompressed(self, source_path, destination):
+    def _write_uncompressed(self, source_path, destination, show_progress=False):
         """Publish plain FASTA from a plain or gzip file, or nothing on failure."""
-        with open(source_path, "rb") as raw:
+        description = "Decompressing " + os.path.basename(urlsplit(self.source).path)
+        with open(source_path, "rb") as raw, _read_progress(
+            raw, description, show_progress
+        ) as report_progress:
             compressed = raw.peek(2)[:2] == b"\x1f\x8b"
             reader = gzip.GzipFile(fileobj=raw) if compressed else raw
             with reader:
@@ -122,8 +124,11 @@ class GenomeFasta:
                         "Genome FASTA must start with a FASTA header: %s" % self.source
                     )
                 with _atomic_output(destination) as output:
-                    output.write(first)
-                    shutil.copyfileobj(reader, output, length=_CHUNK_SIZE)
+                    chunk = first
+                    while chunk:
+                        output.write(chunk)
+                        report_progress()
+                        chunk = reader.read(_CHUNK_SIZE)
 
     def _download(self, expected_size=None, show_progress=False):
         """Fetch with datacache retries, then publish the decompressed FASTA.
@@ -144,7 +149,7 @@ class GenomeFasta:
                 expected_size=expected_size,
                 show_progress=show_progress,
             )
-            self._write_uncompressed(raw, self.materialized_path)
+            self._write_uncompressed(raw, self.materialized_path, show_progress)
         finally:
             _remove(raw)
 
@@ -165,7 +170,7 @@ class GenomeFasta:
             ):
                 logger.info("Decompressing genome FASTA %s", self.source)
                 fingerprint = _fingerprint(self.source)
-                self._write_uncompressed(self.source, self.materialized_path)
+                self._write_uncompressed(self.source, self.materialized_path, show_progress)
                 if fingerprint != _fingerprint(self.source):
                     raise ValueError(
                         "Genome FASTA changed during decompression: %s" % self.source
@@ -209,7 +214,7 @@ class GenomeFasta:
         finally:
             _remove(staged)
 
-    def open(self, overwrite=False):
+    def open(self, overwrite=False, show_progress=False):
         """Return a pyfaidx reader, building or refreshing the cached index.
 
         A reader stays in use until its files change; checking that costs a
@@ -226,7 +231,7 @@ class GenomeFasta:
         # Callers may still hold the previous reader. Atomically replaced files
         # keep its inode valid, and pyfaidx closes it once unreferenced.
         self._forget_reader()
-        path = self.prepare()
+        path = self.prepare(show_progress=show_progress)
         paths = [path] if path == self.source or self.remote else [path, self.source]
         fingerprints = self._file_fingerprints(paths)
         if fingerprints is None:

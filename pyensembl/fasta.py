@@ -19,9 +19,12 @@ Ensembl FTP server that no proper FASTA parser lets you skip over.
 """
 
 
+from contextlib import nullcontext
 from gzip import GzipFile
 import logging
+from os.path import basename
 
+from .common import _read_progress
 
 logger = logging.getLogger(__name__)
 
@@ -97,20 +100,23 @@ class FastaParser(object):
         self.current_id = None
         self.current_lines = []
 
-    def read_file(self, fasta_path):
+    def read_file(self, fasta_path, show_progress=False):
         """
         Read the contents of a FASTA file into a dictionary
         """
         fasta_dictionary = {}
-        for identifier, sequence in self.iterate_over_file(fasta_path):
+        for identifier, sequence in self.iterate_over_file(fasta_path, show_progress):
             fasta_dictionary[identifier] = sequence
         return fasta_dictionary
 
-    def iterate_over_file(self, fasta_path):
+    def iterate_over_file(self, fasta_path, show_progress=False):
         """
         Generator that yields identifiers paired with sequences.
         """
-        with self._open(fasta_path) as f:
+        description = "Reading " + basename(fasta_path)
+        with open(fasta_path, "rb") as raw, _read_progress(
+            raw, description, show_progress
+        ) as report_progress, self._open(fasta_path, raw) as f:
             for line in f:
                 line = line.rstrip()
 
@@ -121,6 +127,7 @@ class FastaParser(object):
                 first_char = line[0:1]
 
                 if first_char == b">":
+                    report_progress()
                     id_and_seq = self._read_header(line)
                     if id_and_seq is not None:
                         yield id_and_seq
@@ -136,14 +143,13 @@ class FastaParser(object):
         if id_and_seq is not None:
             yield id_and_seq
 
-    def _open(self, fasta_path):
+    def _open(self, fasta_path, raw):
         """
-        Open either a text file or compressed gzip file as a stream of bytes.
+        Read an open text or gzip-compressed file as a stream of bytes.
         """
         if fasta_path.endswith("gz") or fasta_path.endswith("gzip"):
-            return GzipFile(fasta_path, "rb")
-        else:
-            return open(fasta_path, "rb")
+            return GzipFile(fileobj=raw, mode="rb")
+        return nullcontext(raw)
 
     def _current_entry(self):
         # when we hit a new entry, if this isn't the first
@@ -168,7 +174,7 @@ class FastaParser(object):
         return previous_entry
 
 
-def parse_fasta_dictionary(fasta_path):
+def parse_fasta_dictionary(fasta_path, show_progress=False):
     """
     Given a path to a FASTA (or compressed FASTA) file, returns a dictionary
     mapping its sequence identifiers to sequences.
@@ -178,7 +184,10 @@ def parse_fasta_dictionary(fasta_path):
     fasta_path : str
         Path to the FASTA file.
 
+    show_progress : bool, optional
+        Display a progress bar while reading.
+
     Returns dictionary from string identifiers to string sequences.
     """
     parser = FastaParser()
-    return parser.read_file(fasta_path)
+    return parser.read_file(fasta_path, show_progress=show_progress)

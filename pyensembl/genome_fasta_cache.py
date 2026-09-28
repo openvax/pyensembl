@@ -302,7 +302,7 @@ class SharedGenomeFasta(GenomeFasta):
         if not download or (not overwrite and self._is_registered()):
             # Installed and registered DNA needs no lock or write, so a
             # read-only cache can repeat downloads like annotation downloads.
-            return super().prepare()
+            return super().prepare(show_progress=show_progress)
         if self.key is None or overwrite:
             identity = _remote_identity(self.source)
             self._select(_identity_key(identity), identity)

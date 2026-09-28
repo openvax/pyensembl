@@ -66,6 +66,22 @@ def _atomic_output(path, mode="wb"):
         _remove(staged)
 
 
+@contextmanager
+def _read_progress(raw, description, enabled):
+    """Yield a callable that reports how much of an open binary file was read."""
+    if not enabled:
+        yield lambda: None
+        return
+    from tqdm.auto import tqdm
+
+    total = os.fstat(raw.fileno()).st_size
+    with tqdm(
+        total=total, desc=description, unit="B", unit_scale=True, unit_divisor=1024,
+        leave=False,
+    ) as bar:
+        yield lambda: bar.update(raw.tell() - bar.n)
+
+
 def dump_pickle(obj, filepath):
     # Atomic, so an interrupted write never leaves a truncated index behind.
     with _atomic_output(filepath) as f:
