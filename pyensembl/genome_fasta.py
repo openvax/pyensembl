@@ -11,6 +11,7 @@ from urllib.parse import urlsplit
 from datacache import FileValidationError, fetch_file
 
 from .common import _atomic_output, _publish, _read_progress, _remove, _staging_path
+from .download_cache import DOWNLOAD_TIMEOUT
 from .normalization import normalize_chromosome
 
 logger = logging.getLogger(__name__)
@@ -145,7 +146,7 @@ class GenomeFasta:
         options = dict(
             destination=raw,
             raw=True,
-            timeout=3600,
+            timeout=DOWNLOAD_TIMEOUT,
             expected_size=expected_size,
             show_progress=show_progress,
         )

@@ -23,6 +23,9 @@ logger = logging.getLogger(__name__)
 
 CACHE_BASE_SUBDIR = "pyensembl"
 CACHE_DIR_ENV_KEY = "PYENSEMBL_CACHE_DIR"
+# Seconds without any data before a download attempt fails and datacache
+# retries (resuming DNA downloads). Not a limit on total download time.
+DOWNLOAD_TIMEOUT = 300
 
 
 def cache_subdirectory(
@@ -255,7 +258,7 @@ class DownloadCache(object):
                 url,
                 destination=cached_path,
                 force=True,
-                timeout=3600,
+                timeout=DOWNLOAD_TIMEOUT,
                 show_progress=show_progress,
             )
         elif missing:

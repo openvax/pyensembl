@@ -390,7 +390,8 @@ retry transient HTTP failures and are checked against the upstream size, and
 installed releases work offline. An interrupted Ensembl DNA download resumes
 where it stopped the next time you install; datacache appends only bytes that
 Ensembl's server confirms come from the same file (its ETag). Resuming needs a
-POSIX system; on Windows an interrupted download starts over.
+POSIX system; on Windows an interrupted download starts over. A download that
+receives no data for five minutes is retried.
 
 Reads take no locks and write nothing, so a fully installed and indexed cache
 can be read-only for other users. A download or index build locks only the
