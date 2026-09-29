@@ -20,7 +20,7 @@ import re
 import sys
 
 from .database import is_complete_database
-from .download_cache import DownloadCache
+from .download_cache import cache_root
 from .ensembl_release import EnsemblRelease
 from .ensembl_versions import MAX_ENSEMBL_RELEASE
 from .genome import Genome
@@ -28,9 +28,7 @@ from .genome_fasta import GenomeFasta
 from .genome_fasta_cache import (
     canonical_source_options,
     dna_cache_lock,
-    dna_cache_root,
     prune_genome_fastas,
-    shared_dna_root,
 )
 from .reference_name import find_species_by_reference, normalize_reference_name
 from .species import Species, find_species_by_name
@@ -411,11 +409,9 @@ def format_installed_genomes(check_genome_fasta=False, use_color=None):
             _display_path(directory),
         ))
     rows.sort(key=lambda row: (row[0], row[1], int(row[2])))
-    # Custom genomes (e.g. install --gtf ...) live beside Ensembl releases,
-    # except in Windows' default layout, where each cache has its own root.
-    root = dna_cache_root().parent
-    nested = shared_dna_root(DownloadCache("r", "a").cache_directory_path) is not None
-    for reference in _subdirectories(root) if nested else []:
+    # Custom genomes (e.g. install --gtf ...) live beside Ensembl releases.
+    root = Path(cache_root())
+    for reference in _subdirectories(root):
         if reference.name == "dna_cache":
             continue
         for directory in _subdirectories(reference):
@@ -435,7 +431,7 @@ def format_installed_genomes(check_genome_fasta=False, use_color=None):
                 _display_path(directory),
             ))
     if not rows:
-        return "No genomes installed" + (" in %s" % _display_path(root) if nested else "")
+        return "No genomes installed in %s" % _display_path(root)
     header = ("Species", "Assembly", "Release", "Annotation", "Reference DNA", "Location")
     return _format_table(header, rows, use_color)
 

@@ -7,9 +7,8 @@ import logging
 import os
 from pathlib import Path
 from urllib.parse import urlsplit
-from uuid import uuid4
 
-from datacache import fetch_file
+from datacache import FileValidationError, fetch_file
 
 from .common import _atomic_output, _publish, _read_progress, _remove, _staging_path
 from .normalization import normalize_chromosome
@@ -133,22 +132,36 @@ class GenomeFasta:
     def _download(self, expected_size=None, show_progress=False):
         """Fetch with datacache retries, then publish the decompressed FASTA.
 
-        expected_size describes the downloaded (possibly compressed) bytes.
+        expected_size describes the downloaded (compressed) bytes. When it is
+        known, an interrupted download resumes where it stopped, even in a
+        later process: datacache appends only bytes the server confirms are
+        from the same file (strong ETag), then checks the size.
         """
         self.directory.mkdir(parents=True, exist_ok=True)
-        # Keep the URL's suffix so datacache stores the bytes unchanged.
+        # A stable name lets a later attempt find the partial download, and a
+        # complete one that was interrupted before decompression.
         name = os.path.basename(urlsplit(self.source).path) or "download"
-        raw = self.directory / (".download-%s-%s" % (uuid4().hex, name))
+        raw = self.directory / ("download-" + name)
+        options = dict(
+            destination=raw,
+            raw=True,
+            timeout=3600,
+            expected_size=expected_size,
+            show_progress=show_progress,
+        )
+        resume = expected_size is not None and os.name == "posix"
         try:
             logger.info("Downloading genome FASTA %s", self.source)
-            fetch_file(
-                self.source,
-                destination=raw,
-                force=True,
-                timeout=3600,
-                expected_size=expected_size,
-                show_progress=show_progress,
-            )
+            try:
+                fetch_file(self.source, resume=resume, **options)
+            except FileValidationError as error:
+                if not resume or "strong ETag" not in error.reason:
+                    raise
+                logger.warning(
+                    "Cannot resume %s (no strong ETag); downloading it in full",
+                    self.source,
+                )
+                fetch_file(self.source, **options)
             self._write_uncompressed(raw, self.materialized_path, show_progress)
         finally:
             _remove(raw)

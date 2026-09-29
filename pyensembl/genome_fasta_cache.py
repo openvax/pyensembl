@@ -23,7 +23,7 @@ from urllib.request import Request, urlopen
 
 from filelock import FileLock, Timeout
 
-from .download_cache import DownloadCache
+from .download_cache import cache_root
 from .common import _remove
 from .genome_fasta import GenomeFasta, _read_json, _write_json
 
@@ -44,8 +44,8 @@ _DNA_FILENAME = re.compile(
 
 
 def dna_cache_root():
-    """Shared DNA root under the same global cache as annotation data."""
-    return Path(DownloadCache(None, None).cache_directory_path) / "dna_cache"
+    """Shared DNA root, beside every genome's cache directory."""
+    return Path(cache_root()) / "dna_cache"
 
 
 def shared_dna_root(cache_directory):
