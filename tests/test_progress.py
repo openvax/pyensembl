@@ -99,6 +99,22 @@ def test_cli_shows_progress_only_when_someone_can_see_it(tmp_path, monkeypatch, 
     assert "Reading mouse.ensembl.81.partial.ENSMUSG00000017167.pep" in errors
 
 
+def test_gtf_parsing_shows_progress(tmp_path, capsys):
+    gtf = tmp_path / "annotation.gtf"
+    gtf.write_text(GTF)
+    genome = Genome(
+        "synthetic", "gtf_progress",
+        gtf_path_or_url=str(gtf),
+        cache_directory_path=str(tmp_path / "cache"),
+    )
+    genome.index(show_progress=True)
+    errors = capsys.readouterr().err
+    assert "Reading annotation.gtf" in errors  # gtfparse 2.9 progress callback
+    assert "Parsing GTF attributes" in errors
+    assert genome.gene_names() == ["g"]
+    genome.close()
+
+
 def test_fasta_reading_and_dna_decompression_show_progress(tmp_path, capsys):
     fasta = tmp_path / "transcripts.fa.gz"
     fasta.write_bytes(gzip.compress(b">t1\nACGT\n>t2\nGGCC\n"))

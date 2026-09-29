@@ -438,8 +438,8 @@ class Genome(Serializable):
         generate the GTF database and save efficient representation of
         FASTA sequence files.
 
-        show_progress displays progress bars while the GTF database is filled
-        and sequence files are read.
+        show_progress displays progress bars while the GTF is read, the database
+        is filled, and sequence files are read.
         """
         if overwrite:
             self.clear_cache()  # Genes etc. may come from the old indexes.

@@ -174,7 +174,8 @@ that release to finish (add `--species` for non-human genomes; custom
 genomes need their original install options).
 
 `install` prints progress on stderr, one line per step, with progress bars for
-downloads, database builds, and reading sequence files when run in a terminal.
+downloads, reading GTF and sequence files, and database builds when run in a
+terminal.
 Add `--verbose` (`-v`) to see every download and database step. In Python, pass
 `show_progress=True` to `download()`, `index()`, `download_genome_fasta()`, or
 `index_genome_fasta()`.
