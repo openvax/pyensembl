@@ -40,6 +40,7 @@ class Species(Serializable):
         reference_assemblies,
         division="vertebrates",
         ensembl_genomes=False,
+        ensembl_names=None,
     ):
         """
         Create a Species object from the given arguments and enter into
@@ -51,9 +52,11 @@ class Species(Serializable):
             reference_assemblies=reference_assemblies,
             division=division,
             ensembl_genomes=ensembl_genomes,
+            ensembl_names=ensembl_names,
         )
         cls._latin_names_to_species[species.latin_name] = species
-        for synonym in synonyms:
+        # Names Ensembl later published the species under also find it.
+        for synonym in list(synonyms) + list(species.ensembl_names.values()):
             if synonym in cls._common_names_to_species:
                 raise ValueError(
                     "Can't use synonym '%s' for both %s and %s"
@@ -103,6 +106,7 @@ class Species(Serializable):
         reference_assemblies={},
         division="vertebrates",
         ensembl_genomes=False,
+        ensembl_names=None,
     ):
         """
         Parameters
@@ -127,6 +131,10 @@ class Species(Serializable):
             numbering (1..MAX_ENSEMBL_GENOMES_RELEASE). If False (default)
             the species is served from the main Ensembl FTP at
             ``ftp.ensembl.org``.
+
+        ensembl_names : dict, optional
+            Names Ensembl publishes the species under from a given release on,
+            when it renamed it, e.g. {100: "canis_lupus_familiaris"}.
         """
         if division not in self.VALID_DIVISIONS:
             raise ValueError(
@@ -138,6 +146,7 @@ class Species(Serializable):
         self.reference_assemblies = reference_assemblies
         self.division = division
         self.ensembl_genomes = ensembl_genomes
+        self.ensembl_names = dict(ensembl_names or {})
         self._release_to_genome = {}
         for genome_name, (start, end) in self.reference_assemblies.items():
             for i in range(start, end + 1):
@@ -147,6 +156,14 @@ class Species(Serializable):
                         % (i, latin_name)
                     )
                 self._release_to_genome[i] = genome_name
+
+    def ensembl_name(self, release):
+        """The name of this species' directories and files in an Ensembl release."""
+        name = self.latin_name
+        for first_release, renamed in sorted(self.ensembl_names.items()):
+            if release >= first_release:
+                name = renamed
+        return name
 
     @property
     def is_plant(self):
@@ -199,6 +216,7 @@ class Species(Serializable):
             and self.reference_assemblies == other.reference_assemblies
             and self.division == other.division
             and self.ensembl_genomes == other.ensembl_genomes
+            and self.ensembl_names == other.ensembl_names
         )
 
     def to_dict(self):
@@ -216,6 +234,7 @@ class Species(Serializable):
                 frozenset(self.reference_assemblies.items()),
                 self.division,
                 self.ensembl_genomes,
+                frozenset(self.ensembl_names.items()),
             )
         )
 
@@ -229,8 +248,9 @@ def normalize_species_name(name):
     lower_name = name.lower().strip()
 
     # if given a common name such as "human", look up its latin equivalent
-    if lower_name in Species._common_names_to_species:
-        return Species._common_names_to_species[lower_name].latin_name
+    for candidate in (lower_name, lower_name.replace(" ", "_")):
+        if candidate in Species._common_names_to_species:
+            return Species._common_names_to_species[candidate].latin_name
 
     return lower_name.replace(" ", "_")
 
@@ -283,8 +303,11 @@ mouse = Species.register(
 dog = Species.register(
     latin_name="canis_familiaris",
     synonyms=["dog"],
-    # Later releases publish dog as canis_lupus_familiaris.
-    reference_assemblies={"CanFam3.1": (75, 99)},
+    reference_assemblies={
+        "CanFam3.1": (75, 104),
+        "ROS_Cfam_1.0": (105, MAX_ENSEMBL_RELEASE),
+    },
+    ensembl_names={100: "canis_lupus_familiaris"},
 )
 
 cat = Species.register(

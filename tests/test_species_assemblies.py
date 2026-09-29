@@ -13,7 +13,7 @@ import urllib.request
 import pytest
 
 from pyensembl import EnsemblRelease
-from pyensembl.species import Species
+from pyensembl.species import Species, find_species_by_name
 
 
 @pytest.mark.parametrize(
@@ -37,6 +37,13 @@ from pyensembl.species import Species
         ("naked_mole_rat", 110,
          "Heterocephalus_glaber_female.Naked_mole-rat_maternal.110.gtf.gz",
          "Heterocephalus_glaber_female.Naked_mole-rat_maternal.cdna.all.fa.gz"),
+        # #407: Ensembl renamed dog to canis_lupus_familiaris in release 100.
+        ("dog", 99, "Canis_familiaris.CanFam3.1.99.gtf.gz",
+         "Canis_familiaris.CanFam3.1.cdna.all.fa.gz"),
+        ("dog", 100, "Canis_lupus_familiaris.CanFam3.1.100.gtf.gz",
+         "Canis_lupus_familiaris.CanFam3.1.cdna.all.fa.gz"),
+        ("dog", 105, "Canis_lupus_familiaris.ROS_Cfam_1.0.105.gtf.gz",
+         "Canis_lupus_familiaris.ROS_Cfam_1.0.cdna.all.fa.gz"),
     ],
 )
 def test_assembly_transitions_name_archived_files(species, release, gtf, cdna):
@@ -48,7 +55,7 @@ def test_assembly_transitions_name_archived_files(species, release, gtf, cdna):
 @pytest.mark.parametrize(
     "species,release",
     [
-        ("dog", 100),  # Later dog releases use canis_lupus_familiaris.
+        ("syrian_hamster", 89),  # Added in release 90.
         ("meriones_unguiculatus", 95),  # Added in release 96.
         ("mus_musculus_balbcj", 87),  # 87-91 kept release 86's filenames.
     ],
@@ -58,14 +65,26 @@ def test_releases_missing_from_the_archive_are_rejected(species, release):
         EnsemblRelease(release, species=species)
 
 
+def test_renamed_species_are_found_by_every_name():
+    dog = find_species_by_name("dog")
+    for name in ("canis_familiaris", "canis_lupus_familiaris", "Canis lupus familiaris"):
+        assert find_species_by_name(name) is dog
+    assert dog.ensembl_name(99) == "canis_familiaris"
+    assert dog.ensembl_name(100) == "canis_lupus_familiaris"
+
+
 def _boundary_urls():
     for species in Species._latin_names_to_species.values():
+        releases = set()
         for start, end in species.reference_assemblies.values():
-            for release in sorted({start, end}):
-                genome = EnsemblRelease(release, species=species)
-                yield genome.gtf_url
-                yield genome.transcript_fasta_urls[0]
-                yield genome.protein_fasta_urls[0]
+            releases |= {start, end}
+        for renamed_in in species.ensembl_names:  # Both sides of a rename.
+            releases |= {renamed_in - 1, renamed_in}
+        for release in sorted(releases):
+            genome = EnsemblRelease(release, species=species)
+            yield genome.gtf_url
+            yield genome.transcript_fasta_urls[0]
+            yield genome.protein_fasta_urls[0]
 
 
 def _missing(url):
