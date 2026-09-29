@@ -10,8 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from contextlib import contextmanager
 import logging
-from os.path import split, join, exists, splitext
+from os.path import basename, split, join, exists, splitext
 import sqlite3
 
 import datacache
@@ -26,6 +27,32 @@ DATABASE_SCHEMA_VERSION = 3
 
 
 logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def _gtf_progress(gtf_path, enabled):
+    """Yield a gtfparse progress callback drawing one bar per parsing stage."""
+    if not enabled:
+        yield None
+        return
+    from tqdm.auto import tqdm
+
+    labels = {
+        "read": "Reading " + basename(gtf_path),
+        "attributes": "Parsing GTF attributes",
+        "convert": "Converting GTF rows",
+    }
+    with tqdm(unit="rows", leave=False) as bar:
+
+        def report(stage, completed, total):
+            label = labels.get(stage, stage)
+            if bar.desc != label:
+                bar.reset(total=total)
+                bar.set_description_str(label)
+            bar.total = total  # None until gtfparse knows the row count.
+            bar.update(completed - bar.n)
+
+        yield report
 
 
 def is_complete_database(path):
@@ -247,7 +274,9 @@ class Database(object):
         datacache.ensure_dir(self.cache_directory_path)
 
         df = self._load_gtf_as_dataframe(
-            usecols=self.restrict_gtf_columns, features=self.restrict_gtf_features
+            usecols=self.restrict_gtf_columns,
+            features=self.restrict_gtf_features,
+            show_progress=show_progress,
         )
         if hasattr(df, "to_pandas"):
             df = df.to_pandas()
@@ -657,7 +686,7 @@ class Database(object):
             )
         return loci[0]
 
-    def _load_gtf_as_dataframe(self, usecols=None, features=None):
+    def _load_gtf_as_dataframe(self, usecols=None, features=None, show_progress=False):
         """
         Parse this genome source's GTF file and load it as a Pandas DataFrame
         """
@@ -666,29 +695,31 @@ class Database(object):
         from gtfparse import GENCODE_BIOTYPE_ALIASES, create_missing_features, read_gtf
 
         logger.info("Reading GTF from %s", self.gtf_path)
-        df = read_gtf(
-            self.gtf_path,
-            column_converters={
-                "seqname": normalize_chromosome,
-                "strand": normalize_strand,
-            },
-            # GENCODE GTFs use gene_type / transcript_type where Ensembl uses
-            # gene_biotype / transcript_biotype. attribute_aliases (gtfparse
-            # 2.7.0+) renames the GENCODE columns onto the Ensembl names at
-            # parse time so the rest of pyensembl can stay Ensembl-centric.
-            attribute_aliases=GENCODE_BIOTYPE_ALIASES,
-            # Opt out of gtfparse's Int64 cast for *_version columns: when
-            # any row is missing a version (e.g. start_codon rows that
-            # don't carry transcript_version), pandas' nullable Int64
-            # routes through float on the sqlite write path and stores as
-            # "7.0" text, which then breaks our `int(result[0])` parse.
-            # pyensembl handles the string→int conversion itself on the
-            # `*.version` property side.
-            cast_version_columns=False,
-            infer_biotype_column=True,
-            usecols=usecols,
-            features=features,
-        )
+        with _gtf_progress(self.gtf_path, show_progress) as progress_callback:
+            df = read_gtf(
+                self.gtf_path,
+                column_converters={
+                    "seqname": normalize_chromosome,
+                    "strand": normalize_strand,
+                },
+                # GENCODE GTFs use gene_type / transcript_type where Ensembl uses
+                # gene_biotype / transcript_biotype. attribute_aliases (gtfparse
+                # 2.7.0+) renames the GENCODE columns onto the Ensembl names at
+                # parse time so the rest of pyensembl can stay Ensembl-centric.
+                attribute_aliases=GENCODE_BIOTYPE_ALIASES,
+                # Opt out of gtfparse's Int64 cast for *_version columns: when
+                # any row is missing a version (e.g. start_codon rows that
+                # don't carry transcript_version), pandas' nullable Int64
+                # routes through float on the sqlite write path and stores as
+                # "7.0" text, which then breaks our `int(result[0])` parse.
+                # pyensembl handles the string→int conversion itself on the
+                # `*.version` property side.
+                cast_version_columns=False,
+                infer_biotype_column=True,
+                usecols=usecols,
+                features=features,
+                progress_callback=progress_callback,
+            )
 
         column_names = set(df.columns)
         expect_gene_feature = features is None or "gene" in features
