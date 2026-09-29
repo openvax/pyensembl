@@ -52,7 +52,7 @@ def normalize_release_properties(ensembl_release, species):
     ensembl_release = check_release_number(ensembl_release)
     species = _resolve_species(species)
     reference_name = species.which_reference(ensembl_release)
-    return ensembl_release, species.latin_name, reference_name
+    return ensembl_release, species.ensembl_name(ensembl_release), reference_name
 
 
 # GTF annotation file example: Homo_sapiens.GRCh38.gtf.gz
@@ -97,14 +97,14 @@ def make_gtf_url(ensembl_release, species, server=None):
         subdir = GENOMES_GTF_SUBDIR_TEMPLATE % {
             "release": check_release_number(ensembl_release),
             "division": species.division,
-            "species": species.latin_name,
+            "species": species.ensembl_name(check_release_number(ensembl_release)),
         }
     else:
         if server is None:
             server = ENSEMBL_FTP_SERVER
         subdir = GTF_SUBDIR_TEMPLATE % {
             "release": check_release_number(ensembl_release),
-            "species": species.latin_name,
+            "species": species.ensembl_name(check_release_number(ensembl_release)),
         }
     filename = make_gtf_filename(
         ensembl_release=ensembl_release, species=species
