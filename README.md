@@ -120,10 +120,14 @@ PYENSEMBL_BENCHMARKS=1 ./test.sh tests/test_timings.py -s
 
 ## Cache Location
 
-By default, PyEnsembl uses the platform-specific `Cache` folder
-and caches the files into the `pyensembl` sub-directory.
-You can override this default by setting the environment key `PYENSEMBL_CACHE_DIR`
-as your preferred location for caching:
+PyEnsembl keeps all of its data under one directory, with a subdirectory per
+genome (`<reference>/<annotation><version>`, e.g. `GRCh38/ensembl81`). By
+default this is the platform cache directory that datacache chooses:
+`~/.cache/pyensembl` on Linux, `~/Library/Caches/pyensembl` on macOS, and
+`%LOCALAPPDATA%\pyensembl\pyensembl\Cache` on Windows. Releases that
+PyEnsembl 2.16 or earlier installed on Windows stay in their old per-genome
+directories and keep working. To use another location, set
+`PYENSEMBL_CACHE_DIR`; the data then goes in its `pyensembl` subdirectory:
 
 ```sh
 export PYENSEMBL_CACHE_DIR=/custom/cache/dir
@@ -167,8 +171,7 @@ queries need no network access or setup. `not indexed` means the files are
 downloaded but the first query would spend minutes indexing them, and
 `incomplete` means some downloads are missing. Run `pyensembl install` for
 that release to finish (add `--species` for non-human genomes; custom
-genomes need their original install options). Custom genomes are listed on
-Linux and macOS, or wherever `PYENSEMBL_CACHE_DIR` is set.
+genomes need their original install options).
 
 `install` prints progress on stderr, one line per step, with progress bars for
 downloads, database builds, and reading sequence files when run in a terminal.
@@ -384,7 +387,11 @@ Ensembl's Unix checksums are not cryptographic hashes. If the metadata is
 incomplete, the assembly directory ends in `-unverified` and each release keeps
 its own copy. Local FASTA files and custom mirrors are never shared. Downloads
 retry transient HTTP failures and are checked against the upstream size, and
-installed releases work offline.
+installed releases work offline. An interrupted Ensembl DNA download resumes
+where it stopped the next time you install; datacache appends only bytes that
+Ensembl's server confirms come from the same file (its ETag). Resuming needs a
+POSIX system; on Windows an interrupted download starts over. A download that
+receives no data for five minutes is retried.
 
 Reads take no locks and write nothing, so a fully installed and indexed cache
 can be read-only for other users. A download or index build locks only the
@@ -392,11 +399,6 @@ file it writes; registering, deleting, and pruning releases briefly lock the
 whole cache. Files follow your umask, as do lock files on Python 3.10+, so use
 `umask 002` or default ACLs for a group-shared cache. `dna_cache` itself may be
 a symlink, e.g. to a larger disk.
-
-Sharing needs release caches next to `dna_cache`. That is the case on Linux
-and macOS, and whenever `PYENSEMBL_CACHE_DIR` is set. Windows' default cache
-layout is different, so there each release keeps its own DNA unless
-`PYENSEMBL_CACHE_DIR` is set.
 
 ## Upgrading from 2.11.0
 

@@ -11,7 +11,8 @@
 # limitations under the License.
 
 
-from os.path import join, exists, split, abspath, isdir
+from os import environ
+from os.path import join, exists, split, abspath, isdir, normpath
 from shutil import copy2, rmtree
 import logging
 
@@ -22,6 +23,9 @@ logger = logging.getLogger(__name__)
 
 CACHE_BASE_SUBDIR = "pyensembl"
 CACHE_DIR_ENV_KEY = "PYENSEMBL_CACHE_DIR"
+# Seconds without any data before a download attempt fails and datacache
+# retries (resuming DNA downloads). Not a limit on total download time.
+DOWNLOAD_TIMEOUT = 300
 
 
 def cache_subdirectory(
@@ -41,6 +45,33 @@ def cache_subdirectory(
     reference_dir = join(CACHE_BASE_SUBDIR, reference_name)
     annotation_dir = "%s%s" % (annotation_name, annotation_version)
     return join(reference_dir, annotation_dir)
+
+
+def cache_root():
+    """The directory holding all of PyEnsembl's data; nothing is created.
+
+    $PYENSEMBL_CACHE_DIR/pyensembl when that variable is set, otherwise the
+    platform cache directory from datacache, e.g. ~/.cache/pyensembl,
+    ~/Library/Caches/pyensembl, or %LOCALAPPDATA%\\pyensembl\\pyensembl\\Cache.
+    Every genome's directory is <root>/<reference>/<annotation><version>.
+    """
+    environment_root = environ.get(CACHE_DIR_ENV_KEY)
+    if environment_root:
+        return join(environment_root, CACHE_BASE_SUBDIR)
+    return datacache.get_cache_root(CACHE_BASE_SUBDIR)
+
+
+def _default_cache_directory(reference_name, annotation_name, annotation_version):
+    subdirectory = cache_subdirectory(reference_name, annotation_name, annotation_version)
+    directory = join(cache_root(), subdirectory[len(CACHE_BASE_SUBDIR) + 1:])
+    if not environ.get(CACHE_DIR_ENV_KEY):
+        # Before 2.17, each genome asked appdirs for its own directory. That
+        # matches the layout above on Linux and macOS, but on Windows gave
+        # unrelated paths; keep using a genome already installed there.
+        legacy = datacache.get_data_dir(subdir=subdirectory)
+        if normpath(legacy) != normpath(directory) and isdir(legacy) and not isdir(directory):
+            return legacy
+    return directory
 
 
 class MissingRemoteFile(Exception):
@@ -118,10 +149,8 @@ class DownloadCache(object):
                 annotation_name=annotation_name,
                 annotation_version=annotation_version,
             )
-
-            # If `CACHE_DIR_ENV_KEY` is set, the cache will be saved there
-            self._cache_directory_path = datacache.get_data_dir(
-                subdir=self.cache_subdirectory, envkey=CACHE_DIR_ENV_KEY
+            self._cache_directory_path = _default_cache_directory(
+                reference_name, annotation_name, annotation_version
             )
 
         self.decompress_on_download = decompress_on_download
@@ -229,7 +258,7 @@ class DownloadCache(object):
                 url,
                 destination=cached_path,
                 force=True,
-                timeout=3600,
+                timeout=DOWNLOAD_TIMEOUT,
                 show_progress=show_progress,
             )
         elif missing:

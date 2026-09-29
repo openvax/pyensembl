@@ -31,8 +31,9 @@ def serve_downloads(monkeypatch, directory, payload):
     """
     calls = []
 
-    def fetch(url, **kwargs):
+    def fetch(url, resume=False, **kwargs):
         calls.append(url)
+        # file:// URLs cannot resume; tests of resumption serve real HTTP.
         served = Path(directory) / "served" / uuid4().hex
         served.mkdir(parents=True)
         path = served / os.path.basename(urlsplit(url).path)
