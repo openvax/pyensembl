@@ -310,6 +310,38 @@ dog = Species.register(
     ensembl_names={100: "canis_lupus_familiaris"},
 )
 
+# Other dog genomes Ensembl publishes, with ranges checked against its
+# archive (the dingo from release 95; breed assemblies from 99-107).
+dingo = Species.register(
+    latin_name="canis_lupus_dingo",
+    synonyms=["dingo"],
+    reference_assemblies={"ASM325472v1": (95, MAX_ENSEMBL_RELEASE)},
+)
+
+dog_basenji = Species.register(
+    latin_name="canis_lupus_familiarisbasenji",
+    synonyms=["dog_basenji", "basenji"],
+    reference_assemblies={"Basenji_breed-1.1": (99, MAX_ENSEMBL_RELEASE)},
+)
+
+dog_great_dane = Species.register(
+    latin_name="canis_lupus_familiarisgreatdane",
+    synonyms=["dog_great_dane", "great_dane"],
+    reference_assemblies={"UMICH_Zoey_3.1": (99, MAX_ENSEMBL_RELEASE)},
+)
+
+dog_boxer = Species.register(
+    latin_name="canis_lupus_familiarisboxer",
+    synonyms=["dog_boxer", "boxer"],
+    reference_assemblies={"Dog10K_Boxer_Tasha": (105, MAX_ENSEMBL_RELEASE)},
+)
+
+dog_german_shepherd = Species.register(
+    latin_name="canis_lupus_familiarisgsd",
+    synonyms=["dog_german_shepherd", "german_shepherd"],
+    reference_assemblies={"UU_Cfam_GSD_1.0": (107, MAX_ENSEMBL_RELEASE)},
+)
+
 cat = Species.register(
     latin_name="felis_catus",
     synonyms=["cat"],

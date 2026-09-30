@@ -65,6 +65,22 @@ def test_releases_missing_from_the_archive_are_rejected(species, release):
         EnsemblRelease(release, species=species)
 
 
+@pytest.mark.parametrize(
+    "species,release,gtf",
+    [
+        ("dingo", 95, "Canis_lupus_dingo.ASM325472v1.95.gtf.gz"),
+        ("dog_basenji", 99, "Canis_lupus_familiarisbasenji.Basenji_breed-1.1.99.gtf.gz"),
+        ("dog_great_dane", 99, "Canis_lupus_familiarisgreatdane.UMICH_Zoey_3.1.99.gtf.gz"),
+        ("dog_boxer", 105, "Canis_lupus_familiarisboxer.Dog10K_Boxer_Tasha.105.gtf.gz"),
+        ("dog_german_shepherd", 107, "Canis_lupus_familiarisgsd.UU_Cfam_GSD_1.0.107.gtf.gz"),
+    ],
+)
+def test_every_dog_genome_ensembl_publishes(species, release, gtf):
+    assert os.path.basename(EnsemblRelease(release, species=species).gtf_url) == gtf
+    with pytest.raises(ValueError, match="No genome for"):
+        EnsemblRelease(release - 1, species=species)
+
+
 def test_renamed_species_are_found_by_every_name():
     dog = find_species_by_name("dog")
     for name in ("canis_familiaris", "canis_lupus_familiaris", "Canis lupus familiaris"):
