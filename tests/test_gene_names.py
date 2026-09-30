@@ -2,11 +2,7 @@
 Test all methods which return collections of gene names that aren't converting
 from some other type of name or ID.
 """
-from pyensembl import genome_for_reference_name
-
-from .common import run_multiple_genomes
-
-grch38 = genome_for_reference_name("GRCh38")
+from .common import eq_, grch38, run_multiple_genomes
 
 KNOWN_GENE_NAMES = [
     "TP53",
@@ -33,17 +29,10 @@ def test_all_gene_names(genome):
 
 
 def test_gene_names_at_locus_grch38_hla_a():
-    # chr6:29,945,884 is a position for HLA-A. Ensembl release 114
-    # introduced overlapping gene POLR1HASP at the same locus, so accept
-    # either HLA-A alone or the HLA-A + POLR1HASP pair.
+    # chr6:29,945,884 is a position for HLA-A.
     # http://useast.ensembl.org/Homo_sapiens/Gene/
     # Summary?db=core;g=ENSG00000206503;r=6:29941260-29945884
-    names = set(grch38.gene_names_at_locus(6, 29945884))
-    assert "HLA-A" in names, "Expected gene name HLA-A, got: %s" % (names,)
-    if len(names) > 1:
-        assert names == {"HLA-A", "POLR1HASP"}, (
-            "Expected HLA-A alone or HLA-A + POLR1HASP, got: %s" % (names,)
-        )
+    eq_(grch38.gene_names_at_locus(6, 29945884), ["HLA-A"])
 
 
 @run_multiple_genomes()

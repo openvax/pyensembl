@@ -1,6 +1,4 @@
-from pyensembl import genome_for_reference_name
-
-grch38 = genome_for_reference_name("GRCh38")
+from .common import grch38
 
 def test_contig_names():
     contig_names = set(grch38.contigs())

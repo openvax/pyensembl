@@ -1,11 +1,12 @@
 
-from pyensembl import genome_for_reference_name, cached_release
+from pyensembl import cached_release
 
 import pytest
 
-
-grch37 = genome_for_reference_name("GRCh37")
-grch38 = genome_for_reference_name("GRCh38")
+# The releases CI installs (.github/workflows/tests.yml), pinned so other
+# releases in the local cache cannot change what the tests check (#398).
+grch37 = cached_release(75)
+grch38 = cached_release(93)
 
 major_releases = [grch37, grch38]
 

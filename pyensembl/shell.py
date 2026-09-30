@@ -272,32 +272,6 @@ def genome_fasta_status(genome, check=False):
     return _dna_status(genome.download_cache.cache_directory_path, check=check)
 
 
-def _index_is_complete(path):
-    if path.endswith(".db"):
-        return is_complete_database(path)
-    try:
-        return os.path.getsize(path) > 0
-    except OSError:
-        return False
-
-
-def _annotation_status(genome):
-    """How far a genome's annotation data is installed.
-
-    None if it has none configured, else 'missing', 'incomplete' (some files
-    but not every download), 'not indexed', or 'indexed': every source is
-    downloaded and every index complete, so queries need no network or setup.
-    """
-    sources = genome._annotation_source_paths()
-    indexes = genome._annotation_index_paths()
-    if not sources and not indexes:
-        return None
-    if not all(os.path.exists(path) for path in sources):
-        present = any(os.path.exists(path) for path in sources + indexes)
-        return "incomplete" if present else "missing"
-    return "indexed" if all(map(_index_is_complete, indexes)) else "not indexed"
-
-
 # Reference DNA bookkeeping in a genome's cache directory.
 _DNA_ENTRIES = {"genome_fasta", "genome_fasta.json", "genome_fasta_refs"}
 
@@ -383,7 +357,7 @@ def collect_all_installed_ensembl_releases():
     return sorted(
         (
             genome for genome in _ensembl_releases()
-            if _has_data(_annotation_status(genome), genome_fasta_status(genome))
+            if _has_data(genome._annotation_status(), genome_fasta_status(genome))
         ),
         key=lambda genome: (genome.species.latin_name, genome.release),
     )
@@ -396,7 +370,7 @@ def format_installed_genomes(check_genome_fasta=False, use_color=None):
     for genome in _ensembl_releases():
         directory = genome.download_cache.cache_directory_path
         ensembl_directories.add(os.path.normpath(directory))
-        annotation = _annotation_status(genome)
+        annotation = genome._annotation_status()
         dna = _dna_status(directory, check=check_genome_fasta)
         if not _has_data(annotation, dna):
             continue
@@ -708,9 +682,10 @@ def _progress_available():
 
 def _install(genome, only_genome_fasta=False, overwrite=False, show_progress=False):
     description = _genome_description(genome)
-    installed = (
-        not genome.requires_genome_fasta or genome._genome_fasta.status() == "indexed"
-    ) and (only_genome_fasta or _annotation_status(genome) in (None, "indexed"))
+    if only_genome_fasta:
+        installed = genome._genome_fasta.status() == "indexed"
+    else:
+        installed = genome.installed()
     if installed and not overwrite:
         # The steps below then only confirm that everything is in place.
         logger.info("%s is already installed", description)

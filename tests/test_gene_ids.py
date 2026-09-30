@@ -6,36 +6,28 @@ TODO: Implement tests for EnsemblRelease.gene_ids
 """
 
 from pytest import raises
-from pyensembl import ensembl_grch38, cached_release
+from pyensembl import cached_release
 
-from .common import run_multiple_genomes, eq_
+from .common import grch38, run_multiple_genomes, eq_
 
 ensembl77 = cached_release(77, "human")
 
 
 def test_gene_ids_grch38_hla_a():
     # chr6:29,945,884 is a position for HLA-A (ENSG00000206503).
-    # Ensembl release 114 introduced overlapping gene POLR1HASP
-    # (ENSG00000293508) at the same locus, so accept either HLA-A alone
-    # or the HLA-A + POLR1HASP pair.
     # http://useast.ensembl.org/Homo_sapiens/Gene/
     # Summary?db=core;g=ENSG00000206503;r=6:29941260-29945884
-    ids = set(ensembl_grch38.gene_ids_at_locus(6, 29945884))
-    assert "ENSG00000206503" in ids, "Expected HLA-A (ENSG00000206503), got: %s" % (ids,)
-    if len(ids) > 1:
-        assert ids == {"ENSG00000206503", "ENSG00000293508"}, (
-            "Expected HLA-A alone or HLA-A + POLR1HASP, got: %s" % (ids,)
-        )
+    eq_(grch38.gene_ids_at_locus(6, 29945884), ["ENSG00000206503"])
 
 
 def test_gene_ids_of_gene_name_hla_grch38():
-    hla_a_gene_ids = ensembl_grch38.gene_ids_of_gene_name("HLA-A")
+    hla_a_gene_ids = grch38.gene_ids_of_gene_name("HLA-A")
     assert "ENSG00000206503" in hla_a_gene_ids, hla_a_gene_ids
 
-    hla_b_gene_ids = ensembl_grch38.gene_ids_of_gene_name("HLA-B")
+    hla_b_gene_ids = grch38.gene_ids_of_gene_name("HLA-B")
     assert "ENSG00000234745" in hla_b_gene_ids, hla_b_gene_ids
 
-    hla_c_gene_ids = ensembl_grch38.gene_ids_of_gene_name("HLA-C")
+    hla_c_gene_ids = grch38.gene_ids_of_gene_name("HLA-C")
     assert "ENSG00000204525" in hla_c_gene_ids, hla_c_gene_ids
 
 
@@ -46,7 +38,7 @@ def test_gene_id_of_protein_id_release77():
 
 def test_gene_id_of_invalid_name():
     with raises(Exception):
-        ensembl_grch38.gene_ids_of_gene_name("A wonderous pony sees through your soul")
+        grch38.gene_ids_of_gene_name("A wonderous pony sees through your soul")
 
 
 @run_multiple_genomes()

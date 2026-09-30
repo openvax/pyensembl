@@ -3,11 +3,7 @@ Tests for methods which return collections of transcript IDs that aren't
 converting from some type of name or ID.
 """
 
-from pyensembl import genome_for_reference_name
-from .common import eq_
-from .common import run_multiple_genomes
-
-grch38 = genome_for_reference_name("GRCh38")
+from .common import eq_, grch38, run_multiple_genomes
 
 # subset of transcript IDs for HLA-A
 HLA_A_TRANSCRIPT_IDS = [

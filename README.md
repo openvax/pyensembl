@@ -102,7 +102,8 @@ Run lint and tests with:
 ```
 
 Most tests need Ensembl data installed first; `.github/workflows/tests.yml`
-lists the releases CI installs.
+lists the releases CI installs. Tests use exactly those releases, so other
+genomes in your cache do not change what they check.
 
 Species assembly ranges are checked against Ensembl's archive. After raising
 `MAX_ENSEMBL_RELEASE`, recheck every assembly boundary on the live FTP servers:
@@ -180,9 +181,18 @@ Add `--verbose` (`-v`) to see every download and database step. In Python, pass
 `show_progress=True` to `download()`, `index()`, `download_genome_fasta()`, or
 `index_genome_fasta()`.
 
-To get the installed Ensembl releases in Python:
+In Python, `installed()` is `True` when a genome is ready: everything it is
+configured with, reference DNA included, is downloaded and indexed. It only
+reads the cache, so checking never downloads or creates files.
+`genome_for_reference_name` picks the newest installed release of an assembly,
+else the newest downloaded one, else the newest Ensembl release:
 
 ```python
+from pyensembl import EnsemblRelease, genome_for_reference_name
+EnsemblRelease(93).installed()
+genome_for_reference_name("GRCh38")
+
+# Ensembl releases with any files in the cache, ready or not:
 from pyensembl.shell import collect_all_installed_ensembl_releases
 collect_all_installed_ensembl_releases()
 ```

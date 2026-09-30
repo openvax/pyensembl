@@ -26,7 +26,7 @@ from serializable import Serializable
 
 from .download_cache import DownloadCache
 from .common import merge_intervals
-from .database import Database
+from .database import Database, is_complete_database
 from .exon import Exon
 from .gene import Gene
 from .genome_fasta import GenomeFasta, MissingGenomeFastaError
@@ -34,6 +34,16 @@ from .normalization import normalize_chromosome, normalize_strand
 from .search import find_nearest_locus
 from .sequence_data import SequenceData, lookup_sequence_with_version_fallback
 from .transcript import Transcript
+
+
+def _index_is_complete(path):
+    if path.endswith(".db"):
+        return is_complete_database(path)
+    try:
+        return getsize(path) > 0
+    except OSError:
+        return False
+
 
 # IUPAC complements, preserving case so soft masking survives.
 _COMPLEMENT = str.maketrans(
@@ -413,6 +423,33 @@ class Genome(Serializable):
                 if getsize(path) == 0:
                     return False
         return True
+
+    def _annotation_status(self):
+        """How far annotation data is installed; only reads the cache.
+
+        None if none is configured, else 'missing', 'incomplete' (some files
+        but not every download), 'not indexed', or 'indexed': every source is
+        downloaded and every index complete.
+        """
+        sources = self._annotation_source_paths()
+        indexes = self._annotation_index_paths()
+        if not sources and not indexes:
+            return None
+        if not all(exists(path) for path in sources):
+            present = any(exists(path) for path in sources + indexes)
+            return "incomplete" if present else "missing"
+        return "indexed" if all(map(_index_is_complete, indexes)) else "not indexed"
+
+    def installed(self):
+        """Whether every configured file is downloaded and indexed, so queries
+        need no network access or setup.
+
+        Includes reference DNA when it is configured. Only reads the cache:
+        never downloads, copies, indexes, or creates files.
+        """
+        if self.requires_genome_fasta and self._genome_fasta.status() != "indexed":
+            return False
+        return self._annotation_status() in (None, "indexed")
 
     def download(self, overwrite=False, show_progress=False):
         """
