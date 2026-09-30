@@ -3,10 +3,7 @@ it's a sequence type which correctly implements `complement`
 and `reverse_complement`
 """
 
-from .common import eq_
-from pyensembl import genome_for_reference_name
-
-grch38 = genome_for_reference_name("GRCh38")
+from .common import eq_, grch38
 
 
 def test_transcript_sequence_ensembl_grch38():

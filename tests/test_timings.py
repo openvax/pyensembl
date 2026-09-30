@@ -9,13 +9,11 @@ with PYENSEMBL_BENCHMARKS=1, ideally on an otherwise idle machine:
 
 import os
 
-from pyensembl import genome_for_reference_name
-
 from tinytimer import benchmark
 
-BENCHMARKS = bool(os.environ.get("PYENSEMBL_BENCHMARKS"))
+from .common import grch38 as ensembl
 
-ensembl = genome_for_reference_name("GRCh38")
+BENCHMARKS = bool(os.environ.get("PYENSEMBL_BENCHMARKS"))
 contigs = [str(i + 1) for i in range(22)] + ["X", "Y"]
 
 

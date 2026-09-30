@@ -41,25 +41,28 @@ def genome_for_reference_name(reference_name, allow_older_downloaded_release=Tru
     Given a genome reference name, such as "GRCh38", returns the
     corresponding Ensembl Release object.
 
-    If `allow_older_downloaded_release` is True, and some older releases have
-    been downloaded, then return the most recent locally available release.
+    If `allow_older_downloaded_release` is True, return the newest release
+    that is installed (see `Genome.installed`), else the newest whose files
+    are downloaded. Choosing only reads the cache; nothing is downloaded.
 
-    Otherwise, return the newest release of Ensembl (even if its data hasn't
-    already been downloaded).
+    Otherwise, or when no release is available locally, return the newest
+    release of Ensembl for the reference.
     """
     reference_name = normalize_reference_name(reference_name)
     species = find_species_by_reference(reference_name)
     (min_ensembl_release, max_ensembl_release) = species.reference_assemblies[
         reference_name
     ]
+    candidates = [
+        EnsemblRelease.cached(release=release, species=species)
+        for release in reversed(range(min_ensembl_release, max_ensembl_release + 1))
+    ]
     if allow_older_downloaded_release:
-        # go through candidate releases in descending order
-        for release in reversed(range(min_ensembl_release, max_ensembl_release + 1)):
-            # check if release has been locally downloaded
-            candidate = EnsemblRelease.cached(release=release, species=species)
-            if candidate.required_local_files_exist():
-                return candidate
-    return EnsemblRelease.cached(release=max_ensembl_release, species=species)
+        for ready in (EnsemblRelease.installed, EnsemblRelease.required_local_files_exist):
+            for candidate in candidates:
+                if ready(candidate):
+                    return candidate
+    return candidates[0]
 
 
 ensembl_grch36 = genome_for_reference_name("ncbi36")

@@ -1,5 +1,5 @@
-from pyensembl import Locus, Gene, ensembl_grch37, Transcript, Exon
-from .common import eq_
+from pyensembl import Locus, Gene, Transcript, Exon
+from .common import eq_, grch37
 
 
 def test_Locus_string_representation():
@@ -18,7 +18,7 @@ def test_Gene_string_representation():
         start=1,
         end=5,
         strand="+",
-        genome=ensembl_grch37,
+        genome=grch37,
     )
     string_repr = str(gene)
     expected = (
@@ -41,7 +41,7 @@ def test_Transcript_string_representation():
         start=1,
         end=5,
         strand="+",
-        genome=ensembl_grch37,
+        genome=grch37,
     )
 
     expected = (
