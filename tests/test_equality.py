@@ -20,7 +20,7 @@ def equality_factory(request, tmp_path, monkeypatch):
     base_type = request.param
     monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
     gtf = tmp_path / "annotations.gtf"
-    gtf.touch()
+    gtf.write_text("# equality fixture\n")
     for name in ("same", "different"):
         (tmp_path / (name + ".fa")).write_text(">sequence\nACGT\n")
     genome = Genome(

@@ -1,7 +1,6 @@
 import gzip
 import os
 import stat
-import tempfile
 
 import pytest
 from pytest import raises as assert_raises
@@ -36,14 +35,14 @@ def test_download_cache_missing_remote_file():
         )
 
 
-def test_download_cache_custom_location():
+def test_download_cache_custom_location(tmp_path, monkeypatch):
     test_file = "refseq.ucsc.small.gtf"
-    tmp_dir = tempfile.gettempdir()
+    tmp_dir = str(tmp_path)
 
     print("DIR: %s" % tmp_dir)
     assert tmp_dir is not None
 
-    os.environ["PYENSEMBL_CACHE_DIR"] = tmp_dir
+    monkeypatch.setenv("PYENSEMBL_CACHE_DIR", tmp_dir)
 
     # We need another instance of DownloadCache
     # that copies files over to cache folder
@@ -66,7 +65,6 @@ def test_download_cache_custom_location():
     assert len(full_path) > 0
 
     ok_(os.path.exists(full_path))
-    del os.environ["PYENSEMBL_CACHE_DIR"]
 
 
 @pytest.mark.parametrize("decompress", [False, True])

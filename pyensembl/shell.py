@@ -13,6 +13,8 @@
 """Command-line tool for installing and managing PyEnsembl data."""
 
 import argparse
+from dataclasses import fields
+import json
 import logging
 import os
 from pathlib import Path
@@ -82,6 +84,7 @@ _ACTIONS_AND_EXAMPLES = """\
 actions:
   install             download and index genome data (skips what is already done)
   list                show installed genomes, whether they are indexed, and their DNA
+  inspect             inspect selected source files, indexes, and download provenance offline
   available           show supported species, assemblies, and Ensembl releases
   delete-index-files  delete indexes, keeping downloaded files (needs --release)
   delete-all-files    delete all of a genome's local data (needs --release)
@@ -95,6 +98,7 @@ examples:
   pyensembl install --reference-name GRCh38 --annotation-name my_genes \\
       --gtf URL_OR_PATH --transcript-fasta URL_OR_PATH  a custom genome
   pyensembl list
+  pyensembl inspect --release 93 --json
   pyensembl delete-all-files --release 75
   pyensembl prune --dry-run
 """
@@ -118,6 +122,12 @@ parser.add_argument(
     "--verbose",
     action="store_true",
     help="Show detailed progress, including download and database steps",
+)
+
+parser.add_argument(
+    "--json",
+    action="store_true",
+    help="With inspect, print a JSON inventory instead of a file table",
 )
 
 parser.add_argument(
@@ -221,7 +231,7 @@ dna_group.add_argument("--genome-fasta-type", choices=("toplevel", "primary_asse
 dna_group.add_argument("--masked", choices=("none", "soft", "hard"), default="none",
                        help="Masking of downloaded reference DNA (default: none)")
 dna_group.add_argument("--check-genome-fasta", action="store_true",
-                       help="With list, check existing DNA indexes without downloading or rebuilding")
+                       help="With list or inspect, check DNA indexes without downloading or rebuilding")
 # Accepted for 2.11.0 scripts; unused DNA is what prune removes.
 dna_group.add_argument("--orphan-genome-fastas", action="store_true", help=argparse.SUPPRESS)
 dna_group.add_argument("--dry-run", action="store_true",
@@ -233,6 +243,7 @@ parser.add_argument(
     choices=(
         "install",
         "list",
+        "inspect",
         "available",
         "delete-index-files",
         "delete-all-files",
@@ -339,6 +350,40 @@ def _format_table(header, rows, use_color=None):
 
     bold, reset = ("\x1b[1m", "\x1b[0m") if use_color else ("", "")
     return "\n".join([bold + line(header) + reset] + [line(row) for row in rows])
+
+
+def inspect_genomes(genomes, check_genome_fasta=False, json_output=False):
+    """Render the same offline inventory exposed by ``Genome.inspect_data``."""
+    reports = []
+    tables = []
+    for genome in genomes:
+        report = genome.inspect_data(check_genome_fasta=check_genome_fasta)
+        report.update(
+            reference_name=genome.reference_name,
+            annotation_name=genome.annotation_name,
+            annotation_version=genome.annotation_version,
+            cache_directory=genome.download_cache.cache_directory_path,
+        )
+        if json_output:
+            report["files"] = {
+                role: {field.name: (str(file.error) if file.error else None)
+                       if field.name == "error" else getattr(file, field.name)
+                       for field in fields(file)}
+                for role, file in report["files"].items()
+            }
+            reports.append(report)
+        else:
+            rows = [(role, file.status, str(file.size) if file.size is not None else "-",
+                     _display_path(file.path), file.source_url or "-")
+                    for role, file in report["files"].items()]
+            lines = ["%s: annotation=%s, reference DNA=%s" % (
+                _genome_description(genome), report["annotation"] or "not configured",
+                report["reference_dna"] or "not configured",
+            ), _format_table(("File", "Status", "Bytes", "Path", "Fetched from"), rows)]
+            lines.extend("%s: %s" % (role, file.error)
+                         for role, file in report["files"].items() if file.error)
+            tables.append("\n".join(lines))
+    return json.dumps(reports, indent=2) if json_output else "\n\n".join(tables)
 
 
 def _ensembl_releases():
@@ -723,6 +768,8 @@ def _delete_genome_files(genome, action):
 def run():
     args = parser.parse_args()
     configure_logging(verbose=args.verbose)
+    if args.json and args.action != "inspect":
+        parser.error("--json requires inspect")
     if args.action == "prune":
         try:
             candidates = prune_genome_fastas(dry_run=args.dry_run)
@@ -757,6 +804,10 @@ def run():
         if len(genomes) == 0:
             logger.error("ERROR: No genomes selected!")
             parser.print_help()
+
+        if args.action == "inspect":
+            print(inspect_genomes(genomes, args.check_genome_fasta, args.json))
+            return
 
         for genome in genomes:
             if args.action in ("delete-all-files", "delete-index-files"):

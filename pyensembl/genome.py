@@ -16,15 +16,17 @@ around an arbitrary genomic database.
 """
 
 
+from dataclasses import replace
 from numbers import Integral
 from os import lstat, remove
-from os.path import abspath, basename, exists, getsize, join, lexists, splitext
+from os.path import basename, join, lexists, splitext
 from pathlib import Path
 import warnings
 
 from serializable import Serializable
+from datacache import FileValidationError
 
-from .download_cache import DownloadCache
+from .download_cache import DownloadCache, inspect_data_file
 from .common import merge_intervals
 from .database import Database, is_complete_database
 from .exon import Exon
@@ -36,13 +38,14 @@ from .sequence_data import SequenceData, lookup_sequence_with_version_fallback
 from .transcript import Transcript
 
 
-def _index_is_complete(path):
-    if path.endswith(".db"):
-        return is_complete_database(path)
-    try:
-        return getsize(path) > 0
-    except OSError:
-        return False
+def _inspect_annotation_index(path):
+    inspection = inspect_data_file(path)
+    if (inspection.status == "available" and path.endswith(".db")
+            and not is_complete_database(path)):
+        return replace(inspection, status="corrupt", error=FileValidationError(
+            path, "incomplete or incompatible annotation database; rebuild the index"
+        ))
+    return inspection
 
 
 # IUPAC complements, preserving case so soft masking survives.
@@ -396,16 +399,22 @@ class Genome(Serializable):
         Downloads and copied files live in the cache; other local files are
         used in place.
         """
-        cache = self.download_cache
-        if cache.is_url_format(path_or_url) or cache.copy_local_files_to_cache:
-            return cache.cached_path(path_or_url)
-        return abspath(path_or_url)
+        return self.download_cache.local_path(path_or_url)
+
+    def _annotation_sources(self):
+        """Stable roles, in the same order as their derived indexes."""
+        sources = {"gtf": self._gtf_path_or_url} if self.requires_gtf else {}
+        for prefix, paths in (
+            ("transcript_fasta", self._transcript_fasta_paths_or_urls),
+            ("protein_fasta", self._protein_fasta_paths_or_urls),
+        ):
+            sources.update(("%s_%d" % (prefix, i), source)
+                           for i, source in enumerate(paths or [], 1))
+        return sources
 
     def _annotation_source_paths(self):
-        sources = [self._gtf_path_or_url] if self._gtf_path_or_url else []
-        sources += self._transcript_fasta_paths_or_urls or []
-        sources += self._protein_fasta_paths_or_urls or []
-        return [self._local_source_path(source) for source in sources]
+        return [self._local_source_path(source)
+                for source in self._annotation_sources().values()]
 
     def required_local_files(self):
         paths = []
@@ -414,31 +423,92 @@ class Genome(Serializable):
         return paths + self._annotation_source_paths()
 
     def required_local_files_exist(self, empty_files_ok=False):
-        if self.requires_genome_fasta and self.genome_fasta_path is None:
-            return False
-        for path in self.required_local_files():
-            if not exists(path):
-                return False
-            if not empty_files_ok:
-                if getsize(path) == 0:
+        if self.requires_genome_fasta:
+            try:
+                if self.genome_fasta_path is None:
                     return False
-        return True
+            except OSError:
+                return False
+        return all(inspect_data_file(path, empty_files_ok).status == "available"
+                   for path in self.required_local_files())
+
+    def _inspect_annotation(self):
+        sources = {role: self.download_cache.inspect(source)
+                   for role, source in self._annotation_sources().items()}
+        indexes = {role + "_index": _inspect_annotation_index(path)
+                   for role, path in zip(sources, self._annotation_index_paths())}
+        return sources, indexes
+
+    @staticmethod
+    def _annotation_readiness(sources, indexes):
+        if not sources:
+            return None
+        statuses = {file.status for file in sources.values()}
+        if "inaccessible" in statuses:
+            return "inaccessible"
+        if "corrupt" in statuses:
+            return "invalid"
+        if "missing" in statuses:
+            present = any(file.status != "missing"
+                          for file in list(sources.values()) + list(indexes.values()))
+            return "incomplete" if present else "missing"
+        return "indexed" if all(file.status == "available" for file in indexes.values()) else "not indexed"
 
     def _annotation_status(self):
         """How far annotation data is installed; only reads the cache.
 
         None if none is configured, else 'missing', 'incomplete' (some files
-        but not every download), 'not indexed', or 'indexed': every source is
-        downloaded and every index complete.
+        but not every download), 'invalid', 'inaccessible', 'not indexed', or
+        'indexed': every source is usable and every index complete.
         """
-        sources = self._annotation_source_paths()
-        indexes = self._annotation_index_paths()
-        if not sources and not indexes:
-            return None
-        if not all(exists(path) for path in sources):
-            present = any(exists(path) for path in sources + indexes)
-            return "incomplete" if present else "missing"
-        return "indexed" if all(map(_index_is_complete, indexes)) else "not indexed"
+        return self._annotation_readiness(*self._inspect_annotation())
+
+    def inspect_data(self, check_genome_fasta=False):
+        """Offline inventory of configured sources and indexes.
+
+        Return readiness and role-keyed datacache ``FileInspection`` objects.
+        Never downloads, imports, builds indexes, creates directories or loads
+        pickle contents. Availability checks regular, readable, nonempty files;
+        SQLite completeness and reference-DNA fingerprints are also checked.
+        ``verified`` is not inferred from an acquisition provenance receipt.
+        """
+        sources, indexes = self._inspect_annotation()
+        annotation = self._annotation_readiness(sources, indexes)
+        files = dict(sources, **indexes)
+        dna = None
+        if self.requires_genome_fasta:
+            fasta = self._genome_fasta
+            try:
+                path = fasta.expected_path
+            except OSError:
+                # Resolving a local gzip source reads its header. Preserve the
+                # original filesystem error as an inspection, not a CLI crash.
+                path = fasta.source
+            source = inspect_data_file(path)
+            index = inspect_data_file(str(fasta.index_path))
+            files["genome_fasta"] = source
+            files["genome_fasta_index_state"] = inspect_data_file(str(fasta.index_state_path))
+            if source.status in ("corrupt", "inaccessible"):
+                dna = "invalid" if source.status == "corrupt" else "inaccessible"
+            else:
+                try:
+                    dna = fasta.status(check=check_genome_fasta)
+                except OSError as error:
+                    dna = "inaccessible"
+                    files["genome_fasta"] = replace(source, status="inaccessible", error=error)
+            if index.status == "available" and dna in ("needs index", "invalid index"):
+                index = replace(index, status="corrupt", error=FileValidationError(
+                    index.path, "stale or invalid reference-DNA index; rebuild the index"
+                ))
+            if dna == "indexed" and index.status != "available":
+                dna = "needs index"
+            files["genome_fasta_index"] = index
+        return {
+            "annotation": annotation,
+            "reference_dna": dna,
+            "installed": annotation in (None, "indexed") and dna in (None, "indexed"),
+            "files": files,
+        }
 
     def installed(self):
         """Whether every configured file is downloaded and indexed, so queries
@@ -447,9 +517,7 @@ class Genome(Serializable):
         Includes reference DNA when it is configured. Only reads the cache:
         never downloads, copies, indexes, or creates files.
         """
-        if self.requires_genome_fasta and self._genome_fasta.status() != "indexed":
-            return False
-        return self._annotation_status() in (None, "indexed")
+        return self.inspect_data()["installed"]
 
     def download(self, overwrite=False, show_progress=False):
         """
