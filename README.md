@@ -170,7 +170,9 @@ custom   GRCm38    mine1    indexed      -                  ~/Library/Caches/pye
 **Annotation** is `indexed` when everything is downloaded and indexed, so
 queries need no network access or setup. `not indexed` means the files are
 downloaded but the first query would spend minutes indexing them, and
-`incomplete` means some downloads are missing. Run `pyensembl install` for
+`incomplete` means some downloads are missing. `invalid` means a source is
+empty or not a regular file; `inaccessible` means it cannot be read.
+Run `pyensembl install` for
 that release to finish (add `--species` for non-human genomes; custom
 genomes need their original install options).
 
@@ -196,6 +198,45 @@ genome_for_reference_name("GRCh38")
 from pyensembl.shell import collect_all_installed_ensembl_releases
 collect_all_installed_ensembl_releases()
 ```
+
+## Inspect data without installing
+
+Inspect a selected genome's configured source files and indexes, including
+paths, availability, sizes and any recorded download provenance:
+
+```sh
+pyensembl inspect --release 93
+pyensembl inspect --release 93 --with-genome-fasta --json
+# Custom genomes use the same --gtf / --transcript-fasta / --protein-fasta
+# and --reference-name / --annotation-name options as install.
+```
+
+In Python, `EnsemblRelease(93).inspect_data()` returns annotation and optional
+reference-DNA readiness, `installed`, and a `files` dictionary keyed by role
+(for example `gtf`, `gtf_index`, `transcript_fasta_1`). Values are datacache
+`FileInspection` objects with `path`, `status`, `error`, `size`, `mtime`,
+`source_url`, `fetched_at`, `recorded_sha256` and `verified` fields. CLI JSON
+is an array of reports, with errors rendered as strings. Add
+`--check-genome-fasta` (Python: `check_genome_fasta=True`) to validate existing
+DNA indexes more thoroughly.
+
+Inspection only reads: no network, copying, directory creation, indexing or
+pickle deserialization. Source files must be readable, regular and nonempty;
+SQLite indexes must have the current completed schema. This is a readiness
+check, not a full validation of biological contents or pickle integrity.
+An available file is not necessarily checksum-verified: provenance receipts
+are advisory, not trusted expected checksums. Old files without receipts
+remain usable; missing, malformed or stale receipts simply omit provenance.
+
+New annotation downloads and copied local imports use datacache's atomic
+publication and record provenance (URL credentials and query strings are
+redacted). Failed overwrites preserve the previous destination. Existing
+cache paths are unchanged. Invalid cached files are reported; use
+`install --overwrite` to explicitly replace them. In Python,
+`Genome(..., copy_local_files_to_cache=True)` makes an independent cached
+import that remains usable after the original is removed, and
+`decompress_on_download=True` applies to both downloaded and copied sources.
+Local sources attached without copying are never modified.
 
 ## List supported species
 

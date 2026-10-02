@@ -1,12 +1,14 @@
 """Genome.installed() only reads the cache, and release selection uses it (#398)."""
 
 from weakref import WeakValueDictionary
+from pathlib import Path
 
 import datacache
 import pytest
 
 from pyensembl import EnsemblRelease, genome_for_reference_name
 from pyensembl.reference_name import find_species_by_reference
+from pyensembl.shell import format_installed_genomes
 from .test_cli_output import ensembl_files, write
 
 
@@ -79,3 +81,11 @@ def test_reference_name_falls_back_to_downloads_then_the_newest_release(cache):
     for path in cache.glob("pyensembl/GRCh38/*/*"):
         path.unlink()
     assert genome_for_reference_name("GRCh38").release == newest_grch38_release()
+
+
+def test_invalid_newer_release_is_not_selected(cache):
+    ensembl_files(93)
+    newer = ensembl_files(110)
+    (newer / Path(EnsemblRelease(110).gtf_url).name).write_bytes(b"")
+    assert genome_for_reference_name("GRCh38").release == 93
+    assert "invalid" in format_installed_genomes(use_color=False)

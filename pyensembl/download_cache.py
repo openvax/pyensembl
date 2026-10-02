@@ -12,8 +12,10 @@
 
 
 from os import environ
-from os.path import join, exists, split, abspath, isdir, normpath
-from shutil import copy2, rmtree
+from dataclasses import replace
+from os.path import join, split, abspath, isdir, normpath
+from pathlib import Path
+from shutil import rmtree
 import logging
 
 import datacache
@@ -26,6 +28,26 @@ CACHE_DIR_ENV_KEY = "PYENSEMBL_CACHE_DIR"
 # Seconds without any data before a download attempt fails and datacache
 # retries (resuming DNA downloads). Not a limit on total download time.
 DOWNLOAD_TIMEOUT = 300
+
+
+def inspect_data_file(path, empty_files_ok=False):
+    """Read-only datacache inspection with PyEnsembl's nonempty-file policy.
+
+    Availability is not a guarantee of valid biological contents. Provenance
+    receipts describe acquisition; they are not trusted integrity checks.
+    """
+    result = datacache.inspect_file(path)
+    if result.status == "available" and result.size == 0 and not empty_files_ok:
+        return replace(result, status="corrupt", error=datacache.FileValidationError(
+            result.path, "empty data file"
+        ))
+    return result
+
+
+def _require_available(inspection):
+    if inspection.status != "available":
+        raise inspection.error
+    return inspection.path
 
 
 def cache_subdirectory(
@@ -138,9 +160,6 @@ class DownloadCache(object):
         self.annotation_name = annotation_name
         self.annotation_version = annotation_version
 
-        # using hidden member variable _cache_directory path since access to
-        # to the visible cache_directory_path (no underscore!) is combined
-        # with ensuring that the directpry actually exists
         if cache_directory_path:
             self._cache_directory_path = cache_directory_path
         else:
@@ -245,42 +264,58 @@ class DownloadCache(object):
 
         return join(self.cache_directory_path, local_filename)
 
+    def local_path(self, path_or_url):
+        """Expected source location, without acquisition or directory creation."""
+        if self.is_url_format(path_or_url) or self.copy_local_files_to_cache:
+            return self.cached_path(path_or_url)
+        return abspath(path_or_url)
+
+    def inspect(self, path_or_url, empty_files_ok=False):
+        """Inspect a configured source without acquiring it."""
+        return inspect_data_file(self.local_path(path_or_url), empty_files_ok)
+
+    def _fetch(self, url, destination, overwrite, show_progress=False):
+        logger.info("Fetching %s", destination)
+        return datacache.fetch_file(
+            url,
+            destination=destination,
+            force=overwrite,
+            raw=not self.decompress_on_download,
+            decompress=self.decompress_on_download,
+            timeout=DOWNLOAD_TIMEOUT,
+            show_progress=show_progress,
+            record_provenance=True,
+        )
+
     def _download_if_necessary(self, url, download_if_missing, overwrite, show_progress=False):
         """
         Return local cached path to a remote file, download it if necessary.
         """
         cached_path = self.cached_path(url)
-        missing = not exists(cached_path)
-        if (missing or overwrite) and download_if_missing:
-            logger.info("Fetching %s from URL %s", cached_path, url)
-            # Decompresses exactly when cached_path drops the URL's .gz suffix.
-            datacache.fetch_file(
-                url,
-                destination=cached_path,
-                force=True,
-                timeout=DOWNLOAD_TIMEOUT,
-                show_progress=show_progress,
-            )
-        elif missing:
+        inspection = self.inspect(url)
+        if download_if_missing and (overwrite or inspection.status == "missing"):
+            return self._fetch(url, cached_path, overwrite, show_progress)
+        if inspection.status == "missing":
             raise MissingRemoteFile(url)
-        return cached_path
+        return _require_available(inspection)
 
-    def _copy_if_necessary(self, local_path, overwrite):
+    def _copy_if_necessary(self, local_path, overwrite, show_progress=False):
         """
         Return cached path to local file, copying it to the cache if necessary.
         """
         local_path = abspath(local_path)
-        if not exists(local_path):
-            raise MissingLocalFile(local_path)
-        elif not self.copy_local_files_to_cache:
-            return local_path
-        else:
+        if self.copy_local_files_to_cache:
             cached_path = self.cached_path(local_path)
-            if exists(cached_path) and not overwrite:
-                return cached_path
-            datacache.ensure_dir(self.cache_directory_path)
-            copy2(local_path, cached_path)
-            return cached_path
+            cached = inspect_data_file(cached_path)
+            if not overwrite and cached.status != "missing":
+                return _require_available(cached)
+        source = inspect_data_file(local_path)
+        if source.status == "missing":
+            raise MissingLocalFile(local_path)
+        _require_available(source)
+        if not self.copy_local_files_to_cache or local_path == abspath(cached_path):
+            return local_path
+        return self._fetch(Path(local_path).as_uri(), cached_path, overwrite, show_progress)
 
     def download_or_copy_if_necessary(
         self, path_or_url, download_if_missing=False, overwrite=False, show_progress=False
@@ -313,7 +348,7 @@ class DownloadCache(object):
                 path_or_url, download_if_missing, overwrite, show_progress=show_progress
             )
         else:
-            return self._copy_if_necessary(path_or_url, overwrite)
+            return self._copy_if_necessary(path_or_url, overwrite, show_progress)
 
     def _raise_missing_file_error(self, missing_urls_dict):
         missing_urls = list(missing_urls_dict.values())
