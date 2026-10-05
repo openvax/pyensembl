@@ -747,7 +747,8 @@ class Database(object):
             )
             logger.debug("Done.")
 
-        if expect_transcript_feature and "transcript" not in observed_features:
+        if (expect_transcript_feature and "transcript" not in observed_features
+                and "transcript_id" in column_names):
             logger.info("Creating missing transcript features...")
             df = create_missing_features(
                 dataframe=df,

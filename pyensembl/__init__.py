@@ -21,6 +21,7 @@ from .genome import Genome
 from .genome_fasta import MissingGenomeFastaError
 from .genome_fasta_cache import prune_genome_fastas
 from .gene import Gene
+from .gene_name_aliases import GeneNameAliases
 from .locus import Locus
 from .reference_name import (
     ensembl_grch36,
@@ -53,6 +54,7 @@ __all__ = [
     "cached_release",
     "MAX_ENSEMBL_RELEASE",
     "Gene",
+    "GeneNameAliases",
     "Transcript",
     "Protein",
     "Exon",

@@ -31,6 +31,7 @@ from .common import merge_intervals
 from .database import Database, is_complete_database
 from .exon import Exon
 from .gene import Gene
+from .gene_name_aliases import GeneNameAliases, normalize_aliases, stable_ensembl_gene_id
 from .genome_fasta import GenomeFasta, MissingGenomeFastaError
 from .normalization import normalize_chromosome, normalize_strand
 from .search import find_nearest_locus
@@ -1162,13 +1163,17 @@ class Genome(Serializable):
 
         return self._genes[gene_id]
 
-    def genes_by_name(self, gene_name):
+    def genes_by_name(self, gene_name, aliases=None):
         """
         Get all the unqiue genes with the given name (there might be multiple
         due to copies in the genome), return a list containing a Gene object
         for each distinct ID.
+
+        aliases optionally supplies a name-to-gene-ID mapping, for example
+        GeneNameAliases.from_hgnc(path). Include all exact and alias matches
+        present in this annotation. No alias data is downloaded by a query.
         """
-        gene_ids = self.gene_ids_of_gene_name(gene_name)
+        gene_ids = self.gene_ids_of_gene_name(gene_name, aliases=aliases)
         return [self.gene_by_id(gene_id) for gene_id in gene_ids]
 
     def gene_by_protein_id(self, protein_id):
@@ -1247,12 +1252,34 @@ class Genome(Serializable):
             biotype=biotype,
         )
 
-    def gene_ids_of_gene_name(self, gene_name):
+    def gene_ids_of_gene_name(self, gene_name, aliases=None):
         """
         What are the gene IDs associated with a given gene name?
         (due to copy events, there might be multiple genes per name)
+
+        aliases is an optional mapping from names to one or more stable IDs.
+        Unknown IDs are ignored; ambiguous names retain every matching gene.
         """
-        results = self._query_gene_ids("gene_name", gene_name)
+        if aliases is None:
+            results = self._query_gene_ids("gene_name", gene_name)
+        else:
+            alias_species = getattr(aliases, "species", None)
+            genome_species = getattr(getattr(self, "species", None), "latin_name", None)
+            if alias_species and genome_species and alias_species != genome_species:
+                raise ValueError("Gene aliases for %s cannot be used with %s" %
+                                 (alias_species, genome_species))
+            alias_map = aliases if isinstance(aliases, GeneNameAliases) else normalize_aliases(aliases)
+            candidates = alias_map.get(gene_name, ())
+            results = []
+            if self.db.column_exists("gene", "gene_name"):
+                results = [str(row[0]) for row in self.db.query(
+                    ["gene_id"], "gene_name", gene_name, "gene", distinct=True
+                ) if row[0]]
+            if candidates:
+                stable_ids = {stable_ensembl_gene_id(gene_id) for gene_id in candidates}
+                results.extend(gene_id for gene_id in self.gene_ids()
+                               if stable_ensembl_gene_id(gene_id) in stable_ids)
+            results = sorted(set(results))
         if len(results) == 0:
             raise ValueError("Gene name not found: %s" % gene_name)
         return results
