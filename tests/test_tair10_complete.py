@@ -24,7 +24,7 @@ Four transcripts were selected:
 from pyensembl import Genome
 
 from .common import eq_, ok_
-from .data import data_path
+from .data import data_path, custom_genome_cache_path
 
 
 TAIR10_GTF_PATH = data_path("arabidopsis.tair10.partial.gtf")
@@ -34,6 +34,7 @@ TAIR10_CDNA_FASTA_PATH = data_path("arabidopsis.tair10.partial.cdna.fa")
 custom_tair10_genome_subset = Genome(
     reference_name="TAIR10",
     annotation_name="_test_arabidopsis_tair10_subset",
+    cache_directory_path=custom_genome_cache_path("tair"),
     gtf_path_or_url=TAIR10_GTF_PATH,
     transcript_fasta_paths_or_urls=[TAIR10_CDNA_FASTA_PATH],
 )

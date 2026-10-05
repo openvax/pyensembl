@@ -31,10 +31,11 @@ def no_protein_(e):
     assert "protein" in str(e)
 
 
-def test_transcript_fasta_only():
+def test_transcript_fasta_only(tmp_path):
     genome = Genome(
         reference_name="GRCm38",
         annotation_name="_test_mouse_ensembl81_subset",
+        cache_directory_path=str(tmp_path),
         transcript_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH],
     )
     genome.index()
@@ -62,10 +63,11 @@ def test_transcript_fasta_only():
     no_protein_(e)
 
 
-def test_protein_fasta_only():
+def test_protein_fasta_only(tmp_path):
     genome_only_proteins = Genome(
         reference_name="GRCm38",
         annotation_name="_test_mouse_ensembl81_subset",
+        cache_directory_path=str(tmp_path),
         protein_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH],
     )
     genome_only_proteins.index()
@@ -81,10 +83,11 @@ def test_protein_fasta_only():
     no_transcript_(e)
 
 
-def test_gtf_only():
+def test_gtf_only(tmp_path):
     genome_only_gtf = Genome(
         reference_name="GRCm38",
         annotation_name="_test_mouse_ensembl81_subset",
+        cache_directory_path=str(tmp_path),
         gtf_path_or_url=MOUSE_ENSMUSG00000017167_PATH,
     )
     genome_only_gtf.index()
@@ -102,10 +105,11 @@ def test_gtf_only():
     no_protein_(cm)
 
 
-def test_gtf_transcript_only():
+def test_gtf_transcript_only(tmp_path):
     genome_gtf_with_cdna = Genome(
         reference_name="GRCm38",
         annotation_name="_test_mouse_ensembl81_subset",
+        cache_directory_path=str(tmp_path),
         gtf_path_or_url=MOUSE_ENSMUSG00000017167_PATH,
         transcript_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH],
     )
@@ -121,10 +125,11 @@ def test_gtf_transcript_only():
     no_protein_(e)
 
 
-def test_gtf_protein_only():
+def test_gtf_protein_only(tmp_path):
     genome_gtf_with_proteins = Genome(
         reference_name="GRCm38",
         annotation_name="_test_mouse_ensembl81_subset",
+        cache_directory_path=str(tmp_path),
         gtf_path_or_url=MOUSE_ENSMUSG00000017167_PATH,
         protein_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH],
     )
