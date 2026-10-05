@@ -1,8 +1,13 @@
 """Alias lookup is explicit, ambiguity-preserving, and annotation-scoped."""
 
 import gzip
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+import threading
 
+import datacache
 import pytest
+from requests.exceptions import HTTPError
 
 from pyensembl import EnsemblRelease, GeneNameAliases, Genome
 
@@ -108,3 +113,115 @@ def test_invalid_hgnc_data_rejected(tmp_path, text):
     path.write_text(text)
     with pytest.raises(ValueError):
         GeneNameAliases.from_hgnc(path)
+
+
+@pytest.fixture
+def hgnc_server():
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *args):
+            pass
+
+        def do_GET(self):
+            self.server.requests.append(self.path)
+            payload = self.server.payloads.get(self.path)
+            if payload is None:
+                self.send_error(404)
+                return
+            self.send_response(200)
+            self.send_header("Content-Length", str(len(payload)))
+            self.end_headers()
+            self.wfile.write(payload)
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    server.payloads = {"/hgnc.tsv": HGNC.encode()}
+    server.requests = []
+    server.url = "http://127.0.0.1:%d" % server.server_address[1]
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield server
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()
+
+
+def test_download_hgnc_indexes_aliases_and_reuses_snapshot_offline(
+    genome, hgnc_server, tmp_path, monkeypatch,
+):
+    source_url = hgnc_server.url + "/hgnc.tsv"
+    options = dict(source_url=source_url, cache_directory_path=tmp_path / "aliases")
+    aliases = GeneNameAliases.download_hgnc(**options)
+    assert hgnc_server.requests == ["/hgnc.tsv"]
+    assert genome.gene_ids_of_gene_name("LFS1", aliases=aliases) == ["ENSG00000141510.7"]
+    assert Path(aliases.source).read_text() == HGNC
+    assert datacache.inspect_file(aliases.source).source_url == source_url
+
+    def no_network(*args, **kwargs):
+        raise AssertionError("Cached aliases must not download again")
+
+    monkeypatch.setattr(datacache, "fetch_file", no_network)
+    cached = GeneNameAliases.download_hgnc(**options)
+    assert cached.source == aliases.source
+    assert dict(cached) == dict(aliases)
+
+
+def test_download_hgnc_refresh_is_explicit(hgnc_server, tmp_path):
+    options = dict(source_url=hgnc_server.url + "/hgnc.tsv", cache_directory_path=tmp_path)
+    original = GeneNameAliases.download_hgnc(**options)
+    hgnc_server.payloads["/hgnc.tsv"] = HGNC.replace("LFS1", "NEW_ALIAS").encode()
+    cached = GeneNameAliases.download_hgnc(**options)
+    assert "LFS1" in cached and "NEW_ALIAS" not in cached
+    assert len(hgnc_server.requests) == 1
+    refreshed = GeneNameAliases.download_hgnc(**options, overwrite=True)
+    assert "NEW_ALIAS" in refreshed and "LFS1" not in refreshed
+    assert "LFS1" in original
+    assert len(hgnc_server.requests) == 2
+
+
+def test_download_hgnc_separates_urls_with_the_same_filename(hgnc_server, tmp_path):
+    hgnc_server.payloads["/archive/hgnc.tsv"] = HGNC.replace("LFS1", "OLD_ALIAS").encode()
+    current = GeneNameAliases.download_hgnc(
+        source_url=hgnc_server.url + "/hgnc.tsv", cache_directory_path=tmp_path,
+    )
+    archived = GeneNameAliases.download_hgnc(
+        source_url=hgnc_server.url + "/archive/hgnc.tsv", cache_directory_path=tmp_path,
+    )
+    assert current.source != archived.source
+    assert "LFS1" in current and "OLD_ALIAS" not in current
+    assert "OLD_ALIAS" in archived and "LFS1" not in archived
+    assert Path(current.source).read_text() == HGNC
+
+
+@pytest.mark.parametrize("url_path", ["/hgnc.tsv.gz", "/hgnc.tsv.gz?download=1", "/snapshot"])
+def test_download_hgnc_supports_gzip_snapshots(hgnc_server, tmp_path, url_path):
+    hgnc_server.payloads[url_path] = gzip.compress(HGNC.encode())
+    aliases = GeneNameAliases.download_hgnc(
+        source_url=hgnc_server.url + url_path, cache_directory_path=tmp_path,
+    )
+    assert aliases["LFS1"] == ("ENSG00000141510",)
+    assert Path(aliases.source).read_bytes()[:2] == b"\x1f\x8b"
+
+
+def test_download_hgnc_respects_configured_cache_root(hgnc_server, tmp_path, monkeypatch):
+    monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
+    aliases = GeneNameAliases.download_hgnc(source_url=hgnc_server.url + "/hgnc.tsv")
+    base = tmp_path / "pyensembl" / "aliases" / "homo_sapiens" / "hgnc"
+    assert Path(aliases.source).is_relative_to(base)
+
+
+def test_failed_hgnc_refresh_preserves_cached_snapshot(hgnc_server, tmp_path):
+    options = dict(source_url=hgnc_server.url + "/hgnc.tsv", cache_directory_path=tmp_path)
+    aliases = GeneNameAliases.download_hgnc(**options)
+    del hgnc_server.payloads["/hgnc.tsv"]
+    with pytest.raises(HTTPError):
+        GeneNameAliases.download_hgnc(**options, overwrite=True)
+    assert Path(aliases.source).read_text() == HGNC
+    assert "LFS1" in GeneNameAliases.download_hgnc(**options)
+
+
+@pytest.mark.parametrize("source_url", [None, "", "/data/hgnc.tsv"])
+def test_download_hgnc_rejects_local_paths_and_missing_urls(source_url, tmp_path):
+    with pytest.raises(ValueError, match="source_url must be a URL"):
+        GeneNameAliases.download_hgnc(source_url=source_url, cache_directory_path=tmp_path)
+    assert not list(tmp_path.iterdir())
