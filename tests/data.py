@@ -1,5 +1,15 @@
 import os
+from tempfile import TemporaryDirectory
 from pyensembl import Locus, Genome
+
+
+# One root per process (including each xdist worker), removed at interpreter
+# shutdown. Keep the object alive for module-level Genome fixtures.
+_custom_genome_cache = TemporaryDirectory(prefix="pyensembl-test-genomes-")
+
+
+def custom_genome_cache_path(name):
+    return os.path.join(_custom_genome_cache.name, name)
 
 
 def data_path(name):
@@ -126,6 +136,7 @@ MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH = data_path(
 custom_mouse_genome_grcm38_subset = Genome(
     reference_name="GRCm38",
     annotation_name="_test_mouse_ensembl81_subset",
+    cache_directory_path=custom_genome_cache_path("mouse"),
     gtf_path_or_url=MOUSE_ENSMUSG00000017167_PATH,
     transcript_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH],
     protein_fasta_paths_or_urls=[MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH])

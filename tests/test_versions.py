@@ -13,6 +13,7 @@ from .data import (
     MOUSE_ENSMUSG00000017167_TRANSCRIPT_FASTA_PATH,
     MOUSE_ENSMUSG00000017167_PROTEIN_FASTA_PATH,
     data_path,
+    custom_genome_cache_path,
 )
 
 
@@ -30,6 +31,7 @@ TAIR10_CDNA_FASTA = data_path("arabidopsis.tair10.partial.cdna.fa")
 mouse_genome = Genome(
     reference_name="GRCm38",
     annotation_name="_test_versions_mouse_ensembl81_subset",
+    cache_directory_path=custom_genome_cache_path("versions-mouse"),
     gtf_path_or_url=ENSEMBL_MOUSE_GTF,
     transcript_fasta_paths_or_urls=[ENSEMBL_MOUSE_TRANSCRIPT_FASTA],
     protein_fasta_paths_or_urls=[ENSEMBL_MOUSE_PROTEIN_FASTA],
@@ -38,6 +40,7 @@ mouse_genome = Genome(
 tair_genome = Genome(
     reference_name="TAIR10",
     annotation_name="_test_versions_arabidopsis_tair10_subset",
+    cache_directory_path=custom_genome_cache_path("versions-tair"),
     gtf_path_or_url=TAIR10_GTF,
     transcript_fasta_paths_or_urls=[TAIR10_CDNA_FASTA],
 )
