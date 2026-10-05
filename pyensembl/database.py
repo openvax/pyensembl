@@ -698,6 +698,9 @@ class Database(object):
         with _gtf_progress(self.gtf_path, show_progress) as progress_callback:
             df = read_gtf(
                 self.gtf_path,
+                # SQLite ingestion uses pandas; avoid converting back through
+                # Polars after gtfparse's pandas-based transformations.
+                result_type="pandas",
                 column_converters={
                     "seqname": normalize_chromosome,
                     "strand": normalize_strand,
