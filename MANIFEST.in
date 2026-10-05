@@ -1,2 +1,6 @@
 include README.md
 include LICENSE
+include mkdocs.yml
+include docs.sh
+recursive-include docs *.md *.css
+recursive-include scripts *.py

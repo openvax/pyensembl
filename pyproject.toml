@@ -49,6 +49,11 @@ pyensembl = "pyensembl.shell:run"
 # Progress bars are always included; this empty extra keeps
 # `pip install "pyensembl[progress]"` from 2.15 working without a warning.
 progress = []
+docs = [
+    "mkdocs>=1.6,<2.0",
+    "mkdocs-material>=9.5,<10.0",
+    "mkdocstrings[python]>=0.27,<2.0",
+]
 dev = [
     "pytest",
     "pytest-cov",
