@@ -8,25 +8,25 @@ download and takes several GB of disk once decompressed.
 ## Quick start
 
 ```sh
-pyensembl install --release 81 --with-genome-fasta  # annotation and DNA
-pyensembl install --release 81 --only-genome-fasta  # just the DNA
+pyensembl install --release 93 --with-genome-fasta  # annotation and DNA
+pyensembl install --release 93 --only-genome-fasta  # just the DNA
 ```
 
 ```python
 from pyensembl import EnsemblRelease
 
-release = EnsemblRelease(81, genome_fasta=True)
+release = EnsemblRelease(93, genome_fasta=True)
 release.download_genome_fasta()  # does nothing if the DNA is already installed
 with release:
     bases = release.sequence("7", 117_480_000, 117_480_100)
-    tp53 = release.genes_by_name("TP53")[0]  # annotated on the minus strand
+    tp53 = release.gene_by_id("ENSG00000141510")  # TP53, on the minus strand
     tp53_dna = release.sequence(tp53.contig, tp53.start, tp53.end, strand=tp53.strand)
 ```
 
 `genome_fasta=True` only chooses the DNA. Nothing is downloaded until you call
 `download_genome_fasta()` or `download()`, or run `pyensembl install`.
 Python objects use reference DNA only when constructed with `genome_fasta`:
-a plain `EnsemblRelease(81)` does not pick up DNA installed by the CLI, and its
+a plain `EnsemblRelease(93)` does not pick up DNA installed by the CLI, and its
 error message names the call that does.
 
 ## Reading sequences
@@ -78,7 +78,7 @@ lowercase), or `hard` (repeats replaced with `N`). See Ensembl's
 ## Local FASTA files
 
 ```python
-release = EnsemblRelease(81, genome_fasta="/data/my_reference.fa.gz")
+release = EnsemblRelease(93, genome_fasta="/data/my_reference.fa.gz")
 
 # Custom annotations can attach DNA too, from a path or URL:
 from pyensembl import Genome
@@ -95,7 +95,7 @@ but matching contig names don't prove that the assembly matches.
 
 ```sh
 pyensembl list --check-genome-fasta      # DNA for each release, verifying indexes
-pyensembl delete-all-files --release 81  # release 81's files and DNA references
+pyensembl delete-all-files --release 93  # release 93's files and DNA references
 pyensembl prune --dry-run                # shared DNA that no installed release uses
 pyensembl prune
 ```

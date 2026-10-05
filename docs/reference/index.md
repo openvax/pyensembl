@@ -1,12 +1,13 @@
 # API reference
 
-The reference is generated from the current Python interfaces and docstrings.
-Use the [first lookup tutorial](../getting-started.md) for a runnable example.
+Find a class or method below. For installation and runnable examples, start
+on the [home page](../index.md). The command-line interface has a
+[separate reference](cli.md).
 
 | Interface | Purpose | Complete reference |
 | --- | --- | --- |
-| `EnsemblRelease` | Numbered species/release selection | [Dataset constructors](datasets.md) |
-| `EnsemblAnnotation` | Explicit new-platform assembly/date selection | [Dataset constructors](datasets.md) |
+| `EnsemblRelease` | Select a species and numbered release | [Select data](datasets.md) |
+| `EnsemblAnnotation` | Select an assembly and dated annotation | [Select data](datasets.md) |
 | `Genome` | Shared annotation queries and custom data | [Genome](genome.md) |
 | `Gene`, `Transcript`, `Exon`, `Protein`, `Locus` | Annotated features and intervals | [Features](features.md) |
 | `GeneNameAliases` | Explicit alias source | [Aliases](aliases.md) |
@@ -19,5 +20,5 @@ uses zero-based half-open slicing. Consult [reference DNA](../guides/reference-d
 before mixing those interfaces. Installed annotation queries read local data;
 setup methods explicitly download and index files.
 
-The [lookup overview](lookups.md) preserves the original method descriptions
-and source links. The [CLI reference](cli.md) lists commands and setup options.
+For a shorter list of common queries and links to their source, see
+[lookup methods](lookups.md).

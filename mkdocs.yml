@@ -12,37 +12,43 @@ theme:
     primary: white
     accent: blue
   features:
-    - navigation.sections
+    - navigation.indexes
     - content.code.copy
 extra_css:
   - stylesheets/docs.css
 nav:
   - Home: index.md
-  - First lookup: getting-started.md
-  - Guides:
-      - Assembly selection: guides/assembly-selection.md
-      - New Ensembl platform: ensembl-platform.md
-      - Custom genomes: guides/custom-genomes.md
-      - Feature objects: guides/features.md
-      - Gene aliases: guides/aliases.md
-      - Cached data: guides/cache.md
-      - Reference DNA: guides/reference-dna.md
-  - Reference:
-      - Overview: reference/index.md
-      - Dataset constructors: reference/datasets.md
-      - Genome queries: reference/genome.md
-      - Feature objects: reference/features.md
-      - Aliases: reference/aliases.md
-      - Data and caches: reference/data.md
-      - Helpers: reference/helpers.md
-      - Lookup overview: reference/lookups.md
-      - CLI: reference/cli.md
-  - Development:
-      - Contributing: dev/contributing.md
+  - Common tasks:
+      - Find genes and transcripts: guides/features.md
+      - Search gene aliases: guides/aliases.md
+      - Read genomic DNA: guides/reference-dna.md
+  - Reference data:
+      - Choose a reference: guides/assembly-selection.md
+      - Manage downloaded data: guides/cache.md
+      - Use your own annotations: guides/custom-genomes.md
+      - Use dated Ensembl annotations: ensembl-platform.md
+  - API reference:
+      - reference/index.md
+      - Select data: reference/datasets.md
+      - Query a genome: reference/genome.md
+      - Genes, transcripts and exons: reference/features.md
+      - Gene name aliases: reference/aliases.md
+      - Data and indexing: reference/data.md
+      - Species and reference helpers: reference/helpers.md
+      - Command line: reference/cli.md
+  - Contributing:
+      - dev/contributing.md
       - Documentation style: dev/documentation-style.md
       - Releasing: dev/releasing.md
+exclude_docs: |
+  /getting-started.md
+not_in_nav: |
+  /reference/lookups.md
 plugins:
   - search
+  - redirects:
+      redirect_maps:
+        getting-started.md: index.md
   - mkdocstrings:
       handlers:
         python:

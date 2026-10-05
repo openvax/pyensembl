@@ -3,10 +3,7 @@
 These methods apply to `EnsemblRelease`, `EnsemblAnnotation` and `Genome`.
 The [complete Genome reference](genome.md) includes signatures and all public methods.
 
-The `EnsemblRelease` object has methods to let you access all possible
-combinations of the annotation features `gene_name`, `gene_id`,
-`transcript_name`, `transcript_id`, `exon_id` as well as the location of
-these genomic elements (contig, start position, end position, strand).
+Find genes, transcripts and exons by ID, name or genomic position.
 
 ## Genes
 

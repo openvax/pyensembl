@@ -1,8 +1,9 @@
 # Choose an assembly and annotation
 
-Select the assembly and annotation version before querying a locus. Coordinates,
-contig coverage, identifiers and sequences can differ between annotations.
-Use an explicit release in reproducible analyses and record that selection.
+Choose the genome assembly used by your analysis, then an annotation for that
+assembly. For example, use GRCh37 annotations for positions measured on GRCh37,
+not GRCh38. Annotation versions can also change gene IDs, coordinates and
+sequences, so record the version you use.
 
 | Annotation source | Choose by | Guide |
 | --- | --- | --- |
