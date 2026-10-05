@@ -71,8 +71,12 @@ class LocusWithGenome(Locus):
     def __init__(self, contig, start, end, strand, biotype, genome):
         Locus.__init__(self, contig, start, end, strand)
         self.genome = genome
-        self.db = self.genome.db
         self.biotype = biotype
+
+    @property
+    def db(self):
+        """Resolve annotation only when needed, preserving metadata-only use."""
+        return self.genome.db
 
     def to_dict(self):
         return dict(
