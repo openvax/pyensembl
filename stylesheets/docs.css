@@ -1,0 +1,69 @@
+/* A quiet reading surface for scientific guides and API reference. */
+:root {
+  --md-text-font: "Helvetica Neue", Arial, sans-serif;
+  --md-code-font: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+body[data-md-color-scheme="default"] {
+  --md-default-bg-color: #ffffff;
+  --md-default-fg-color: #263238;
+  --md-default-fg-color--light: #59636b;
+  --md-typeset-a-color: #1769aa;
+  --md-code-bg-color: #f5f7f9;
+}
+
+.md-header {
+  box-shadow: none;
+  border-bottom: 1px solid #e2e6ea;
+}
+
+.md-content__inner {
+  max-width: 76ch;
+}
+
+.md-typeset {
+  font-size: 0.85rem;
+  line-height: 1.65;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3 {
+  color: var(--md-default-fg-color);
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+.md-typeset h1 {
+  font-size: 1.8rem;
+}
+
+.md-typeset h2 {
+  font-size: 1.25rem;
+}
+
+/* Inline identifiers read as part of a sentence, rather than little badges. */
+.md-typeset :not(pre) > code {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  font-size: 0.88em;
+  color: inherit;
+  box-shadow: none;
+}
+
+.md-typeset table:not([class]) {
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* Keep an identifier intact; wide reference tables can scroll. */
+.md-typeset table code {
+  white-space: nowrap;
+}
+
+.md-typeset h3 { font-size: 1.05rem; }
+.md-typeset pre { overflow-x: auto; }
+
+/* Keep the repository link without unrelated GitHub release/star counters. */
+.md-source__facts { display: none; }
