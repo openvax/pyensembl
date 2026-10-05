@@ -835,6 +835,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.GeneNameAliases.download_hgnc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        download_hgnc
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.GeneNameAliases.from_hgnc" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1157,6 +1168,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.GeneNameAliases.download_hgnc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        download_hgnc
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.GeneNameAliases.from_hgnc" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1282,6 +1304,131 @@ Values may name several genes: aliases are not necessarily unique.</p>
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pyensembl.GeneNameAliases.download_hgnc" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">download_hgnc</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#pyensembl.GeneNameAliases.download_hgnc" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">download_hgnc</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">cache_directory_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">source_url</span><span class="o">=</span><span class="n">HGNC_COMPLETE_SET_URL</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Download and load human HGNC aliases, reusing a cached snapshot.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>cache_directory_path</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <span title="Path">Path</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Storage base directory. Defaults to aliases/homo_sapiens/hgnc
+under PyEnsembl's configured cache root. Each source URL has
+a separate subdirectory.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>source_url</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Complete-set TSV or gzip TSV URL. Defaults to HGNC's current
+complete set; an archived snapshot or mirror can be selected.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="pyensembl.gene_name_aliases.HGNC_COMPLETE_SET_URL">HGNC_COMPLETE_SET_URL</span></code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>overwrite</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Download again even when this source is already cached.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="GeneNameAliases (pyensembl.gene_name_aliases.GeneNameAliases)" href="#pyensembl.GeneNameAliases">GeneNameAliases</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Human alias mapping whose source is the cached file path.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>Existing cached files are read without network access. Refresh is
+explicit; HGNC nomenclature is independent of the Ensembl release.
+Use from_hgnc(path) to load an already selected local snapshot.</p>
+</details>
+
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-function">
 

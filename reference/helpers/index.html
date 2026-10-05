@@ -1881,7 +1881,9 @@ has been moving into the cached method of EnsemblRelease.</p>
 
 
 <a href="#pyensembl.genome_for_reference_name" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">genome_for_reference_name</span><span class="p">(</span><span class="n">reference_name</span><span class="p">,</span> <span class="n">allow_older_downloaded_release</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">genome_for_reference_name</span><span class="p">(</span>
+    <span class="n">reference_name</span><span class="p">,</span> <span class="n">allow_older_downloaded_release</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2012,7 +2014,14 @@ Returns the distance to that locus, along with the locus object itself.</p>
 
 
 <a href="#pyensembl.species.Species" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Species</span><span class="p">(</span><span class="n">latin_name</span><span class="p">,</span> <span class="n">synonyms</span><span class="o">=</span><span class="p">[],</span> <span class="n">reference_assemblies</span><span class="o">=</span><span class="p">{},</span> <span class="n">division</span><span class="o">=</span><span class="s1">'vertebrates'</span><span class="p">,</span> <span class="n">ensembl_genomes</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ensembl_names</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Species</span><span class="p">(</span>
+    <span class="n">latin_name</span><span class="p">,</span>
+    <span class="n">synonyms</span><span class="o">=</span><span class="p">[],</span>
+    <span class="n">reference_assemblies</span><span class="o">=</span><span class="p">{},</span>
+    <span class="n">division</span><span class="o">=</span><span class="s2">"vertebrates"</span><span class="p">,</span>
+    <span class="n">ensembl_genomes</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">ensembl_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2175,7 +2184,16 @@ when it renamed it, e.g. {100: "canis_lupus_familiaris"}.</p>
   </span>
 
 <a href="#pyensembl.species.Species.VALID_DIVISIONS" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">VALID_DIVISIONS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s1">'vertebrates'</span><span class="p">,</span> <span class="s1">'plants'</span><span class="p">,</span> <span class="s1">'fungi'</span><span class="p">,</span> <span class="s1">'metazoa'</span><span class="p">,</span> <span class="s1">'protists'</span><span class="p">,</span> <span class="s1">'bacteria'</span><span class="p">})</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">VALID_DIVISIONS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"vertebrates"</span><span class="p">,</span>
+        <span class="s2">"plants"</span><span class="p">,</span>
+        <span class="s2">"fungi"</span><span class="p">,</span>
+        <span class="s2">"metazoa"</span><span class="p">,</span>
+        <span class="s2">"protists"</span><span class="p">,</span>
+        <span class="s2">"bacteria"</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2485,7 +2503,14 @@ when it renamed it, e.g. {100: "canis_lupus_familiaris"}.</p>
   </span>
 
 <a href="#pyensembl.species.Species.register" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">register</span><span class="p">(</span><span class="n">latin_name</span><span class="p">,</span> <span class="n">synonyms</span><span class="p">,</span> <span class="n">reference_assemblies</span><span class="p">,</span> <span class="n">division</span><span class="o">=</span><span class="s1">'vertebrates'</span><span class="p">,</span> <span class="n">ensembl_genomes</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ensembl_names</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">register</span><span class="p">(</span>
+    <span class="n">latin_name</span><span class="p">,</span>
+    <span class="n">synonyms</span><span class="p">,</span>
+    <span class="n">reference_assemblies</span><span class="p">,</span>
+    <span class="n">division</span><span class="o">=</span><span class="s2">"vertebrates"</span><span class="p">,</span>
+    <span class="n">ensembl_genomes</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">ensembl_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">

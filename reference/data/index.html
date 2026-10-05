@@ -2375,7 +2375,15 @@ and does not validate the biological contents of a file.</p>
 
 
 <a href="#pyensembl.DownloadCache" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">DownloadCache</span><span class="p">(</span><span class="n">reference_name</span><span class="p">,</span> <span class="n">annotation_name</span><span class="p">,</span> <span class="n">annotation_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">decompress_on_download</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">copy_local_files_to_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">install_string_function</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cache_directory_path</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">DownloadCache</span><span class="p">(</span>
+    <span class="n">reference_name</span><span class="p">,</span>
+    <span class="n">annotation_name</span><span class="p">,</span>
+    <span class="n">annotation_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">decompress_on_download</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">copy_local_files_to_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">install_string_function</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">cache_directory_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2616,7 +2624,11 @@ and the global cache directory determined by datacache.</p>
   </span>
 
 <a href="#pyensembl.DownloadCache.cache_subdirectory" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">cache_subdirectory</span> <span class="o">=</span> <span class="n">cache_subdirectory</span><span class="p">(</span><span class="n">reference_name</span><span class="o">=</span><span class="n">reference_name</span><span class="p">,</span> <span class="n">annotation_name</span><span class="o">=</span><span class="n">annotation_name</span><span class="p">,</span> <span class="n">annotation_version</span><span class="o">=</span><span class="n">annotation_version</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">cache_subdirectory</span> <span class="o">=</span> <span class="n">cache_subdirectory</span><span class="p">(</span>
+    <span class="n">reference_name</span><span class="o">=</span><span class="n">reference_name</span><span class="p">,</span>
+    <span class="n">annotation_name</span><span class="o">=</span><span class="n">annotation_name</span><span class="p">,</span>
+    <span class="n">annotation_version</span><span class="o">=</span><span class="n">annotation_version</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2859,7 +2871,12 @@ files the same as their remote counterparts.</p>
 
 
 <a href="#pyensembl.DownloadCache.download_or_copy_if_necessary" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">download_or_copy_if_necessary</span><span class="p">(</span><span class="n">path_or_url</span><span class="p">,</span> <span class="n">download_if_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">show_progress</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">download_or_copy_if_necessary</span><span class="p">(</span>
+    <span class="n">path_or_url</span><span class="p">,</span>
+    <span class="n">download_if_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">show_progress</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2948,7 +2965,13 @@ self.copy_local_to_cache is True, and then copy it to the cache first.</p>
 
 
 <a href="#pyensembl.DownloadCache.local_path_or_install_error" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">local_path_or_install_error</span><span class="p">(</span><span class="n">field_name</span><span class="p">,</span> <span class="n">path_or_url</span><span class="p">,</span> <span class="n">download_if_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">show_progress</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">local_path_or_install_error</span><span class="p">(</span>
+    <span class="n">field_name</span><span class="p">,</span>
+    <span class="n">path_or_url</span><span class="p">,</span>
+    <span class="n">download_if_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">show_progress</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2993,7 +3016,13 @@ self.copy_local_to_cache is True, and then copy it to the cache first.</p>
 
 
 <a href="#pyensembl.Database" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Database</span><span class="p">(</span><span class="n">gtf_path</span><span class="p">,</span> <span class="n">install_string</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cache_directory_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">restrict_gtf_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">restrict_gtf_features</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Database</span><span class="p">(</span>
+    <span class="n">gtf_path</span><span class="p">,</span>
+    <span class="n">install_string</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">cache_directory_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">restrict_gtf_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">restrict_gtf_features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3311,7 +3340,10 @@ a database.</p>
   </span>
 
 <a href="#pyensembl.Database.PRIMARY_KEY_COLUMNS" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">PRIMARY_KEY_COLUMNS</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'gene'</span><span class="p">:</span> <span class="s1">'gene_id'</span><span class="p">,</span> <span class="s1">'transcript'</span><span class="p">:</span> <span class="s1">'transcript_id'</span><span class="p">}</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">PRIMARY_KEY_COLUMNS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"gene"</span><span class="p">:</span> <span class="s2">"gene_id"</span><span class="p">,</span>
+    <span class="s2">"transcript"</span><span class="p">:</span> <span class="s2">"transcript_id"</span><span class="p">,</span>
+<span class="p">}</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -3476,7 +3508,16 @@ With <code>overwrite</code>, rebuild it from the GTF even if it exists.</p>
 
 
 <a href="#pyensembl.Database.column_values_at_locus" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">column_values_at_locus</span><span class="p">(</span><span class="n">column_name</span><span class="p">,</span> <span class="n">feature</span><span class="p">,</span> <span class="n">contig</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="nb">sorted</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">column_values_at_locus</span><span class="p">(</span>
+    <span class="n">column_name</span><span class="p">,</span>
+    <span class="n">feature</span><span class="p">,</span>
+    <span class="n">contig</span><span class="p">,</span>
+    <span class="n">position</span><span class="p">,</span>
+    <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">strand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">distinct</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="nb">sorted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -3497,7 +3538,9 @@ at a particular range of loci</p>
 
 
 <a href="#pyensembl.Database.distinct_column_values_at_locus" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">distinct_column_values_at_locus</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">feature</span><span class="p">,</span> <span class="n">contig</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strand</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">distinct_column_values_at_locus</span><span class="p">(</span>
+    <span class="n">column</span><span class="p">,</span> <span class="n">feature</span><span class="p">,</span> <span class="n">contig</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strand</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -3717,7 +3760,14 @@ this list.</p>
 
 
 <a href="#pyensembl.Database.query" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">query</span><span class="p">(</span><span class="n">select_column_names</span><span class="p">,</span> <span class="n">filter_column</span><span class="p">,</span> <span class="n">filter_value</span><span class="p">,</span> <span class="n">feature</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">query</span><span class="p">(</span>
+    <span class="n">select_column_names</span><span class="p">,</span>
+    <span class="n">filter_column</span><span class="p">,</span>
+    <span class="n">filter_value</span><span class="p">,</span>
+    <span class="n">feature</span><span class="p">,</span>
+    <span class="n">distinct</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -3738,7 +3788,14 @@ filtered both by the feature type and a user-provided column/value.</p>
 
 
 <a href="#pyensembl.Database.query_one" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">query_one</span><span class="p">(</span><span class="n">select_column_names</span><span class="p">,</span> <span class="n">filter_column</span><span class="p">,</span> <span class="n">filter_value</span><span class="p">,</span> <span class="n">feature</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">query_one</span><span class="p">(</span>
+    <span class="n">select_column_names</span><span class="p">,</span>
+    <span class="n">filter_column</span><span class="p">,</span>
+    <span class="n">filter_value</span><span class="p">,</span>
+    <span class="n">feature</span><span class="p">,</span>
+    <span class="n">distinct</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -3756,7 +3813,14 @@ filtered both by the feature type and a user-provided column/value.</p>
 
 
 <a href="#pyensembl.Database.query_feature_values" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">query_feature_values</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">feature</span><span class="p">,</span> <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">contig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">biotype</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">query_feature_values</span><span class="p">(</span>
+    <span class="n">column</span><span class="p">,</span>
+    <span class="n">feature</span><span class="p">,</span>
+    <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">contig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">strand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">biotype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4061,7 +4125,9 @@ one locus in the database.</p>
   </span>
 
 <a href="#pyensembl.SequenceData.fasta_directory_paths" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">fasta_directory_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">split</span><span class="p">(</span><span class="n">path</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fasta_paths</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">fasta_directory_paths</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">split</span><span class="p">(</span><span class="n">path</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fasta_paths</span>
+<span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4083,7 +4149,9 @@ one locus in the database.</p>
   </span>
 
 <a href="#pyensembl.SequenceData.fasta_filenames" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">fasta_filenames</span> <span class="o">=</span> <span class="p">[</span><span class="n">split</span><span class="p">(</span><span class="n">path</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fasta_paths</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">fasta_filenames</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">split</span><span class="p">(</span><span class="n">path</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fasta_paths</span>
+<span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4105,7 +4173,9 @@ one locus in the database.</p>
   </span>
 
 <a href="#pyensembl.SequenceData.cache_directory_paths" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">cache_directory_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">cache_directory_path</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fasta_paths</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">cache_directory_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">cache_directory_path</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">fasta_paths</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4127,7 +4197,10 @@ one locus in the database.</p>
   </span>
 
 <a href="#pyensembl.SequenceData.fasta_dictionary_filenames" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">fasta_dictionary_filenames</span> <span class="o">=</span> <span class="p">[</span><span class="n">filename</span> <span class="o">+</span> <span class="s1">'.pickle'</span> <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fasta_filenames</span><span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">fasta_dictionary_filenames</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">filename</span> <span class="o">+</span> <span class="s2">".pickle"</span>
+    <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fasta_filenames</span>
+<span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4149,7 +4222,13 @@ one locus in the database.</p>
   </span>
 
 <a href="#pyensembl.SequenceData.fasta_dictionary_pickle_paths" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">fasta_dictionary_pickle_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">join</span><span class="p">(</span><span class="n">cache_path</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span> <span class="k">for</span> <span class="n">cache_path</span><span class="p">,</span> <span class="n">filename</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_directory_paths</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fasta_dictionary_filenames</span><span class="p">)]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">fasta_dictionary_pickle_paths</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">join</span><span class="p">(</span><span class="n">cache_path</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">cache_path</span><span class="p">,</span> <span class="n">filename</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache_directory_paths</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fasta_dictionary_filenames</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">

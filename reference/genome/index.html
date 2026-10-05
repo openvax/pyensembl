@@ -2968,7 +2968,18 @@ listed below. <a href="../lookups/">Lookup methods</a> gives a shorter query ove
 
 
 <a href="#pyensembl.Genome" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Genome</span><span class="p">(</span><span class="n">reference_name</span><span class="p">,</span> <span class="n">annotation_name</span><span class="p">,</span> <span class="n">annotation_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">gtf_path_or_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transcript_fasta_paths_or_urls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">protein_fasta_paths_or_urls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">decompress_on_download</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">copy_local_files_to_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cache_directory_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">genome_fasta_path_or_url</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Genome</span><span class="p">(</span>
+    <span class="n">reference_name</span><span class="p">,</span>
+    <span class="n">annotation_name</span><span class="p">,</span>
+    <span class="n">annotation_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">gtf_path_or_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">transcript_fasta_paths_or_urls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">protein_fasta_paths_or_urls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">decompress_on_download</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">copy_local_files_to_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">cache_directory_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">genome_fasta_path_or_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3322,7 +3333,15 @@ indexes and decompressed copies are stored in the cache.</p>
   </span>
 
 <a href="#pyensembl.Genome.download_cache" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">download_cache</span> <span class="o">=</span> <span class="n">DownloadCache</span><span class="p">(</span><span class="n">reference_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">reference_name</span><span class="p">,</span> <span class="n">annotation_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">annotation_name</span><span class="p">,</span> <span class="n">annotation_version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">annotation_version</span><span class="p">,</span> <span class="n">decompress_on_download</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">decompress_on_download</span><span class="p">,</span> <span class="n">copy_local_files_to_cache</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">copy_local_files_to_cache</span><span class="p">,</span> <span class="n">install_string_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">install_string</span><span class="p">,</span> <span class="n">cache_directory_path</span><span class="o">=</span><span class="n">cache_directory_path</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">download_cache</span> <span class="o">=</span> <span class="n">DownloadCache</span><span class="p">(</span>
+    <span class="n">reference_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">reference_name</span><span class="p">,</span>
+    <span class="n">annotation_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">annotation_name</span><span class="p">,</span>
+    <span class="n">annotation_version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">annotation_version</span><span class="p">,</span>
+    <span class="n">decompress_on_download</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">decompress_on_download</span><span class="p">,</span>
+    <span class="n">copy_local_files_to_cache</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">copy_local_files_to_cache</span><span class="p">,</span>
+    <span class="n">install_string_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">install_string</span><span class="p">,</span>
+    <span class="n">cache_directory_path</span><span class="o">=</span><span class="n">cache_directory_path</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -3976,7 +3995,9 @@ absent from the FASTA. Accepts both versioned
 
 
 <a href="#pyensembl.Genome.transcripts_at_locus" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">transcripts_at_locus</span><span class="p">(</span><span class="n">contig</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strand</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">transcripts_at_locus</span><span class="p">(</span>
+    <span class="n">contig</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strand</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4103,7 +4124,9 @@ overlaps. See :meth:<code>nearest_gene</code> for the return shape.</p>
 
 
 <a href="#pyensembl.Genome.gene_names_at_locus" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">gene_names_at_locus</span><span class="p">(</span><span class="n">contig</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strand</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">gene_names_at_locus</span><span class="p">(</span>
+    <span class="n">contig</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strand</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4139,7 +4162,9 @@ overlaps. See :meth:<code>nearest_gene</code> for the return shape.</p>
 
 
 <a href="#pyensembl.Genome.transcript_ids_at_locus" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">transcript_ids_at_locus</span><span class="p">(</span><span class="n">contig</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strand</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">transcript_ids_at_locus</span><span class="p">(</span>
+    <span class="n">contig</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strand</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4157,7 +4182,9 @@ overlaps. See :meth:<code>nearest_gene</code> for the return shape.</p>
 
 
 <a href="#pyensembl.Genome.transcript_names_at_locus" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">transcript_names_at_locus</span><span class="p">(</span><span class="n">contig</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strand</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">transcript_names_at_locus</span><span class="p">(</span>
+    <span class="n">contig</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strand</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4175,7 +4202,9 @@ overlaps. See :meth:<code>nearest_gene</code> for the return shape.</p>
 
 
 <a href="#pyensembl.Genome.protein_ids_at_locus" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">protein_ids_at_locus</span><span class="p">(</span><span class="n">contig</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strand</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">protein_ids_at_locus</span><span class="p">(</span>
+    <span class="n">contig</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">strand</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
