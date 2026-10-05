@@ -636,7 +636,10 @@ class Database(object):
         feature : str
             Feature names such as 'transcript', 'gene', and 'exon'
 
-        Returns list of Locus objects
+        Returns
+        -------
+        list of Locus
+            Matching genomic loci.
         """
         # list of values containing (contig, start, stop, strand)
         result_tuples = self.query(
@@ -668,7 +671,10 @@ class Database(object):
         feature : str
             Feature names such as 'transcript', 'gene', and 'exon'
 
-        Returns single Locus object.
+        Returns
+        -------
+        Locus
+            The unique matching genomic locus.
         """
         loci = self.query_loci(
             filter_column=filter_column, filter_value=filter_value, feature=feature
