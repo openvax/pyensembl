@@ -1,26 +1,92 @@
-# Work with genes, transcripts and proteins
+# Find genes and transcripts <a id="work-with-genes-transcripts-and-proteins"></a>
 
-The [first lookup tutorial](../getting-started.md) uses pinned human GRCh38 data.
-A gene may have several transcripts. Select a transcript by a stated rule or
-stable ID; list order does not identify a preferred isoform. Protein sequence
-is available only when a matching peptide record exists.
+These examples use the human GRCh38 / Ensembl release 93 data installed on the
+[home page](../index.md#install). They cover name, ID and position lookups,
+then show how to explore a gene's transcripts.
 
-## Load genome in Python
+## Find a gene by name or ID
 
-This separate example selects fly release 100. Install it before running the
-Python fragment:
-
-```sh
-pyensembl install --release 100 --species drosophila_melanogaster
-```
+A name lookup returns every matching gene:
 
 ```python
 from pyensembl import EnsemblRelease
 
-data = EnsemblRelease(100, species="drosophila_melanogaster")
-gene = data.gene_by_id("FBgn0011747")
-transcripts = gene.transcripts
+with EnsemblRelease(93, species="human") as data:
+    genes = data.genes_by_name("TP53")
+    for gene in genes:
+        print(gene.id, gene.name, gene.contig)
 ```
+
+```text
+ENSG00000141510 TP53 17
+```
+
+Names can match multiple loci. When you know the intended gene ID, use
+`data.gene_by_id("ENSG00000141510")` to select it directly.
+[Alias lookup](aliases.md) adds names from a separate source, such as HGNC.
+
+## Query a genomic interval
+
+Find gene names overlapping a position, or add `end` to search an interval:
+
+```python
+from pyensembl import EnsemblRelease
+
+with EnsemblRelease(93, species="human") as data:
+    print(data.gene_names_at_locus(contig="17", position=7668402))
+```
+
+```text
+['TP53']
+```
+
+Coordinates are one-based and inclusive, and must use the selected assembly.
+Use `genes_at_locus(...)` for gene objects instead of names. The optional
+`strand` argument restricts the search to `"+"` or `"-"`.
+
+## List a gene's transcripts
+
+`gene.transcripts` returns the transcripts annotated for that gene:
+
+```python
+from pyensembl import EnsemblRelease
+
+with EnsemblRelease(93, species="human") as data:
+    gene = data.gene_by_id("ENSG00000141510")
+    transcripts = gene.transcripts
+```
+
+List order does not identify a preferred isoform. Select a transcript by ID or
+by a rule appropriate to your analysis.
+
+## Inspect a transcript
+
+After [installing human release 93](../index.md#install), you can inspect a
+transcript's gene and genomic span:
+
+```python
+from pyensembl import EnsemblRelease
+
+with EnsemblRelease(93, species="human") as data:
+    transcript = data.transcript_by_id("ENST00000269305")
+    print(transcript.id, transcript.version, transcript.gene_id)
+    print(transcript.contig, transcript.start, transcript.end, transcript.strand)
+```
+
+```text
+ENST00000269305 8 ENSG00000141510
+17 7668402 7687538 -
+```
+
+The stable transcript ID and its version are separate fields. Its genomic
+span includes introns; its spliced cDNA sequence does not.
+
+## Get transcript and protein sequences
+
+Use `transcript.sequence` for spliced cDNA and `transcript.protein_sequence`
+for its annotated translation. The [home page](../index.md#read-transcript-and-protein-sequences)
+shows an example and output. To include introns or flanking regions instead,
+read [genomic DNA](reference-dna.md) from the same assembly.
 
 ## Data structures
 
@@ -52,10 +118,28 @@ sequence. Do not treat a missing peptide as evidence that a locus is absent.
 Use the [Transcript reference](../reference/features.md#pyensembl.Transcript)
 for coding intervals, completeness and sequence behavior.
 
-## Query a genomic interval
+## Examples with other reference data
 
-This example requires the human release 77 data installed by the following
-command. It preserves the original HLA-A lookup:
+### Fly annotation <a id="load-genome-in-python"></a>
+
+This separate example selects fly release 100. Install it before running the
+Python fragment:
+
+```sh
+pyensembl install --release 100 --species drosophila_melanogaster
+```
+
+```python
+from pyensembl import EnsemblRelease
+
+data = EnsemblRelease(100, species="drosophila_melanogaster")
+gene = data.gene_by_id("FBgn0011747")
+transcripts = gene.transcripts
+```
+
+### Human release 77: HLA-A
+
+This example uses human release 77. Install its data before querying HLA-A:
 
 ```sh
 pyensembl install --release 77 --species human

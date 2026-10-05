@@ -1,6 +1,6 @@
 # Command-line reference
 
-Run `pyensembl ACTION [options]`. [Installation](../getting-started.md),
+Run `pyensembl ACTION [options]`. [Installation](../index.md#install),
 [assembly selection](../guides/assembly-selection.md), [data inspection](../guides/cache.md)
 and [reference DNA](../guides/reference-dna.md) explain the main workflows.
 Dated new-platform annotations currently use the Python constructor described

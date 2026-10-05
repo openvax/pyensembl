@@ -9,14 +9,21 @@ The site uses [MkDocs](https://www.mkdocs.org/) with
 
 ## Structure
 
-Keep the homepage short. The first-use tutorial goes from installation to a
-result with one explicitly selected species, assembly and annotation version.
+Put installation and the first useful examples directly on the homepage.
+Readers should reach a result without having to find a separate tutorial.
+Use one explicitly selected species, assembly and annotation version.
 Explain IDs, coordinates, strand and sequence interpretation alongside the
 output. Task guides cover selection, custom files, aliases, caches and DNA.
 Reference pages give complete interfaces and metadata. Maintainer workflows
 belong under Development.
 
-Use descriptive headings. Avoid repeating the sidebar in the page body.
+Use descriptive headings and label guides by the task a reader wants to do.
+Keep navigation groups collapsed until they are needed. Split pages for
+substantial tasks or reference material, not for each step of a short example.
+Order common lookups and sequence tasks before reference selection, cache
+management and custom-data setup. Use the same reference for the main examples;
+put examples requiring another species or release after the main workflow.
+Avoid repeating the sidebar in the page body.
 Comparison tables should have short entries; place long explanations below
 them or on linked reference pages.
 

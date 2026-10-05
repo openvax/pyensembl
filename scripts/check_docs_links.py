@@ -67,12 +67,18 @@ def check_links():
         repo_prefix = "/openvax/pyensembl/blob/main/"
         if url.netloc == "github.com" and url.path.startswith(repo_prefix):
             target = ROOT / unquote(url.path.removeprefix(repo_prefix))
+        elif url.netloc == "openvax.github.io" and url.path.startswith("/pyensembl/"):
+            target = site / unquote(url.path.removeprefix("/pyensembl/"))
+            if target.is_dir():
+                target /= "index.html"
         elif not url.scheme and not url.netloc and url.path:
             target = ROOT / unquote(url.path)
         else:
             continue
         if not target.is_file():
             failures.append("README: missing %s" % href)
+        elif url.fragment and target.resolve() in pages and unquote(url.fragment) not in pages[target.resolve()].ids:
+            failures.append("README: missing anchor %s" % href)
     # Signatures and own public methods must actually appear in the rendered
     # reference. This catches decorators or doc generation omitting interfaces.
     reference_ids = set().union(*(page.ids for path, page in pages.items()

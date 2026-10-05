@@ -1,5 +1,10 @@
 # Manage and inspect cached data
 
+Use `pyensembl list` to check which datasets are ready to query. This guide
+also covers where files are stored and how to inspect an incomplete install.
+For deleting data or reclaiming DNA storage, see
+[managing disk space](reference-dna.md#managing-disk-space).
+
 ## Cache location
 
 PyEnsembl keeps all of its data under one directory, with a subdirectory per

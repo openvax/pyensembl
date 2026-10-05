@@ -1,7 +1,7 @@
 # The new Ensembl platform
 
 PyEnsembl reads downloadable annotations and sequences into local indexes.
-The transition from [Ensembl Beta](https://www.ensembl.org/) to the new website
+The transition to the [new Ensembl website](https://www.ensembl.org/)
 does not change an installed dataset. Numbered releases remain available through
 `EnsemblRelease`; new assembly/date datasets use `EnsemblAnnotation`.
 
@@ -11,7 +11,7 @@ does not change an installed dataset. Numbered releases remain available through
 | --- | --- | --- |
 | [Numbered Ensembl releases](https://ftp.ensembl.org/pub/) | Species and integer release | `EnsemblRelease(93, species="human")` |
 | [New Ensembl downloads](https://ftp.ebi.ac.uk/pub/ensemblorganisms/) | Versioned assembly accession, provider and annotation date | `EnsemblAnnotation("GCA_000001405.29", "2023_03")` |
-| [Custom GTF and FASTA](https://github.com/openvax/pyensembl#non-ensembl-data) | Matched files selected by the caller | `Genome(...)` |
+| [Custom GTF and FASTA](guides/custom-genomes.md) | Matched annotation and sequence files | `Genome(...)` |
 
 As checked on 2026-10-05, Ensembl's [transition announcement](https://www.ensembl.info/2025/12/02/updates-to-programmatic-access-to-ensembl-and-transitioning-to-the-new-ensembl-platform/)
 states that legacy FTP and API services remain available but stop receiving

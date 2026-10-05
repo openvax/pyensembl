@@ -24,7 +24,7 @@ version. See [assembly selection](../guides/assembly-selection.md).
 
 ::: pyensembl.species.Species
 
-## Exported constants
+## Package values and convenience genomes <a id="exported-constants"></a>
 
 `MAX_ENSEMBL_RELEASE` is the newest numbered release supported by this package.
 `__version__` is its package version. `ensembl_grch36`, `ensembl_grch37` and
