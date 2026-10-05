@@ -14,6 +14,7 @@ import logging
 
 from .database import Database
 from .download_cache import DownloadCache
+from .ensembl_annotation import EnsemblAnnotation
 from .ensembl_release import EnsemblRelease, cached_release
 from .ensembl_versions import MAX_ENSEMBL_RELEASE
 from .exon import Exon
@@ -50,6 +51,7 @@ __all__ = [
     "__version__",
     "DownloadCache",
     "Database",
+    "EnsemblAnnotation",
     "EnsemblRelease",
     "cached_release",
     "MAX_ENSEMBL_RELEASE",

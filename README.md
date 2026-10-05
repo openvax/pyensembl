@@ -79,6 +79,24 @@ additional genes. Existing source files and indexes are retained, and unchanged
 FASTA files are reused. Custom mirrors must provide the complete GTF filename;
 to use a deliberately restricted annotation, supply its GTF as custom data.
 
+## New Ensembl platform
+
+Numbered annotations continue to use `EnsemblRelease`. For the new
+assembly-accession and dated-annotation downloads, use `EnsemblAnnotation`:
+
+```python
+from pyensembl import EnsemblAnnotation
+
+data = EnsemblAnnotation("GCA_000001405.29", "2023_03", species="human",
+                         reference_name="GRCh38", include_alt=True)
+data.download()
+data.index()
+print(data.gene_by_id("ENSG00000141510").name)
+```
+
+See [the platform guide](docs/ensembl-platform.md) for dataset selection,
+annotation coverage, optional DNA, cache identity and Ensembl's archive policy.
+
 ## Development Setup
 
 For development, install PyEnsembl in editable mode with development dependencies:
