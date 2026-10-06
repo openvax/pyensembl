@@ -37,9 +37,12 @@ require `data.download()` before `data.index()`.
 
 Keep annotation source, assembly, version and file provenance with your
 analysis. A GTF should identify genes and transcripts using `gene_id` and
-`transcript_id`; sequence lookup uses matching FASTA record IDs. Ensembl
-version-suffix fallback supports matching a stable identifier to one versioned
-record, but ambiguous versions are not chosen arbitrarily. Gene-only GTF files
+`transcript_id`; sequence lookup uses matching FASTA record IDs. Ensembl IDs
+match with or without a version suffix, whether the files store versions in
+separate `*_version` attributes (Ensembl) or in the IDs themselves (GENCODE). A
+supplied version must match the stored one. When FASTA headers carry no version,
+or several versions of one ID, sequence lookups use the version the GTF records;
+an ID that still matches several versions raises an error. Gene-only GTF files
 can support gene queries without transcript identifiers.
 
 GFF3 requires conversion to GTF before indexing. Unsupported or missing GTF

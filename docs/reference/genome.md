@@ -3,7 +3,8 @@
 These methods apply to `EnsemblRelease`, `EnsemblAnnotation` and custom
 [`Genome`](../guides/custom-genomes.md) objects. Find a method in the tables
 below; the [complete reference](#pyensembl.Genome) follows them. Coordinates are
-one-based and inclusive.
+one-based and inclusive. Gene, transcript, exon and protein IDs may include a
+[version](../guides/features.md#versioned-ids), which must match the annotation's.
 
 ## Find a method
 
