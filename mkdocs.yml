@@ -21,7 +21,7 @@ nav:
   - Home: index.md
   - Common tasks:
       - Find genes and transcripts: guides/features.md
-      - Exons and coding sequences: guides/transcripts.md
+      - Protein and transcript sequences: guides/transcripts.md
       - Search gene aliases: guides/aliases.md
       - Read genomic DNA: guides/reference-dna.md
   - Reference data:

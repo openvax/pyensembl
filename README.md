@@ -51,7 +51,7 @@ getting-started examples. Use these guides for other tasks:
 | Task | Guide |
 | --- | --- |
 | <a id="load-genome-in-python"></a><a id="data-structures"></a><a id="gene"></a><a id="transcript"></a>Find genes by name, position or biotype | [Genes and transcripts](https://openvax.github.io/pyensembl/guides/features/) |
-| <a id="protein-information"></a>Exons, coding sequences, UTRs and codon positions | [Exons and coding sequences](https://openvax.github.io/pyensembl/guides/transcripts/) |
+| <a id="protein-information"></a>Protein, coding and transcript sequences; exons | [Protein and transcript sequences](https://openvax.github.io/pyensembl/guides/transcripts/) |
 | <a id="look-up-gene-name-aliases"></a>Search additional gene names | [Alias lookup](https://openvax.github.io/pyensembl/guides/aliases/) |
 | <a id="reference-dna-optional"></a><a id="quick-start"></a><a id="reading-sequences"></a><a id="choosing-dna"></a><a id="local-fasta-files"></a><a id="upgrading-from-2110"></a>Read genomic DNA | [Reference DNA](https://openvax.github.io/pyensembl/guides/reference-dna/) |
 | <a id="annotation-coverage"></a><a id="list-supported-species"></a>Choose an assembly, species and coverage | [Assembly selection](https://openvax.github.io/pyensembl/guides/assembly-selection/) |
