@@ -42,27 +42,28 @@ You can also search with `data.genes_by_name("TP53")`. It returns a list because
 a name can match several genes. [Gene aliases](guides/aliases.md) let you search
 additional names such as p53.
 
-## Read transcript and protein sequences <a id="select-one-transcript"></a>
+## Read protein and transcript sequences <a id="read-transcript-and-protein-sequences"></a><a id="select-one-transcript"></a>
 
 A gene can have several transcripts. Continue in the same Python session with
 one selected transcript:
 
 ```python
 transcript = data.transcript_by_id("ENST00000269305")
-print(transcript.sequence[:30])
 print(transcript.protein_sequence[:30])
-print(len(transcript.sequence), len(transcript.protein_sequence))
+print(transcript.sequence[:30])
+print(len(transcript.protein_sequence), len(transcript.sequence))
 data.close()
 ```
 
 ```text
-GTTTTCCCCTCCCATGTGCTCAAGACTGGC
 MEEPQSDPSVEPPLSQETFSDLWKLLPENN
-2579 393
+GTTTTCCCCTCCCATGTGCTCAAGACTGGC
+393 2579
 ```
 
-The first two lines show the first 30 bases of cDNA and the first 30 amino acids
-of its protein. The full sequences have 2,579 bases and 393 amino acids.
+The first two lines show the first 30 amino acids of the protein and the first
+30 bases of the transcript's cDNA, which begins with the 5′ UTR. The full
+sequences have 393 amino acids and 2,579 bases.
 The cDNA is spliced and already oriented 5′ to 3′, including
 for minus-strand transcripts. Noncoding or incomplete transcripts may have no
 protein sequence. Both come from the reference annotation, not from your
@@ -76,8 +77,8 @@ automatically.
 
 - [Find genes and transcripts](guides/features.md) by name, ID, position or
   biotype, and choose among a gene's transcripts.
-- [Explore exons and coding sequences](guides/transcripts.md): UTRs, codon
-  positions and mapping genomic positions onto a transcript.
+- [Get protein and transcript sequences](guides/transcripts.md): proteins by
+  ID, coding sequences, UTRs, exons and genomic coordinates.
 - [Read genomic DNA](guides/reference-dna.md) for introns or flanking regions.
   Whole-genome DNA is a separate, optional download.
 - [Choose another species, assembly or annotation](guides/assembly-selection.md),

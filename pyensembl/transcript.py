@@ -272,6 +272,17 @@ class Transcript(LocusWithGenome):
         return True
 
     @memoized_property
+    def stop_codon_complete(self):
+        """
+        Does the stop codon span 3 genomic positions?
+        """
+        try:
+            self._codon_positions("stop_codon")
+        except ValueError:
+            return False
+        return True
+
+    @memoized_property
     def start_codon_positions(self):
         """
         Chromosomal positions of nucleotides in start codon.
@@ -424,13 +435,14 @@ class Transcript(LocusWithGenome):
     @memoized_property
     def complete(self):
         """
-        Consider a transcript complete if it has start and stop codons and
-        a coding sequence whose length is divisible by 3
+        Consider a transcript complete if it has three-base start and stop
+        codons and a coding sequence whose length is divisible by 3
         """
         return (
             self.contains_start_codon
             and self.start_codon_complete
             and self.contains_stop_codon
+            and self.stop_codon_complete
             and self.coding_sequence is not None
             and len(self.coding_sequence) % 3 == 0
         )
