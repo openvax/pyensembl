@@ -38,7 +38,7 @@ Ensembl release options:
   --release RELEASE [RELEASE ...]
                         Ensembl release version(s); required for deletion
                         (install default=newest supported release for
-                        --reference-name, otherwise 116)
+                        --reference-name, otherwise for each species)
   --species SPECIES [SPECIES ...]
                         Which species to download Ensembl data for
                         (default=inferred from --reference-name, otherwise
