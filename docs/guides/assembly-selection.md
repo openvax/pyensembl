@@ -27,6 +27,7 @@ pyensembl install --release 93 --species human
 ranges. In Python, `EnsemblRelease(93, species="human")` selects GRCh38;
 `EnsemblRelease(75, species="human")` selects GRCh37. These coordinate systems
 are distinct. See [Ensembl's assembly explanation](https://www.ensembl.org/info/genome/assembly/index.html).
+Species accept common or Latin names, such as `"mouse"` or `"mus_musculus"`.
 
 To choose the newest supported release for an assembly:
 
@@ -53,11 +54,10 @@ Patch and haplotype contig names are preserved, for example
 `CHR_HG2263_PATCH`. Gene-name searches can return additional genes on these
 contigs; use stable gene IDs or a contig filter when selecting a particular locus.
 
-After upgrading from versions before 2.10.17, rerun installation for each affected
-release you use, for example `pyensembl install --release 97 --species human`.
-The complete GTF creates a separate index, so an older index cannot hide the
-additional genes. Existing source files and indexes are retained, and unchanged
-FASTA files are reused. Custom mirrors must provide the complete GTF filename;
-to use a deliberately restricted annotation, supply its GTF as custom data.
+If you installed one of these releases with PyEnsembl before 2.10.17, rerun
+`pyensembl install` for it to add the complete annotation; existing files are
+kept. Custom mirrors must provide the complete GTF filename. To use a
+deliberately restricted annotation, supply its GTF as
+[custom data](custom-genomes.md).
 
 The [new platform guide](../ensembl-platform.md) explains its separate `include_alt` choice. Matching contig names alone do not prove matching assemblies.

@@ -1,122 +1,104 @@
 # Find genes and transcripts <a id="work-with-genes-transcripts-and-proteins"></a>
 
 These examples use the human GRCh38 / Ensembl release 93 data installed on the
-[home page](../index.md#install). They cover name, ID and position lookups,
-then show how to explore a gene's transcripts.
+[home page](../index.md#install). They run in one Python session.
 
 ## Find a gene by name or ID
 
-A name lookup returns every matching gene:
+A name lookup returns a list of every matching gene:
 
 ```python
 from pyensembl import EnsemblRelease
 
-with EnsemblRelease(93, species="human") as data:
-    genes = data.genes_by_name("TP53")
-    for gene in genes:
-        print(gene.id, gene.name, gene.contig)
+data = EnsemblRelease(93, species="human")
+for gene in data.genes_by_name("TP53"):
+    print(gene.id, gene.name, gene.contig, gene.biotype)
 ```
 
 ```text
-ENSG00000141510 TP53 17
+ENSG00000141510 TP53 17 protein_coding
 ```
 
-Names can match multiple loci. When you know the intended gene ID, use
-`data.gene_by_id("ENSG00000141510")` to select it directly.
-[Alias lookup](aliases.md) adds names from a separate source, such as HGNC.
+A name can match several loci, such as copies on patch or haplotype contigs.
+When you know the gene ID, `data.gene_by_id("ENSG00000141510")` selects it
+directly. [Alias lookup](aliases.md) adds names from a separate source, such as
+HGNC.
 
-## Query a genomic interval
+## Find genes at a position <a id="query-a-genomic-interval"></a>
 
-Find gene names overlapping a position, or add `end` to search an interval:
+Give a position, or add `end` to search an interval:
 
 ```python
-from pyensembl import EnsemblRelease
-
-with EnsemblRelease(93, species="human") as data:
-    print(data.gene_names_at_locus(contig="17", position=7668402))
+print(data.gene_names_at_locus(contig="17", position=7668402))
+for gene in data.genes_at_locus(contig="17", position=7660000, end=7690000):
+    print(gene.name, gene.strand, gene.start, gene.end)
 ```
 
 ```text
 ['TP53']
+WRAP53 + 7686071 7703502
+TP53 - 7661779 7687550
+AC087388.1 - 7685260 7686371
 ```
 
 Coordinates are one-based and inclusive, and must use the selected assembly.
-Use `genes_at_locus(...)` for gene objects instead of names. The optional
-`strand` argument restricts the search to `"+"` or `"-"`.
+Overlapping genes on both strands are returned; pass `strand="+"` or `"-"` to
+restrict the search. `transcripts_at_locus` and `exons_at_locus` work the same
+way, and `nearest_gene` finds the closest gene when none overlaps.
 
-## List a gene's transcripts
+## Filter by contig or biotype
 
-`gene.transcripts` returns the transcripts annotated for that gene:
-
-```python
-from pyensembl import EnsemblRelease
-
-with EnsemblRelease(93, species="human") as data:
-    gene = data.gene_by_id("ENSG00000141510")
-    transcripts = gene.transcripts
-```
-
-List order does not identify a preferred isoform. Select a transcript by ID or
-by a rule appropriate to your analysis.
-
-## Inspect a transcript
-
-After [installing human release 93](../index.md#install), you can inspect a
-transcript's gene and genomic span:
+Whole-genome lists accept optional `contig`, `strand` and `biotype` filters:
 
 ```python
-from pyensembl import EnsemblRelease
-
-with EnsemblRelease(93, species="human") as data:
-    transcript = data.transcript_by_id("ENST00000269305")
-    print(transcript.id, transcript.version, transcript.gene_id)
-    print(transcript.contig, transcript.start, transcript.end, transcript.strand)
+coding_genes = data.genes(contig="17", biotype="protein_coding")
+print(len(coding_genes))
 ```
 
 ```text
-ENST00000269305 8 ENSG00000141510
-17 7668402 7687538 -
+1183
 ```
 
-The stable transcript ID and its version are separate fields. Its genomic
-span includes introns; its spliced cDNA sequence does not.
+Biotype names come from the annotation and can differ between releases; list
+them with `{gene.biotype for gene in data.genes()}`. `gene_ids`, `gene_names`
+and `transcript_ids` return identifiers without building objects, and
+`data.contigs()` lists the chromosome and contig names.
 
-## Get transcript and protein sequences
+## Choose among a gene's transcripts <a id="list-a-gene-s-transcripts"></a>
 
-Use `transcript.sequence` for spliced cDNA and `transcript.protein_sequence`
-for its annotated translation. The [home page](../index.md#read-transcript-and-protein-sequences)
-shows an example and output. To include introns or flanking regions instead,
-read [genomic DNA](reference-dna.md) from the same assembly.
+A gene usually has several transcripts. List order does not identify a
+preferred isoform, so choose by ID or by attributes that suit your analysis:
 
-## Data structures
+```python
+gene = data.gene_by_id("ENSG00000141510")
+coding = [t for t in gene.transcripts
+          if t.biotype == "protein_coding" and t.complete]
+print(len(gene.transcripts), len(coding))
+coding.sort(key=lambda t: len(t.protein_sequence), reverse=True)
+for t in coding[:3]:
+    print(t.id, t.name, t.support_level, len(t.protein_sequence))
+```
 
-| API object | Represents | Detail |
-| --- | --- | --- |
-| `Gene` | An annotated locus with one gene ID | [Gene reference](../reference/features.md#pyensembl.Gene) |
-| `Transcript` | One transcript and its ordered exons | [Transcript reference](../reference/features.md#pyensembl.Transcript) |
-| `Exon` | One annotated exon interval | [Exon reference](../reference/features.md#pyensembl.Exon) |
-| `Protein` | An annotated translation | [Protein reference](../reference/features.md#pyensembl.Protein) |
+```text
+28 19
+ENST00000269305 TP53-201 1 393
+ENST00000445888 TP53-205 1 393
+ENST00000615910 TP53-221 5 382
+```
 
-### Gene
+TP53 has 28 transcripts; 19 are protein coding with annotated start and stop
+codons. `support_level` is Ensembl's transcript support level, from 1 (best
+supported by mRNA evidence) to 5, or `None` when the annotation omits it.
+Two transcripts can encode the same protein from different UTRs.
 
-`gene.id`, `gene.name`, `gene.contig`, `gene.start`, `gene.end` and `gene.strand`
-describe the selected annotation. Name lookup may return multiple loci; stable
-IDs avoid choosing a gene by list position. See [aliases](aliases.md) for an
-explicit source of additional names.
+## Exons and sequences <a id="inspect-a-transcript"></a><a id="get-transcript-and-protein-sequences"></a><a id="data-structures"></a><a id="gene"></a><a id="transcript"></a><a id="protein-information"></a>
 
-### Transcript
-
-`gene.transcripts` returns annotated transcripts. `transcript.exons` follows
-transcriptional order, including on the minus strand. The transcript's locus
-includes introns; its cDNA sequence is spliced and already oriented 5′ to 3′.
-
-### Protein information
-
-`transcript.protein_id` and `transcript.protein_sequence` refer to its annotated
-translation. Noncoding or incomplete transcripts may lack a translation or
-sequence. Do not treat a missing peptide as evidence that a locus is absent.
-Use the [Transcript reference](../reference/features.md#pyensembl.Transcript)
-for coding intervals, completeness and sequence behavior.
+[Exons and coding sequences](transcripts.md) continues with a transcript's
+exons, coding sequence, UTRs, codon positions and protein. The
+[method overview](../reference/genome.md#find-a-method) lists every lookup.
+Call `data.close()` when you are finished; a
+`with EnsemblRelease(93, species="human") as data:` block closes it
+automatically.
 
 ## Examples with other reference data
 
@@ -149,11 +131,8 @@ pyensembl install --release 77 --species human
 from pyensembl import EnsemblRelease
 
 data = EnsemblRelease(77, species="human")
-gene_names = data.gene_names_at_locus(contig=6, position=29945884)
-exon_ids = data.exon_ids_of_gene_name("HLA-A")
-print(gene_names)
+print(data.gene_names_at_locus(contig=6, position=29945884))
 ```
 
-The gene-name result is `["HLA-A"]`. Locus queries use one-based inclusive
-coordinates on the selected assembly and can return overlapping genes.
-[Lookup methods](../reference/lookups.md) describes filters and nearest-locus queries.
+The result is `["HLA-A"]`. Release 77 also uses GRCh38, but its annotation
+differs from release 93, so pin the release you analyze.

@@ -1,41 +1,71 @@
 # Contributing to PyEnsembl
 
-[PyEnsembl](http://www.github.com/openvax/pyensembl) is open source software and
-we welcome your contributions. This document should help you get started
-contributing to PyEnsembl.
+[PyEnsembl](https://github.com/openvax/pyensembl) is open source software under
+the Apache 2.0 license, and we welcome contributions. Contributed code is
+assumed to use the same license.
 
-## Filing Issues
+## Filing issues
 
-If you find any bugs or problems while using PyEnsembl or have any feature requests, please feel free to file an issue against the project. When doing so, please follow the guidelines below:
+Check the [open issues](https://github.com/openvax/pyensembl/issues) first,
+then [open a new issue](https://github.com/openvax/pyensembl/issues/new) for a
+bug or feature request. Include your PyEnsembl and Python versions. If the
+problem involves a particular gene, transcript or locus, name it and the
+release, e.g. "Missing transcript sequence for BRCA1-002 in Ensembl release 74".
 
-To report any bugs, issues, or feature requests, please [open an issue](https://github.com/openvax/pyensembl/issues)
-Please check the [current open issues](https://github.com/openvax/pyensembl/issues) to see if the request already exists
-If you are filing a bug report, please describe the version of PyEnsembl and Python you are using. If your problem involves a particular gene, transcript, or genomic locus, please include that information (e.g. "Missing transcript sequence for BRCA1-002 for Ensembl release 74").
+## Pull requests
 
-## Coding Guidelines
+- Start a new feature with an issue explaining its scope and rationale, and
+  reference the issue in the PR, e.g. "Closes #123".
+- Follow [PEP 8](https://peps.python.org/pep-0008/); `./lint.sh` runs ruff.
+- Accompany new code with unit tests.
+- Support Python 3.9 and later.
+- Bump the version in `pyensembl/version.py` in every PR, including
+  documentation-only changes.
 
-- PyEnsembl is written in Python and adheres to the [PEP8](https://www.python.org/dev/peps/pep-0008/)
-  style guidelines.
-- Contributions should come in the form of GitHub pull requests.
-- New features should start with a GitHub issue explaining their scope and rationale.
-- If the work is based on an existing issue, please reference the issue in the PR.
-- All new code should be accompanied by comprehensive unit tests.
-- If the PR fixes or implements an issue, please state "Closes #XYZ" or "Fixes #XYZ", where XYZ is the issue number.
-- Please ensure that your code works under Python >= 3.9.
+## Development setup
+
+```sh
+git clone https://github.com/openvax/pyensembl.git
+cd pyensembl
+pip install -e '.[dev]'
+./lint.sh
+./test.sh
+```
+
+The `dev` extra installs pytest, pytest-cov, ruff and build. Most tests need
+Ensembl data installed first; `.github/workflows/tests.yml` lists the releases
+CI installs. Tests use exactly those releases, so other genomes in your cache
+do not change what they check.
+
+Species assembly ranges are checked against Ensembl's archive. After raising
+`MAX_ENSEMBL_RELEASE`, recheck every assembly boundary on the live FTP servers:
+
+```sh
+PYENSEMBL_NETWORK_TESTS=1 ./test.sh tests/test_species_assemblies.py
+```
+
+Timed benchmarks are opt-in because wall-clock limits depend on the machine
+and its load. Run them on an otherwise idle machine:
+
+```sh
+PYENSEMBL_BENCHMARKS=1 ./test.sh tests/test_timings.py -s
+```
 
 ## Documentation
 
-Follow the [documentation style guide](docs/dev/documentation-style.md): short
-entry pages, installation before queries, pinned examples with interpreted
-results, task guides and complete reference. Use ordinary linked names for
-concepts and libraries; inline code is for literal syntax. Keep scientific
-qualifications, source links and existing linked anchors.
+Follow the [documentation style guide](https://openvax.github.io/pyensembl/dev/documentation-style/),
+then build and check the site:
 
-Install `.[docs]` and run `./docs.sh`; run
-`python scripts/check_docs_examples.py` with human release 93 installed. Review
-first-use and reference pages at desktop and narrow widths. Run `./lint.sh`
-and `./test.sh` for documentation changes too. Every PR bumps the version.
+```sh
+pip install -e '.[dev,docs]'
+./docs.sh  # strict build plus link, anchor and API checks
+python scripts/check_docs_examples.py  # needs human release 93
+```
 
-## Licensing
+Preview with `mkdocs serve` and review changed pages at desktop and narrow
+widths.
 
-PyEnsembl is licensed under the Apache 2.0 license. Your code is assumed to be as well.
+## Releasing
+
+Maintainers merge through a PR and publish from a clean main; see
+[releasing](https://openvax.github.io/pyensembl/dev/releasing/).
