@@ -91,9 +91,9 @@ codons. `support_level` is Ensembl's transcript support level, from 1 (best
 supported by mRNA evidence) to 5, or `None` when the annotation omits it.
 Two transcripts can encode the same protein from different UTRs.
 
-## Sequences and exons <a id="inspect-a-transcript"></a><a id="get-transcript-and-protein-sequences"></a><a id="data-structures"></a><a id="gene"></a><a id="transcript"></a><a id="protein-information"></a>
+## Sequences and exons <a id="exons-and-sequences"></a><a id="inspect-a-transcript"></a><a id="get-transcript-and-protein-sequences"></a><a id="data-structures"></a><a id="gene"></a><a id="transcript"></a><a id="protein-information"></a>
 
-[Protein and transcript sequences](transcripts.md) continues with a
+[Get protein and transcript sequences](transcripts.md) continues with a
 transcript's protein, coding sequence, UTRs, exons and codon positions. The
 [method overview](../reference/genome.md#find-a-method) lists every lookup.
 Call `data.close()` when you are finished; a

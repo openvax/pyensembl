@@ -49,7 +49,7 @@ similar methods return IDs or names. A gene's transcripts are also available as
 `exon_ids_of_transcript_id`, `exon_ids_of_gene_id` and similar methods return
 IDs. Use `transcript.exons` for exons in transcription order.
 
-### Proteins and sequences
+### Proteins and sequences <a id="sequences-and-proteins"></a>
 
 | Method | Returns |
 | --- | --- |

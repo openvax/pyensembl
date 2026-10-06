@@ -1,10 +1,11 @@
-# Protein and transcript sequences
+# Get protein and transcript sequences
 
 These examples go further than the [home page](../index.md#read-protein-and-transcript-sequences)
 with the TP53 transcript TP53-201. They use the human GRCh38 / Ensembl release
-93 data installed on the home page and run in one Python session.
+93 data [installed on the home page](../index.md#install) and run in one Python
+session.
 
-## Protein sequence
+## Protein sequence <a id="proteins"></a>
 
 ```python
 from pyensembl import EnsemblRelease
@@ -21,7 +22,7 @@ ENST00000269305.8 ENSP00000269305.4 393
 
 `protein_sequence` is the annotated translation from Ensembl's peptide file.
 It normally has no stop symbol, but a few peptides, mostly from polymorphic
-pseudogenes, contain `*` at internal stop codons. `versioned_id` adds this
+pseudogenes, contain `*` stop symbols. `versioned_id` adds this
 release's version to a stable ID; `transcript.protein_id` is the stable protein
 ID without it.
 
@@ -45,7 +46,7 @@ ID such as `ENSP00000269305.4`, but it returns this release's sequence whatever
 the version number, so compare versions yourself when IDs come from another
 release.
 
-Noncoding transcripts have no protein, so their `protein_id` and
+Noncoding transcripts have no protein, so their `protein`, `protein_id` and
 `protein_sequence` are `None`:
 
 ```python
@@ -57,7 +58,7 @@ print(noncoding.name, noncoding.biotype, noncoding.protein_sequence)
 TP53-210 retained_intron None
 ```
 
-## Coding sequence
+## Coding sequence <a id="coding-sequence-and-utrs"></a>
 
 ```python
 cds = transcript.coding_sequence
@@ -72,8 +73,8 @@ True
 
 The coding sequence runs from the first base of the start codon through the
 stop codon, so its 1,182 bases are 393 codons plus the stop. `complete` is
-`True` when the transcript has annotated start and stop codons and a coding
-length divisible by three.
+`True` when the transcript has annotated three-base start and stop codons and a
+coding length divisible by three.
 
 ## Transcript sequence and UTRs
 
@@ -118,7 +119,7 @@ Without an annotated start codon, `coding_sequence` and
 `five_prime_utr_sequence` are `None`. The peptide file can still hold a partial
 translation, so check `complete` before analyzing codons or reading frames.
 
-## Exons and genomic coordinates
+## Exons and genomic coordinates <a id="transcript-span-and-exons"></a><a id="inspect-a-transcript"></a>
 
 ### Exons
 
@@ -141,7 +142,7 @@ transcription order, so on the minus strand the first exon has the highest
 coordinates. Every `start` is still the lower coordinate, and coordinates are
 one-based and inclusive.
 
-### Codon positions and coding intervals
+### Codon positions and coding intervals <a id="codon-positions-and-genomic-coding-intervals"></a>
 
 ```python
 print(transcript.start_codon_positions)
