@@ -1068,6 +1068,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.species.Species.dated_releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dated_releases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.species.Species.is_plant" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1633,6 +1644,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.species.Species.dated_releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        dated_releases
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.species.Species.is_plant" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2004,7 +2026,7 @@ and return "homo_sapiens". Also replace common names like "human" with
 
 
 <a href="#pyensembl.species.Species" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Species</span><span class="p">(</span><span class="n">latin_name</span><span class="p">,</span> <span class="n">synonyms</span><span class="o">=</span><span class="p">[],</span> <span class="n">reference_assemblies</span><span class="o">=</span><span class="p">{},</span> <span class="n">division</span><span class="o">=</span><span class="s1">'vertebrates'</span><span class="p">,</span> <span class="n">ensembl_genomes</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ensembl_names</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Species</span><span class="p">(</span><span class="n">latin_name</span><span class="p">,</span> <span class="n">synonyms</span><span class="o">=</span><span class="p">[],</span> <span class="n">reference_assemblies</span><span class="o">=</span><span class="p">{},</span> <span class="n">division</span><span class="o">=</span><span class="s1">'vertebrates'</span><span class="p">,</span> <span class="n">ensembl_genomes</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ensembl_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dated_releases</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2126,6 +2148,25 @@ the species is served from the main Ensembl FTP at
               <div class="doc-md-description">
                 <p>Names Ensembl publishes the species under from a given release on,
 when it renamed it, e.g. {100: "canis_lupus_familiaris"}.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dated_releases</code>
+            </td>
+            <td>
+                  <code>tuple of (str, str)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Assembly accession and provider under which the new Ensembl
+platform publishes dated releases (e.g. "2026_04") of the
+assembly of the last numbered release, e.g.
+("GCA_000001405.29", "ensembl").</p>
               </div>
             </td>
             <td>
@@ -2312,6 +2353,28 @@ when it renamed it, e.g. {100: "canis_lupus_familiaris"}.</p>
 
 
 
+<h3 id="pyensembl.species.Species.dated_releases" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">dated_releases</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#pyensembl.species.Species.dated_releases" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">dated_releases</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">dated_releases</span><span class="p">)</span> <span class="k">if</span> <span class="n">dated_releases</span> <span class="k">else</span> <span class="kc">None</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
 <h3 id="pyensembl.species.Species.is_plant" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">is_plant</span>
 
@@ -2477,7 +2540,7 @@ when it renamed it, e.g. {100: "canis_lupus_familiaris"}.</p>
   </span>
 
 <a href="#pyensembl.species.Species.register" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">register</span><span class="p">(</span><span class="n">latin_name</span><span class="p">,</span> <span class="n">synonyms</span><span class="p">,</span> <span class="n">reference_assemblies</span><span class="p">,</span> <span class="n">division</span><span class="o">=</span><span class="s1">'vertebrates'</span><span class="p">,</span> <span class="n">ensembl_genomes</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ensembl_names</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">register</span><span class="p">(</span><span class="n">latin_name</span><span class="p">,</span> <span class="n">synonyms</span><span class="p">,</span> <span class="n">reference_assemblies</span><span class="p">,</span> <span class="n">division</span><span class="o">=</span><span class="s1">'vertebrates'</span><span class="p">,</span> <span class="n">ensembl_genomes</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ensembl_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dated_releases</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">

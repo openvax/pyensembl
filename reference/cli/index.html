@@ -1154,8 +1154,9 @@
 <p>Run <code>pyensembl ACTION [options]</code>. <a href="../../#install">Installation</a>,
 <a href="../../guides/assembly-selection/">assembly selection</a>, <a href="../../guides/cache/">data inspection</a>
 and <a href="../../guides/reference-dna/">reference DNA</a> explain the main workflows.
-Dated new-platform annotations currently use the Python constructor described
-in the <a href="../../ensembl-platform/">platform guide</a>.</p>
+Dated releases of the new platform use <code>--release YYYY_MM</code>, e.g.
+<code>--release 2026_04</code>; other new-platform datasets use the Python constructor
+described in the <a href="../../ensembl-platform/">platform guide</a>.</p>
 <h2 id="commands-and-options">Commands and options<a class="headerlink" href="#commands-and-options" title="Permanent link">&para;</a></h2>
 <p>This is the complete help output for the documented package version. Run
 <code>pyensembl --help</code> for the version installed in your environment.</p>
@@ -1183,9 +1184,10 @@ options:
 
 Ensembl release options:
   --release RELEASE [RELEASE ...]
-                        Ensembl release version(s); required for deletion
-                        (install default=newest supported release for
-                        --reference-name, otherwise for each species)
+                        Ensembl release version(s), numbered or a YYYY_MM
+                        annotation date on the new Ensembl platform; required
+                        for deletion (install default=newest supported release
+                        for --reference-name, otherwise for each species)
   --species SPECIES [SPECIES ...]
                         Which species to download Ensembl data for
                         (default=inferred from --reference-name, otherwise
@@ -1240,6 +1242,7 @@ actions:
 examples:
   pyensembl install --release 75 77                     human releases 75 and 77
   pyensembl install --release 110 --species mouse       a mouse release
+  pyensembl install --release 2026_04                   a dated release (new Ensembl platform)
   pyensembl install --reference-name GRCh37             newest release for GRCh37
   pyensembl install --release 110 --with-genome-fasta   also install reference DNA
   pyensembl install --reference-name GRCh38 --annotation-name my_genes \

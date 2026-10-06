@@ -785,10 +785,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pyensembl.EnsemblRelease.genome_fasta_urls" class="md-nav__link">
+  <a href="#pyensembl.EnsemblRelease.reference_name" class="md-nav__link">
     <span class="md-ellipsis">
       
-        genome_fasta_urls
+        reference_name
       
     </span>
   </a>
@@ -829,10 +829,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pyensembl.EnsemblRelease.reference_name" class="md-nav__link">
+  <a href="#pyensembl.EnsemblRelease.genome_fasta_urls" class="md-nav__link">
     <span class="md-ellipsis">
       
-        reference_name
+        genome_fasta_urls
       
     </span>
   </a>
@@ -1430,10 +1430,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pyensembl.EnsemblRelease.genome_fasta_urls" class="md-nav__link">
+  <a href="#pyensembl.EnsemblRelease.reference_name" class="md-nav__link">
     <span class="md-ellipsis">
       
-        genome_fasta_urls
+        reference_name
       
     </span>
   </a>
@@ -1474,10 +1474,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pyensembl.EnsemblRelease.reference_name" class="md-nav__link">
+  <a href="#pyensembl.EnsemblRelease.genome_fasta_urls" class="md-nav__link">
     <span class="md-ellipsis">
       
-        reference_name
+        genome_fasta_urls
       
     </span>
   </a>
@@ -1704,8 +1704,9 @@
 
 <h1 id="dataset-constructors">Dataset constructors<a class="headerlink" href="#dataset-constructors" title="Permanent link">&para;</a></h1>
 <p><code>EnsemblRelease</code> selects a numbered <a href="https://ftp.ensembl.org/pub/">Ensembl</a>
-annotation. <code>EnsemblAnnotation</code> selects an assembly and dated geneset from
-<a href="../../ensembl-platform/">the new platform</a>. Both provide the shared
+release, such as 116, or a dated release of <a href="../../ensembl-platform/">the new platform</a>,
+such as <code>"2026_04"</code>. <code>EnsemblAnnotation</code> selects any assembly accession,
+provider and dated geneset from the new platform. Both provide the shared
 <a href="../genome/">Genome methods</a>.</p>
 
 
@@ -1727,8 +1728,14 @@ annotation. <code>EnsemblAnnotation</code> selects an assembly and dated geneset
 
         <p>Bundles together the genomic annotation and sequence data associated with
 a particular release of the Ensembl database.</p>
+<p>A release is either numbered (up to 116, the last) or, on the new Ensembl
+platform, the annotation date of the species' current assembly, e.g.
+<code>EnsemblRelease("2026_04", species="human")</code> for GRCh38.</p>
 
-        <p>genome_fasta : True or path, optional
+        <p>release : int or str
+    Numbered Ensembl release, e.g. 116, or an annotation date on the
+    new Ensembl platform in YYYY_MM form, e.g. "2026_04".</p>
+<p>genome_fasta : True or path, optional
     Reference DNA for <code>sequence()</code>: True for Ensembl's DNA for this
     release (see genome_fasta_type and genome_fasta_mask), or a local
     plain or gzip FASTA. Nothing is downloaded until
@@ -1800,16 +1807,16 @@ a particular release of the Ensembl database.</p>
 
 
 
-<h3 id="pyensembl.EnsemblRelease.genome_fasta_urls" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">genome_fasta_urls</span>
+<h3 id="pyensembl.EnsemblRelease.reference_name" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">reference_name</span>
 
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
-<a href="#pyensembl.EnsemblRelease.genome_fasta_urls" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">genome_fasta_urls</span> <span class="o">=</span> <span class="p">[</span><span class="n">genome_fasta_url</span><span class="p">]</span> <span class="k">if</span> <span class="n">genome_fasta</span> <span class="ow">is</span> <span class="kc">True</span> <span class="k">else</span> <span class="p">[]</span>
+<a href="#pyensembl.EnsemblRelease.reference_name" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">reference_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="o">.</span><span class="n">which_reference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1831,7 +1838,7 @@ a particular release of the Ensembl database.</p>
   </span>
 
 <a href="#pyensembl.EnsemblRelease.gtf_url" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">gtf_url</span> <span class="o">=</span> <span class="n">make_gtf_url</span><span class="p">(</span><span class="n">ensembl_release</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">gtf_url</span> <span class="o">=</span> <span class="n">urls</span><span class="o">.</span><span class="n">gtf</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1853,7 +1860,7 @@ a particular release of the Ensembl database.</p>
   </span>
 
 <a href="#pyensembl.EnsemblRelease.transcript_fasta_urls" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">transcript_fasta_urls</span> <span class="o">=</span> <span class="p">[</span><span class="n">make_fasta_url</span><span class="p">(</span><span class="n">ensembl_release</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="p">,</span> <span class="n">sequence_type</span><span class="o">=</span><span class="s1">'cdna'</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">),</span> <span class="n">make_fasta_url</span><span class="p">(</span><span class="n">ensembl_release</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="p">,</span> <span class="n">sequence_type</span><span class="o">=</span><span class="s1">'ncrna'</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">)]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">transcript_fasta_urls</span> <span class="o">=</span> <span class="p">[</span><span class="n">urls</span><span class="o">.</span><span class="n">cdna</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1875,7 +1882,7 @@ a particular release of the Ensembl database.</p>
   </span>
 
 <a href="#pyensembl.EnsemblRelease.protein_fasta_urls" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">protein_fasta_urls</span> <span class="o">=</span> <span class="p">[</span><span class="n">make_fasta_url</span><span class="p">(</span><span class="n">ensembl_release</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="p">,</span> <span class="n">sequence_type</span><span class="o">=</span><span class="s1">'pep'</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">)]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">protein_fasta_urls</span> <span class="o">=</span> <span class="p">[</span><span class="n">urls</span><span class="o">.</span><span class="n">pep</span><span class="p">]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1888,16 +1895,16 @@ a particular release of the Ensembl database.</p>
 
 
 
-<h3 id="pyensembl.EnsemblRelease.reference_name" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">reference_name</span>
+<h3 id="pyensembl.EnsemblRelease.genome_fasta_urls" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">genome_fasta_urls</span>
 
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
-<a href="#pyensembl.EnsemblRelease.reference_name" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">reference_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="o">.</span><span class="n">which_reference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">)</span>
+<a href="#pyensembl.EnsemblRelease.genome_fasta_urls" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">genome_fasta_urls</span> <span class="o">=</span> <span class="p">[</span><span class="n">genome_fasta_url</span><span class="p">]</span> <span class="k">if</span> <span class="n">genome_fasta</span> <span class="ow">is</span> <span class="kc">True</span> <span class="k">else</span> <span class="p">[]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2054,7 +2061,7 @@ return an old instance.</p>
 
 
 <a href="#pyensembl.EnsemblAnnotation" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">EnsemblAnnotation</span><span class="p">(</span><span class="n">assembly_accession</span><span class="p">,</span> <span class="n">annotation_date</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="s1">'ensembl'</span><span class="p">,</span> <span class="n">include_alt</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">genome_fasta</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">genome_fasta_mask</span><span class="o">=</span><span class="s1">'none'</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reference_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cache_directory_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="s1">'https://ftp.ebi.ac.uk/pub/ensemblorganisms'</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">EnsemblAnnotation</span><span class="p">(</span><span class="n">assembly_accession</span><span class="p">,</span> <span class="n">annotation_date</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="s1">'ensembl'</span><span class="p">,</span> <span class="n">include_alt</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">genome_fasta</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">genome_fasta_mask</span><span class="o">=</span><span class="s1">'none'</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reference_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cache_directory_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="n">ENSEMBL_PLATFORM_FTP_SERVER</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2238,7 +2245,7 @@ The assembly accession remains the authoritative dataset selection.</p>
               </div>
             </td>
             <td>
-                  <code>&#39;https://ftp.ebi.ac.uk/pub/ensemblorganisms&#39;</code>
+                  <code><span title="pyensembl.ensembl_url_templates.ENSEMBL_PLATFORM_FTP_SERVER">ENSEMBL_PLATFORM_FTP_SERVER</span></code>
             </td>
           </tr>
       </tbody>
@@ -2429,7 +2436,7 @@ The assembly accession remains the authoritative dataset selection.</p>
   </span>
 
 <a href="#pyensembl.EnsemblAnnotation.download_url" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">download_url</span> <span class="o">=</span> <span class="s1">'</span><span class="si">%s</span><span class="s1">/</span><span class="si">%s</span><span class="s1">/</span><span class="si">%s</span><span class="s1">/</span><span class="si">%s</span><span class="s1">'</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">,</span> <span class="s1">'/'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()),</span> <span class="n">provider</span><span class="p">,</span> <span class="n">annotation_date</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">download_url</span> <span class="o">=</span> <span class="n">urls</span><span class="o">.</span><span class="n">directory</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
