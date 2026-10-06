@@ -13,6 +13,7 @@ theme:
     accent: blue
   features:
     - navigation.indexes
+    - navigation.expand
     - content.code.copy
 extra_css:
   - stylesheets/docs.css

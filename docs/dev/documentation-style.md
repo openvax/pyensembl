@@ -20,7 +20,8 @@ method returns. Contributor and release workflows live in the root
 `CONTRIBUTING.md` and `RELEASING.md`, which the Contributing pages include.
 
 Use descriptive headings and label guides by the task a reader wants to do.
-Keep navigation groups collapsed until they are needed. Split pages for
+Keep desktop sidebar groups expanded by default so readers can see the available
+tasks; readers can collapse individual groups. Split pages for
 substantial tasks or reference material, not for each step of a short example.
 Order common lookups and sequence tasks before reference selection, cache
 management and custom-data setup. Use the same reference for the main examples;
