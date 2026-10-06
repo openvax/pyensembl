@@ -3,8 +3,9 @@
 Run `pyensembl ACTION [options]`. [Installation](../index.md#install),
 [assembly selection](../guides/assembly-selection.md), [data inspection](../guides/cache.md)
 and [reference DNA](../guides/reference-dna.md) explain the main workflows.
-Dated new-platform annotations currently use the Python constructor described
-in the [platform guide](../ensembl-platform.md).
+Dated releases of the new platform use `--release YYYY_MM`, e.g.
+`--release 2026_04`; other new-platform datasets use the Python constructor
+described in the [platform guide](../ensembl-platform.md).
 
 ## Commands and options
 
@@ -36,9 +37,10 @@ options:
 
 Ensembl release options:
   --release RELEASE [RELEASE ...]
-                        Ensembl release version(s); required for deletion
-                        (install default=newest supported release for
-                        --reference-name, otherwise for each species)
+                        Ensembl release version(s), numbered or a YYYY_MM
+                        annotation date on the new Ensembl platform; required
+                        for deletion (install default=newest supported release
+                        for --reference-name, otherwise for each species)
   --species SPECIES [SPECIES ...]
                         Which species to download Ensembl data for
                         (default=inferred from --reference-name, otherwise
@@ -93,6 +95,7 @@ actions:
 examples:
   pyensembl install --release 75 77                     human releases 75 and 77
   pyensembl install --release 110 --species mouse       a mouse release
+  pyensembl install --release 2026_04                   a dated release (new Ensembl platform)
   pyensembl install --reference-name GRCh37             newest release for GRCh37
   pyensembl install --release 110 --with-genome-fasta   also install reference DNA
   pyensembl install --reference-name GRCh38 --annotation-name my_genes \

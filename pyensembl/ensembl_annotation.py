@@ -3,6 +3,7 @@
 from datetime import datetime
 import re
 
+from .ensembl_url_templates import ENSEMBL_PLATFORM_FTP_SERVER, make_dated_release_urls
 from .genome import Genome
 from .species import find_species_by_name
 
@@ -45,7 +46,7 @@ class EnsemblAnnotation(Genome):
         self, assembly_accession, annotation_date, *, provider="ensembl",
         include_alt=False, genome_fasta=False, genome_fasta_mask="none",
         species=None, reference_name=None, cache_directory_path=None,
-        server="https://ftp.ebi.ac.uk/pub/ensemblorganisms",
+        server=ENSEMBL_PLATFORM_FTP_SERVER,
     ):
         match = re.fullmatch(r"(GC[AF])_(\d{3})(\d{3})(\d{3})\.(\d+)", assembly_accession)
         if match is None or int(match.group(5)) < 1:
@@ -60,9 +61,6 @@ class EnsemblAnnotation(Genome):
             raise ValueError("provider must be one lowercase directory name")
         if not isinstance(include_alt, bool) or not isinstance(genome_fasta, bool):
             raise TypeError("include_alt and genome_fasta must be bool values")
-        masks = {"none": "unmasked", "soft": "softmasked", "hard": "hardmasked"}
-        if genome_fasta_mask not in masks:
-            raise ValueError("genome_fasta_mask must be none, soft or hard")
         self.assembly_accession = assembly_accession
         self.annotation_date = annotation_date
         self.provider = provider
@@ -71,22 +69,20 @@ class EnsemblAnnotation(Genome):
         self.genome_fasta_mask = genome_fasta_mask
         self.species = find_species_by_name(species) if species is not None else None
         self.server = server.rstrip("/")
-        self.download_url = "%s/%s/%s/%s" % (
-            self.server, "/".join(match.groups()), provider, annotation_date
+        urls = make_dated_release_urls(
+            assembly_accession, provider, annotation_date, include_alt=include_alt,
+            genome_fasta_mask=genome_fasta_mask, server=self.server,
         )
-        geneset = self.download_url + "/geneset/"
+        self.download_url = urls.directory
         coverage = "including-alt" if include_alt else "primary"
         super().__init__(
             reference_name=reference_name or assembly_accession,
             annotation_name="ensembl-%s-%s-%s-" % (provider, assembly_accession, coverage),
             annotation_version=annotation_date,
-            gtf_path_or_url=geneset + ("genes-including_alt.gtf.gz" if include_alt else "genes.gtf.gz"),
-            transcript_fasta_paths_or_urls=[geneset + "cdna.fa.bgz"],
-            protein_fasta_paths_or_urls=[geneset + "pep.fa.bgz"],
-            genome_fasta_path_or_url=(
-                self.download_url + "/genome/%s.fa.bgz" % masks[genome_fasta_mask]
-                if genome_fasta else None
-            ),
+            gtf_path_or_url=urls.gtf,
+            transcript_fasta_paths_or_urls=[urls.cdna],
+            protein_fasta_paths_or_urls=[urls.pep],
+            genome_fasta_path_or_url=urls.genome_fasta if genome_fasta else None,
             cache_directory_path=cache_directory_path,
         )
 

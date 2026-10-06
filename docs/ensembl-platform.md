@@ -1,40 +1,82 @@
 # Use dated Ensembl annotations
 
 Ensembl's [new platform](https://www.ensembl.org/) publishes annotations by
-genome assembly and date instead of numbered releases. Select these datasets
-with `EnsemblAnnotation`. Numbered releases remain available through
-`EnsemblRelease`; [choose a reference](guides/assembly-selection.md) compares
-both with custom files. Installed datasets are not affected by the transition.
+genome assembly and date instead of numbered releases. PyEnsembl treats each
+annotation date as a release: `EnsemblRelease("2026_04", species="human")`
+works like `EnsemblRelease(116, species="human")` and selects GRCh38.
+[Choose a reference](guides/assembly-selection.md) compares both with custom
+files. Installed datasets are not affected by the transition.
 
-## Find a dataset <a id="choose-the-dataset-explicitly"></a>
+## Install a dated release
+
+This example downloads the GTF, cDNA and peptide files of the human GRCh38
+annotation dated 2026_04 from
+[its dataset directory](https://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/29/ensembl/2026_04/).
+
+```python
+from pyensembl import EnsemblRelease
+
+data = EnsemblRelease("2026_04", species="human")
+data.download()
+data.index()
+gene = data.gene_by_id("ENSG00000141510")
+print(gene.name, gene.contig, gene.start, gene.end, gene.strand)
+```
+
+From the command line:
+
+```sh
+pyensembl install --release 2026_04 --species human
+```
+
+A date selects the annotation of the species' current assembly, the assembly
+of its last numbered release, under PyEnsembl's name for that assembly. Dated
+and numbered releases of an assembly share its cache directory, for example
+`GRCh38/ensembl2026_04/` beside `GRCh38/ensembl116/`.
+
+For human GRCh38, `2026_04` has the same gene and transcript IDs and versions
+as release 116; `2025_12` matches release 115 and `2023_03` matches release 110.
+`2024_11` is a GENCODE subset without non-canonical lncRNA transcripts; release
+114 has the complete annotation.
+
+Human GRCh38 uses `genes-including_alt.gtf.gz`, the counterpart of the
+complete patch and haplotype GTF of numbered GRCh38 releases. Other species
+use `genes.gtf.gz`; dated zebrafish GRCz11 therefore omits the alternative
+loci of its numbered releases. The cDNA FASTA covers every transcript biotype.
+For reference DNA, add `genome_fasta=True`; `genome_fasta_mask="none"`,
+`"soft"` or `"hard"` selects the corresponding combined genome FASTA. Only
+toplevel DNA is published. [Read genomic DNA](guides/reference-dna.md)
+describes coordinates, strand and masking.
+
+## Find a date <a id="choose-the-dataset-explicitly"></a>
 
 The new platform's [FTP layout](https://www.ensembl.info/2026/06/26/updates-to-ftp-site-of-the-new-ensembl-website/)
-groups data by GCA/GCF assembly accession, provider and annotation date, as in
-`GCA/000/001/405/29/ensembl/2023_03/`. Select an existing directory from the
-[downloads](https://ftp.ebi.ac.uk/pub/ensemblorganisms/). A website release
-label such as 2026-07 is different from the annotation directory `2023_03`.
+groups data by GCA/GCF assembly accession, provider and annotation date. Browse
+an assembly's directory for its dates, for example
+[human GRCh38](https://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/29/ensembl/).
+An annotation date records when the annotation was built, not when it was
+published: Arabidopsis's current annotation is dated `2010_09`, and fly's
+`2022_07` annotation is older than release 116's. A website release label such
+as 2026-07 is different from an annotation date and is rejected.
 
-## Install a dated annotation
+## Other assemblies and providers
 
-This example selects the human GRCh38 assembly accession and dated Ensembl
-geneset. It downloads GTF, cDNA and peptide files from
-[one dataset directory](https://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/29/ensembl/2023_03/).
+`EnsemblAnnotation` selects any dataset by assembly accession, provider and
+date: an older assembly such as GRCh37 (`2013_09`), a species PyEnsembl does
+not list, or another provider's annotation.
 
 ```python
 from pyensembl import EnsemblAnnotation
 
 with EnsemblAnnotation(
-    assembly_accession="GCA_000001405.29",
-    annotation_date="2023_03",
+    assembly_accession="GCA_000001405.14",
+    annotation_date="2013_09",
     provider="ensembl",
     species="human",
-    reference_name="GRCh38",
-    include_alt=True,
+    reference_name="GRCh37",
 ) as data:
     data.download()
     data.index()
-    gene = data.gene_by_id("ENSG00000141510")
-    print(gene.name, gene.contig, gene.start, gene.end, gene.strand)
 ```
 
 `include_alt=True` selects `genes-including_alt.gtf.gz`; the default selects
@@ -44,11 +86,7 @@ ambiguous. Accession, provider, date and coverage have separate default caches.
 If overriding `cache_directory_path`, use a distinct directory for each dataset.
 The optional `species` label guards species-specific alias sources; it does not
 select or verify the assembly's species. Keep it consistent with the accession.
-
-For reference DNA, add `genome_fasta=True`. `genome_fasta_mask="none"`, `"soft"`
-or `"hard"` selects the corresponding combined genome FASTA from the same
-directory. [Read genomic DNA](guides/reference-dna.md) describes coordinates,
-strand and masking.
+`genome_fasta=True` and `genome_fasta_mask` select reference DNA as above.
 
 Community providers may have different available files. Check the directory
 before installation. Use `Genome` with explicitly matched files when a dataset
@@ -61,6 +99,6 @@ latest annotation or integrate the new GraphQL/refget services.
 As checked on 2026-10-05, Ensembl's [transition announcement](https://www.ensembl.info/2025/12/02/updates-to-programmatic-access-to-ensembl-and-transitioning-to-the-new-ensembl-platform/)
 states that legacy FTP and API services remain available but stop receiving
 updates after Ensembl 116; new datasets are delivered through the new platform.
-PyEnsembl's existing numbered-release URLs and selection rules are preserved.
+PyEnsembl's numbered-release URLs and selection rules are preserved.
 Old species-name directories on the new platform were scheduled for retirement
 in August 2026.

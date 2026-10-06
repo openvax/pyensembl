@@ -15,6 +15,7 @@ from serializable import Serializable
 from .ensembl_versions import (
     MAX_ENSEMBL_RELEASE,
     MAX_ENSEMBL_GENOMES_RELEASE,
+    is_dated_release,
 )
 
 # TODO: replace Serializable with data class
@@ -41,6 +42,7 @@ class Species(Serializable):
         division="vertebrates",
         ensembl_genomes=False,
         ensembl_names=None,
+        dated_releases=None,
     ):
         """
         Create a Species object from the given arguments and enter into
@@ -53,6 +55,7 @@ class Species(Serializable):
             division=division,
             ensembl_genomes=ensembl_genomes,
             ensembl_names=ensembl_names,
+            dated_releases=dated_releases,
         )
         cls._latin_names_to_species[species.latin_name] = species
         # Names Ensembl later published the species under also find it.
@@ -107,6 +110,7 @@ class Species(Serializable):
         division="vertebrates",
         ensembl_genomes=False,
         ensembl_names=None,
+        dated_releases=None,
     ):
         """
         Parameters
@@ -135,6 +139,12 @@ class Species(Serializable):
         ensembl_names : dict, optional
             Names Ensembl publishes the species under from a given release on,
             when it renamed it, e.g. {100: "canis_lupus_familiaris"}.
+
+        dated_releases : tuple of (str, str), optional
+            Assembly accession and provider under which the new Ensembl
+            platform publishes dated releases (e.g. "2026_04") of the
+            assembly of the last numbered release, e.g.
+            ("GCA_000001405.29", "ensembl").
         """
         if division not in self.VALID_DIVISIONS:
             raise ValueError(
@@ -147,6 +157,7 @@ class Species(Serializable):
         self.division = division
         self.ensembl_genomes = ensembl_genomes
         self.ensembl_names = dict(ensembl_names or {})
+        self.dated_releases = tuple(dated_releases) if dated_releases else None
         self._release_to_genome = {}
         for genome_name, (start, end) in self.reference_assemblies.items():
             for i in range(start, end + 1):
@@ -194,9 +205,19 @@ class Species(Serializable):
         return self.division == "bacteria"
 
     def which_reference(self, ensembl_release):
+        if is_dated_release(ensembl_release):
+            if self.dated_releases is None:
+                raise ValueError(
+                    "No dated Ensembl releases for %s" % (self.latin_name,)
+                )
+            # Dates select annotation of the last numbered release's assembly.
+            return max(
+                self.reference_assemblies,
+                key=lambda name: self.reference_assemblies[name][1],
+            )
         if ensembl_release not in self._release_to_genome:
             raise ValueError(
-                "No genome for %s in Ensembl release %d"
+                "No genome for %s in Ensembl release %s"
                 % (self.latin_name, ensembl_release)
             )
         return self._release_to_genome[ensembl_release]
@@ -217,6 +238,7 @@ class Species(Serializable):
             and self.division == other.division
             and self.ensembl_genomes == other.ensembl_genomes
             and self.ensembl_names == other.ensembl_names
+            and self.dated_releases == other.dated_releases
         )
 
     def to_dict(self):
@@ -235,6 +257,7 @@ class Species(Serializable):
                 self.division,
                 self.ensembl_genomes,
                 frozenset(self.ensembl_names.items()),
+                self.dated_releases,
             )
         )
 
@@ -288,6 +311,7 @@ human = Species.register(
         "GRCh37": (55, 75),
         "NCBI36": (54, 54),
     },
+    dated_releases=("GCA_000001405.29", "ensembl"),
 )
 
 mouse = Species.register(
@@ -298,6 +322,7 @@ mouse = Species.register(
         "GRCm38": (68, 102),
         "GRCm39": (103, MAX_ENSEMBL_RELEASE),
     },
+    dated_releases=("GCA_000001635.9", "ensembl"),
 )
 
 dog = Species.register(
@@ -307,6 +332,7 @@ dog = Species.register(
         "CanFam3.1": (75, 104),
         "ROS_Cfam_1.0": (105, MAX_ENSEMBL_RELEASE),
     },
+    dated_releases=("GCA_014441545.1", "ensembl"),
     ensembl_names={100: "canis_lupus_familiaris"},
 )
 
@@ -316,30 +342,35 @@ dingo = Species.register(
     latin_name="canis_lupus_dingo",
     synonyms=["dingo"],
     reference_assemblies={"ASM325472v1": (95, MAX_ENSEMBL_RELEASE)},
+    dated_releases=("GCA_003254725.1", "ensembl"),
 )
 
 dog_basenji = Species.register(
     latin_name="canis_lupus_familiarisbasenji",
     synonyms=["dog_basenji", "basenji"],
     reference_assemblies={"Basenji_breed-1.1": (99, MAX_ENSEMBL_RELEASE)},
+    dated_releases=("GCA_004886185.1", "ensembl"),
 )
 
 dog_great_dane = Species.register(
     latin_name="canis_lupus_familiarisgreatdane",
     synonyms=["dog_great_dane", "great_dane"],
     reference_assemblies={"UMICH_Zoey_3.1": (99, MAX_ENSEMBL_RELEASE)},
+    dated_releases=("GCA_005444595.1", "ensembl"),
 )
 
 dog_boxer = Species.register(
     latin_name="canis_lupus_familiarisboxer",
     synonyms=["dog_boxer", "boxer"],
     reference_assemblies={"Dog10K_Boxer_Tasha": (105, MAX_ENSEMBL_RELEASE)},
+    dated_releases=("GCA_000002285.4", "ensembl"),
 )
 
 dog_german_shepherd = Species.register(
     latin_name="canis_lupus_familiarisgsd",
     synonyms=["dog_german_shepherd", "german_shepherd"],
     reference_assemblies={"UU_Cfam_GSD_1.0": (107, MAX_ENSEMBL_RELEASE)},
+    dated_releases=("GCA_011100685.1", "ensembl"),
 )
 
 cat = Species.register(
@@ -351,6 +382,7 @@ cat = Species.register(
         "Felis_catus_9.0": (93, 113),
         "F.catus_Fca126_mat1.0": (114, MAX_ENSEMBL_RELEASE),
     },
+    dated_releases=("GCA_018350175.1", "ensembl"),
 )
 
 chicken = Species.register(
@@ -362,6 +394,7 @@ chicken = Species.register(
         "GRCg6a": (95, 106),
         "bGalGal1.mat.broiler.GRCg7b": (107, MAX_ENSEMBL_RELEASE),
     },
+    dated_releases=("GCA_016699485.1", "ensembl"),
 )
 
 # Does the black rat (Rattus Rattus) get used for research too?
@@ -374,6 +407,7 @@ brown_rat = Species.register(
         "mRatBN7.2": (105, 113),
         "GRCr8": (114, MAX_ENSEMBL_RELEASE),
     },
+    dated_releases=("GCA_036323735.1", "ensembl"),
 )
 
 macaque = Species.register(
@@ -382,6 +416,7 @@ macaque = Species.register(
     reference_assemblies={
         "Macaca_fascicularis_6.0": (103, MAX_ENSEMBL_RELEASE),
     },
+    dated_releases=("GCA_011100615.1", "ensembl"),
 )
 
 green_monkey = Species.register(
@@ -390,6 +425,7 @@ green_monkey = Species.register(
     reference_assemblies={
         "ChlSab1.1": (86, MAX_ENSEMBL_RELEASE),
     },
+    dated_releases=("GCA_000409795.2", "ensembl"),
 )
 
 rhesus = Species.register(
@@ -400,30 +436,35 @@ rhesus = Species.register(
         "Mmul_8.0.1": (86, 97),
         "Mmul_10": (98, MAX_ENSEMBL_RELEASE),
     },
+    dated_releases=("GCA_003339765.3", "ensembl"),
 )
 
 rabbit = Species.register(
     latin_name="oryctolagus_cuniculus",
     synonyms=["rabbit"],
     reference_assemblies={"OryCun2.0": (75, MAX_ENSEMBL_RELEASE)},
+    dated_releases=("GCA_000003625.1", "ensembl"),
 )
 
 gerbil = Species.register(
     latin_name="meriones_unguiculatus",
     synonyms=["gerbil"],
     reference_assemblies={"MunDraft-v1.0": (96, MAX_ENSEMBL_RELEASE)},
+    dated_releases=("GCA_002204375.1", "ensembl"),
 )
 
 syrian_hamster = Species.register(
     latin_name="mesocricetus_auratus",
     synonyms=["syrian_hamster"],
     reference_assemblies={"MesAur1.0": (90, MAX_ENSEMBL_RELEASE)},
+    dated_releases=("GCA_000349665.1", "ensembl"),
 )
 
 chinese_hamster = Species.register(
     latin_name="cricetulus_griseus_chok1gshd",
     synonyms=["chinese_hamster"],
     reference_assemblies={"CHOK1GS_HDv1": (90, MAX_ENSEMBL_RELEASE)},
+    dated_releases=("GCA_900186095.1", "community"),
 )
 
 naked_mole_rat = Species.register(
@@ -433,6 +474,7 @@ naked_mole_rat = Species.register(
         "HetGla_female_1.0": (90, 109),
         "Naked_mole-rat_maternal": (110, MAX_ENSEMBL_RELEASE),
     },
+    dated_releases=("GCA_944319715.1", "ensembl"),
 )
 
 guinea_pig = Species.register(
@@ -442,6 +484,7 @@ guinea_pig = Species.register(
         "cavPor3": (75, 89),
         "Cavpor3.0": (90, MAX_ENSEMBL_RELEASE),
     },
+    dated_releases=("GCA_000151735.1", "ensembl"),
 )
 
 pig = Species.register(
@@ -451,6 +494,7 @@ pig = Species.register(
         "Sscrofa10.2": (75, 89),
         "Sscrofa11.1": (90, MAX_ENSEMBL_RELEASE),
     },
+    dated_releases=("GCA_000003025.6", "ensembl"),
 )
 
 zebrafish = Species.register(
@@ -463,6 +507,7 @@ zebrafish = Species.register(
         "GRCz10": (80, 91),
         "GRCz11": (92, MAX_ENSEMBL_RELEASE),
     },
+    dated_releases=("GCA_000002035.4", "ensembl"),
 )
 
 xenopus = Species.register(
@@ -472,6 +517,7 @@ xenopus = Species.register(
         "Xenopus_tropicalis_v9.1": (98, 106),
         "UCB_Xtro_10.0": (107, MAX_ENSEMBL_RELEASE),
     },
+    dated_releases=("GCA_000004195.4", "ensembl"),
 )
 
 fly = Species.register(
@@ -487,6 +533,7 @@ fly = Species.register(
         "BDGP6.46": (111, 113),
         "BDGP6.54": (114, MAX_ENSEMBL_RELEASE),
     },
+    dated_releases=("GCA_000001215.4", "flybase"),
     division="metazoa",
 )
 
@@ -502,6 +549,7 @@ nematode = Species.register(
         "WBcel215": (67, 70),
         "WBcel235": (71, MAX_ENSEMBL_RELEASE),
     },
+    dated_releases=("GCA_000002985.3", "wormbase"),
     division="metazoa",
 )
 
@@ -511,6 +559,7 @@ yeast = Species.register(
     reference_assemblies={
         "R64-1-1": (76, MAX_ENSEMBL_RELEASE),
     },
+    dated_releases=("GCA_000146045.2", "community"),
     division="fungi",
 )
 
@@ -520,6 +569,7 @@ arabidopsis_thaliana = Species.register(
     reference_assemblies={
         "TAIR10": (40, MAX_ENSEMBL_GENOMES_RELEASE),
     },
+    dated_releases=("GCA_000001735.1", "community_araport11"),
     division="plants",
     ensembl_genomes=True,
 )
@@ -530,6 +580,7 @@ rice = Species.register(
     reference_assemblies={
         "IRGSP-1.0": (40, MAX_ENSEMBL_GENOMES_RELEASE),
     },
+    dated_releases=("GCA_001433935.1", "community_rapdb"),
     division="plants",
     ensembl_genomes=True,
 )
@@ -544,6 +595,7 @@ wheat = Species.register(
     reference_assemblies={
         "IWGSC": (40, MAX_ENSEMBL_GENOMES_RELEASE),
     },
+    dated_releases=("GCA_900519105.1", "community_iwgsc"),
     division="plants",
     ensembl_genomes=True,
 )
@@ -557,6 +609,7 @@ maize = Species.register(
         # for this asset.
         "Zm-B73-REFERENCE-NAM-5.0": (54, MAX_ENSEMBL_GENOMES_RELEASE),
     },
+    dated_releases=("GCA_902167145.1", "community_cshl"),
     division="plants",
     ensembl_genomes=True,
 )
@@ -568,6 +621,7 @@ tomato = Species.register(
         # Ensembl Genomes 63 removed SL3.0.
         "SL3.0": (42, 62),
     },
+    dated_releases=("GCA_000188115.3", "community_sol"),
     division="plants",
     ensembl_genomes=True,
 )
@@ -578,6 +632,7 @@ soybean = Species.register(
     reference_assemblies={
         "Glycine_max_v2.1": (43, MAX_ENSEMBL_GENOMES_RELEASE),
     },
+    dated_releases=("GCA_000004515.4", "community_jgi"),
     division="plants",
     ensembl_genomes=True,
 )
@@ -588,6 +643,7 @@ fission_yeast = Species.register(
     reference_assemblies={
         "ASM294v2": (40, MAX_ENSEMBL_GENOMES_RELEASE),
     },
+    dated_releases=("GCA_000002945.2", "community"),
     division="fungi",
     ensembl_genomes=True,
 )
@@ -598,6 +654,7 @@ aspergillus_nidulans = Species.register(
     reference_assemblies={
         "ASM1142v1": (40, MAX_ENSEMBL_GENOMES_RELEASE),
     },
+    dated_releases=("GCA_000011425.1", "refseq"),
     division="fungi",
     ensembl_genomes=True,
 )
@@ -608,6 +665,7 @@ candida_albicans = Species.register(
     reference_assemblies={
         "GCA000182965v3": (52, MAX_ENSEMBL_GENOMES_RELEASE),
     },
+    dated_releases=("GCA_000182965.3", "community"),
     division="fungi",
     ensembl_genomes=True,
 )
@@ -618,6 +676,7 @@ anopheles_gambiae = Species.register(
     reference_assemblies={
         "AgamP4": (40, MAX_ENSEMBL_GENOMES_RELEASE),
     },
+    dated_releases=("GCA_000005575.1", "veupathdb"),
     division="metazoa",
     ensembl_genomes=True,
 )
@@ -630,6 +689,7 @@ plasmodium_falciparum = Species.register(
         "ASM276v2": (45, 60),
         "GCA000002765v3": (61, MAX_ENSEMBL_GENOMES_RELEASE),
     },
+    dated_releases=("GCA_000002765.3", "community"),
     division="protists",
     ensembl_genomes=True,
 )
@@ -654,7 +714,9 @@ mus_musculus_balbc = Species.register(
     reference_assemblies = {
         'BALB_cJ_v1':(92, 113),
         'BALB_cJ_v3':(114, MAX_ENSEMBL_RELEASE),
-    })
+    },
+    dated_releases=("GCA_921997145.2", "ensembl"),
+)
 #129
 mus_musculus_129 = Species.register(
     latin_name='mus_musculus_129s1svimj',
@@ -662,7 +724,9 @@ mus_musculus_129 = Species.register(
     reference_assemblies = {
         '129S1_SvImJ_v1':(92, 113),
         '129S1_SvImJ_v3':(114, MAX_ENSEMBL_RELEASE),
-    })
+    },
+    dated_releases=("GCA_921998555.2", "ensembl"),
+)
 #FVB
 mus_musculus_fvb = Species.register(
     latin_name='mus_musculus_fvbnj',
@@ -670,7 +734,9 @@ mus_musculus_fvb = Species.register(
     reference_assemblies = {
         'FVB_NJ_v1':(92, 113),
         'FVB_NJ_v3':(114, MAX_ENSEMBL_RELEASE),
-    })
+    },
+    dated_releases=("GCA_921998635.2", "ensembl"),
+)
 #NOD
 mus_musculus_nod = Species.register(
     latin_name='mus_musculus_nodshiltj',
@@ -678,7 +744,9 @@ mus_musculus_nod = Species.register(
     reference_assemblies = {
         'NOD_ShiLtJ_v1':(92, 113),
         'NOD_ShiLtJ_v3':(114, MAX_ENSEMBL_RELEASE),
-    })
+    },
+    dated_releases=("GCA_921998325.2", "ensembl"),
+)
 #6NJ
 mus_musculus_c57bl6nj = Species.register(
     latin_name='mus_musculus_c57bl6nj',
@@ -686,4 +754,6 @@ mus_musculus_c57bl6nj = Species.register(
     reference_assemblies = {
         'C57BL_6NJ_v1':(92, 113),
         'C57BL_6NJ_v3':(114, MAX_ENSEMBL_RELEASE),
-    })
+    },
+    dated_releases=("GCA_921999865.2", "ensembl"),
+)
