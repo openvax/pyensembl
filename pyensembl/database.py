@@ -696,7 +696,7 @@ class Database(object):
         """
         Parse this genome source's GTF file and load it as a Pandas DataFrame
         """
-        # Imported here: gtfparse loads pandas and polars, which only index
+        # Imported here: gtfparse loads pandas and pyarrow, which only index
         # builds need, so importing pyensembl and querying stay fast.
         from gtfparse import GENCODE_BIOTYPE_ALIASES, create_missing_features, read_gtf
 
@@ -704,8 +704,8 @@ class Database(object):
         with _gtf_progress(self.gtf_path, show_progress) as progress_callback:
             df = read_gtf(
                 self.gtf_path,
-                # SQLite ingestion uses pandas; avoid converting back through
-                # Polars after gtfparse's pandas-based transformations.
+                # SQLite ingestion uses pandas (the default from gtfparse 3;
+                # gtfparse 2.9 returns Polars unless asked).
                 result_type="pandas",
                 column_converters={
                     "seqname": normalize_chromosome,
