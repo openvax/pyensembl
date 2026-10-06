@@ -41,10 +41,10 @@ TP53-201
 TP53
 ```
 
-These lookups take the stable ID. `protein_sequence` also accepts a versioned
-ID such as `ENSP00000269305.4`, but it returns this release's sequence whatever
-the version number, so compare versions yourself when IDs come from another
-release.
+Each lookup also accepts a [versioned ID](features.md#versioned-ids) such as
+`ENSP00000269305.4`. A version that differs from this release's, such as
+`ENSP00000269305.3`, raises `ValueError` instead of returning this release's
+protein.
 
 Noncoding transcripts have no protein, so their `protein`, `protein_id` and
 `protein_sequence` are `None`:
