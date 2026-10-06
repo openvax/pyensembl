@@ -62,7 +62,8 @@ GTTTTCCCCTCCCATGTGCTCAAGACTGGC
 ```
 
 The first two lines show the first 30 amino acids of the protein and the first
-30 bases of its cDNA. The full sequences have 393 amino acids and 2,579 bases.
+30 bases of the transcript's cDNA, which begins with the 5′ UTR. The full
+sequences have 393 amino acids and 2,579 bases.
 The cDNA is spliced and already oriented 5′ to 3′, including
 for minus-strand transcripts. Noncoding or incomplete transcripts may have no
 protein sequence. Both come from the reference annotation, not from your

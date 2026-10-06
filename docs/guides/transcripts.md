@@ -12,21 +12,24 @@ from pyensembl import EnsemblRelease
 data = EnsemblRelease(93, species="human")
 transcript = data.transcript_by_id("ENST00000269305")
 protein = transcript.protein_sequence
-print(transcript.protein_id, len(protein))
-print(protein[:20])
+print(transcript.versioned_id, transcript.protein.versioned_id, len(protein))
 ```
 
 ```text
-ENSP00000269305 393
-MEEPQSDPSVEPPLSQETFS
+ENST00000269305.8 ENSP00000269305.4 393
 ```
 
-`protein_sequence` is the annotated translation from Ensembl's peptide file,
-without a stop symbol. When you start from a protein ID, look up its sequence,
-transcript or gene directly; versioned IDs such as `ENSP00000269305.4` also work:
+`protein_sequence` is the annotated translation from Ensembl's peptide file.
+It normally has no stop symbol, but a few peptides, mostly from polymorphic
+pseudogenes, contain `*` at internal stop codons. `versioned_id` adds this
+release's version to a stable ID; `transcript.protein_id` is the stable protein
+ID without it.
+
+When you start from a protein ID, look up its sequence, transcript or gene
+directly:
 
 ```python
-print(data.protein_sequence("ENSP00000269305") == protein)
+print(data.protein_sequence(transcript.protein_id) == protein)
 print(data.transcript_by_protein_id("ENSP00000269305").name)
 print(data.gene_by_protein_id("ENSP00000269305").name)
 ```
@@ -36,6 +39,11 @@ True
 TP53-201
 TP53
 ```
+
+These lookups take the stable ID. `protein_sequence` also accepts a versioned
+ID such as `ENSP00000269305.4`, but it returns this release's sequence whatever
+the version number, so compare versions yourself when IDs come from another
+release.
 
 Noncoding transcripts have no protein, so their `protein_id` and
 `protein_sequence` are `None`:
@@ -69,8 +77,9 @@ length divisible by three.
 
 ## Transcript sequence and UTRs
 
-`transcript.sequence` is the full spliced cDNA, oriented 5′ to 3′. It is the
-5′ UTR, the coding sequence and the 3′ UTR joined together:
+`transcript.sequence` is the full spliced cDNA, oriented 5′ to 3′. For a
+transcript with annotated start and stop codons, it is the 5′ UTR, the coding
+sequence and the 3′ UTR joined together:
 
 ```python
 utr5 = transcript.five_prime_utr_sequence
@@ -109,7 +118,7 @@ Without an annotated start codon, `coding_sequence` and
 `five_prime_utr_sequence` are `None`. The peptide file can still hold a partial
 translation, so check `complete` before analyzing codons or reading frames.
 
-## Exons and genomic coordinates <a id="inspect-a-transcript"></a>
+## Exons and genomic coordinates
 
 ### Exons
 

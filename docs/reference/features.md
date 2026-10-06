@@ -2,7 +2,7 @@
 
 Gene and transcript coordinates refer to the selected annotation, with
 one-based inclusive bounds. The guides show how to
-[find genes and transcripts](../guides/features.md) and use
+[find genes and transcripts](../guides/features.md) and
 [get protein and transcript sequences](../guides/transcripts.md).
 
 ::: pyensembl.Gene
