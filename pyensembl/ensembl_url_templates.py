@@ -67,6 +67,7 @@ def make_gtf_filename(ensembl_release, species):
     Return GTF filename expected on the Ensembl FTP server for a specific
     species/release combination.
     """
+    species = _resolve_species(species)
     ensembl_release, species_name, reference_name = normalize_release_properties(
         ensembl_release, species
     )
@@ -77,10 +78,15 @@ def make_gtf_filename(ensembl_release, species):
     template = GTF_FILENAME_TEMPLATE
     if ensembl_release >= 82 and reference_name in ("GRCh38", "GRCm38", "GRCz11"):
         template = GTF_FILENAME_TEMPLATE_WITH_PATCHES
+    # Ensembl 116 republished the Ensembl Genomes 63 GTFs of its
+    # non-vertebrates (worm, fly, yeast) under their Ensembl Genomes names.
+    filename_release = ensembl_release
+    if ensembl_release == 116 and not species.is_vertebrate:
+        filename_release = 63
     return template % {
         "Species": species_name.capitalize(),
         "reference": reference_name,
-        "release": ensembl_release,
+        "release": filename_release,
     }
 
 

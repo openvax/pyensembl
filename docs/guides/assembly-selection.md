@@ -13,8 +13,10 @@ sequences, so record the version you use.
 
 ## Numbered releases
 
-PyEnsembl supports numbered Ensembl releases through 115. Ensembl's archive
-policy and the new platform are described in the [platform guide](../ensembl-platform.md).
+PyEnsembl supports numbered Ensembl releases through the final one, 116 (63 for
+Ensembl Genomes); `pyensembl available` lists each species' supported range.
+Ensembl's archive policy and the new platform are described in the
+[platform guide](../ensembl-platform.md).
 The newest supported release can change with package updates. Pin a release
 number when repeating an analysis rather than relying on assembly-only selection.
 

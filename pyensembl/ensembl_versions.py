@@ -11,10 +11,10 @@
 # limitations under the License.
 
 MIN_ENSEMBL_RELEASE = 40
-MAX_ENSEMBL_RELEASE = 115
+MAX_ENSEMBL_RELEASE = 116
 # Ensembl Genomes (plants, fungi, metazoa, protists, bacteria) has its own
 # release numbering that runs separately from the main Ensembl release.
-MAX_ENSEMBL_GENOMES_RELEASE = 58
+MAX_ENSEMBL_GENOMES_RELEASE = 63
 
 
 def check_release_number(release):

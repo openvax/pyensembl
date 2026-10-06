@@ -44,6 +44,19 @@ from pyensembl.species import Species, find_species_by_name
          "Canis_lupus_familiaris.CanFam3.1.cdna.all.fa.gz"),
         ("dog", 105, "Canis_lupus_familiaris.ROS_Cfam_1.0.105.gtf.gz",
          "Canis_lupus_familiaris.ROS_Cfam_1.0.cdna.all.fa.gz"),
+        ("plasmodium_falciparum", 60, "Plasmodium_falciparum.ASM276v2.60.gtf.gz",
+         "Plasmodium_falciparum.ASM276v2.cdna.all.fa.gz"),
+        ("plasmodium_falciparum", 61, "Plasmodium_falciparum.GCA000002765v3.61.gtf.gz",
+         "Plasmodium_falciparum.GCA000002765v3.cdna.all.fa.gz"),
+        ("toxoplasma_gondii", 61, "Toxoplasma_gondii.GCA000006565v2.61.gtf.gz",
+         "Toxoplasma_gondii.GCA000006565v2.cdna.all.fa.gz"),
+        # Ensembl 116 republished Ensembl Genomes 63 GTFs for non-vertebrates.
+        ("drosophila_melanogaster", 116, "Drosophila_melanogaster.BDGP6.54.63.gtf.gz",
+         "Drosophila_melanogaster.BDGP6.54.cdna.all.fa.gz"),
+        ("yeast", 116, "Saccharomyces_cerevisiae.R64-1-1.63.gtf.gz",
+         "Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz"),
+        ("nematode", 116, "Caenorhabditis_elegans.WBcel235.63.gtf.gz",
+         "Caenorhabditis_elegans.WBcel235.cdna.all.fa.gz"),
     ],
 )
 def test_assembly_transitions_name_archived_files(species, release, gtf, cdna):
@@ -58,6 +71,7 @@ def test_assembly_transitions_name_archived_files(species, release, gtf, cdna):
         ("syrian_hamster", 89),  # Added in release 90.
         ("meriones_unguiculatus", 95),  # Added in release 96.
         ("mus_musculus_balbcj", 87),  # 87-91 kept release 86's filenames.
+        ("tomato", 63),  # Ensembl Genomes 63 removed SL3.0.
     ],
 )
 def test_releases_missing_from_the_archive_are_rejected(species, release):

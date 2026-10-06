@@ -24,6 +24,7 @@ COMPLETE_GTF = "Homo_sapiens.GRCh38.97.chr_patch_hapl_scaff.gtf.gz"
         ("human", 81, "Homo_sapiens.GRCh38.81.gtf.gz"),
         ("human", 82, "Homo_sapiens.GRCh38.82.chr_patch_hapl_scaff.gtf.gz"),
         ("human", 115, "Homo_sapiens.GRCh38.115.chr_patch_hapl_scaff.gtf.gz"),
+        ("human", 116, "Homo_sapiens.GRCh38.116.chr_patch_hapl_scaff.gtf.gz"),
         ("mouse", 81, "Mus_musculus.GRCm38.81.gtf.gz"),
         ("mouse", 82, "Mus_musculus.GRCm38.82.chr_patch_hapl_scaff.gtf.gz"),
         ("mouse", 102, "Mus_musculus.GRCm38.102.chr_patch_hapl_scaff.gtf.gz"),
