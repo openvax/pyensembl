@@ -351,7 +351,7 @@
   <span class="md-ellipsis">
     
   
-    Exons and coding sequences
+    Get protein and transcript sequences
   
 
     
@@ -1775,6 +1775,17 @@
     <span class="md-ellipsis">
       
         start_codon_complete
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.Transcript.stop_codon_complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stop_codon_complete
       
     </span>
   </a>
@@ -4061,6 +4072,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.Transcript.stop_codon_complete" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stop_codon_complete
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.Transcript.start_codon_positions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5085,8 +5107,8 @@
 <h1 id="feature-objects">Feature objects<a class="headerlink" href="#feature-objects" title="Permanent link">&para;</a></h1>
 <p>Gene and transcript coordinates refer to the selected annotation, with
 one-based inclusive bounds. The guides show how to
-<a href="../../guides/features/">find genes and transcripts</a> and use
-<a href="../../guides/transcripts/">exons and coding sequences</a>.</p>
+<a href="../../guides/features/">find genes and transcripts</a> and
+<a href="../../guides/transcripts/">get protein and transcript sequences</a>.</p>
 
 
 <div class="doc doc-object doc-class">
@@ -7114,6 +7136,26 @@ result is reported on this locus's strand.</p>
 <div class="doc doc-object doc-function">
 
 
+<h3 id="pyensembl.Transcript.stop_codon_complete" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">stop_codon_complete</span>
+
+
+<a href="#pyensembl.Transcript.stop_codon_complete" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">stop_codon_complete</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Does the stop codon span 3 genomic positions?</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h3 id="pyensembl.Transcript.start_codon_positions" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">start_codon_positions</span>
 
@@ -7315,8 +7357,8 @@ encodes as a separate feature from the CDS).</p>
 
     <div class="doc doc-contents ">
 
-        <p>Consider a transcript complete if it has start and stop codons and
-a coding sequence whose length is divisible by 3</p>
+        <p>Consider a transcript complete if it has three-base start and stop
+codons and a coding sequence whose length is divisible by 3</p>
 
 
     </div>

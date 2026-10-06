@@ -351,7 +351,7 @@
   <span class="md-ellipsis">
     
   
-    Exons and coding sequences
+    Get protein and transcript sequences
   
 
     
@@ -824,10 +824,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#sequences-and-proteins" class="md-nav__link">
+  <a href="#proteins-and-sequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sequences and proteins
+        Proteins and sequences
       
     </span>
   </a>
@@ -2167,10 +2167,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#sequences-and-proteins" class="md-nav__link">
+  <a href="#proteins-and-sequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sequences and proteins
+        Proteins and sequences
       
     </span>
   </a>
@@ -3265,7 +3265,7 @@ similar methods return IDs or names. A gene's transcripts are also available as
 </table>
 <p><code>exon_ids_of_transcript_id</code>, <code>exon_ids_of_gene_id</code> and similar methods return
 IDs. Use <code>transcript.exons</code> for exons in transcription order.</p>
-<h3 id="sequences-and-proteins">Sequences and proteins<a class="headerlink" href="#sequences-and-proteins" title="Permanent link">&para;</a></h3>
+<h3 id="proteins-and-sequences">Proteins and sequences <a id="sequences-and-proteins"></a><a class="headerlink" href="#proteins-and-sequences" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -3275,10 +3275,6 @@ IDs. Use <code>transcript.exons</code> for exons in transcription order.</p>
 </thead>
 <tbody>
 <tr>
-<td><a href="#pyensembl.Genome.transcript_sequence"><code>transcript_sequence</code></a></td>
-<td>Spliced cDNA for a transcript ID</td>
-</tr>
-<tr>
 <td><a href="#pyensembl.Genome.protein_sequence"><code>protein_sequence</code></a></td>
 <td>Amino acids for a protein ID</td>
 </tr>
@@ -3286,10 +3282,14 @@ IDs. Use <code>transcript.exons</code> for exons in transcription order.</p>
 <td><a href="#pyensembl.Genome.protein_ids"><code>protein_ids</code></a></td>
 <td>Protein IDs, filtered by contig or strand</td>
 </tr>
+<tr>
+<td><a href="#pyensembl.Genome.transcript_sequence"><code>transcript_sequence</code></a></td>
+<td>Spliced cDNA for a transcript ID</td>
+</tr>
 </tbody>
 </table>
-<p>Transcript objects also provide <code>sequence</code>, <code>coding_sequence</code>, UTR sequences
-and <code>protein_sequence</code>; see <a href="../../guides/transcripts/">exons and coding sequences</a>.</p>
+<p>Transcript objects also provide <code>protein_sequence</code>, <code>coding_sequence</code>,
+<code>sequence</code> and UTR sequences; see <a href="../../guides/transcripts/">protein and transcript sequences</a>.</p>
 <h3 id="reference-dna">Reference DNA<a class="headerlink" href="#reference-dna" title="Permanent link">&para;</a></h3>
 <p>These need <a href="../../guides/reference-dna/">reference DNA</a>, configured with
 <code>genome_fasta</code>.</p>

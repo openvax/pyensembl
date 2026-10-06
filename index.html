@@ -310,10 +310,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#read-transcript-and-protein-sequences" class="md-nav__link">
+  <a href="#read-protein-and-transcript-sequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Read transcript and protein sequences
+        Read protein and transcript sequences
       
     </span>
   </a>
@@ -440,7 +440,7 @@
   <span class="md-ellipsis">
     
   
-    Exons and coding sequences
+    Get protein and transcript sequences
   
 
     
@@ -1173,10 +1173,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#read-transcript-and-protein-sequences" class="md-nav__link">
+  <a href="#read-protein-and-transcript-sequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Read transcript and protein sequences
+        Read protein and transcript sequences
       
     </span>
   </a>
@@ -1243,21 +1243,22 @@ include both ends; <code>start</code> is the lower coordinate on either strand.<
 <p>You can also search with <code>data.genes_by_name("TP53")</code>. It returns a list because
 a name can match several genes. <a href="guides/aliases/">Gene aliases</a> let you search
 additional names such as p53.</p>
-<h2 id="read-transcript-and-protein-sequences">Read transcript and protein sequences <a id="select-one-transcript"></a><a class="headerlink" href="#read-transcript-and-protein-sequences" title="Permanent link">&para;</a></h2>
+<h2 id="read-protein-and-transcript-sequences">Read protein and transcript sequences <a id="read-transcript-and-protein-sequences"></a><a id="select-one-transcript"></a><a class="headerlink" href="#read-protein-and-transcript-sequences" title="Permanent link">&para;</a></h2>
 <p>A gene can have several transcripts. Continue in the same Python session with
 one selected transcript:</p>
 <div class="highlight"><pre><span></span><code><span class="n">transcript</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">transcript_by_id</span><span class="p">(</span><span class="s2">"ENST00000269305"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">sequence</span><span class="p">[:</span><span class="mi">30</span><span class="p">])</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">protein_sequence</span><span class="p">[:</span><span class="mi">30</span><span class="p">])</span>
-<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">sequence</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">protein_sequence</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">sequence</span><span class="p">[:</span><span class="mi">30</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">protein_sequence</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">sequence</span><span class="p">))</span>
 <span class="n">data</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code>GTTTTCCCCTCCCATGTGCTCAAGACTGGC
-MEEPQSDPSVEPPLSQETFSDLWKLLPENN
-2579 393
+<div class="highlight"><pre><span></span><code>MEEPQSDPSVEPPLSQETFSDLWKLLPENN
+GTTTTCCCCTCCCATGTGCTCAAGACTGGC
+393 2579
 </code></pre></div>
-<p>The first two lines show the first 30 bases of cDNA and the first 30 amino acids
-of its protein. The full sequences have 2,579 bases and 393 amino acids.
+<p>The first two lines show the first 30 amino acids of the protein and the first
+30 bases of the transcript's cDNA, which begins with the 5′ UTR. The full
+sequences have 393 amino acids and 2,579 bases.
 The cDNA is spliced and already oriented 5′ to 3′, including
 for minus-strand transcripts. Noncoding or incomplete transcripts may have no
 protein sequence. Both come from the reference annotation, not from your
@@ -1269,8 +1270,8 @@ automatically.</p>
 <ul>
 <li><a href="guides/features/">Find genes and transcripts</a> by name, ID, position or
   biotype, and choose among a gene's transcripts.</li>
-<li><a href="guides/transcripts/">Explore exons and coding sequences</a>: UTRs, codon
-  positions and mapping genomic positions onto a transcript.</li>
+<li><a href="guides/transcripts/">Get protein and transcript sequences</a>: proteins by
+  ID, coding sequences, UTRs, exons and genomic coordinates.</li>
 <li><a href="guides/reference-dna/">Read genomic DNA</a> for introns or flanking regions.
   Whole-genome DNA is a separate, optional download.</li>
 <li><a href="guides/assembly-selection/">Choose another species, assembly or annotation</a>,
