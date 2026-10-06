@@ -29,7 +29,7 @@ from .ensembl_url_templates import (
     ENSEMBL_FTP_SERVER,
     ENSEMBL_GENOMES_FTP_SERVER,
     ENSEMBL_PLATFORM_FTP_SERVER,
-    DATED_GENOME_FASTA_MASKS,
+    dated_genome_fasta_mask,
     make_dated_release_urls,
     make_gtf_url,
     make_fasta_url,
@@ -94,7 +94,8 @@ class EnsemblRelease(Genome):
         release = normalize_release(release)
         species = check_species_object(species)
         if is_dated_release(release):
-            if server is None or server == ENSEMBL_FTP_SERVER:
+            # Neither legacy server hosts dated releases.
+            if server in (None, ENSEMBL_FTP_SERVER, ENSEMBL_GENOMES_FTP_SERVER):
                 server = ENSEMBL_PLATFORM_FTP_SERVER
         elif server is None or server == ENSEMBL_FTP_SERVER:
             # Promote to the Ensembl Genomes server when the species lives
@@ -206,13 +207,11 @@ class EnsemblRelease(Genome):
 
     def _dated_release_urls(self):
         """Files of a dated release of the species' current assembly."""
-        if self.genome_fasta_type != "toplevel":
+        if self._genome_fasta_option is True and self.genome_fasta_type != "toplevel":
             raise ValueError(
                 "Dated releases publish only toplevel reference DNA, not %r"
                 % (self.genome_fasta_type,)
             )
-        if self.genome_fasta_mask not in DATED_GENOME_FASTA_MASKS:
-            raise ValueError("genome_fasta_mask must be 'none', 'soft', or 'hard'")
         accession, provider = self.species.dated_releases
         # Only GRCh38 datasets publish genes-including_alt, the counterpart of
         # the complete chr_patch_hapl_scaff GTF of numbered GRCh38 releases.
@@ -291,7 +290,13 @@ class EnsemblRelease(Genome):
             return "Reference DNA is attached to this release; use %s." % call(
                 repr(installed.source)
             )
-        options = canonical_source_options(installed.source) if installed else None
+        if installed is None:
+            options = None
+        elif is_dated_release(self.release):
+            mask = dated_genome_fasta_mask(installed.source)
+            options = None if mask is None else ("toplevel", mask)
+        else:
+            options = canonical_source_options(installed.source)
         if options is not None:
             fasta_type, mask = options
             extra = {}

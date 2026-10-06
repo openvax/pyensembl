@@ -10,7 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import datetime
 import re
 
 MIN_ENSEMBL_RELEASE = 40
@@ -22,7 +21,10 @@ MAX_ENSEMBL_GENOMES_RELEASE = 63
 
 def is_dated_release(release):
     """True for an annotation date on the new Ensembl platform, e.g. "2026_04"."""
-    return isinstance(release, str) and re.fullmatch(r"\d{4}_\d{2}", release) is not None
+    return (
+        isinstance(release, str)
+        and re.fullmatch(r"\d{4}_(0[1-9]|1[0-2])", release) is not None
+    )
 
 
 def normalize_release(release):
@@ -39,11 +41,9 @@ def normalize_release(release):
                 % (release,)
             )
         if is_dated_release(release):
-            try:
-                datetime.strptime(release, "%Y_%m")
-            except ValueError as error:
-                raise ValueError("Invalid annotation date: %s" % (release,)) from error
             return release
+        if re.fullmatch(r"\d{4}_\d{2}", release):
+            raise ValueError("Invalid annotation date: %s" % (release,))
     return check_release_number(release)
 
 

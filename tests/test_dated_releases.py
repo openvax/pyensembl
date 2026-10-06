@@ -4,14 +4,16 @@ import gzip
 import os
 from pathlib import Path
 import re
+from types import SimpleNamespace
 import urllib.request
 
 import pytest
 
 from pyensembl import EnsemblRelease, shell
-from pyensembl.ensembl_url_templates import make_dated_release_urls
+from pyensembl.ensembl_url_templates import ENSEMBL_GENOMES_FTP_SERVER, make_dated_release_urls
+from pyensembl.genome_fasta import GenomeFasta
 from pyensembl.ensembl_versions import check_release_number
-from pyensembl.species import Species
+from pyensembl.species import Species, find_species_by_name
 
 from .test_ensembl_annotation import bgzf
 
@@ -129,6 +131,43 @@ def test_species_without_dated_releases_rejected():
 def test_unpublished_reference_dna_rejected(options):
     with pytest.raises(ValueError):
         EnsemblRelease("2026_04", genome_fasta=True, **options)
+
+
+def test_genome_fasta_type_is_checked_only_when_dna_is_requested():
+    genome = EnsemblRelease("2026_04", genome_fasta_type="primary_assembly")
+    assert genome.genome_fasta_urls == []
+
+
+def test_dated_releases_never_use_a_legacy_server():
+    genome = EnsemblRelease(
+        "2010_09", species="arabidopsis_thaliana", server=ENSEMBL_GENOMES_FTP_SERVER
+    )
+    assert genome.gtf_url.startswith(PLATFORM + "/GCA/000/001/735/1/")
+
+
+def test_setup_hint_keeps_the_mask_of_installed_dna(monkeypatch):
+    genome = EnsemblRelease("2026_04")
+    installed = SimpleNamespace(
+        source=PLATFORM + "/GCA/000/001/405/29/ensembl/2026_04/genome/softmasked.fa.bgz",
+        remote=True, installed_path="/cache/softmasked.fa.bgz",
+    )
+    monkeypatch.setattr(GenomeFasta, "installed_source", lambda directory: installed)
+    assert "EnsemblRelease('2026_04', genome_fasta=True, genome_fasta_mask='soft')" in (
+        genome._genome_fasta_setup_hint()
+    )
+
+
+def test_invalid_months_are_not_dated_releases():
+    with pytest.raises(ValueError, match="No genome for homo_sapiens"):
+        find_species_by_name("human").which_reference("2026_13")
+    assert shell._other_genome_labels("GRCh38", "ensembl2026_13") == (
+        "custom", "ensembl2026_13"
+    )
+
+
+def test_dated_release_urls_reject_unknown_masks():
+    with pytest.raises(ValueError, match="genome_fasta_mask"):
+        make_dated_release_urls("GCA_000001405.29", "ensembl", "2026_04", genome_fasta_mask="x")
 
 
 def select(*arguments):

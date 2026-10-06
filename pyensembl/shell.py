@@ -333,14 +333,14 @@ def _subdirectories(path):
 
 def _other_genome_labels(reference, annotation):
     """(species, release) cells for a cache directory pyensembl did not match."""
-    match = re.fullmatch(r"ensembl(\d+|\d{4}_\d{2})", annotation)
-    if match is None:
+    release = annotation[len("ensembl"):] if annotation.startswith("ensembl") else ""
+    if not (re.fullmatch(r"[0-9]+", release) or is_dated_release(release)):
         return "custom", annotation
     try:
         species = _species_display_name(find_species_by_reference(reference))
     except (KeyError, ValueError):
         species = "unknown"
-    return species, match.group(1)  # e.g. installed by a newer pyensembl
+    return species, release  # e.g. installed by a newer pyensembl
 
 
 def _display_path(path):

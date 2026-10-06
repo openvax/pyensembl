@@ -3,11 +3,7 @@
 from datetime import datetime
 import re
 
-from .ensembl_url_templates import (
-    DATED_GENOME_FASTA_MASKS,
-    ENSEMBL_PLATFORM_FTP_SERVER,
-    make_dated_release_urls,
-)
+from .ensembl_url_templates import ENSEMBL_PLATFORM_FTP_SERVER, make_dated_release_urls
 from .genome import Genome
 from .species import find_species_by_name
 
@@ -65,8 +61,6 @@ class EnsemblAnnotation(Genome):
             raise ValueError("provider must be one lowercase directory name")
         if not isinstance(include_alt, bool) or not isinstance(genome_fasta, bool):
             raise TypeError("include_alt and genome_fasta must be bool values")
-        if genome_fasta_mask not in DATED_GENOME_FASTA_MASKS:
-            raise ValueError("genome_fasta_mask must be none, soft or hard")
         self.assembly_accession = assembly_accession
         self.annotation_date = annotation_date
         self.provider = provider

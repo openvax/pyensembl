@@ -252,6 +252,8 @@ def make_dated_release_urls(
     lives in .../GCA/000/001/405/29/ensembl/2026_04/. cDNA covers every
     transcript biotype, so there is no separate ncRNA FASTA.
     """
+    if genome_fasta_mask not in DATED_GENOME_FASTA_MASKS:
+        raise ValueError("genome_fasta_mask must be 'none', 'soft', or 'hard'")
     prefix, digits = assembly_accession.split("_")
     number, version = digits.split(".")
     accession_path = "/".join([prefix, number[:3], number[3:6], number[6:9], version])
@@ -266,3 +268,11 @@ def make_dated_release_urls(
             directory, DATED_GENOME_FASTA_MASKS[genome_fasta_mask]
         ),
     )
+
+
+def dated_genome_fasta_mask(url):
+    """genome_fasta_mask of a dated release's reference DNA URL, or None."""
+    for mask, name in DATED_GENOME_FASTA_MASKS.items():
+        if url.endswith("/genome/%s.fa.bgz" % name):
+            return mask
+    return None
