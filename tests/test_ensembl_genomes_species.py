@@ -13,7 +13,6 @@ from pyensembl.ensembl_url_templates import (
     ENSEMBL_FTP_SERVER,
     ENSEMBL_GENOMES_FTP_SERVER,
 )
-from pyensembl.ensembl_versions import MAX_ENSEMBL_GENOMES_RELEASE
 from pyensembl.species import (
     Species,
     anopheles_gambiae,
@@ -99,9 +98,8 @@ def test_ensembl_genomes_species_have_expected_divisions():
 def test_ensembl_genomes_species_route_through_genomes_server():
     for species_list in GENOMES_SPECIES_BY_DIVISION.values():
         for species in species_list:
-            release = EnsemblRelease(
-                release=MAX_ENSEMBL_GENOMES_RELEASE, species=species
-            )
+            latest = max(end for _, end in species.reference_assemblies.values())
+            release = EnsemblRelease(release=latest, species=species)
             assert release.server == ENSEMBL_GENOMES_FTP_SERVER
             assert release.gtf_url.startswith(ENSEMBL_GENOMES_FTP_SERVER)
             assert "/%s/gtf/%s/" % (species.division, species.latin_name) in (

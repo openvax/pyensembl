@@ -565,7 +565,8 @@ tomato = Species.register(
     latin_name="solanum_lycopersicum",
     synonyms=["tomato"],
     reference_assemblies={
-        "SL3.0": (42, MAX_ENSEMBL_GENOMES_RELEASE),
+        # Ensembl Genomes 63 removed SL3.0.
+        "SL3.0": (42, 62),
     },
     division="plants",
     ensembl_genomes=True,
@@ -626,7 +627,8 @@ plasmodium_falciparum = Species.register(
     synonyms=["plasmodium", "malaria_parasite"],
     reference_assemblies={
         "EPr1": (40, 44),
-        "ASM276v2": (45, MAX_ENSEMBL_GENOMES_RELEASE),
+        "ASM276v2": (45, 60),
+        "GCA000002765v3": (61, MAX_ENSEMBL_GENOMES_RELEASE),
     },
     division="protists",
     ensembl_genomes=True,
@@ -636,7 +638,8 @@ toxoplasma_gondii = Species.register(
     latin_name="toxoplasma_gondii",
     synonyms=["toxoplasma"],
     reference_assemblies={
-        "TGA4": (40, MAX_ENSEMBL_GENOMES_RELEASE),
+        "TGA4": (40, 60),
+        "GCA000006565v2": (61, MAX_ENSEMBL_GENOMES_RELEASE),
     },
     division="protists",
     ensembl_genomes=True,
