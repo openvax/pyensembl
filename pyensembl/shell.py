@@ -24,7 +24,7 @@ import sys
 from .database import is_complete_database
 from .download_cache import cache_root
 from .ensembl_release import EnsemblRelease
-from .ensembl_versions import MAX_ENSEMBL_RELEASE, is_dated_release, normalize_release
+from .ensembl_versions import is_dated_release, normalize_release
 from .genome import Genome
 from .genome_fasta import GenomeFasta
 from .genome_fasta_cache import (
@@ -156,7 +156,7 @@ release_group.add_argument(
         "Ensembl release version(s), numbered or a YYYY_MM annotation date on "
         "the new Ensembl platform; required for deletion "
         "(install default=newest supported release for --reference-name, "
-        "otherwise %d)" % MAX_ENSEMBL_RELEASE
+        "otherwise for each species)"
     ),
 )
 
@@ -464,6 +464,12 @@ def format_installed_genomes(check_genome_fasta=False, use_color=None):
     return _format_table(header, rows, use_color)
 
 
+def _newest_release(species_name):
+    """Newest release supported for a species; Ensembl Genomes numbers end at 63."""
+    species = find_species_by_name(species_name)
+    return max(end for _, end in species.reference_assemblies.values())
+
+
 def all_combinations_of_ensembl_genomes(args):
     """
     Use all combinations of species and release versions specified by the
@@ -474,7 +480,7 @@ def all_combinations_of_ensembl_genomes(args):
     --custom-mirror argument was given.
     """
     species_list = args.species if args.species else ["human"]
-    release_list = args.release if args.release else [MAX_ENSEMBL_RELEASE]
+    release_list = args.release
     if args.reference_name is not None:
         reference_name = normalize_reference_name(args.reference_name)
         reference_species = find_species_by_reference(reference_name)
@@ -515,7 +521,7 @@ def all_combinations_of_ensembl_genomes(args):
     genomes = []
     for species in species_list:
         # Otherwise, use Ensembl release information
-        for version in release_list:
+        for version in release_list or [_newest_release(species)]:
             ensembl_release = EnsemblRelease(
                 version, species=species,
                 genome_fasta=genome_fasta,

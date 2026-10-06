@@ -40,7 +40,7 @@ Ensembl release options:
                         Ensembl release version(s), numbered or a YYYY_MM
                         annotation date on the new Ensembl platform; required
                         for deletion (install default=newest supported release
-                        for --reference-name, otherwise 116)
+                        for --reference-name, otherwise for each species)
   --species SPECIES [SPECIES ...]
                         Which species to download Ensembl data for
                         (default=inferred from --reference-name, otherwise

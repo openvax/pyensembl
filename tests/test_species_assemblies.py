@@ -55,6 +55,8 @@ from pyensembl.species import Species, find_species_by_name
          "Drosophila_melanogaster.BDGP6.54.cdna.all.fa.gz"),
         ("yeast", 116, "Saccharomyces_cerevisiae.R64-1-1.63.gtf.gz",
          "Saccharomyces_cerevisiae.R64-1-1.cdna.all.fa.gz"),
+        ("nematode", 116, "Caenorhabditis_elegans.WBcel235.63.gtf.gz",
+         "Caenorhabditis_elegans.WBcel235.cdna.all.fa.gz"),
     ],
 )
 def test_assembly_transitions_name_archived_files(species, release, gtf, cdna):

@@ -34,6 +34,16 @@ def test_grch37_selects_latest_matching_release(reference, species):
 
 
 @pytest.mark.parametrize(
+    "species, release",
+    [("human", MAX_ENSEMBL_RELEASE), ("arabidopsis", MAX_ENSEMBL_GENOMES_RELEASE),
+     ("tomato", 62)],
+)
+def test_species_without_release_selects_its_newest(species, release):
+    genome, = select("--species", species)
+    assert genome.release == release
+
+
+@pytest.mark.parametrize(
     "reference, species, release",
     [("GRCm38", "mus_musculus", 102), ("NCBI36", "homo_sapiens", 54),
      ("GRCh38", "homo_sapiens", MAX_ENSEMBL_RELEASE),
