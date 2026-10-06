@@ -20,8 +20,6 @@ version. See [assembly selection](../guides/assembly-selection.md).
 
 ::: pyensembl.normalize_species_name
 
-::: pyensembl.find_nearest_locus
-
 ::: pyensembl.species.Species
 
 ## Package values and convenience genomes <a id="exported-constants"></a>

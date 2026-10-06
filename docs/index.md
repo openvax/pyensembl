@@ -65,15 +65,22 @@ The first two lines show the first 30 bases of cDNA and the first 30 amino acids
 of its protein. The full sequences have 2,579 bases and 393 amino acids.
 The cDNA is spliced and already oriented 5′ to 3′, including
 for minus-strand transcripts. Noncoding or incomplete transcripts may have no
-protein sequence. These are annotated reference sequences.
+protein sequence. Both come from the reference annotation, not from your
+samples.
+
+`data.close()` releases the open index files. You can instead write
+`with EnsemblRelease(93, species="human") as data:` to close them
+automatically.
 
 ## Next steps
 
-- [Find genes by name or genomic position and explore their transcripts](guides/features.md).
-  Use the
-  [API reference](reference/index.md) to find a specific method.
+- [Find genes and transcripts](guides/features.md) by name, ID, position or
+  biotype, and choose among a gene's transcripts.
+- [Explore exons and coding sequences](guides/transcripts.md): UTRs, codon
+  positions and mapping genomic positions onto a transcript.
 - [Read genomic DNA](guides/reference-dna.md) for introns or flanking regions.
   Whole-genome DNA is a separate, optional download.
-- [Choose another species, assembly or annotation](guides/assembly-selection.md).
-- [Manage downloaded data](guides/cache.md) to check installation, choose a cache
-  location or free disk space.
+- [Choose another species, assembly or annotation](guides/assembly-selection.md),
+  or [install and manage data](guides/cache.md) from Python, check what is
+  installed and free disk space.
+- [Find a method](reference/genome.md#find-a-method) in the API reference.

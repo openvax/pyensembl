@@ -901,10 +901,20 @@ class Genome(Serializable):
         )
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
+        """
+        Gene objects overlapping ``position``, or the ``position..end``
+        interval, on ``contig``. Coordinates are one-based and inclusive.
+        Pass ``strand`` to restrict the search to one strand.
+        """
         gene_ids = self.gene_ids_at_locus(contig, position, end=end, strand=strand)
         return [self.gene_by_id(gene_id) for gene_id in gene_ids]
 
     def transcripts_at_locus(self, contig, position, end=None, strand=None):
+        """
+        Transcript objects overlapping ``position``, or the ``position..end``
+        interval, on ``contig``. Coordinates are one-based and inclusive.
+        Pass ``strand`` to restrict the search to one strand.
+        """
         transcript_ids = self.transcript_ids_at_locus(
             contig, position, end=end, strand=strand
         )
@@ -913,6 +923,11 @@ class Genome(Serializable):
         ]
 
     def exons_at_locus(self, contig, position, end=None, strand=None):
+        """
+        Exon objects overlapping ``position``, or the ``position..end``
+        interval, on ``contig``. Coordinates are one-based and inclusive.
+        Pass ``strand`` to restrict the search to one strand.
+        """
         exon_ids = self.exon_ids_at_locus(contig, position, end=end, strand=strand)
         return [self.exon_by_id(exon_id) for exon_id in exon_ids]
 
@@ -979,6 +994,11 @@ class Genome(Serializable):
         )
 
     def gene_names_at_locus(self, contig, position, end=None, strand=None):
+        """
+        Names of genes overlapping ``position``, or the ``position..end``
+        interval, on ``contig``. Coordinates are one-based and inclusive.
+        Pass ``strand`` to restrict the search to one strand.
+        """
         return self.db.distinct_column_values_at_locus(
             column="gene_name",
             feature="gene",
@@ -1165,7 +1185,7 @@ class Genome(Serializable):
 
     def genes_by_name(self, gene_name, aliases=None):
         """
-        Get all the unqiue genes with the given name (there might be multiple
+        Get all the unique genes with the given name (there might be multiple
         due to copies in the genome), return a list containing a Gene object
         for each distinct ID.
 
@@ -1384,12 +1404,18 @@ class Genome(Serializable):
         return self._transcripts[transcript_id]
 
     def transcripts_by_name(self, transcript_name):
+        """
+        Transcript objects with the given name, such as ``"TP53-201"``.
+        """
         transcript_ids = self.transcript_ids_of_transcript_name(transcript_name)
         return [
             self.transcript_by_id(transcript_id) for transcript_id in transcript_ids
         ]
 
     def transcript_by_protein_id(self, protein_id):
+        """
+        Transcript object that encodes the given protein ID.
+        """
         transcript_id = self.transcript_id_of_protein_id(protein_id)
         return self.transcript_by_id(transcript_id)
 
@@ -1505,7 +1531,7 @@ class Genome(Serializable):
         return [self.exon_by_id(exon_id) for exon_id in exon_ids]
 
     def exon_by_id(self, exon_id):
-        """Construct an Exon object from its ID by looking up the exon"s
+        """Construct an Exon object from its ID by looking up the exon's
         properties in the given Database.
         """
         if exon_id not in self._exons:

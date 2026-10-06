@@ -19,7 +19,8 @@ def check_examples():
         if not data.installed():
             raise SystemExit("First run: pyensembl install --release 93 --species human")
     executed = 0
-    for filename in ("docs/index.md", "docs/guides/features.md"):
+    for filename in ("docs/index.md", "docs/guides/features.md",
+                     "docs/guides/transcripts.md"):
         text = (ROOT / filename).read_text()
         blocks = re.findall(r"^```([^\n]*)\n(.*?)^```[ \t]*$", text,
                             re.MULTILINE | re.DOTALL)

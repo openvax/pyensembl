@@ -13,6 +13,7 @@ theme:
     accent: blue
   features:
     - navigation.indexes
+    - navigation.expand
     - content.code.copy
 extra_css:
   - stylesheets/docs.css
@@ -20,11 +21,12 @@ nav:
   - Home: index.md
   - Common tasks:
       - Find genes and transcripts: guides/features.md
+      - Exons and coding sequences: guides/transcripts.md
       - Search gene aliases: guides/aliases.md
       - Read genomic DNA: guides/reference-dna.md
   - Reference data:
       - Choose a reference: guides/assembly-selection.md
-      - Manage downloaded data: guides/cache.md
+      - Install and manage data: guides/cache.md
       - Use your own annotations: guides/custom-genomes.md
       - Use dated Ensembl annotations: ensembl-platform.md
   - API reference:
@@ -42,13 +44,12 @@ nav:
       - Releasing: dev/releasing.md
 exclude_docs: |
   /getting-started.md
-not_in_nav: |
-  /reference/lookups.md
 plugins:
   - search
   - redirects:
       redirect_maps:
         getting-started.md: index.md
+        reference/lookups.md: reference/genome.md
   - mkdocstrings:
       handlers:
         python:
@@ -73,6 +74,9 @@ markdown_extensions:
       permalink: true
   - pymdownx.highlight
   - pymdownx.superfences
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
 validation:
   nav:
     omitted_files: warn
