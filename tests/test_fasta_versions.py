@@ -13,14 +13,19 @@ Covers:
     versioned caller -> bare FASTA (Ensembl case) and bare caller ->
     versioned FASTA (GENCODE case).
 """
+import gzip
+import os
 import pickle
 from os.path import join
 from tempfile import TemporaryDirectory
 
+import pytest
+
 from pyensembl import SequenceData
 from pyensembl.common import dump_pickle
-from pyensembl.fasta import _parse_header_id, _split_ens_version
+from pyensembl.fasta import _parse_header_id
 from pyensembl.sequence_data import lookup_sequence_with_version_fallback
+from pyensembl.versioned_ids import _split_ens_version
 
 from .common import eq_
 
@@ -155,40 +160,104 @@ def test_sequence_data_stripped_index_keeps_highest_version_on_conflict():
         eq_(sd._stripped_index["ENSPTEST00000001"], "ENSPTEST00000001.5")
 
 
-def test_old_bare_keyed_pickle_still_loads_under_new_code():
-    """Caches written by older pyensembl (before this PR) keyed FASTA
-    entries on the bare ENS ID. The new parser preserves versions, but
-    a pre-existing pickle from the old code path must still load — its
-    bare-keyed dict gets walked through `_add_to_fasta_dictionary` which
-    leaves `_stripped_index` empty (the source dict has no versioned
-    keys to index), and lookups via the version-fallback helper still
-    resolve correctly because the version-stripped retry path handles
-    the bare-cache case.
-    """
+def test_pickle_from_version_stripping_parser_is_rebuilt():
+    """pyensembl before 2.10 stripped versions from FASTA headers, so its
+    cached dictionaries hold bare keys for versioned headers. Reusing one
+    would hide every FASTA version, so it is rebuilt from the FASTA."""
     with TemporaryDirectory() as tmpdir:
         fasta = join(tmpdir, "legacy.fa")
-        # write a versioned FASTA (so the new parser would key versioned)
         _write_fasta(fasta, "ENSPLEGACY00000001.4", "MLEGACY")
         sd = SequenceData([fasta], cache_directory_path=tmpdir)
-        # simulate an old (v1) bare-keyed pickle sitting on disk where
-        # the new parser expects its cache file
-        old_pickle_dict = {"ENSPLEGACY00000001": "MLEGACY"}
-        dump_pickle(old_pickle_dict, sd.fasta_dictionary_pickle_paths[0])
-        # index should pick up the existing pickle, NOT re-parse the FASTA
+        pickle_path = sd.fasta_dictionary_pickle_paths[0]
+        dump_pickle({"ENSPLEGACY00000001": "MLEGACY"}, pickle_path)
         sd.index()
-        # bare lookup hits directly
-        eq_(sd.get("ENSPLEGACY00000001"), "MLEGACY")
-        # versioned lookup falls back via the strip-and-retry path
-        eq_(
-            lookup_sequence_with_version_fallback(sd, "ENSPLEGACY00000001.4"),
-            "MLEGACY",
+        eq_(sd.get("ENSPLEGACY00000001.4"), "MLEGACY")
+        eq_(sd.fasta_version("ENSPLEGACY00000001"), 4)
+        with open(pickle_path, "rb") as f:
+            eq_(pickle.load(f), {"ENSPLEGACY00000001.4": "MLEGACY"})
+
+
+def test_bare_keyed_pickle_of_unversioned_fasta_is_reused():
+    """FASTAs before Ensembl 83 have bare headers; their pickles are current."""
+    with TemporaryDirectory() as tmpdir:
+        fasta = join(tmpdir, "bare.fa")
+        _write_fasta(fasta, "ENSPBARE00000001", "MFROMFASTA")
+        sd = SequenceData([fasta], cache_directory_path=tmpdir)
+        # A distinct cached sequence shows whether the pickle was used
+        dump_pickle(
+            {"ENSPBARE00000001": "MFROMPICKLE"}, sd.fasta_dictionary_pickle_paths[0]
         )
-        # _stripped_index stays empty for a bare-keyed cache
-        eq_(sd._stripped_index, {})
-        # fasta_version returns None for bare-only caches (the version
-        # info was never captured at parse time)
-        eq_(sd.fasta_version("ENSPLEGACY00000001.4"), None)
-        eq_(sd.fasta_version("ENSPLEGACY00000001"), None)
+        sd.index()
+        eq_(sd.get("ENSPBARE00000001"), "MFROMPICKLE")
+
+
+def test_versioned_pickle_is_reused():
+    with TemporaryDirectory() as tmpdir:
+        fasta = join(tmpdir, "v.fa")
+        _write_fasta(fasta, "ENSPCUR00000001.2", "MFROMFASTA")
+        sd = SequenceData([fasta], cache_directory_path=tmpdir)
+        dump_pickle(
+            {"ENSPCUR00000001.2": "MFROMPICKLE"}, sd.fasta_dictionary_pickle_paths[0]
+        )
+        sd.index()
+        eq_(sd.get("ENSPCUR00000001.2"), "MFROMPICKLE")
+
+
+def test_unreadable_first_header_keeps_the_pickle():
+    with TemporaryDirectory() as tmpdir:
+        fasta = join(tmpdir, "odd.fa")
+        with open(fasta, "w") as f:
+            f.write(">\nMNOID\n>ENSPODD00000001.1\nMODD\n")
+        sd = SequenceData([fasta], cache_directory_path=tmpdir)
+        dump_pickle({"ENSPODD00000001.1": "MODD"}, sd.fasta_dictionary_pickle_paths[0])
+        sd.index()
+        eq_(sd.get("ENSPODD00000001.1"), "MODD")
+
+
+def test_corrupt_gzip_header_keeps_the_pickle():
+    with TemporaryDirectory() as tmpdir:
+        fasta = join(tmpdir, "corrupt.fa.gz")
+        data = bytearray(gzip.compress(b">ENSPGZ00000001.1\nMGZ\n" * 100))
+        data[10:30] = b"\xff" * 20
+        with open(fasta, "wb") as f:
+            f.write(bytes(data))
+        sd = SequenceData([fasta], cache_directory_path=tmpdir)
+        dump_pickle({"ENSPGZ00000001.1": "MGZ"}, sd.fasta_dictionary_pickle_paths[0])
+        sd.index()
+        eq_(sd.get("ENSPGZ00000001.1"), "MGZ")
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root ignores directory permissions")
+def test_stale_pickle_in_read_only_cache_is_rebuilt_in_memory():
+    with TemporaryDirectory() as tmpdir:
+        fasta = join(tmpdir, "legacy.fa")
+        _write_fasta(fasta, "ENSPLEGACY00000001.4", "MLEGACY")
+        cache = join(tmpdir, "cache")
+        os.mkdir(cache)
+        sd = SequenceData([fasta], cache_directory_path=cache)
+        dump_pickle({"ENSPLEGACY00000001": "MLEGACY"}, sd.fasta_dictionary_pickle_paths[0])
+        os.chmod(cache, 0o555)
+        try:
+            sd.index()
+        finally:
+            os.chmod(cache, 0o755)
+        eq_(sd.get("ENSPLEGACY00000001.4"), "MLEGACY")
+        eq_(sd.fasta_version("ENSPLEGACY00000001"), 4)
+
+
+def test_stored_id_rejects_bare_id_with_several_versions():
+    with TemporaryDirectory() as tmpdir:
+        fasta = join(tmpdir, "dup.fa")
+        with open(fasta, "w") as f:
+            f.write(">ENSPTEST00000001.1\nMOLD\n>ENSPTEST00000001.5\nMNEW\n")
+        sd = SequenceData([fasta], cache_directory_path=tmpdir)
+        sd.index()
+        eq_(sd.stored_id("ENSPTEST00000001.1"), "ENSPTEST00000001.1")
+        eq_(sd.stored_id("ENSPTEST00000001.5"), "ENSPTEST00000001.5")
+        with pytest.raises(ValueError, match="matches several versions"):
+            sd.stored_id("ENSPTEST00000001")
+        with pytest.raises(ValueError, match="which has ENSPTEST00000001.1, ENSPTEST00000001.5"):
+            sd.stored_id("ENSPTEST00000001.3")
 
 
 def test_sequence_data_pickle_round_trip_rebuilds_stripped_index():
