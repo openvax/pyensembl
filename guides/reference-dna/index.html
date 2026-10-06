@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#reference-dna-optional" class="md-skip">
+        <a href="#read-genomic-dna" class="md-skip">
           Skip to content
         </a>
       
@@ -267,6 +267,8 @@
       
         
       
+        
+      
     
     
     
@@ -322,6 +324,34 @@
     
   
     Find genes and transcripts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../transcripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exons and coding sequences
   
 
     
@@ -474,21 +504,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#managing-disk-space" class="md-nav__link">
+  <a href="#disk-space-and-shared-files" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Managing disk space
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-the-shared-dna-cache-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How the shared DNA cache works
+        Disk space and shared files
       
     </span>
   </a>
@@ -547,7 +566,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -621,7 +642,7 @@
   <span class="md-ellipsis">
     
   
-    Manage downloaded data
+    Install and manage data
   
 
     
@@ -733,7 +754,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -1000,7 +1023,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
@@ -1194,21 +1219,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#managing-disk-space" class="md-nav__link">
+  <a href="#disk-space-and-shared-files" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Managing disk space
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#how-the-shared-dna-cache-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How the shared DNA cache works
+        Disk space and shared files
       
     </span>
   </a>
@@ -1246,23 +1260,26 @@
   
 
 
-<h1 id="reference-dna-optional">Reference DNA (optional)<a class="headerlink" href="#reference-dna-optional" title="Permanent link">&para;</a></h1>
+<h1 id="read-genomic-dna">Read genomic DNA<a class="headerlink" href="#read-genomic-dna" title="Permanent link">&para;</a></h1>
 <p>Reference DNA lets you read any genomic interval, including introns,
-intergenic regions, and flanking sequence. It is <strong>opt-in</strong>: a normal
+intergenic regions and flanking sequence. It is optional: a normal
 installation does not download a whole genome. Human DNA is about 1 GB to
 download and takes several GB of disk once decompressed.</p>
 <h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>pyensembl<span class="w"> </span>install<span class="w"> </span>--release<span class="w"> </span><span class="m">93</span><span class="w"> </span>--with-genome-fasta<span class="w">  </span><span class="c1"># annotation and DNA</span>
-pyensembl<span class="w"> </span>install<span class="w"> </span>--release<span class="w"> </span><span class="m">93</span><span class="w"> </span>--only-genome-fasta<span class="w">  </span><span class="c1"># just the DNA</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># Annotation and DNA, or just the DNA:</span>
+pyensembl<span class="w"> </span>install<span class="w"> </span>--release<span class="w"> </span><span class="m">93</span><span class="w"> </span>--species<span class="w"> </span>human<span class="w"> </span>--with-genome-fasta
+pyensembl<span class="w"> </span>install<span class="w"> </span>--release<span class="w"> </span><span class="m">93</span><span class="w"> </span>--species<span class="w"> </span>human<span class="w"> </span>--only-genome-fasta
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyensembl</span><span class="w"> </span><span class="kn">import</span> <span class="n">EnsemblRelease</span>
 
-<span class="n">release</span> <span class="o">=</span> <span class="n">EnsemblRelease</span><span class="p">(</span><span class="mi">93</span><span class="p">,</span> <span class="n">genome_fasta</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">release</span><span class="o">.</span><span class="n">download_genome_fasta</span><span class="p">()</span>  <span class="c1"># does nothing if the DNA is already installed</span>
-<span class="k">with</span> <span class="n">release</span><span class="p">:</span>
-    <span class="n">bases</span> <span class="o">=</span> <span class="n">release</span><span class="o">.</span><span class="n">sequence</span><span class="p">(</span><span class="s2">"7"</span><span class="p">,</span> <span class="mi">117_480_000</span><span class="p">,</span> <span class="mi">117_480_100</span><span class="p">)</span>
-    <span class="n">tp53</span> <span class="o">=</span> <span class="n">release</span><span class="o">.</span><span class="n">gene_by_id</span><span class="p">(</span><span class="s2">"ENSG00000141510"</span><span class="p">)</span>  <span class="c1"># TP53, on the minus strand</span>
-    <span class="n">tp53_dna</span> <span class="o">=</span> <span class="n">release</span><span class="o">.</span><span class="n">sequence</span><span class="p">(</span><span class="n">tp53</span><span class="o">.</span><span class="n">contig</span><span class="p">,</span> <span class="n">tp53</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">tp53</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="n">strand</span><span class="o">=</span><span class="n">tp53</span><span class="o">.</span><span class="n">strand</span><span class="p">)</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">EnsemblRelease</span><span class="p">(</span><span class="mi">93</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="s2">"human"</span><span class="p">,</span> <span class="n">genome_fasta</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">data</span><span class="o">.</span><span class="n">download_genome_fasta</span><span class="p">()</span>  <span class="c1"># does nothing if the DNA is already installed</span>
+<span class="k">with</span> <span class="n">data</span><span class="p">:</span>
+    <span class="n">bases</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">sequence</span><span class="p">(</span><span class="s2">"7"</span><span class="p">,</span> <span class="mi">117_480_000</span><span class="p">,</span> <span class="mi">117_480_100</span><span class="p">)</span>
+    <span class="n">tp53</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">gene_by_id</span><span class="p">(</span><span class="s2">"ENSG00000141510"</span><span class="p">)</span>  <span class="c1"># TP53, on the minus strand</span>
+    <span class="n">tp53_dna</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">sequence</span><span class="p">(</span>
+        <span class="n">tp53</span><span class="o">.</span><span class="n">contig</span><span class="p">,</span> <span class="n">tp53</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">tp53</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="n">strand</span><span class="o">=</span><span class="n">tp53</span><span class="o">.</span><span class="n">strand</span>
+    <span class="p">)</span>
 </code></pre></div>
 <p><code>genome_fasta=True</code> only chooses the DNA. Nothing is downloaded until you call
 <code>download_genome_fasta()</code> or <code>download()</code>, or run <code>pyensembl install</code>.
@@ -1337,64 +1354,25 @@ releases and species don't provide it. Masking is <code>none</code>, <code>soft<
 lowercase), or <code>hard</code> (repeats replaced with <code>N</code>). See Ensembl's
 <a href="https://ftp.ensembl.org/pub/release-81/fasta/homo_sapiens/dna/README">DNA file definitions</a>.</p>
 <h2 id="local-fasta-files">Local FASTA files<a class="headerlink" href="#local-fasta-files" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><span class="n">release</span> <span class="o">=</span> <span class="n">EnsemblRelease</span><span class="p">(</span><span class="mi">93</span><span class="p">,</span> <span class="n">genome_fasta</span><span class="o">=</span><span class="s2">"/data/my_reference.fa.gz"</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><span class="n">data</span> <span class="o">=</span> <span class="n">EnsemblRelease</span><span class="p">(</span>
+    <span class="mi">93</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="s2">"human"</span><span class="p">,</span> <span class="n">genome_fasta</span><span class="o">=</span><span class="s2">"/data/my_reference.fa.gz"</span>
+<span class="p">)</span>
 
 <span class="c1"># Custom annotations can attach DNA too, from a path or URL:</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyensembl</span><span class="w"> </span><span class="kn">import</span> <span class="n">Genome</span>
-<span class="n">custom</span> <span class="o">=</span> <span class="n">Genome</span><span class="p">(</span><span class="s2">"custom"</span><span class="p">,</span> <span class="s2">"my_annotations"</span><span class="p">,</span> <span class="n">genome_fasta_path_or_url</span><span class="o">=</span><span class="s2">"/data/reference.fa"</span><span class="p">)</span>
+<span class="n">custom</span> <span class="o">=</span> <span class="n">Genome</span><span class="p">(</span><span class="s2">"custom"</span><span class="p">,</span> <span class="s2">"my_annotations"</span><span class="p">,</span>
+                <span class="n">genome_fasta_path_or_url</span><span class="o">=</span><span class="s2">"/data/reference.fa"</span><span class="p">)</span>
 </code></pre></div>
 <p>Plain FASTA files are read in place; gzip and BGZF files are decompressed into
 PyEnsembl's cache on first use. Indexes always live in the cache, so read-only
 source directories work and your own files and indexes are never modified.
 <code>index()</code> warns about annotation contigs that are missing from a local FASTA,
 but matching contig names don't prove that the assembly matches.</p>
-<h2 id="managing-disk-space">Managing disk space<a class="headerlink" href="#managing-disk-space" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code>pyensembl<span class="w"> </span>list<span class="w"> </span>--check-genome-fasta<span class="w">      </span><span class="c1"># DNA for each release, verifying indexes</span>
-pyensembl<span class="w"> </span>delete-all-files<span class="w"> </span>--release<span class="w"> </span><span class="m">93</span><span class="w">  </span><span class="c1"># release 93's files and DNA references</span>
-pyensembl<span class="w"> </span>prune<span class="w"> </span>--dry-run<span class="w">                </span><span class="c1"># shared DNA that no installed release uses</span>
-pyensembl<span class="w"> </span>prune
-</code></pre></div>
-<p>Compatible releases share one copy of Ensembl DNA, so deleting a release keeps
-DNA that other releases still use, and <code>prune</code> removes DNA that no release
-references. It skips DNA that is being downloaded or indexed, never touches
-local FASTA files, and deletes nothing if any release's DNA metadata is
-malformed (<code>list</code> shows which one). <code>list</code> includes DNA-only installs and
-shows each release's most recently installed DNA. <code>delete-index-files</code> keeps
-shared DNA indexes because other releases may use them; rebuild one with
-<code>index_genome_fasta(overwrite=True)</code>. In Python,
-<code>prune_genome_fastas(dry_run=True)</code> returns <code>(path, bytes)</code> candidates.</p>
-<h2 id="how-the-shared-dna-cache-works">How the shared DNA cache works<a class="headerlink" href="#how-the-shared-dna-cache-works" title="Permanent link">&para;</a></h2>
-<p>Ensembl DNA is stored once per upstream file under <code>pyensembl/dna_cache/</code>, in
-<code>&lt;species&gt;/&lt;provider&gt;/&lt;reference&gt;-&lt;assembly accession&gt;/&lt;coverage&gt;/&lt;masking&gt;/fasta/&lt;file key&gt;/</code>:</p>
-<div class="highlight"><pre><span></span><code>pyensembl/dna_cache/
-  homo_sapiens/ftp.ensembl.org/GRCh38-GCA_000001405.18/
-    toplevel/unmasked/fasta/&lt;file key&gt;/
-      sequence.fa        uncompressed, even when downloaded as .fa.gz
-      sequence.fa.fai
-      object.json        full identity of the upstream file
-      index.json
-</code></pre></div>
-<p>Installing a release first reads Ensembl's small README and CHECKSUMS files to
-see whether another release already downloaded the same file. The versioned
-assembly accession distinguishes assembly patches. The 16-character file key
-is a prefix of the SHA-256 of the file's identity (assembly, Ensembl's Unix
-checksum, and compressed size), which separates upstream revisions of the same
-file, and conflicting identities are never reused. These are metadata checks:
-Ensembl's Unix checksums are not cryptographic hashes. If the metadata is
-incomplete, the assembly directory ends in <code>-unverified</code> and each release keeps
-its own copy. Local FASTA files and custom mirrors are never shared. Downloads
-retry transient HTTP failures and are checked against the upstream size, and
-installed releases work offline. An interrupted Ensembl DNA download resumes
-where it stopped the next time you install; datacache appends only bytes that
-Ensembl's server confirms come from the same file (its ETag). Resuming needs a
-POSIX system; on Windows an interrupted download starts over. A download that
-receives no data for five minutes is retried.</p>
-<p>Reads take no locks and write nothing, so a fully installed and indexed cache
-can be read-only for other users. A download or index build locks only the
-file it writes; registering, deleting, and pruning releases briefly lock the
-whole cache. Files follow your umask, as do lock files on Python 3.10+, so use
-<code>umask 002</code> or default ACLs for a group-shared cache. <code>dna_cache</code> itself may be
-a symlink, e.g. to a larger disk.</p>
+<h2 id="disk-space-and-shared-files">Disk space and shared files <a id="managing-disk-space"></a><a id="how-the-shared-dna-cache-works"></a><a class="headerlink" href="#disk-space-and-shared-files" title="Permanent link">&para;</a></h2>
+<p>Compatible releases share one copy of Ensembl DNA. To delete DNA, prune
+unused copies or share a cache with other users, see
+<a href="../cache/#free-disk-space">free disk space</a> and
+<a href="../cache/#how-reference-dna-is-stored">how reference DNA is stored</a>.</p>
 <h2 id="upgrading-from-2110">Upgrading from 2.11.0<a class="headerlink" href="#upgrading-from-2110" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1465,7 +1443,7 @@ serialized by 2.11.0 still load. CLI flags are unchanged.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>

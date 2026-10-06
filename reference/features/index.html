@@ -265,6 +265,8 @@
       
         
       
+        
+      
     
     
     
@@ -273,7 +275,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -320,6 +324,34 @@
     
   
     Find genes and transcripts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/transcripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exons and coding sequences
   
 
     
@@ -421,7 +453,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -495,7 +529,7 @@
   <span class="md-ellipsis">
     
   
-    Manage downloaded data
+    Install and manage data
   
 
     
@@ -2738,6 +2772,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#pyensembl.find_nearest_locus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        find_nearest_locus
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2889,7 +2934,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
@@ -5004,6 +5051,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#pyensembl.find_nearest_locus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        find_nearest_locus
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -5026,8 +5084,9 @@
 
 <h1 id="feature-objects">Feature objects<a class="headerlink" href="#feature-objects" title="Permanent link">&para;</a></h1>
 <p>Gene and transcript coordinates refer to the selected annotation, with
-one-based inclusive bounds. See <a href="../../guides/features/">feature guidance</a>
-and <a href="../../#read-transcript-and-protein-sequences">sequence interpretation</a>.</p>
+one-based inclusive bounds. The guides show how to
+<a href="../../guides/features/">find genes and transcripts</a> and use
+<a href="../../guides/transcripts/">exons and coding sequences</a>.</p>
 
 
 <div class="doc doc-object doc-class">
@@ -5039,16 +5098,7 @@ and <a href="../../#read-transcript-and-protein-sequences">sequence interpretati
 
 
 <a href="#pyensembl.Gene" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Gene</span><span class="p">(</span>
-    <span class="n">gene_id</span><span class="p">,</span>
-    <span class="n">gene_name</span><span class="p">,</span>
-    <span class="n">contig</span><span class="p">,</span>
-    <span class="n">start</span><span class="p">,</span>
-    <span class="n">end</span><span class="p">,</span>
-    <span class="n">strand</span><span class="p">,</span>
-    <span class="n">biotype</span><span class="p">,</span>
-    <span class="n">genome</span><span class="p">,</span>
-<span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Gene</span><span class="p">(</span><span class="n">gene_id</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">,</span> <span class="n">contig</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">strand</span><span class="p">,</span> <span class="n">biotype</span><span class="p">,</span> <span class="n">genome</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -5990,18 +6040,7 @@ transcript IDs associated with this gene.</p>
 
 
 <a href="#pyensembl.Transcript" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Transcript</span><span class="p">(</span>
-    <span class="n">transcript_id</span><span class="p">,</span>
-    <span class="n">transcript_name</span><span class="p">,</span>
-    <span class="n">contig</span><span class="p">,</span>
-    <span class="n">start</span><span class="p">,</span>
-    <span class="n">end</span><span class="p">,</span>
-    <span class="n">strand</span><span class="p">,</span>
-    <span class="n">biotype</span><span class="p">,</span>
-    <span class="n">gene_id</span><span class="p">,</span>
-    <span class="n">genome</span><span class="p">,</span>
-    <span class="n">support_level</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Transcript</span><span class="p">(</span><span class="n">transcript_id</span><span class="p">,</span> <span class="n">transcript_name</span><span class="p">,</span> <span class="n">contig</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">strand</span><span class="p">,</span> <span class="n">biotype</span><span class="p">,</span> <span class="n">gene_id</span><span class="p">,</span> <span class="n">genome</span><span class="p">,</span> <span class="n">support_level</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -7148,8 +7187,9 @@ exon table.</p>
     <div class="doc doc-contents ">
 
         <p>Convert from an absolute chromosomal position to the offset into
-this transcript"s spliced mRNA.</p>
-<p>Position must be inside some exon (otherwise raise exception).</p>
+this transcript's spliced mRNA.</p>
+<p>Returns a zero-based index into <code>sequence</code>. Position must be
+inside an exon; otherwise raises <code>ValueError</code>.</p>
 
 
     </div>
@@ -7504,16 +7544,7 @@ or <code>None</code> if this transcript is non-coding.</p>
 
 
 <a href="#pyensembl.Exon" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Exon</span><span class="p">(</span>
-    <span class="n">exon_id</span><span class="p">,</span>
-    <span class="n">contig</span><span class="p">,</span>
-    <span class="n">start</span><span class="p">,</span>
-    <span class="n">end</span><span class="p">,</span>
-    <span class="n">strand</span><span class="p">,</span>
-    <span class="n">gene_name</span><span class="p">,</span>
-    <span class="n">gene_id</span><span class="p">,</span>
-    <span class="n">exon_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Exon</span><span class="p">(</span><span class="n">exon_id</span><span class="p">,</span> <span class="n">contig</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">strand</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">,</span> <span class="n">gene_id</span><span class="p">,</span> <span class="n">exon_version</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -9063,6 +9094,28 @@ result is reported on this locus's strand.</p>
 
 </div>
 
+<div class="doc doc-object doc-function">
+
+
+<h2 id="pyensembl.find_nearest_locus" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">find_nearest_locus</span>
+
+
+<a href="#pyensembl.find_nearest_locus" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">find_nearest_locus</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">loci</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Finds nearest locus (object with method <code>distance_to_interval</code>) to the
+interval defined by the given <code>start</code> and <code>end</code> positions.
+Returns the distance to that locus, along with the locus object itself.</p>
+
+
+    </div>
+
+</div>
+
 
 
 
@@ -9111,7 +9164,7 @@ result is reported on this locus's strand.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>

@@ -265,6 +265,8 @@
       
         
       
+        
+      
     
     
     
@@ -273,7 +275,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -320,6 +324,34 @@
     
   
     Find genes and transcripts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/transcripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exons and coding sequences
   
 
     
@@ -421,7 +453,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -495,7 +529,7 @@
   <span class="md-ellipsis">
     
   
-    Manage downloaded data
+    Install and manage data
   
 
     
@@ -876,7 +910,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
@@ -1038,9 +1074,10 @@
 
 
 <h1 id="api-reference">API reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h1>
-<p>Find a class or method below. For installation and runnable examples, start
-on the <a href="../">home page</a>. The command-line interface has a
-<a href="cli/">separate reference</a>.</p>
+<p>Find a class below. To find a query method by what it returns, use the
+<a href="genome/#find-a-method">method overview</a>. For installation and runnable
+examples, start on the <a href="../">home page</a>. The command-line interface has
+a <a href="cli/">separate reference</a>.</p>
 <table>
 <thead>
 <tr>
@@ -1063,7 +1100,7 @@ on the <a href="../">home page</a>. The command-line interface has a
 <tr>
 <td><code>Genome</code></td>
 <td>Shared annotation queries and custom data</td>
-<td><a href="genome/">Genome</a></td>
+<td><a href="genome/">Query a genome</a></td>
 </tr>
 <tr>
 <td><code>Gene</code>, <code>Transcript</code>, <code>Exon</code>, <code>Protein</code>, <code>Locus</code></td>
@@ -1092,8 +1129,6 @@ on the <a href="../">home page</a>. The command-line interface has a
 uses zero-based half-open slicing. Consult <a href="../guides/reference-dna/">reference DNA</a>
 before mixing those interfaces. Installed annotation queries read local data;
 setup methods explicitly download and index files.</p>
-<p>For a shorter list of common queries and links to their source, see
-<a href="lookups/">lookup methods</a>.</p>
 
 
 
@@ -1143,7 +1178,7 @@ setup methods explicitly download and index files.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.indexes", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.indexes", "navigation.expand", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>

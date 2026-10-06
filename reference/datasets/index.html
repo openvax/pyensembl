@@ -265,6 +265,8 @@
       
         
       
+        
+      
     
     
     
@@ -273,7 +275,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -320,6 +324,34 @@
     
   
     Find genes and transcripts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/transcripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exons and coding sequences
   
 
     
@@ -421,7 +453,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -495,7 +529,7 @@
   <span class="md-ellipsis">
     
   
-    Manage downloaded data
+    Install and manage data
   
 
     
@@ -1210,7 +1244,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
@@ -1682,17 +1718,7 @@ annotation. <code>EnsemblAnnotation</code> selects an assembly and dated geneset
 
 
 <a href="#pyensembl.EnsemblRelease" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">EnsemblRelease</span><span class="p">(</span>
-    <span class="n">release</span><span class="o">=</span><span class="n">MAX_ENSEMBL_RELEASE</span><span class="p">,</span>
-    <span class="n">species</span><span class="o">=</span><span class="n">human</span><span class="p">,</span>
-    <span class="n">server</span><span class="o">=</span><span class="n">ENSEMBL_FTP_SERVER</span><span class="p">,</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">genome_fasta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">genome_fasta_type</span><span class="o">=</span><span class="s2">"toplevel"</span><span class="p">,</span>
-    <span class="n">genome_fasta_mask</span><span class="o">=</span><span class="s2">"none"</span><span class="p">,</span>
-    <span class="n">download_genome_fasta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">genome_fasta_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">EnsemblRelease</span><span class="p">(</span><span class="n">release</span><span class="o">=</span><span class="n">MAX_ENSEMBL_RELEASE</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="n">human</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="n">ENSEMBL_FTP_SERVER</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">genome_fasta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">genome_fasta_type</span><span class="o">=</span><span class="s1">'toplevel'</span><span class="p">,</span> <span class="n">genome_fasta_mask</span><span class="o">=</span><span class="s1">'none'</span><span class="p">,</span> <span class="n">download_genome_fasta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">genome_fasta_path</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -1783,9 +1809,7 @@ a particular release of the Ensembl database.</p>
   </span>
 
 <a href="#pyensembl.EnsemblRelease.genome_fasta_urls" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">genome_fasta_urls</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="p">[</span><span class="n">genome_fasta_url</span><span class="p">]</span> <span class="k">if</span> <span class="n">genome_fasta</span> <span class="ow">is</span> <span class="kc">True</span> <span class="k">else</span> <span class="p">[]</span>
-<span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">genome_fasta_urls</span> <span class="o">=</span> <span class="p">[</span><span class="n">genome_fasta_url</span><span class="p">]</span> <span class="k">if</span> <span class="n">genome_fasta</span> <span class="ow">is</span> <span class="kc">True</span> <span class="k">else</span> <span class="p">[]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1807,11 +1831,7 @@ a particular release of the Ensembl database.</p>
   </span>
 
 <a href="#pyensembl.EnsemblRelease.gtf_url" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">gtf_url</span> <span class="o">=</span> <span class="n">make_gtf_url</span><span class="p">(</span>
-    <span class="n">ensembl_release</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">,</span>
-    <span class="n">species</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="p">,</span>
-    <span class="n">server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">,</span>
-<span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">gtf_url</span> <span class="o">=</span> <span class="n">make_gtf_url</span><span class="p">(</span><span class="n">ensembl_release</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1833,20 +1853,7 @@ a particular release of the Ensembl database.</p>
   </span>
 
 <a href="#pyensembl.EnsemblRelease.transcript_fasta_urls" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">transcript_fasta_urls</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">make_fasta_url</span><span class="p">(</span>
-        <span class="n">ensembl_release</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">,</span>
-        <span class="n">species</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="p">,</span>
-        <span class="n">sequence_type</span><span class="o">=</span><span class="s2">"cdna"</span><span class="p">,</span>
-        <span class="n">server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">,</span>
-    <span class="p">),</span>
-    <span class="n">make_fasta_url</span><span class="p">(</span>
-        <span class="n">ensembl_release</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">,</span>
-        <span class="n">species</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="p">,</span>
-        <span class="n">sequence_type</span><span class="o">=</span><span class="s2">"ncrna"</span><span class="p">,</span>
-        <span class="n">server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">,</span>
-    <span class="p">),</span>
-<span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">transcript_fasta_urls</span> <span class="o">=</span> <span class="p">[</span><span class="n">make_fasta_url</span><span class="p">(</span><span class="n">ensembl_release</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="p">,</span> <span class="n">sequence_type</span><span class="o">=</span><span class="s1">'cdna'</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">),</span> <span class="n">make_fasta_url</span><span class="p">(</span><span class="n">ensembl_release</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="p">,</span> <span class="n">sequence_type</span><span class="o">=</span><span class="s1">'ncrna'</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">)]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1868,14 +1875,7 @@ a particular release of the Ensembl database.</p>
   </span>
 
 <a href="#pyensembl.EnsemblRelease.protein_fasta_urls" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">protein_fasta_urls</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">make_fasta_url</span><span class="p">(</span>
-        <span class="n">ensembl_release</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">,</span>
-        <span class="n">species</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="p">,</span>
-        <span class="n">sequence_type</span><span class="o">=</span><span class="s2">"pep"</span><span class="p">,</span>
-        <span class="n">server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">,</span>
-    <span class="p">)</span>
-<span class="p">]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">protein_fasta_urls</span> <span class="o">=</span> <span class="p">[</span><span class="n">make_fasta_url</span><span class="p">(</span><span class="n">ensembl_release</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">release</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">species</span><span class="p">,</span> <span class="n">sequence_type</span><span class="o">=</span><span class="s1">'pep'</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">)]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1946,17 +1946,7 @@ genome.</p>
   </span>
 
 <a href="#pyensembl.EnsemblRelease.cached" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">cached</span><span class="p">(</span>
-    <span class="n">release</span><span class="o">=</span><span class="n">MAX_ENSEMBL_RELEASE</span><span class="p">,</span>
-    <span class="n">species</span><span class="o">=</span><span class="n">human</span><span class="p">,</span>
-    <span class="n">server</span><span class="o">=</span><span class="n">ENSEMBL_FTP_SERVER</span><span class="p">,</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">genome_fasta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">genome_fasta_type</span><span class="o">=</span><span class="s2">"toplevel"</span><span class="p">,</span>
-    <span class="n">genome_fasta_mask</span><span class="o">=</span><span class="s2">"none"</span><span class="p">,</span>
-    <span class="n">download_genome_fasta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">genome_fasta_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">cached</span><span class="p">(</span><span class="n">release</span><span class="o">=</span><span class="n">MAX_ENSEMBL_RELEASE</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="n">human</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="n">ENSEMBL_FTP_SERVER</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">genome_fasta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">genome_fasta_type</span><span class="o">=</span><span class="s1">'toplevel'</span><span class="p">,</span> <span class="n">genome_fasta_mask</span><span class="o">=</span><span class="s1">'none'</span><span class="p">,</span> <span class="n">download_genome_fasta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">genome_fasta_path</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2064,19 +2054,7 @@ return an old instance.</p>
 
 
 <a href="#pyensembl.EnsemblAnnotation" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">EnsemblAnnotation</span><span class="p">(</span>
-    <span class="n">assembly_accession</span><span class="p">,</span>
-    <span class="n">annotation_date</span><span class="p">,</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">provider</span><span class="o">=</span><span class="s2">"ensembl"</span><span class="p">,</span>
-    <span class="n">include_alt</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">genome_fasta</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">genome_fasta_mask</span><span class="o">=</span><span class="s2">"none"</span><span class="p">,</span>
-    <span class="n">species</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">reference_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">cache_directory_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">server</span><span class="o">=</span><span class="s2">"https://ftp.ebi.ac.uk/pub/ensemblorganisms"</span><span class="p">,</span>
-<span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">EnsemblAnnotation</span><span class="p">(</span><span class="n">assembly_accession</span><span class="p">,</span> <span class="n">annotation_date</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="s1">'ensembl'</span><span class="p">,</span> <span class="n">include_alt</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">genome_fasta</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">genome_fasta_mask</span><span class="o">=</span><span class="s1">'none'</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reference_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cache_directory_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="s1">'https://ftp.ebi.ac.uk/pub/ensemblorganisms'</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -2407,11 +2385,7 @@ The assembly accession remains the authoritative dataset selection.</p>
   </span>
 
 <a href="#pyensembl.EnsemblAnnotation.species" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">species</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">find_species_by_name</span><span class="p">(</span><span class="n">species</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">species</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-    <span class="k">else</span> <span class="kc">None</span>
-<span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">species</span> <span class="o">=</span> <span class="n">find_species_by_name</span><span class="p">(</span><span class="n">species</span><span class="p">)</span> <span class="k">if</span> <span class="n">species</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2455,12 +2429,7 @@ The assembly accession remains the authoritative dataset selection.</p>
   </span>
 
 <a href="#pyensembl.EnsemblAnnotation.download_url" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">download_url</span> <span class="o">=</span> <span class="s2">"</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">,</span>
-    <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()),</span>
-    <span class="n">provider</span><span class="p">,</span>
-    <span class="n">annotation_date</span><span class="p">,</span>
-<span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">download_url</span> <span class="o">=</span> <span class="s1">'</span><span class="si">%s</span><span class="s1">/</span><span class="si">%s</span><span class="s1">/</span><span class="si">%s</span><span class="s1">/</span><span class="si">%s</span><span class="s1">'</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">,</span> <span class="s1">'/'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()),</span> <span class="n">provider</span><span class="p">,</span> <span class="n">annotation_date</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -2570,7 +2539,7 @@ The assembly accession remains the authoritative dataset selection.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>

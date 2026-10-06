@@ -265,6 +265,8 @@
       
         
       
+        
+      
     
     
     
@@ -273,7 +275,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -320,6 +324,34 @@
     
   
     Find genes and transcripts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/transcripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exons and coding sequences
   
 
     
@@ -421,7 +453,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -495,7 +529,7 @@
   <span class="md-ellipsis">
     
   
-    Manage downloaded data
+    Install and manage data
   
 
     
@@ -607,7 +641,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -978,7 +1014,7 @@
   <a href="#filing-issues" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Filing Issues
+        Filing issues
       
     </span>
   </a>
@@ -986,21 +1022,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#coding-guidelines" class="md-nav__link">
+  <a href="#pull-requests" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Coding Guidelines
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#licensing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Licensing
+        Pull requests
       
     </span>
   </a>
@@ -1023,6 +1048,17 @@
     <span class="md-ellipsis">
       
         Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#releasing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Releasing
       
     </span>
   </a>
@@ -1131,7 +1167,7 @@
   <a href="#filing-issues" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Filing Issues
+        Filing issues
       
     </span>
   </a>
@@ -1139,21 +1175,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#coding-guidelines" class="md-nav__link">
+  <a href="#pull-requests" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Coding Guidelines
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#licensing" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Licensing
+        Pull requests
       
     </span>
   </a>
@@ -1182,6 +1207,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#releasing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Releasing
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1203,45 +1239,36 @@
 
 
 <h1 id="contributing-to-pyensembl">Contributing to PyEnsembl<a class="headerlink" href="#contributing-to-pyensembl" title="Permanent link">&para;</a></h1>
-<p><a href="http://www.github.com/openvax/pyensembl">PyEnsembl</a> is open source software and
-we welcome your contributions. This document should help you get started
-contributing to PyEnsembl.</p>
-<h2 id="filing-issues">Filing Issues<a class="headerlink" href="#filing-issues" title="Permanent link">&para;</a></h2>
-<p>If you find any bugs or problems while using PyEnsembl or have any feature requests, please feel free to file an issue against the project. When doing so, please follow the guidelines below:</p>
-<p>To report any bugs, issues, or feature requests, please <a href="https://github.com/openvax/pyensembl/issues">open an issue</a>
-Please check the <a href="https://github.com/openvax/pyensembl/issues">current open issues</a> to see if the request already exists
-If you are filing a bug report, please describe the version of PyEnsembl and Python you are using. If your problem involves a particular gene, transcript, or genomic locus, please include that information (e.g. "Missing transcript sequence for BRCA1-002 for Ensembl release 74").</p>
-<h2 id="coding-guidelines">Coding Guidelines<a class="headerlink" href="#coding-guidelines" title="Permanent link">&para;</a></h2>
+<p><a href="https://github.com/openvax/pyensembl">PyEnsembl</a> is open source software under
+the Apache 2.0 license, and we welcome contributions. Contributed code is
+assumed to use the same license.</p>
+<h2 id="filing-issues">Filing issues<a class="headerlink" href="#filing-issues" title="Permanent link">&para;</a></h2>
+<p>Check the <a href="https://github.com/openvax/pyensembl/issues">open issues</a> first,
+then <a href="https://github.com/openvax/pyensembl/issues/new">open a new issue</a> for a
+bug or feature request. Include your PyEnsembl and Python versions. If the
+problem involves a particular gene, transcript or locus, name it and the
+release, e.g. "Missing transcript sequence for BRCA1-002 in Ensembl release 74".</p>
+<h2 id="pull-requests">Pull requests<a class="headerlink" href="#pull-requests" title="Permanent link">&para;</a></h2>
 <ul>
-<li>PyEnsembl is written in Python and adheres to the <a href="https://www.python.org/dev/peps/pep-0008/">PEP8</a>
-  style guidelines.</li>
-<li>Contributions should come in the form of GitHub pull requests.</li>
-<li>New features should start with a GitHub issue explaining their scope and rationale.</li>
-<li>If the work is based on an existing issue, please reference the issue in the PR.</li>
-<li>All new code should be accompanied by comprehensive unit tests.</li>
-<li>If the PR fixes or implements an issue, please state "Closes #XYZ" or "Fixes #XYZ", where XYZ is the issue number.</li>
-<li>Please ensure that your code works under Python &gt;= 3.9.</li>
+<li>Start a new feature with an issue explaining its scope and rationale, and
+  reference the issue in the PR, e.g. "Closes #123".</li>
+<li>Follow <a href="https://peps.python.org/pep-0008/">PEP 8</a>; <code>./lint.sh</code> runs ruff.</li>
+<li>Accompany new code with unit tests.</li>
+<li>Support Python 3.9 and later.</li>
+<li>Bump the version in <code>pyensembl/version.py</code> in every PR, including
+  documentation-only changes.</li>
 </ul>
-<h2 id="licensing">Licensing<a class="headerlink" href="#licensing" title="Permanent link">&para;</a></h2>
-<p>PyEnsembl is licensed under the Apache 2.0 license. Your code is assumed to be as well.</p>
 <h2 id="development-setup">Development setup<a class="headerlink" href="#development-setup" title="Permanent link">&para;</a></h2>
-<p>For development, install PyEnsembl in editable mode with development dependencies:</p>
 <div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/openvax/pyensembl.git
 <span class="nb">cd</span><span class="w"> </span>pyensembl
-pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="o">[</span>dev<span class="o">]</span>
-</code></pre></div>
-<p>This installs the package in development mode along with tools for testing, linting, and building:
-- <code>pytest</code> for running tests
-- <code>ruff</code> for code linting
-- <code>pytest-cov</code> for coverage reporting
-- <code>build</code> for package building</p>
-<p>Run lint and tests with:
-<div class="highlight"><pre><span></span><code>./lint.sh
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">'.[dev]'</span>
+./lint.sh
 ./test.sh
-</code></pre></div></p>
-<p>Most tests need Ensembl data installed first; <code>.github/workflows/tests.yml</code>
-lists the releases CI installs. Tests use exactly those releases, so other
-genomes in your cache do not change what they check.</p>
+</code></pre></div>
+<p>The <code>dev</code> extra installs pytest, pytest-cov, ruff and build. Most tests need
+Ensembl data installed first; <code>.github/workflows/tests.yml</code> lists the releases
+CI installs. Tests use exactly those releases, so other genomes in your cache
+do not change what they check.</p>
 <p>Species assembly ranges are checked against Ensembl's archive. After raising
 <code>MAX_ENSEMBL_RELEASE</code>, recheck every assembly boundary on the live FTP servers:</p>
 <div class="highlight"><pre><span></span><code><span class="nv">PYENSEMBL_NETWORK_TESTS</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>./test.sh<span class="w"> </span>tests/test_species_assemblies.py
@@ -1251,7 +1278,17 @@ and its load. Run them on an otherwise idle machine:</p>
 <div class="highlight"><pre><span></span><code><span class="nv">PYENSEMBL_BENCHMARKS</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>./test.sh<span class="w"> </span>tests/test_timings.py<span class="w"> </span>-s
 </code></pre></div>
 <h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
-<p>Follow the <a href="../documentation-style/">documentation style guide</a>. Install <code>.[docs]</code> and run <code>./docs.sh</code>; with human release 93 installed, run <code>python scripts/check_docs_examples.py</code>. Review first-use and reference pages at desktop and narrow widths. Every PR includes a version bump and must pass <code>./lint.sh</code> and <code>./test.sh</code>.</p>
+<p>Follow the <a href="https://openvax.github.io/pyensembl/dev/documentation-style/">documentation style guide</a>,
+then build and check the site:</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">'.[dev,docs]'</span>
+./docs.sh<span class="w">  </span><span class="c1"># strict build plus link, anchor and API checks</span>
+python<span class="w"> </span>scripts/check_docs_examples.py<span class="w">  </span><span class="c1"># needs human release 93</span>
+</code></pre></div>
+<p>Preview with <code>mkdocs serve</code> and review changed pages at desktop and narrow
+widths.</p>
+<h2 id="releasing">Releasing<a class="headerlink" href="#releasing" title="Permanent link">&para;</a></h2>
+<p>Maintainers merge through a PR and publish from a clean main; see
+<a href="https://openvax.github.io/pyensembl/dev/releasing/">releasing</a>.</p>
 
 
 
@@ -1301,7 +1338,7 @@ and its load. Run them on an otherwise idle machine:</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>

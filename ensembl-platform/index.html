@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#the-new-ensembl-platform" class="md-skip">
+        <a href="#use-dated-ensembl-annotations" class="md-skip">
           Skip to content
         </a>
       
@@ -265,6 +265,8 @@
       
         
       
+        
+      
     
     
     
@@ -273,7 +275,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -320,6 +324,34 @@
     
   
     Find genes and transcripts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/transcripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exons and coding sequences
   
 
     
@@ -497,7 +529,7 @@
   <span class="md-ellipsis">
     
   
-    Manage downloaded data
+    Install and manage data
   
 
     
@@ -606,10 +638,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#choose-the-dataset-explicitly" class="md-nav__link">
+  <a href="#find-a-dataset" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Choose the dataset explicitly
+        Find a dataset
       
     </span>
   </a>
@@ -621,6 +653,17 @@
     <span class="md-ellipsis">
       
         Install a dated annotation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transition-from-numbered-releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transition from numbered releases
       
     </span>
   </a>
@@ -678,7 +721,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -945,7 +990,9 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
@@ -1095,10 +1142,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#choose-the-dataset-explicitly" class="md-nav__link">
+  <a href="#find-a-dataset" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Choose the dataset explicitly
+        Find a dataset
       
     </span>
   </a>
@@ -1110,6 +1157,17 @@
     <span class="md-ellipsis">
       
         Install a dated annotation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transition-from-numbered-releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transition from numbered releases
       
     </span>
   </a>
@@ -1136,50 +1194,21 @@
   
 
 
-<h1 id="the-new-ensembl-platform">The new Ensembl platform<a class="headerlink" href="#the-new-ensembl-platform" title="Permanent link">&para;</a></h1>
-<p>PyEnsembl reads downloadable annotations and sequences into local indexes.
-The transition to the <a href="https://www.ensembl.org/">new Ensembl website</a>
-does not change an installed dataset. Numbered releases remain available through
-<code>EnsemblRelease</code>; new assembly/date datasets use <code>EnsemblAnnotation</code>.</p>
-<h2 id="choose-the-dataset-explicitly">Choose the dataset explicitly<a class="headerlink" href="#choose-the-dataset-explicitly" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Data source</th>
-<th>Selection</th>
-<th>Python entry point</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="https://ftp.ensembl.org/pub/">Numbered Ensembl releases</a></td>
-<td>Species and integer release</td>
-<td><code>EnsemblRelease(93, species="human")</code></td>
-</tr>
-<tr>
-<td><a href="https://ftp.ebi.ac.uk/pub/ensemblorganisms/">New Ensembl downloads</a></td>
-<td>Versioned assembly accession, provider and annotation date</td>
-<td><code>EnsemblAnnotation("GCA_000001405.29", "2023_03")</code></td>
-</tr>
-<tr>
-<td><a href="../guides/custom-genomes/">Custom GTF and FASTA</a></td>
-<td>Matched annotation and sequence files</td>
-<td><code>Genome(...)</code></td>
-</tr>
-</tbody>
-</table>
-<p>As checked on 2026-10-05, Ensembl's <a href="https://www.ensembl.info/2025/12/02/updates-to-programmatic-access-to-ensembl-and-transitioning-to-the-new-ensembl-platform/">transition announcement</a>
-states that legacy FTP and API services remain available but stop receiving
-updates after Ensembl 116; new datasets are delivered through the new platform.
-PyEnsembl's existing numbered-release URLs and selection rules are preserved.</p>
+<h1 id="use-dated-ensembl-annotations">Use dated Ensembl annotations<a class="headerlink" href="#use-dated-ensembl-annotations" title="Permanent link">&para;</a></h1>
+<p>Ensembl's <a href="https://www.ensembl.org/">new platform</a> publishes annotations by
+genome assembly and date instead of numbered releases. Select these datasets
+with <code>EnsemblAnnotation</code>. Numbered releases remain available through
+<code>EnsemblRelease</code>; <a href="../guides/assembly-selection/">choose a reference</a> compares
+both with custom files. Installed datasets are not affected by the transition.</p>
+<h2 id="find-a-dataset">Find a dataset <a id="choose-the-dataset-explicitly"></a><a class="headerlink" href="#find-a-dataset" title="Permanent link">&para;</a></h2>
 <p>The new platform's <a href="https://www.ensembl.info/2026/06/26/updates-to-ftp-site-of-the-new-ensembl-website/">FTP layout</a>
-groups data by GCA/GCF assembly accession, provider and annotation date.
-Old species-name directories were scheduled for retirement in August 2026.
-Select an existing directory from the downloads page. A website release label
-such as 2026-07 is different from the annotation directory <code>2023_03</code>.</p>
+groups data by GCA/GCF assembly accession, provider and annotation date, as in
+<code>GCA/000/001/405/29/ensembl/2023_03/</code>. Select an existing directory from the
+<a href="https://ftp.ebi.ac.uk/pub/ensemblorganisms/">downloads</a>. A website release
+label such as 2026-07 is different from the annotation directory <code>2023_03</code>.</p>
 <h2 id="install-a-dated-annotation">Install a dated annotation<a class="headerlink" href="#install-a-dated-annotation" title="Permanent link">&para;</a></h2>
-<p>This example selects the documented human GRCh38 assembly accession and dated
-Ensembl geneset. It downloads GTF, cDNA and peptide files from
+<p>This example selects the human GRCh38 assembly accession and dated Ensembl
+geneset. It downloads GTF, cDNA and peptide files from
 <a href="https://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/29/ensembl/2023_03/">one dataset directory</a>.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyensembl</span><span class="w"> </span><span class="kn">import</span> <span class="n">EnsemblAnnotation</span>
 
@@ -1205,15 +1234,20 @@ The optional <code>species</code> label guards species-specific alias sources; i
 select or verify the assembly's species. Keep it consistent with the accession.</p>
 <p>For reference DNA, add <code>genome_fasta=True</code>. <code>genome_fasta_mask="none"</code>, <code>"soft"</code>
 or <code>"hard"</code> selects the corresponding combined genome FASTA from the same
-directory. Genome DNA can require several gigabytes. BGZF FASTA files are read
-as gzip; reference DNA is materialized and indexed locally for random access.
-Coordinates use one-based inclusive intervals; <code>strand="-"</code> reverse-complements
-DNA, and <code>mask="raw"</code> preserves soft masking.</p>
+directory. <a href="../guides/reference-dna/">Read genomic DNA</a> describes coordinates,
+strand and masking.</p>
 <p>Community providers may have different available files. Check the directory
 before installation. Use <code>Genome</code> with explicitly matched files when a dataset
 does not provide the standard GTF, cDNA and peptide filenames. GFF3 and other
 formats require conversion to GTF first. PyEnsembl does not select a rolling
 latest annotation or integrate the new GraphQL/refget services.</p>
+<h2 id="transition-from-numbered-releases">Transition from numbered releases<a class="headerlink" href="#transition-from-numbered-releases" title="Permanent link">&para;</a></h2>
+<p>As checked on 2026-10-05, Ensembl's <a href="https://www.ensembl.info/2025/12/02/updates-to-programmatic-access-to-ensembl-and-transitioning-to-the-new-ensembl-platform/">transition announcement</a>
+states that legacy FTP and API services remain available but stop receiving
+updates after Ensembl 116; new datasets are delivered through the new platform.
+PyEnsembl's existing numbered-release URLs and selection rules are preserved.
+Old species-name directories on the new platform were scheduled for retirement
+in August 2026.</p>
 
 
 
@@ -1263,7 +1297,7 @@ latest annotation or integrate the new GraphQL/refget services.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.indexes", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.indexes", "navigation.expand", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
