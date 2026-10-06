@@ -454,7 +454,9 @@ class Transcript(LocusWithGenome):
         (includes 5" UTR, coding sequence, and 3" UTR)
         """
         return lookup_sequence_with_version_fallback(
-            self.genome.transcript_sequences, self.transcript_id
+            self.genome.transcript_sequences,
+            self.transcript_id,
+            version=self.transcript_version,
         )
 
     @memoized_property
@@ -605,7 +607,9 @@ class Transcript(LocusWithGenome):
         if not self.protein_id:
             return None
         return lookup_sequence_with_version_fallback(
-            self.genome.protein_sequences, self.protein_id
+            self.genome.protein_sequences,
+            self.protein_id,
+            version=self.protein.protein_version,
         )
 
     @property

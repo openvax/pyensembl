@@ -9,6 +9,7 @@ import os
 import re
 
 from .download_cache import DownloadCache, cache_root
+from .versioned_ids import _split_ens_version
 
 
 HGNC_COMPLETE_SET_URL = (
@@ -35,6 +36,11 @@ def normalize_aliases(aliases):
             raise ValueError("Gene alias values must contain nonempty gene ID strings")
         result[name] = tuple(sorted(set(ids)))
     return result
+
+
+def stable_ensembl_gene_id(gene_id):
+    """Strip an Ensembl version suffix, preserving other identifier formats."""
+    return _split_ens_version(gene_id)[0]
 
 
 class GeneNameAliases(Mapping):

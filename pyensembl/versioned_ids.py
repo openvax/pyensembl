@@ -20,6 +20,11 @@ bare IDs with separate ``*_version`` attributes, while GENCODE GTFs and newer
 Ensembl FASTA headers embed the version in the ID.
 """
 
+import re
+
+# An Ensembl ID with a version: a plain decimal suffix without leading zeros
+_VERSIONED_ID = re.compile(r"(ENS.*)\.(0|[1-9][0-9]*)")
+
 
 def _split_ens_version(identifier):
     """
@@ -30,13 +35,10 @@ def _split_ens_version(identifier):
     returned as-is with version ``None`` — the ``.N`` in those is an
     isoform suffix, not a version.
     """
-    if not identifier or not identifier.startswith("ENS") or "." not in identifier:
+    match = _VERSIONED_ID.fullmatch(identifier) if isinstance(identifier, str) else None
+    if match is None:
         return identifier, None
-    bare, _, suffix = identifier.rpartition(".")
-    try:
-        return bare, int(suffix)
-    except ValueError:
-        return identifier, None
+    return match.group(1), int(match.group(2))
 
 
 def match_version(identifier, installed):
@@ -67,9 +69,8 @@ def match_version(identifier, installed):
     recorded = sorted(v for v in installed.values() if v is not None)
     if not recorded:
         raise ValueError(
-            "%s: this annotation doesn't record versions for %s, so version %d "
-            "can't be checked; pass %s without a version"
-            % (identifier, bare, version, bare)
+            "%s: no version is recorded for %s, so version %d can't be "
+            "checked; pass %s without a version" % (identifier, bare, version, bare)
         )
     raise ValueError(
         "%s is not in this annotation, which has %s"

@@ -15,6 +15,7 @@ from os.path import dirname, exists, abspath, split, join
 
 import datacache
 import logging
+import zlib
 from collections import Counter
 import pickle
 from .common import load_pickle, dump_pickle
@@ -25,10 +26,12 @@ from .versioned_ids import _split_ens_version, match_version
 logger = logging.getLogger(__name__)
 
 
-def lookup_sequence_with_version_fallback(sequence_data, identifier):
+def lookup_sequence_with_version_fallback(sequence_data, identifier, version=None):
     """
     Look up ``identifier`` in ``sequence_data``, tolerating ENS ``.N``
-    version-suffix mismatches in either direction.
+    version-suffix mismatches in either direction. ``version``, the version
+    the GTF records for a bare ``identifier``, is preferred when the FASTA
+    has that record.
 
     Both Ensembl and GENCODE work with versioned IDs (e.g.
     ``ENSP00000123456.3``); the two formats just split that information
@@ -58,6 +61,10 @@ def lookup_sequence_with_version_fallback(sequence_data, identifier):
     """
     if not identifier:
         return None
+    if version is not None:
+        sequence = sequence_data.get("%s.%d" % (identifier, version))
+        if sequence is not None:
+            return sequence
     sequence = sequence_data.get(identifier)
     if sequence is not None:
         return sequence
@@ -83,7 +90,7 @@ def _pickle_lost_versions(fasta_path, fasta_dictionary):
     """
     try:
         first_id = first_fasta_id(fasta_path)
-    except (OSError, EOFError, ValueError):
+    except (OSError, EOFError, ValueError, zlib.error):
         # An unreadable header can't show the pickle is stale; keep using it
         return False
     bare, version = _split_ens_version(first_id)
@@ -236,8 +243,12 @@ class SequenceData(object):
             fasta_dictionary_tmp = parse_fasta_dictionary(fasta_path, show_progress)
             self._add_to_fasta_dictionary(fasta_dictionary_tmp)
             logger.debug("Saving sequence dictionary to %s", pickle_path)
-            datacache.ensure_dir(dirname(pickle_path))
-            dump_pickle(fasta_dictionary_tmp, pickle_path)
+            try:
+                datacache.ensure_dir(dirname(pickle_path))
+                dump_pickle(fasta_dictionary_tmp, pickle_path)
+            except OSError as e:
+                # A read-only shared cache still serves the parsed sequences
+                logger.warning("Couldn't save %s: %s", pickle_path, e)
 
     def index(self, overwrite=False, show_progress=False):
         if overwrite:
@@ -268,13 +279,23 @@ class SequenceData(object):
         if sequence_id in self.fasta_dictionary:
             return sequence_id
         bare, _ = _split_ens_version(sequence_id)
-        versioned = self._version_conflicts.get(bare)
-        if versioned is None:
-            versioned = [self._stripped_index[bare]] if bare in self._stripped_index else []
-        installed = {form: self._versions[form] for form in versioned}
+        installed = {form: self._versions[form] for form in self._versioned_forms(bare)}
         if bare in self.fasta_dictionary:
             installed[bare] = None
         return match_version(sequence_id, installed)
+
+    def recorded_versions(self, sequence_id):
+        """Sorted versions that FASTA headers record for this stable ID."""
+        bare, _ = _split_ens_version(sequence_id)
+        return sorted(self._versions[form] for form in self._versioned_forms(bare))
+
+    def _versioned_forms(self, bare):
+        _ = self.fasta_dictionary  # ensure lazy load
+        if bare in self._version_conflicts:
+            return self._version_conflicts[bare]
+        if bare in self._stripped_index:
+            return [self._stripped_index[bare]]
+        return []
 
     def fasta_version(self, sequence_id):
         """

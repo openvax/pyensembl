@@ -9,6 +9,7 @@ from tempfile import TemporaryDirectory
 import pytest
 
 from pyensembl import Genome
+from pyensembl.gene_name_aliases import stable_ensembl_gene_id
 from pyensembl.versioned_ids import match_version
 
 from .common import eq_, grch38
@@ -41,9 +42,10 @@ def _ensembl_gtf(with_versions=True):
     )
 
 
-def _ensembl_genome(tmpdir, gtf_versions=True, fasta_versions=True):
+def _ensembl_genome(tmpdir, gtf_versions=True, fasta_versions=True, extra_proteins=()):
     """Ensembl 83+ records versions in the GTF and FASTA headers, 77-82 only
-    in the GTF, and earlier releases nowhere."""
+    in the GTF, and earlier releases nowhere. ``extra_proteins`` adds
+    ``(header, sequence)`` records to the protein FASTA."""
     gtf = join(tmpdir, "e.gtf")
     with open(gtf, "w") as f:
         f.write(_ensembl_gtf(with_versions=gtf_versions))
@@ -56,6 +58,9 @@ def _ensembl_genome(tmpdir, gtf_versions=True, fasta_versions=True):
         if not fasta_versions:
             header = header.rpartition(".")[0]
         with open(path, "w") as f:
+            f.write(">%s\n%s\n" % (header, sequence))
+    with open(pep, "a") as f:
+        for header, sequence in extra_proteins:
             f.write(">%s\n%s\n" % (header, sequence))
     genome = Genome(
         reference_name="GRCh38",
@@ -141,13 +146,51 @@ def test_annotation_without_versions_rejects_versioned_ids():
         genome = _ensembl_genome(tmpdir, gtf_versions=False, fasta_versions=False)
         eq_(genome.transcript_by_id("ENSTTEST00000020001").version, None)
         eq_(genome.protein_sequence("ENSPTEST00000020001"), "MPKF")
-        message = "doesn't record versions for ENSTTEST00000020001"
+        message = "no version is recorded for ENSTTEST00000020001"
         with pytest.raises(ValueError, match=message):
             genome.transcript_by_id("ENSTTEST00000020001.7")
         with pytest.raises(ValueError, match=message):
             genome.transcript_sequence("ENSTTEST00000020001.7")
-        with pytest.raises(ValueError, match="doesn't record versions"):
+        with pytest.raises(ValueError, match="no version is recorded"):
             genome.protein_sequence("ENSPTEST00000020001.5")
+
+
+def test_fasta_record_missing_from_gtf_reports_no_recorded_version():
+    with TemporaryDirectory() as tmpdir:
+        genome = _ensembl_genome(
+            tmpdir, fasta_versions=False, extra_proteins=[("ENSPTEST00000099999", "MX")]
+        )
+        eq_(genome.protein_sequence("ENSPTEST00000099999"), "MX")
+        with pytest.raises(ValueError, match="no version is recorded for ENSPTEST00000099999"):
+            genome.protein_sequence("ENSPTEST00000099999.1")
+
+
+def test_gtf_version_chooses_among_several_fasta_versions():
+    """The GTF records protein version 5; the FASTA also holds versions 4 and 6."""
+    with TemporaryDirectory() as tmpdir:
+        genome = _ensembl_genome(
+            tmpdir,
+            extra_proteins=[
+                ("ENSPTEST00000020001.4", "MOLDER"),
+                ("ENSPTEST00000020001.6", "MNEWER"),
+            ],
+        )
+        eq_(genome.transcript_by_id("ENSTTEST00000020001").protein_sequence, "MPKF")
+        eq_(genome.protein_sequence("ENSPTEST00000020001"), "MPKF")
+        eq_(genome.protein_sequence("ENSPTEST00000020001.6"), "MNEWER")
+        eq_(genome.protein_sequence("ENSPTEST00000020001.4"), "MOLDER")
+
+
+@pytest.mark.parametrize("suffix", [".03", ".+5", ". 5", ".0_5", ".5\n", ".5 "])
+def test_malformed_version_suffix_is_not_a_version(ensembl, suffix):
+    with pytest.raises(ValueError, match="not found"):
+        ensembl.transcript_by_id("ENSTTEST00000020001" + suffix)
+
+
+def test_stable_ensembl_gene_id():
+    eq_(stable_ensembl_gene_id("ENSG00000141510.16"), "ENSG00000141510")
+    eq_(stable_ensembl_gene_id("ENSG00000141510"), "ENSG00000141510")
+    eq_(stable_ensembl_gene_id("AT1G01010.1"), "AT1G01010.1")
 
 
 def test_gencode_ids_accept_bare_and_check_versions():

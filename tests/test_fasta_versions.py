@@ -13,6 +13,8 @@ Covers:
     versioned caller -> bare FASTA (Ensembl case) and bare caller ->
     versioned FASTA (GENCODE case).
 """
+import gzip
+import os
 import pickle
 from os.path import join
 from tempfile import TemporaryDirectory
@@ -210,6 +212,37 @@ def test_unreadable_first_header_keeps_the_pickle():
         dump_pickle({"ENSPODD00000001.1": "MODD"}, sd.fasta_dictionary_pickle_paths[0])
         sd.index()
         eq_(sd.get("ENSPODD00000001.1"), "MODD")
+
+
+def test_corrupt_gzip_header_keeps_the_pickle():
+    with TemporaryDirectory() as tmpdir:
+        fasta = join(tmpdir, "corrupt.fa.gz")
+        data = bytearray(gzip.compress(b">ENSPGZ00000001.1\nMGZ\n" * 100))
+        data[10:30] = b"\xff" * 20
+        with open(fasta, "wb") as f:
+            f.write(bytes(data))
+        sd = SequenceData([fasta], cache_directory_path=tmpdir)
+        dump_pickle({"ENSPGZ00000001.1": "MGZ"}, sd.fasta_dictionary_pickle_paths[0])
+        sd.index()
+        eq_(sd.get("ENSPGZ00000001.1"), "MGZ")
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root ignores directory permissions")
+def test_stale_pickle_in_read_only_cache_is_rebuilt_in_memory():
+    with TemporaryDirectory() as tmpdir:
+        fasta = join(tmpdir, "legacy.fa")
+        _write_fasta(fasta, "ENSPLEGACY00000001.4", "MLEGACY")
+        cache = join(tmpdir, "cache")
+        os.mkdir(cache)
+        sd = SequenceData([fasta], cache_directory_path=cache)
+        dump_pickle({"ENSPLEGACY00000001": "MLEGACY"}, sd.fasta_dictionary_pickle_paths[0])
+        os.chmod(cache, 0o555)
+        try:
+            sd.index()
+        finally:
+            os.chmod(cache, 0o755)
+        eq_(sd.get("ENSPLEGACY00000001.4"), "MLEGACY")
+        eq_(sd.fasta_version("ENSPLEGACY00000001"), 4)
 
 
 def test_stored_id_rejects_bare_id_with_several_versions():
