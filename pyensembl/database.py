@@ -584,13 +584,22 @@ class Database(object):
         """
         if not isinstance(identifier, str) or not identifier.startswith("ENS"):
             return identifier
-        table, version_column = self.ID_VERSION_COLUMNS[id_column]
-        if not self.column_exists(table, id_column):
-            return identifier
-        bare, version = _split_ens_version(identifier)
+        _, version = _split_ens_version(identifier)
         if version is None and not self._stores_versioned_ids(id_column):
             # Without stored versions, a bare ID can only match itself
             return identifier
+        installed = self.installed_versions(id_column, identifier)
+        return match_version(identifier, installed) or identifier
+
+    def installed_versions(self, id_column, identifier):
+        """
+        Stored forms of an Ensembl gene, transcript, exon or protein ID, with
+        or without a version, each mapped to its recorded version or ``None``.
+        """
+        table, version_column = self.ID_VERSION_COLUMNS[id_column]
+        if not self.column_exists(table, id_column):
+            return {}
+        bare, _ = _split_ens_version(identifier)
         has_version = self.column_exists(table, version_column)
         # Stored forms of this stable ID ("bare", "bare.N") sort between
         # bare and bare + "/", since "." < "/"
@@ -609,17 +618,21 @@ class Database(object):
             if recorded is None and has_version and row[1]:
                 recorded = int(row[1])
             installed[row[0]] = recorded
-        return match_version(identifier, installed) or identifier
+        return installed
 
     def _stores_versioned_ids(self, id_column):
         """Whether any stored ID of this kind carries a version, as in GENCODE."""
         if id_column not in self._versioned_id_columns:
             table, _ = self.ID_VERSION_COLUMNS[id_column]
+            # One scan per column, so misses on bare IDs in annotations
+            # without stored versions skip the per-ID range query
             sql = "SELECT 1 FROM %s WHERE %s GLOB 'ENS*.[0-9]*' LIMIT 1" % (
                 table,
                 id_column,
             )
-            self._versioned_id_columns[id_column] = bool(self.run_sql_query(sql))
+            self._versioned_id_columns[id_column] = self.column_exists(
+                table, id_column
+            ) and bool(self.run_sql_query(sql))
         return self._versioned_id_columns[id_column]
 
     def query_one(

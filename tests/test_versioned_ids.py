@@ -166,6 +166,18 @@ def test_gencode_ids_accept_bare_and_check_versions():
             genome.protein_sequence("ENSPTEST00000000001.2")
 
 
+def test_gencode_gtf_confirms_versions_for_bare_fasta_headers():
+    with TemporaryDirectory() as tmpdir:
+        genome = _make_gencode_genome(tmpdir)
+        with open(join(tmpdir, "gencode_style.cdna.fa"), "w") as f:
+            f.write(">ENSTTEST00000000001\nATGCCC\n")
+        genome.index()
+        eq_(genome.transcript_sequence("ENSTTEST00000000001.5"), "ATGCCC")
+        eq_(genome.transcript_by_id("ENSTTEST00000000001").sequence, "ATGCCC")
+        with pytest.raises(ValueError, match="which has ENSTTEST00000000001.5"):
+            genome.transcript_sequence("ENSTTEST00000000001.4")
+
+
 def test_tair_isoform_suffix_is_not_a_version():
     genome = Genome(
         reference_name="TAIR10",

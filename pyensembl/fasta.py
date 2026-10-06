@@ -35,10 +35,9 @@ def _parse_header_id(line):
     which starts with '>'.
 
     The full versioned form (e.g. ``ENSP00000123456.3``) is returned when
-    the header carries a version. Stripping happens at lookup time via
-    :func:`pyensembl.sequence_data.lookup_sequence_with_version_fallback`,
-    not here, so the FASTA-header version is preserved as the authoritative
-    identity of the sequence.
+    the header carries a version, preserving it as the authoritative
+    identity of the sequence. Lookups match bare and versioned IDs against
+    it (see :meth:`pyensembl.SequenceData.stored_id`).
 
     Non-ENS IDs (e.g. TAIR ``AT1G01010.1``, where ``.1`` is an isoform
     suffix rather than a version) are returned verbatim — this function

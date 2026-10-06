@@ -81,7 +81,11 @@ def _pickle_lost_versions(fasta_path, fasta_dictionary):
     2.10, which stripped versions from Ensembl FASTA headers, so it holds the
     bare ID where the header carries a versioned one.
     """
-    first_id = first_fasta_id(fasta_path)
+    try:
+        first_id = first_fasta_id(fasta_path)
+    except (OSError, EOFError, ValueError):
+        # An unreadable header can't show the pickle is stale; keep using it
+        return False
     bare, version = _split_ens_version(first_id)
     return (
         version is not None
@@ -131,6 +135,9 @@ class SequenceData(object):
         # FASTA header carried, or absent for headers without a version.
         # Lets callers sanity-check FASTA / GTF alignment.
         self._versions = None
+        # Maps a bare ENS ID with several versioned FASTA entries -> all of
+        # them, so a bare lookup can report the ambiguity
+        self._version_conflicts = None
 
     def clear_cache(self):
         """Clear parsed sequence data held in memory."""
@@ -182,6 +189,9 @@ class SequenceData(object):
                     # the canonical alias since version numbers grow
                     # monotonically.
                     existing = self._stripped_index[bare]
+                    self._version_conflicts.setdefault(bare, {existing}).add(
+                        identifier
+                    )
                     _, existing_version = _split_ens_version(existing)
                     if existing_version is None or version > existing_version:
                         self._stripped_index[bare] = identifier
@@ -193,6 +203,7 @@ class SequenceData(object):
         self._fasta_dictionary = dict()
         self._stripped_index = dict()
         self._versions = dict()
+        self._version_conflicts = dict()
         for fasta_path, pickle_path in zip(
             self.fasta_paths, self.fasta_dictionary_pickle_paths
         ):
@@ -247,21 +258,22 @@ class SequenceData(object):
         """
         FASTA record ID for ``sequence_id``, or ``None`` if it has no record.
 
-        A bare Ensembl ID matches the record whatever its version. A versioned
-        ID must match the header's version: ``ValueError`` if the header
-        carries a different version or none.
+        A bare Ensembl ID matches the record whatever its version, and raises
+        ``ValueError`` if several versions are present. A versioned ID must
+        match the header's version: ``ValueError`` if the header carries a
+        different version or none.
         """
         if not sequence_id:
             return None
         if sequence_id in self.fasta_dictionary:
             return sequence_id
         bare, _ = _split_ens_version(sequence_id)
-        installed = {}
+        versioned = self._version_conflicts.get(bare)
+        if versioned is None:
+            versioned = [self._stripped_index[bare]] if bare in self._stripped_index else []
+        installed = {form: self._versions[form] for form in versioned}
         if bare in self.fasta_dictionary:
             installed[bare] = None
-        versioned = self._stripped_index.get(bare)
-        if versioned is not None:
-            installed[versioned] = self._versions[versioned]
         return match_version(sequence_id, installed)
 
     def fasta_version(self, sequence_id):

@@ -37,12 +37,6 @@ def normalize_aliases(aliases):
     return result
 
 
-def stable_ensembl_gene_id(gene_id):
-    """Strip an Ensembl version suffix, preserving other identifier formats."""
-    match = re.fullmatch(r"(ENS[A-Z]*G\d+)\.\d+", gene_id)
-    return match.group(1) if match else gene_id
-
-
 class GeneNameAliases(Mapping):
     """Read-only name-to-ID mapping with optional species/source metadata.
 

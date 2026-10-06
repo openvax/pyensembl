@@ -17,6 +17,8 @@ import pickle
 from os.path import join
 from tempfile import TemporaryDirectory
 
+import pytest
+
 from pyensembl import SequenceData
 from pyensembl.common import dump_pickle
 from pyensembl.fasta import _parse_header_id
@@ -197,6 +199,32 @@ def test_versioned_pickle_is_reused():
         )
         sd.index()
         eq_(sd.get("ENSPCUR00000001.2"), "MFROMPICKLE")
+
+
+def test_unreadable_first_header_keeps_the_pickle():
+    with TemporaryDirectory() as tmpdir:
+        fasta = join(tmpdir, "odd.fa")
+        with open(fasta, "w") as f:
+            f.write(">\nMNOID\n>ENSPODD00000001.1\nMODD\n")
+        sd = SequenceData([fasta], cache_directory_path=tmpdir)
+        dump_pickle({"ENSPODD00000001.1": "MODD"}, sd.fasta_dictionary_pickle_paths[0])
+        sd.index()
+        eq_(sd.get("ENSPODD00000001.1"), "MODD")
+
+
+def test_stored_id_rejects_bare_id_with_several_versions():
+    with TemporaryDirectory() as tmpdir:
+        fasta = join(tmpdir, "dup.fa")
+        with open(fasta, "w") as f:
+            f.write(">ENSPTEST00000001.1\nMOLD\n>ENSPTEST00000001.5\nMNEW\n")
+        sd = SequenceData([fasta], cache_directory_path=tmpdir)
+        sd.index()
+        eq_(sd.stored_id("ENSPTEST00000001.1"), "ENSPTEST00000001.1")
+        eq_(sd.stored_id("ENSPTEST00000001.5"), "ENSPTEST00000001.5")
+        with pytest.raises(ValueError, match="matches several versions"):
+            sd.stored_id("ENSPTEST00000001")
+        with pytest.raises(ValueError, match="which has ENSPTEST00000001.1, ENSPTEST00000001.5"):
+            sd.stored_id("ENSPTEST00000001.3")
 
 
 def test_sequence_data_pickle_round_trip_rebuilds_stripped_index():

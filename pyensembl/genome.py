@@ -31,12 +31,12 @@ from .common import merge_intervals
 from .database import Database, is_complete_database
 from .exon import Exon
 from .gene import Gene
-from .gene_name_aliases import GeneNameAliases, normalize_aliases, stable_ensembl_gene_id
+from .gene_name_aliases import GeneNameAliases, normalize_aliases
 from .genome_fasta import GenomeFasta, MissingGenomeFastaError
 from .normalization import normalize_chromosome, normalize_strand
 from .search import find_nearest_locus
 from .sequence_data import SequenceData
-from .versioned_ids import _split_ens_version
+from .versioned_ids import _split_ens_version, match_version
 from .transcript import Transcript
 
 
@@ -902,9 +902,11 @@ class Genome(Serializable):
             and sequences.fasta_version(bare) is None
             and self.requires_gtf
         ):
-            # Ensembl FASTA headers before release 83 carry no versions, so
-            # check a requested version against the GTF
-            sequence_id = self.db.stored_id(id_column, sequence_id)
+            # Ensembl FASTA headers before release 83 carry no versions; when
+            # the GTF records the requested one, use the FASTA's bare record
+            installed = self.db.installed_versions(id_column, sequence_id)
+            if match_version(sequence_id, installed) is not None:
+                sequence_id = bare
         stored_id = sequences.stored_id(sequence_id)
         return None if stored_id is None else sequences.get(stored_id)
 
@@ -1300,9 +1302,9 @@ class Genome(Serializable):
                     ["gene_id"], "gene_name", gene_name, "gene", distinct=True
                 ) if row[0]]
             if candidates:
-                stable_ids = {stable_ensembl_gene_id(gene_id) for gene_id in candidates}
+                stable_ids = {_split_ens_version(gene_id)[0] for gene_id in candidates}
                 results.extend(gene_id for gene_id in self.gene_ids()
-                               if stable_ensembl_gene_id(gene_id) in stable_ids)
+                               if _split_ens_version(gene_id)[0] in stable_ids)
             results = sorted(set(results))
         if len(results) == 0:
             raise ValueError("Gene name not found: %s" % gene_name)
