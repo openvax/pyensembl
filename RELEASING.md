@@ -1,7 +1,12 @@
-# Releasing Pyensembl
+# Publish a release <a id="releasing-pyensembl"></a>
 
-This document explains what do once your [Pull Request](https://www.atlassian.com/git/tutorials/making-a-pull-request/) has been reviewed and all final changes applied. Now you're ready merge your branch into main and release it to the world:
+Every PR includes a version bump in `pyensembl/version.py`, including
+documentation changes. Once lint, tests and review have passed:
 
-1. Bump the [version](http://semver.org/) in `pyensembl/version.py`, as part of the PR you want to release.
-2. Merge your branch into main.
-3. Run `deploy.sh`
+1. Merge the PR into main.
+2. Check out main, pull the merged commit, and ensure the working tree is clean.
+3. Run `./deploy.sh`. It reruns lint and tests, builds the package, uploads to
+   PyPI, and pushes the version tag.
+
+The release is shipped after the upload succeeds. Documentation changes also
+publish through the Documentation workflow; check the live site after it runs.

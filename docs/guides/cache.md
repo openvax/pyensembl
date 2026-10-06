@@ -1,44 +1,36 @@
-# Manage and inspect cached data
+# Install and manage data
 
-Use `pyensembl list` to check which datasets are ready to query. This guide
-also covers where files are stored and how to inspect an incomplete install.
-For deleting data or reclaiming DNA storage, see
-[managing disk space](reference-dna.md#managing-disk-space).
+PyEnsembl downloads annotation and sequence files once and indexes them in a
+local cache. After that, queries need no network access.
 
-## Cache location
+## Install data
 
-PyEnsembl keeps all of its data under one directory, with a subdirectory per
-genome (`<reference>/<annotation><version>`, e.g. `GRCh38/ensembl81`). By
-default this is the platform cache directory that datacache chooses:
-`~/.cache/pyensembl` on Linux, `~/Library/Caches/pyensembl` on macOS, and
-`%LOCALAPPDATA%\pyensembl\pyensembl\Cache` on Windows. Releases that
-PyEnsembl 2.16 or earlier installed on Windows stay in their old per-genome
-directories and keep working. To use another location, set
-`PYENSEMBL_CACHE_DIR`; the data then goes in its `pyensembl` subdirectory:
+Install from the command line:
 
 ```sh
-export PYENSEMBL_CACHE_DIR=/custom/cache/dir
+pyensembl install --release 93 --species human
 ```
 
-or
+or from Python, for example in a notebook or pipeline:
 
 ```python
-import os
+from pyensembl import EnsemblRelease
 
-os.environ['PYENSEMBL_CACHE_DIR'] = '/custom/cache/dir'
-# ... PyEnsembl API usage
+data = EnsemblRelease(93, species="human")
+data.download()
+data.index()
 ```
 
-To share a cache with a group, set a group-friendly umask such as `umask 002`
-before installing: new files follow it. Files downloaded before PyEnsembl
-2.13.1 (datacache 1.10.0) were readable only by the user who installed them;
-share an existing cache with `chmod -R g+rX "$PYENSEMBL_CACHE_DIR/pyensembl"`
-(or the platform cache directory).
+Both skip files that are already downloaded or indexed, so rerunning finishes
+an interrupted install. `install` prints one progress line per step on stderr,
+with progress bars in a terminal; add `--verbose` (`-v`) to see every download
+and database step. In Python, pass `show_progress=True` to `download()` and
+`index()`. Use `--overwrite` or `overwrite=True` to replace existing files.
 
-## List installed genomes
+[Choose a reference](assembly-selection.md) explains release, species and
+assembly options. Whole-genome DNA is a [separate download](reference-dna.md).
 
-To see which genomes are in the local cache, whether each is ready to use, and
-any reference DNA:
+## Check what is installed <a id="list-installed-genomes"></a>
 
 ```sh
 pyensembl list
@@ -55,23 +47,14 @@ custom   GRCm38    mine1    indexed      -                  ~/Library/Caches/pye
 queries need no network access or setup. `not indexed` means the files are
 downloaded but the first query would spend minutes indexing them, and
 `incomplete` means some downloads are missing. `invalid` means a source is
-empty or not a regular file; `inaccessible` means it cannot be read.
-Run `pyensembl install` for
-that release to finish (add `--species` for non-human genomes; custom
-genomes need their original install options).
+empty or not a regular file; `inaccessible` means it cannot be read. Run
+`pyensembl install` for that release to finish (add `--species` for non-human
+genomes; custom genomes need their original install options).
 
-`install` prints progress on stderr, one line per step, with progress bars for
-downloads, reading GTF and sequence files, and database builds when run in a
-terminal.
-Add `--verbose` (`-v`) to see every download and database step. In Python, pass
-`show_progress=True` to `download()`, `index()`, `download_genome_fasta()`, or
-`index_genome_fasta()`.
-
-In Python, `installed()` is `True` when a genome is ready: everything it is
-configured with, reference DNA included, is downloaded and indexed. It only
-reads the cache, so checking never downloads or creates files.
+In Python, `installed()` is `True` when everything a genome is configured with,
+reference DNA included, is downloaded and indexed. It only reads the cache.
 `genome_for_reference_name` picks the newest installed release of an assembly,
-else the newest downloaded one, else the newest Ensembl release:
+else the newest downloaded one, else the newest supported Ensembl release:
 
 ```python
 from pyensembl import EnsemblRelease, genome_for_reference_name
@@ -83,10 +66,46 @@ from pyensembl.shell import collect_all_installed_ensembl_releases
 collect_all_installed_ensembl_releases()
 ```
 
-## Inspect data without installing
+## Cache location
 
-Inspect a selected genome's configured source files and indexes, including
-paths, availability, sizes and any recorded download provenance:
+PyEnsembl keeps all of its data under one directory, with a subdirectory per
+genome (`<reference>/<annotation><version>`, e.g. `GRCh38/ensembl81`). By
+default this is the platform cache directory that datacache chooses:
+`~/.cache/pyensembl` on Linux, `~/Library/Caches/pyensembl` on macOS, and
+`%LOCALAPPDATA%\pyensembl\pyensembl\Cache` on Windows. Releases that
+PyEnsembl 2.16 or earlier installed on Windows stay in their old per-genome
+directories and keep working. To use another location, set
+`PYENSEMBL_CACHE_DIR`; the data then goes in its `pyensembl` subdirectory:
+
+```sh
+export PYENSEMBL_CACHE_DIR=/custom/cache/dir
+```
+
+In Python, set `os.environ["PYENSEMBL_CACHE_DIR"]` before creating a genome.
+
+## Free disk space <a id="managing-disk-space"></a>
+
+```sh
+pyensembl delete-index-files --release 93  # keep downloads, reindex on use
+pyensembl delete-all-files --release 93    # all of release 93's files
+pyensembl prune --dry-run                  # list unused shared DNA
+pyensembl prune
+```
+
+Add `--species` for non-human releases. Compatible releases share one copy of
+Ensembl DNA, so deleting a release keeps DNA that other releases still use, and
+`prune` removes DNA that no release references. It skips DNA that is being
+downloaded or indexed, never touches local FASTA files, and deletes nothing if
+any release's DNA metadata is malformed (`pyensembl list` shows which one).
+`delete-index-files` keeps shared DNA indexes because other releases may use
+them; rebuild one with `index_genome_fasta(overwrite=True)`. In Python,
+`prune_genome_fastas(dry_run=True)` returns `(path, bytes)` candidates, and
+`pyensembl list --check-genome-fasta` verifies each release's DNA index.
+
+## Inspect files without installing <a id="inspect-data-without-installing"></a>
+
+Inspect a selected genome's source files and indexes, including paths,
+availability, sizes and any recorded download provenance:
 
 ```sh
 pyensembl inspect --release 93
@@ -105,21 +124,50 @@ is an array of reports, with errors rendered as strings. Add
 DNA indexes more thoroughly.
 
 Inspection only reads: no network, copying, directory creation, indexing or
-pickle deserialization. Source files must be readable, regular and nonempty;
-SQLite indexes must have the current completed schema. This is a readiness
-check, not a full validation of biological contents or pickle integrity.
-An available file is not necessarily checksum-verified: provenance receipts
-are advisory, not trusted expected checksums. Old files without receipts
-remain usable; missing, malformed or stale receipts simply omit provenance.
+pickle deserialization. It checks that source files are readable, regular and
+nonempty and that SQLite indexes are complete; it does not validate biological
+contents. Recorded provenance is advisory, not a trusted checksum, and files
+from older versions have none. Downloads are published atomically, so a failed
+overwrite keeps the previous file; replace an invalid file with
+`pyensembl install --overwrite`.
 
-New annotation downloads and copied local imports use datacache's atomic
-publication and record provenance (URL credentials and query strings are
-redacted). Failed overwrites preserve the previous destination. Existing
-cache paths are unchanged. Invalid cached files are reported; use
-`install --overwrite` to explicitly replace them. In Python,
-`Genome(..., copy_local_files_to_cache=True)` makes an independent cached
-import that remains usable after the original is removed, and
-`decompress_on_download=True` applies to both downloaded and copied sources.
-Local sources attached without copying are never modified.
+## Share a cache
 
-For DNA disk usage, shared-cache identity, locking and pruning, see [Reference DNA](reference-dna.md#managing-disk-space).
+Reads take no locks and write nothing, so a fully installed and indexed cache
+can be read-only for other users. A download or index build locks only the
+file it writes; registering, deleting and pruning releases briefly lock the
+whole cache.
+
+New files follow your umask, as do lock files on Python 3.10+, so set
+`umask 002` (or default ACLs) before installing into a group-shared cache.
+Files downloaded before PyEnsembl 2.13.1 were readable only by their owner;
+share them with `chmod -R g+rX "$PYENSEMBL_CACHE_DIR/pyensembl"` (or the
+platform cache directory). `dna_cache` may be a symlink, e.g. to a larger disk.
+
+## How reference DNA is stored <a id="how-the-shared-dna-cache-works"></a>
+
+Ensembl DNA is stored once per upstream file under `pyensembl/dna_cache/`:
+
+```text
+pyensembl/dna_cache/
+  homo_sapiens/ftp.ensembl.org/GRCh38-GCA_000001405.18/
+    toplevel/unmasked/fasta/<file key>/
+      sequence.fa        uncompressed, even when downloaded as .fa.gz
+      sequence.fa.fai
+      object.json        full identity of the upstream file
+      index.json
+```
+
+Before downloading, PyEnsembl reads Ensembl's small README and CHECKSUMS files
+to see whether another release already has the same file. The versioned
+assembly accession distinguishes assembly patches, and the 16-character file
+key (a SHA-256 prefix of the assembly, Ensembl's checksum and compressed size)
+distinguishes upstream revisions. These are metadata checks: Ensembl's Unix
+checksums are not cryptographic hashes. If the metadata is incomplete, the
+assembly directory ends in `-unverified` and each release keeps its own copy.
+Local FASTA files and custom mirrors are never shared.
+
+Downloads retry transient HTTP failures and stalls of five minutes, and are
+checked against the upstream size. An interrupted DNA download resumes on the
+next install on POSIX systems, using only bytes the server confirms come from
+the same file; on Windows it starts over.

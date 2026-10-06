@@ -305,9 +305,10 @@ class Transcript(LocusWithGenome):
     def spliced_offset(self, position):
         """
         Convert from an absolute chromosomal position to the offset into
-        this transcript"s spliced mRNA.
+        this transcript's spliced mRNA.
 
-        Position must be inside some exon (otherwise raise exception).
+        Returns a zero-based index into ``sequence``. Position must be
+        inside an exon; otherwise raises ``ValueError``.
         """
         if type(position) is not int:
             raise TypeError(

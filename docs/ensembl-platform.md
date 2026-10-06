@@ -1,33 +1,23 @@
-# The new Ensembl platform
+# Use dated Ensembl annotations
 
-PyEnsembl reads downloadable annotations and sequences into local indexes.
-The transition to the [new Ensembl website](https://www.ensembl.org/)
-does not change an installed dataset. Numbered releases remain available through
-`EnsemblRelease`; new assembly/date datasets use `EnsemblAnnotation`.
+Ensembl's [new platform](https://www.ensembl.org/) publishes annotations by
+genome assembly and date instead of numbered releases. Select these datasets
+with `EnsemblAnnotation`. Numbered releases remain available through
+`EnsemblRelease`; [choose a reference](guides/assembly-selection.md) compares
+both with custom files. Installed datasets are not affected by the transition.
 
-## Choose the dataset explicitly
-
-| Data source | Selection | Python entry point |
-| --- | --- | --- |
-| [Numbered Ensembl releases](https://ftp.ensembl.org/pub/) | Species and integer release | `EnsemblRelease(93, species="human")` |
-| [New Ensembl downloads](https://ftp.ebi.ac.uk/pub/ensemblorganisms/) | Versioned assembly accession, provider and annotation date | `EnsemblAnnotation("GCA_000001405.29", "2023_03")` |
-| [Custom GTF and FASTA](guides/custom-genomes.md) | Matched annotation and sequence files | `Genome(...)` |
-
-As checked on 2026-10-05, Ensembl's [transition announcement](https://www.ensembl.info/2025/12/02/updates-to-programmatic-access-to-ensembl-and-transitioning-to-the-new-ensembl-platform/)
-states that legacy FTP and API services remain available but stop receiving
-updates after Ensembl 116; new datasets are delivered through the new platform.
-PyEnsembl's existing numbered-release URLs and selection rules are preserved.
+## Find a dataset <a id="choose-the-dataset-explicitly"></a>
 
 The new platform's [FTP layout](https://www.ensembl.info/2026/06/26/updates-to-ftp-site-of-the-new-ensembl-website/)
-groups data by GCA/GCF assembly accession, provider and annotation date.
-Old species-name directories were scheduled for retirement in August 2026.
-Select an existing directory from the downloads page. A website release label
-such as 2026-07 is different from the annotation directory `2023_03`.
+groups data by GCA/GCF assembly accession, provider and annotation date, as in
+`GCA/000/001/405/29/ensembl/2023_03/`. Select an existing directory from the
+[downloads](https://ftp.ebi.ac.uk/pub/ensemblorganisms/). A website release
+label such as 2026-07 is different from the annotation directory `2023_03`.
 
 ## Install a dated annotation
 
-This example selects the documented human GRCh38 assembly accession and dated
-Ensembl geneset. It downloads GTF, cDNA and peptide files from
+This example selects the human GRCh38 assembly accession and dated Ensembl
+geneset. It downloads GTF, cDNA and peptide files from
 [one dataset directory](https://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/29/ensembl/2023_03/).
 
 ```python
@@ -57,13 +47,20 @@ select or verify the assembly's species. Keep it consistent with the accession.
 
 For reference DNA, add `genome_fasta=True`. `genome_fasta_mask="none"`, `"soft"`
 or `"hard"` selects the corresponding combined genome FASTA from the same
-directory. Genome DNA can require several gigabytes. BGZF FASTA files are read
-as gzip; reference DNA is materialized and indexed locally for random access.
-Coordinates use one-based inclusive intervals; `strand="-"` reverse-complements
-DNA, and `mask="raw"` preserves soft masking.
+directory. [Read genomic DNA](guides/reference-dna.md) describes coordinates,
+strand and masking.
 
 Community providers may have different available files. Check the directory
 before installation. Use `Genome` with explicitly matched files when a dataset
 does not provide the standard GTF, cDNA and peptide filenames. GFF3 and other
 formats require conversion to GTF first. PyEnsembl does not select a rolling
 latest annotation or integrate the new GraphQL/refget services.
+
+## Transition from numbered releases
+
+As checked on 2026-10-05, Ensembl's [transition announcement](https://www.ensembl.info/2025/12/02/updates-to-programmatic-access-to-ensembl-and-transitioning-to-the-new-ensembl-platform/)
+states that legacy FTP and API services remain available but stop receiving
+updates after Ensembl 116; new datasets are delivered through the new platform.
+PyEnsembl's existing numbered-release URLs and selection rules are preserved.
+Old species-name directories on the new platform were scheduled for retirement
+in August 2026.

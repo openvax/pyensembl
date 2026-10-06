@@ -13,9 +13,11 @@ Put installation and the first useful examples directly on the homepage.
 Readers should reach a result without having to find a separate tutorial.
 Use one explicitly selected species, assembly and annotation version.
 Explain IDs, coordinates, strand and sequence interpretation alongside the
-output. Task guides cover selection, custom files, aliases, caches and DNA.
-Reference pages give complete interfaces and metadata. Maintainer workflows
-belong under Development.
+output. Task guides cover lookups, transcript structure, selection, custom
+files, aliases, caches and DNA. Reference pages give complete interfaces and
+metadata; the Genome page opens with a method overview grouped by what each
+method returns. Contributor and release workflows live in the root
+`CONTRIBUTING.md` and `RELEASING.md`, which the Contributing pages include.
 
 Use descriptive headings and label guides by the task a reader wants to do.
 Keep navigation groups collapsed until they are needed. Split pages for
@@ -48,8 +50,10 @@ contig names alone do not prove assembly identity.
 ## Examples and presentation
 
 Prefer complete examples with imports and real inputs. State required downloads
-before queries. Pin data and show output when it helps interpretation. Label
-templates and replaceable paths; do not present them as immediately runnable.
+before queries. Pin data and show output when it helps interpretation. Within a
+guide, examples may continue one Python session when the page says so; the
+first example then creates `data`. Label templates and replaceable paths; do
+not present them as immediately runnable.
 Keep working examples, source links, page URLs and linked anchors where practical.
 README compatibility anchors point to the migrated guidance.
 
@@ -69,9 +73,10 @@ python scripts/check_docs_examples.py
 ./test.sh
 ```
 
-The example check requires human release 93 installed. `./docs.sh` builds
-strictly and validates rendered internal links, anchors, README links and API
-coverage. CI performs the docs build on PRs and publishes the site from main.
+The example check runs every Python block that is followed by a text output
+block on the home page and the gene and transcript guides, and requires human
+release 93 installed. `./docs.sh` builds strictly and validates rendered
+internal links, anchors, README links and API coverage. CI performs the docs build on PRs and publishes the site from main.
 Use `mkdocs serve` to preview the pages; review the first-use and complete
 reference pages at desktop and narrow widths, including long signatures and
 tables. Do not use tests that only repeat documentation configuration values.

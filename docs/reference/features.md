@@ -1,8 +1,9 @@
 # Feature objects
 
 Gene and transcript coordinates refer to the selected annotation, with
-one-based inclusive bounds. See [feature guidance](../guides/features.md)
-and [sequence interpretation](../index.md#read-transcript-and-protein-sequences).
+one-based inclusive bounds. The guides show how to
+[find genes and transcripts](../guides/features.md) and use
+[exons and coding sequences](../guides/transcripts.md).
 
 ::: pyensembl.Gene
 
@@ -13,3 +14,5 @@ and [sequence interpretation](../index.md#read-transcript-and-protein-sequences)
 ::: pyensembl.Protein
 
 ::: pyensembl.Locus
+
+::: pyensembl.find_nearest_locus
