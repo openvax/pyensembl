@@ -19,11 +19,15 @@ For example, the human chromosomal DNA sequences for release 78 are in:
     https://ftp.ensembl.org/pub/release-78/fasta/homo_sapiens/dna/
 """
 
+from collections import namedtuple
+
 from .species import Species, find_species_by_name
 from .ensembl_versions import check_release_number
 
 ENSEMBL_FTP_SERVER = "https://ftp.ensembl.org"
 ENSEMBL_GENOMES_FTP_SERVER = "https://ftp.ensemblgenomes.ebi.ac.uk"
+# The new Ensembl platform: dated releases by assembly accession and provider.
+ENSEMBL_PLATFORM_FTP_SERVER = "https://ftp.ebi.ac.uk/pub/ensemblorganisms"
 
 # Path layouts:
 #   main Ensembl:    /pub/release-N/{gtf,fasta}/{species}/...
@@ -230,3 +234,35 @@ def make_genome_fasta_url(
     # Reuse the established division routing without treating DNA as cDNA.
     directory = make_fasta_url(release, species, "dna", server=server).rsplit("/", 1)[0]
     return directory + "/" + filename
+
+
+DatedReleaseUrls = namedtuple(
+    "DatedReleaseUrls", ["directory", "gtf", "cdna", "pep", "genome_fasta"]
+)
+DATED_GENOME_FASTA_MASKS = {"none": "unmasked", "soft": "softmasked", "hard": "hardmasked"}
+
+
+def make_dated_release_urls(
+    assembly_accession, provider, annotation_date, include_alt=False,
+    genome_fasta_mask="none", server=ENSEMBL_PLATFORM_FTP_SERVER,
+):
+    """URLs of one assembly/provider/date dataset on the new Ensembl platform.
+
+    For example, GCA_000001405.29 with provider "ensembl" and date "2026_04"
+    lives in .../GCA/000/001/405/29/ensembl/2026_04/. cDNA covers every
+    transcript biotype, so there is no separate ncRNA FASTA.
+    """
+    prefix, digits = assembly_accession.split("_")
+    number, version = digits.split(".")
+    accession_path = "/".join([prefix, number[:3], number[3:6], number[6:9], version])
+    directory = "/".join([server.rstrip("/"), accession_path, provider, annotation_date])
+    geneset = directory + "/geneset/"
+    return DatedReleaseUrls(
+        directory=directory,
+        gtf=geneset + ("genes-including_alt.gtf.gz" if include_alt else "genes.gtf.gz"),
+        cdna=geneset + "cdna.fa.bgz",
+        pep=geneset + "pep.fa.bgz",
+        genome_fasta="%s/genome/%s.fa.bgz" % (
+            directory, DATED_GENOME_FASTA_MASKS[genome_fasta_mask]
+        ),
+    )

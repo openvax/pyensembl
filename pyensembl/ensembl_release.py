@@ -22,12 +22,15 @@ import warnings
 from .genome import Genome
 from .genome_fasta_cache import canonical_source_options, release_genome_fasta
 from .genome_fasta import GenomeFasta
-from .ensembl_versions import check_release_number, MAX_ENSEMBL_RELEASE
+from .ensembl_versions import MAX_ENSEMBL_RELEASE, is_dated_release, normalize_release
 from .species import check_species_object, human
 
 from .ensembl_url_templates import (
     ENSEMBL_FTP_SERVER,
     ENSEMBL_GENOMES_FTP_SERVER,
+    ENSEMBL_PLATFORM_FTP_SERVER,
+    DATED_GENOME_FASTA_MASKS,
+    make_dated_release_urls,
     make_gtf_url,
     make_fasta_url,
     make_genome_fasta_url,
@@ -76,6 +79,10 @@ class EnsemblRelease(Genome):
     """
     Bundles together the genomic annotation and sequence data associated with
     a particular release of the Ensembl database.
+
+    A release is either numbered (up to 116, the last) or, on the new Ensembl
+    platform, the annotation date of the species' current assembly, e.g.
+    ``EnsemblRelease("2026_04", species="human")`` for GRCh38.
     """
 
     @classmethod
@@ -84,9 +91,12 @@ class EnsemblRelease(Genome):
         Normalizes the arguments which uniquely specify an EnsemblRelease
         genome.
         """
-        release = check_release_number(release)
+        release = normalize_release(release)
         species = check_species_object(species)
-        if server is None or server == ENSEMBL_FTP_SERVER:
+        if is_dated_release(release):
+            if server is None or server == ENSEMBL_FTP_SERVER:
+                server = ENSEMBL_PLATFORM_FTP_SERVER
+        elif server is None or server == ENSEMBL_FTP_SERVER:
             # Promote to the Ensembl Genomes server when the species lives
             # there; otherwise keep the main Ensembl server.
             server = _default_server_for_species(species)
@@ -129,6 +139,10 @@ class EnsemblRelease(Genome):
         download_genome_fasta=None, genome_fasta_path=None,
     ):
         """
+        release : int or str
+            Numbered Ensembl release, e.g. 116, or an annotation date on the
+            new Ensembl platform in YYYY_MM form, e.g. "2026_04".
+
         genome_fasta : True or path, optional
             Reference DNA for ``sequence()``: True for Ensembl's DNA for this
             release (see genome_fasta_type and genome_fasta_mask), or a local
@@ -144,42 +158,40 @@ class EnsemblRelease(Genome):
         self._genome_fasta_option = genome_fasta
         self.genome_fasta_type = genome_fasta_type
         self.genome_fasta_mask = genome_fasta_mask
-        genome_fasta_url = make_genome_fasta_url(
-            self.release, self.species, fasta_type=genome_fasta_type,
-            mask=genome_fasta_mask, server=self.server,
-        )
+        self.reference_name = self.species.which_reference(self.release)
+        if is_dated_release(self.release):
+            urls = self._dated_release_urls()
+            genome_fasta_url = urls.genome_fasta
+            self.gtf_url = urls.gtf
+            self.transcript_fasta_urls = [urls.cdna]
+            self.protein_fasta_urls = [urls.pep]
+        else:
+            genome_fasta_url = make_genome_fasta_url(
+                self.release, self.species, fasta_type=genome_fasta_type,
+                mask=genome_fasta_mask, server=self.server,
+            )
+            self.gtf_url = make_gtf_url(
+                ensembl_release=self.release, species=self.species, server=self.server
+            )
+            self.transcript_fasta_urls = [
+                make_fasta_url(
+                    ensembl_release=self.release,
+                    species=self.species,
+                    sequence_type=sequence_type,
+                    server=self.server,
+                )
+                for sequence_type in ("cdna", "ncrna")
+            ]
+            self.protein_fasta_urls = [
+                make_fasta_url(
+                    ensembl_release=self.release,
+                    species=self.species,
+                    sequence_type="pep",
+                    server=self.server,
+                )
+            ]
         self.genome_fasta_urls = [genome_fasta_url] if genome_fasta is True else []
         genome_fasta_source = genome_fasta_url if genome_fasta is True else genome_fasta
-
-        self.gtf_url = make_gtf_url(
-            ensembl_release=self.release, species=self.species, server=self.server
-        )
-
-        self.transcript_fasta_urls = [
-            make_fasta_url(
-                ensembl_release=self.release,
-                species=self.species,
-                sequence_type="cdna",
-                server=self.server,
-            ),
-            make_fasta_url(
-                ensembl_release=self.release,
-                species=self.species,
-                sequence_type="ncrna",
-                server=self.server,
-            ),
-        ]
-
-        self.protein_fasta_urls = [
-            make_fasta_url(
-                ensembl_release=self.release,
-                species=self.species,
-                sequence_type="pep",
-                server=self.server,
-            )
-        ]
-
-        self.reference_name = self.species.which_reference(self.release)
 
         Genome.__init__(
             self,
@@ -190,6 +202,24 @@ class EnsemblRelease(Genome):
             transcript_fasta_paths_or_urls=self.transcript_fasta_urls,
             protein_fasta_paths_or_urls=self.protein_fasta_urls,
             genome_fasta_path_or_url=genome_fasta_source,
+        )
+
+    def _dated_release_urls(self):
+        """Files of a dated release of the species' current assembly."""
+        if self.genome_fasta_type != "toplevel":
+            raise ValueError(
+                "Dated releases publish only toplevel reference DNA, not %r"
+                % (self.genome_fasta_type,)
+            )
+        if self.genome_fasta_mask not in DATED_GENOME_FASTA_MASKS:
+            raise ValueError("genome_fasta_mask must be 'none', 'soft', or 'hard'")
+        accession, provider = self.species.dated_releases
+        # Only GRCh38 datasets publish genes-including_alt, the counterpart of
+        # the complete chr_patch_hapl_scaff GTF of numbered GRCh38 releases.
+        return make_dated_release_urls(
+            accession, provider, self.release,
+            include_alt=self.reference_name == "GRCh38",
+            genome_fasta_mask=self.genome_fasta_mask, server=self.server,
         )
 
     def _make_genome_fasta(self, source):
@@ -206,7 +236,7 @@ class EnsemblRelease(Genome):
         return self._install_command(only_genome_fasta=True)
 
     def _install_command(self, only_genome_fasta):
-        command = "pyensembl install --release %d --species %s" % (
+        command = "pyensembl install --release %s --species %s" % (
             self.release,
             self.species.latin_name,
         )
@@ -224,7 +254,7 @@ class EnsemblRelease(Genome):
         return command
 
     def __str__(self):
-        return "EnsemblRelease(release=%d, species='%s')" % (
+        return "EnsemblRelease(release=%r, species='%s')" % (
             self.release,
             self.species.latin_name,
         )
@@ -244,7 +274,7 @@ class EnsemblRelease(Genome):
         """Explain how to enable reference DNA recorded for this release."""
 
         def call(genome_fasta, **options):
-            arguments = [str(self.release)]
+            arguments = [repr(self.release)]
             if self.species != human:
                 arguments.append("species=%r" % self.species.latin_name)
             arguments.append("genome_fasta=%s" % genome_fasta)

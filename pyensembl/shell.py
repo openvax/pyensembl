@@ -24,7 +24,7 @@ import sys
 from .database import is_complete_database
 from .download_cache import cache_root
 from .ensembl_release import EnsemblRelease
-from .ensembl_versions import MAX_ENSEMBL_RELEASE
+from .ensembl_versions import MAX_ENSEMBL_RELEASE, is_dated_release, normalize_release
 from .genome import Genome
 from .genome_fasta import GenomeFasta
 from .genome_fasta_cache import (
@@ -93,6 +93,7 @@ actions:
 examples:
   pyensembl install --release 75 77                     human releases 75 and 77
   pyensembl install --release 110 --species mouse       a mouse release
+  pyensembl install --release 2026_04                   a dated release (new Ensembl platform)
   pyensembl install --reference-name GRCh37             newest release for GRCh37
   pyensembl install --release 110 --with-genome-fasta   also install reference DNA
   pyensembl install --reference-name GRCh38 --annotation-name my_genes \\
@@ -138,14 +139,22 @@ parser.add_argument(
 )
 
 
+def _release_argument(value):
+    try:
+        return normalize_release(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(str(error))
+
+
 release_group = parser.add_argument_group("Ensembl release options")
 release_group.add_argument(
     "--release",
-    type=int,
+    type=_release_argument,
     nargs="+",
     default=[],
     help=(
-        "Ensembl release version(s); required for deletion "
+        "Ensembl release version(s), numbered or a YYYY_MM annotation date on "
+        "the new Ensembl platform; required for deletion "
         "(install default=newest supported release for --reference-name, "
         "otherwise %d)" % MAX_ENSEMBL_RELEASE
     ),
@@ -324,7 +333,7 @@ def _subdirectories(path):
 
 def _other_genome_labels(reference, annotation):
     """(species, release) cells for a cache directory pyensembl did not match."""
-    match = re.fullmatch(r"ensembl(\d+)", annotation)
+    match = re.fullmatch(r"ensembl(\d+|\d{4}_\d{2})", annotation)
     if match is None:
         return "custom", annotation
     try:
@@ -480,7 +489,14 @@ def all_combinations_of_ensembl_genomes(args):
         first_release, last_release = reference_species.reference_assemblies[reference_name]
         release_list = args.release or [last_release]
         for version in release_list:
-            if not first_release <= version <= last_release:
+            if is_dated_release(version):
+                provided = reference_species.which_reference(version)
+                if provided != reference_name:
+                    raise ValueError(
+                        "Dated release %s of %s provides %s, not %s"
+                        % (version, reference_species.latin_name, provided, reference_name)
+                    )
+            elif not first_release <= version <= last_release:
                 raise ValueError(
                     "Reference %s supports Ensembl releases %d-%d, not --release %d"
                     % (reference_name, first_release, last_release, version)
@@ -702,7 +718,7 @@ def _genome_description(genome):
     if isinstance(genome, EnsemblRelease):
         species = genome.species
         name = species.synonyms[0] if species.synonyms else species.latin_name
-        return "%s %s release %d" % (name, genome.reference_name, genome.release)
+        return "%s %s release %s" % (name, genome.reference_name, genome.release)
     description = "%s %s" % (genome.reference_name, genome.annotation_name)
     if genome.annotation_version is not None:
         description += " %s" % genome.annotation_version

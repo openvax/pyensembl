@@ -8,7 +8,7 @@ sequences, so record the version you use.
 | Annotation source | Choose by | Guide |
 | --- | --- | --- |
 | [Numbered Ensembl](https://ftp.ensembl.org/pub/) | Species, assembly and integer release | [Numbered releases](#numbered-releases) |
-| [New Ensembl platform](https://www.ensembl.org/) | Assembly accession, provider and annotation date | [Dated annotations](../ensembl-platform.md) |
+| [New Ensembl platform](https://www.ensembl.org/) | Species and annotation date, e.g. `2026_04` | [Dated releases](../ensembl-platform.md) |
 | [Custom GTF and FASTA](custom-genomes.md) | Matched local files or URLs | [Custom genomes](custom-genomes.md) |
 
 ## Numbered releases
