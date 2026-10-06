@@ -24,6 +24,28 @@ When you know the gene ID, `data.gene_by_id("ENSG00000141510")` selects it
 directly. [Alias lookup](aliases.md) adds names from a separate source, such as
 HGNC.
 
+### Versioned IDs <a id="versioned-ids"></a>
+
+Ensembl IDs can carry a version, which changes when a feature's structure or
+sequence changes. Every method that takes a gene, transcript, exon or protein
+ID accepts it with or without one:
+
+```python
+gene = data.gene_by_id("ENSG00000141510.16")
+print(gene.id, gene.versioned_id)
+```
+
+```text
+ENSG00000141510 ENSG00000141510.16
+```
+
+An ID without a version matches whatever version this release has. An ID with
+a version must match it: `data.gene_by_id("ENSG00000141510.15")` raises
+`ValueError: ENSG00000141510.15 is not in this annotation, which has
+ENSG00000141510.16`, so an ID copied from another release can't silently match
+a changed feature. Releases before Ensembl 77 record no versions, so they
+accept only IDs without one.
+
 ## Find genes at a position <a id="query-a-genomic-interval"></a>
 
 Give a position, or add `end` to search an interval:
@@ -91,10 +113,10 @@ codons. `support_level` is Ensembl's transcript support level, from 1 (best
 supported by mRNA evidence) to 5, or `None` when the annotation omits it.
 Two transcripts can encode the same protein from different UTRs.
 
-## Exons and sequences <a id="inspect-a-transcript"></a><a id="get-transcript-and-protein-sequences"></a><a id="data-structures"></a><a id="gene"></a><a id="transcript"></a><a id="protein-information"></a>
+## Sequences and exons <a id="exons-and-sequences"></a><a id="inspect-a-transcript"></a><a id="get-transcript-and-protein-sequences"></a><a id="data-structures"></a><a id="gene"></a><a id="transcript"></a><a id="protein-information"></a>
 
-[Exons and coding sequences](transcripts.md) continues with a transcript's
-exons, coding sequence, UTRs, codon positions and protein. The
+[Get protein and transcript sequences](transcripts.md) continues with a
+transcript's protein, coding sequence, UTRs, exons and codon positions. The
 [method overview](../reference/genome.md#find-a-method) lists every lookup.
 Call `data.close()` when you are finished; a
 `with EnsemblRelease(93, species="human") as data:` block closes it

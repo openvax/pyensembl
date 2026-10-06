@@ -3,7 +3,8 @@
 These methods apply to `EnsemblRelease`, `EnsemblAnnotation` and custom
 [`Genome`](../guides/custom-genomes.md) objects. Find a method in the tables
 below; the [complete reference](#pyensembl.Genome) follows them. Coordinates are
-one-based and inclusive.
+one-based and inclusive. Gene, transcript, exon and protein IDs may include a
+[version](../guides/features.md#versioned-ids), which must match the annotation's.
 
 ## Find a method
 
@@ -49,16 +50,16 @@ similar methods return IDs or names. A gene's transcripts are also available as
 `exon_ids_of_transcript_id`, `exon_ids_of_gene_id` and similar methods return
 IDs. Use `transcript.exons` for exons in transcription order.
 
-### Sequences and proteins
+### Proteins and sequences <a id="sequences-and-proteins"></a>
 
 | Method | Returns |
 | --- | --- |
-| [`transcript_sequence`](#pyensembl.Genome.transcript_sequence) | Spliced cDNA for a transcript ID |
 | [`protein_sequence`](#pyensembl.Genome.protein_sequence) | Amino acids for a protein ID |
 | [`protein_ids`](#pyensembl.Genome.protein_ids) | Protein IDs, filtered by contig or strand |
+| [`transcript_sequence`](#pyensembl.Genome.transcript_sequence) | Spliced cDNA for a transcript ID |
 
-Transcript objects also provide `sequence`, `coding_sequence`, UTR sequences
-and `protein_sequence`; see [exons and coding sequences](../guides/transcripts.md).
+Transcript objects also provide `protein_sequence`, `coding_sequence`,
+`sequence` and UTR sequences; see [protein and transcript sequences](../guides/transcripts.md).
 
 ### Reference DNA
 
