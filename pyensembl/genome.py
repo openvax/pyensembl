@@ -35,7 +35,8 @@ from .gene_name_aliases import GeneNameAliases, normalize_aliases, stable_ensemb
 from .genome_fasta import GenomeFasta, MissingGenomeFastaError
 from .normalization import normalize_chromosome, normalize_strand
 from .search import find_nearest_locus
-from .sequence_data import SequenceData, lookup_sequence_with_version_fallback
+from .sequence_data import SequenceData
+from .versioned_ids import _split_ens_version
 from .transcript import Transcript
 
 
@@ -880,25 +881,32 @@ class Genome(Serializable):
 
     def transcript_sequence(self, transcript_id):
         """Return cDNA nucleotide sequence of transcript, or None if
-        transcript doesn't have cDNA sequence. Accepts both versioned
-        (``ENST00000123456.7``) and unversioned identifiers.
+        transcript doesn't have cDNA sequence. A versioned ID such as
+        ``ENST00000269305.8`` must match this annotation's version.
         """
-        if self.transcript_sequences is None:
-            raise ValueError("No transcript FASTA supplied to this Genome: %s" % self)
-        return lookup_sequence_with_version_fallback(
-            self.transcript_sequences, transcript_id
+        return self._sequence_of_id(
+            self.transcript_sequences, "transcript_id", transcript_id
         )
 
     def protein_sequence(self, protein_id):
         """Return amino-acid sequence of protein, or None if the protein is
-        absent from the FASTA. Accepts both versioned
-        (``ENSP00000123456.3``) and unversioned identifiers.
+        absent from the FASTA. A versioned ID such as ``ENSP00000269305.4``
+        must match this annotation's version.
         """
-        if self.protein_sequences is None:
-            raise ValueError("No protein FASTA supplied to this Genome: %s" % self)
-        return lookup_sequence_with_version_fallback(
-            self.protein_sequences, protein_id
-        )
+        return self._sequence_of_id(self.protein_sequences, "protein_id", protein_id)
+
+    def _sequence_of_id(self, sequences, id_column, sequence_id):
+        bare, version = _split_ens_version(sequence_id)
+        if (
+            version is not None
+            and sequences.fasta_version(bare) is None
+            and self.requires_gtf
+        ):
+            # Ensembl FASTA headers before release 83 carry no versions, so
+            # check a requested version against the GTF
+            sequence_id = self.db.stored_id(id_column, sequence_id)
+        stored_id = sequences.stored_id(sequence_id)
+        return None if stored_id is None else sequences.get(stored_id)
 
     def genes_at_locus(self, contig, position, end=None, strand=None):
         """
@@ -1127,10 +1135,13 @@ class Genome(Serializable):
 
     def gene_by_id(self, gene_id):
         """
-        Construct a Gene object for the given gene ID.
+        Construct a Gene object for the given gene ID, such as
+        ``"ENSG00000141510"``. A versioned ID such as
+        ``"ENSG00000141510.16"`` must match this annotation's version.
         """
         if gene_id not in self._genes:
             field_names = [
+                "gene_id",
                 "seqname",
                 "start",
                 "end",
@@ -1158,28 +1169,21 @@ class Genome(Serializable):
             if not result:
                 raise ValueError("Gene not found: %s" % (gene_id,))
 
-            gene_name, gene_biotype = None, None
-            if len(result) < 4 or len(result) > 6:
-                raise ValueError("Result is not the expected length: %d" % len(result))
-            contig, start, end, strand = result[:4]
-            if len(result) == 5:
-                if "gene_name" in field_names:
-                    gene_name = result[4]
-                else:
-                    gene_biotype = result[4]
-            elif len(result) == 6:
-                gene_name, gene_biotype = result[4:]
-
-            self._genes[gene_id] = Gene(
-                gene_id=gene_id,
-                gene_name=gene_name,
-                contig=contig,
-                start=start,
-                end=end,
-                strand=strand,
-                biotype=gene_biotype,
-                genome=self,
-            )
+            # The stored ID may differ in form from the one given,
+            # e.g. bare where a versioned ID was requested
+            data = dict(zip(field_names, result))
+            gene_id = data["gene_id"]
+            if gene_id not in self._genes:
+                self._genes[gene_id] = Gene(
+                    gene_id=gene_id,
+                    gene_name=data.get("gene_name"),
+                    contig=data["seqname"],
+                    start=data["start"],
+                    end=data["end"],
+                    strand=data["strand"],
+                    biotype=data.get("gene_biotype"),
+                    genome=self,
+                )
 
         return self._genes[gene_id]
 
@@ -1341,7 +1345,11 @@ class Genome(Serializable):
         ]
 
     def transcript_by_id(self, transcript_id):
-        """Construct Transcript object with given transcript ID"""
+        """
+        Construct a Transcript object for the given transcript ID, such as
+        ``"ENST00000269305"``. A versioned ID such as
+        ``"ENST00000269305.8"`` must match this annotation's version.
+        """
         if transcript_id not in self._transcripts:
             optional_field_names = [
                 "transcript_name",
@@ -1349,6 +1357,7 @@ class Genome(Serializable):
                 "transcript_support_level",
             ]
             field_names = [
+                "transcript_id",
                 "seqname",
                 "start",
                 "end",
@@ -1373,33 +1382,25 @@ class Genome(Serializable):
             if not result:
                 raise ValueError("Transcript not found: %s" % (transcript_id,))
 
-            transcript_name, transcript_biotype, tsl = None, None, None
-            if len(result) < 5 or len(result) > (5 + len(optional_field_names)):
-                raise ValueError("Result is not the expected length: %d" % len(result))
-            contig, start, end, strand, gene_id = result[:5]
-            if len(result) > 5:
-                extra_field_names = [
-                    f for f in optional_field_names if f in field_names
-                ]
-                extra_data = dict(zip(extra_field_names, result[5:]))
-                transcript_name = extra_data.get("transcript_name")
-                transcript_biotype = extra_data.get("transcript_biotype")
-                tsl = _parse_transcript_support_level(
-                    extra_data.get("transcript_support_level")
+            # The stored ID may differ in form from the one given,
+            # e.g. bare where a versioned ID was requested
+            data = dict(zip(field_names, result))
+            transcript_id = data["transcript_id"]
+            if transcript_id not in self._transcripts:
+                self._transcripts[transcript_id] = Transcript(
+                    transcript_id=transcript_id,
+                    transcript_name=data.get("transcript_name"),
+                    contig=data["seqname"],
+                    start=data["start"],
+                    end=data["end"],
+                    strand=data["strand"],
+                    biotype=data.get("transcript_biotype"),
+                    gene_id=data["gene_id"],
+                    genome=self,
+                    support_level=_parse_transcript_support_level(
+                        data.get("transcript_support_level")
+                    ),
                 )
-
-            self._transcripts[transcript_id] = Transcript(
-                transcript_id=transcript_id,
-                transcript_name=transcript_name,
-                contig=contig,
-                start=start,
-                end=end,
-                strand=strand,
-                biotype=transcript_biotype,
-                gene_id=gene_id,
-                genome=self,
-                support_level=tsl,
-            )
 
         return self._transcripts[transcript_id]
 
@@ -1496,7 +1497,8 @@ class Genome(Serializable):
         return self._query_transcript_ids("transcript_name", transcript_name)
 
     def transcript_ids_of_exon_id(self, exon_id):
-        return self._query_transcript_ids("exon_id", exon_id)
+        # Exon IDs appear only on exon rows
+        return self._query_transcript_ids("exon_id", exon_id, feature="exon")
 
     def transcript_id_of_protein_id(self, protein_id):
         """
@@ -1531,11 +1533,13 @@ class Genome(Serializable):
         return [self.exon_by_id(exon_id) for exon_id in exon_ids]
 
     def exon_by_id(self, exon_id):
-        """Construct an Exon object from its ID by looking up the exon's
-        properties in the given Database.
+        """
+        Construct an Exon object for the given exon ID. A versioned ID
+        must match this annotation's version.
         """
         if exon_id not in self._exons:
             field_names = [
+                "exon_id",
                 "seqname",
                 "start",
                 "end",
@@ -1554,20 +1558,25 @@ class Genome(Serializable):
                 feature="exon",
                 distinct=True,
             )
-            contig, start, end, strand, gene_name, gene_id = row[:6]
-            version_value = row[6] if has_exon_version else None
-            exon_version = int(version_value) if version_value else None
+            if not row:
+                raise ValueError("Exon not found: %s" % (exon_id,))
 
-            self._exons[exon_id] = Exon(
-                exon_id=exon_id,
-                contig=contig,
-                start=start,
-                end=end,
-                strand=strand,
-                gene_name=gene_name,
-                gene_id=gene_id,
-                exon_version=exon_version,
-            )
+            # The stored ID may differ in form from the one given,
+            # e.g. bare where a versioned ID was requested
+            data = dict(zip(field_names, row))
+            exon_id = data["exon_id"]
+            if exon_id not in self._exons:
+                version_value = data.get("exon_version")
+                self._exons[exon_id] = Exon(
+                    exon_id=exon_id,
+                    contig=data["seqname"],
+                    start=data["start"],
+                    end=data["end"],
+                    strand=data["strand"],
+                    gene_name=data["gene_name"],
+                    gene_id=data["gene_id"],
+                    exon_version=int(version_value) if version_value else None,
+                )
 
         return self._exons[exon_id]
 

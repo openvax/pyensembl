@@ -21,6 +21,7 @@ from typechecks import require_integer, require_string
 from .common import memoize
 from .normalization import normalize_chromosome, normalize_strand
 from .locus import Locus
+from .versioned_ids import _split_ens_version, match_version
 
 # any time we update the database schema, increment this version number
 DATABASE_SCHEMA_VERSION = 3
@@ -126,10 +127,13 @@ class Database(object):
         self._connection = None
         # dictionary mapping table names to sets of columns
         self._columns = {}
+        # dictionary mapping ID columns to whether any stored ID has a version
+        self._versioned_id_columns = {}
 
     def clear_cache(self):
         """Clear query results and schema metadata cached in memory."""
         self._columns.clear()
+        self._versioned_id_columns.clear()
         type(self).query.clear_cache(self)
         type(self).query_feature_values.clear_cache(self)
 
@@ -216,6 +220,15 @@ class Database(object):
     # mapping from database tables to their primary keys
     # sadly exon IDs *are* not unique, so can't be in this dict
     PRIMARY_KEY_COLUMNS = {"gene": "gene_id", "transcript": "transcript_id"}
+
+    # Table defining each kind of ID, and the column where Ensembl GTFs record
+    # its version (GENCODE GTFs embed the version in the ID instead)
+    ID_VERSION_COLUMNS = {
+        "gene_id": ("gene", "gene_version"),
+        "transcript_id": ("transcript", "transcript_version"),
+        "exon_id": ("exon", "exon_version"),
+        "protein_id": ("CDS", "protein_version"),
+    }
 
     def _get_primary_key(self, feature_name, feature_df):
         """Name of primary key for a feature table (e.g. "gene" -> "gene_id")
@@ -545,8 +558,69 @@ class Database(object):
             feature,
             filter_column,
         )
-        query_params = [filter_value]
-        return self.run_sql_query(sql, required=required, query_params=query_params)
+        results = self.run_sql_query(sql, query_params=[filter_value])
+        if not results and filter_column in self.ID_VERSION_COLUMNS:
+            # Retry with the form this annotation stores, e.g. a bare ID for a
+            # versioned one; resolving only on a miss keeps hits to one query
+            stored_id = self.stored_id(filter_column, filter_value)
+            if stored_id != filter_value:
+                results = self.run_sql_query(sql, query_params=[stored_id])
+        if required and not results:
+            raise ValueError(
+                "No results found for query:\n%s\nwith parameters: %s"
+                % (sql, [filter_value])
+            )
+        return results
+
+    def stored_id(self, id_column, identifier):
+        """
+        Form in which this annotation stores a gene, transcript, exon or
+        protein ID, or the ID unchanged if it is absent or stored as given.
+
+        A bare Ensembl ID matches whatever version is installed. A versioned
+        ID must match the installed version: ``ValueError`` if the annotation
+        records a different version or none. Other IDs, such as TAIR
+        ``AT1G01010.1``, are returned unchanged.
+        """
+        if not isinstance(identifier, str) or not identifier.startswith("ENS"):
+            return identifier
+        table, version_column = self.ID_VERSION_COLUMNS[id_column]
+        if not self.column_exists(table, id_column):
+            return identifier
+        bare, version = _split_ens_version(identifier)
+        if version is None and not self._stores_versioned_ids(id_column):
+            # Without stored versions, a bare ID can only match itself
+            return identifier
+        has_version = self.column_exists(table, version_column)
+        # Stored forms of this stable ID ("bare", "bare.N") sort between
+        # bare and bare + "/", since "." < "/"
+        sql = "SELECT DISTINCT %s%s FROM %s WHERE %s >= ? AND %s < ?" % (
+            id_column,
+            ", " + version_column if has_version else "",
+            table,
+            id_column,
+            id_column,
+        )
+        installed = {}
+        for row in self.run_sql_query(sql, query_params=[bare, bare + "/"]):
+            stored_bare, recorded = _split_ens_version(row[0])
+            if stored_bare != bare:
+                continue
+            if recorded is None and has_version and row[1]:
+                recorded = int(row[1])
+            installed[row[0]] = recorded
+        return match_version(identifier, installed) or identifier
+
+    def _stores_versioned_ids(self, id_column):
+        """Whether any stored ID of this kind carries a version, as in GENCODE."""
+        if id_column not in self._versioned_id_columns:
+            table, _ = self.ID_VERSION_COLUMNS[id_column]
+            sql = "SELECT 1 FROM %s WHERE %s GLOB 'ENS*.[0-9]*' LIMIT 1" % (
+                table,
+                id_column,
+            )
+            self._versioned_id_columns[id_column] = bool(self.run_sql_query(sql))
+        return self._versioned_id_columns[id_column]
 
     def query_one(
         self,

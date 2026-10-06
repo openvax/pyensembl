@@ -18,7 +18,8 @@ import logging
 from collections import Counter
 import pickle
 from .common import load_pickle, dump_pickle
-from .fasta import _split_ens_version, parse_fasta_dictionary
+from .fasta import first_fasta_id, parse_fasta_dictionary
+from .versioned_ids import _split_ens_version, match_version
 
 
 logger = logging.getLogger(__name__)
@@ -50,6 +51,10 @@ def lookup_sequence_with_version_fallback(sequence_data, identifier):
     Non-Ensembl IDs (e.g. TAIR ``AT1G01010.1`` where ``.N`` is an
     isoform suffix, not a version) skip step (2): stripping there is
     semantically wrong.
+
+    Use this for IDs the annotation itself stores (object properties such
+    as ``Transcript.sequence``). IDs from callers go through
+    :meth:`SequenceData.stored_id`, which checks a supplied version.
     """
     if not identifier:
         return None
@@ -68,6 +73,21 @@ def lookup_sequence_with_version_fallback(sequence_data, identifier):
         if versioned is not None:
             return sequence_data.get(versioned)
     return None
+
+
+def _pickle_lost_versions(fasta_path, fasta_dictionary):
+    """
+    Whether a cached dictionary was built by the parser in pyensembl before
+    2.10, which stripped versions from Ensembl FASTA headers, so it holds the
+    bare ID where the header carries a versioned one.
+    """
+    first_id = first_fasta_id(fasta_path)
+    bare, version = _split_ens_version(first_id)
+    return (
+        version is not None
+        and first_id not in fasta_dictionary
+        and bare in fasta_dictionary
+    )
 
 
 class SequenceData(object):
@@ -181,9 +201,17 @@ class SequenceData(object):
                 # but we'll fall back on recreating it if loading fails
                 try:
                     fasta_dictionary_tmp = load_pickle(pickle_path)
-                    self._add_to_fasta_dictionary(fasta_dictionary_tmp)
-                    logger.debug("Loaded sequence dictionary from %s", pickle_path)
-                    continue
+                    if _pickle_lost_versions(fasta_path, fasta_dictionary_tmp):
+                        logger.info(
+                            "Rebuilding %s to keep FASTA header versions",
+                            pickle_path,
+                        )
+                    else:
+                        self._add_to_fasta_dictionary(fasta_dictionary_tmp)
+                        logger.debug(
+                            "Loaded sequence dictionary from %s", pickle_path
+                        )
+                        continue
                 except (pickle.UnpicklingError, AttributeError):
                     # catch either an UnpicklingError or an AttributeError
                     # resulting from pickled objects refering to classes
@@ -214,6 +242,27 @@ class SequenceData(object):
     def get(self, sequence_id):
         """Get sequence associated with given ID or return None if missing"""
         return self.fasta_dictionary.get(sequence_id)
+
+    def stored_id(self, sequence_id):
+        """
+        FASTA record ID for ``sequence_id``, or ``None`` if it has no record.
+
+        A bare Ensembl ID matches the record whatever its version. A versioned
+        ID must match the header's version: ``ValueError`` if the header
+        carries a different version or none.
+        """
+        if not sequence_id:
+            return None
+        if sequence_id in self.fasta_dictionary:
+            return sequence_id
+        bare, _ = _split_ens_version(sequence_id)
+        installed = {}
+        if bare in self.fasta_dictionary:
+            installed[bare] = None
+        versioned = self._stripped_index.get(bare)
+        if versioned is not None:
+            installed[versioned] = self._versions[versioned]
+        return match_version(sequence_id, installed)
 
     def fasta_version(self, sequence_id):
         """

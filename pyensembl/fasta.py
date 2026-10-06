@@ -72,24 +72,6 @@ def _parse_header_id(line):
     return identifier.decode("ascii")
 
 
-def _split_ens_version(identifier):
-    """
-    Split an ENS-prefix identifier into ``(bare_id, version_int)``.
-
-    Returns ``(identifier, None)`` for IDs that don't carry a parseable
-    ENS version. Non-ENS IDs (e.g. TAIR ``AT1G01010.1``) are always
-    returned as-is with version ``None`` — the ``.N`` in those is an
-    isoform suffix, not a version.
-    """
-    if not identifier or not identifier.startswith("ENS") or "." not in identifier:
-        return identifier, None
-    bare, _, suffix = identifier.rpartition(".")
-    try:
-        return bare, int(suffix)
-    except ValueError:
-        return identifier, None
-
-
 class FastaParser(object):
     """
     FastaParser object consumes lines of a FASTA file incrementally
@@ -191,3 +173,12 @@ def parse_fasta_dictionary(fasta_path, show_progress=False):
     """
     parser = FastaParser()
     return parser.read_file(fasta_path, show_progress=show_progress)
+
+
+def first_fasta_id(fasta_path):
+    """Identifier of the first record in a FASTA file, or None if it has none."""
+    with open(fasta_path, "rb") as raw, FastaParser()._open(fasta_path, raw) as f:
+        for line in f:
+            if line.startswith(b">"):
+                return _parse_header_id(line.rstrip())
+    return None
