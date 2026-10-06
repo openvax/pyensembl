@@ -1156,6 +1156,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.Database.ID_VERSION_COLUMNS" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ID_VERSION_COLUMNS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.Database.connection" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1270,6 +1281,28 @@
     <span class="md-ellipsis">
       
         query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.Database.stored_id" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stored_id
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.Database.installed_versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        installed_versions
       
     </span>
   </a>
@@ -1452,6 +1485,28 @@
     <span class="md-ellipsis">
       
         get
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.SequenceData.stored_id" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stored_id
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.SequenceData.recorded_versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        recorded_versions
       
     </span>
   </a>
@@ -2036,6 +2091,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.Database.ID_VERSION_COLUMNS" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ID_VERSION_COLUMNS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.Database.connection" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2150,6 +2216,28 @@
     <span class="md-ellipsis">
       
         query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.Database.stored_id" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stored_id
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.Database.installed_versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        installed_versions
       
     </span>
   </a>
@@ -2332,6 +2420,28 @@
     <span class="md-ellipsis">
       
         get
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.SequenceData.stored_id" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stored_id
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.SequenceData.recorded_versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        recorded_versions
       
     </span>
   </a>
@@ -3360,6 +3470,29 @@ a database.</p>
 
 
 
+<h3 id="pyensembl.Database.ID_VERSION_COLUMNS" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">ID_VERSION_COLUMNS</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#pyensembl.Database.ID_VERSION_COLUMNS" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">ID_VERSION_COLUMNS</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'gene_id'</span><span class="p">:</span> <span class="p">(</span><span class="s1">'gene'</span><span class="p">,</span> <span class="s1">'gene_version'</span><span class="p">),</span> <span class="s1">'transcript_id'</span><span class="p">:</span> <span class="p">(</span><span class="s1">'transcript'</span><span class="p">,</span> <span class="s1">'transcript_version'</span><span class="p">),</span> <span class="s1">'exon_id'</span><span class="p">:</span> <span class="p">(</span><span class="s1">'exon'</span><span class="p">,</span> <span class="s1">'exon_version'</span><span class="p">),</span> <span class="s1">'protein_id'</span><span class="p">:</span> <span class="p">(</span><span class="s1">'CDS'</span><span class="p">,</span> <span class="s1">'protein_version'</span><span class="p">)}</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
 <h3 id="pyensembl.Database.connection" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">connection</span>
 
@@ -3760,6 +3893,52 @@ this list.</p>
 
         <p>Construct a SQL query and run against the sqlite3 database,
 filtered both by the feature type and a user-provided column/value.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pyensembl.Database.stored_id" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">stored_id</span>
+
+
+<a href="#pyensembl.Database.stored_id" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">stored_id</span><span class="p">(</span><span class="n">id_column</span><span class="p">,</span> <span class="n">identifier</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Form in which this annotation stores a gene, transcript, exon or
+protein ID, or the ID unchanged if it is absent or stored as given.</p>
+<p>A bare Ensembl ID matches whatever version is installed. A versioned
+ID must match the installed version: <code>ValueError</code> if the annotation
+records a different version or none. Other IDs, such as TAIR
+<code>AT1G01010.1</code>, are returned unchanged.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pyensembl.Database.installed_versions" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">installed_versions</span>
+
+
+<a href="#pyensembl.Database.installed_versions" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">installed_versions</span><span class="p">(</span><span class="n">id_column</span><span class="p">,</span> <span class="n">identifier</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Stored forms of an Ensembl gene, transcript, exon or protein ID, with
+or without a version, each mapped to its recorded version or <code>None</code>.</p>
 
 
     </div>
@@ -4291,6 +4470,50 @@ one locus in the database.</p>
     <div class="doc doc-contents ">
 
         <p>Get sequence associated with given ID or return None if missing</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pyensembl.SequenceData.stored_id" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">stored_id</span>
+
+
+<a href="#pyensembl.SequenceData.stored_id" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">stored_id</span><span class="p">(</span><span class="n">sequence_id</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>FASTA record ID for <code>sequence_id</code>, or <code>None</code> if it has no record.</p>
+<p>A bare Ensembl ID matches the record whatever its version, and raises
+<code>ValueError</code> if several versions are present. A versioned ID must
+match the header's version: <code>ValueError</code> if the header carries a
+different version or none.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pyensembl.SequenceData.recorded_versions" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">recorded_versions</span>
+
+
+<a href="#pyensembl.SequenceData.recorded_versions" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">recorded_versions</span><span class="p">(</span><span class="n">sequence_id</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Sorted versions that FASTA headers record for this stable ID.</p>
 
 
     </div>

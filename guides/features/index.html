@@ -384,6 +384,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Find a gene by name or ID">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#versioned-ids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Versioned IDs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1211,6 +1228,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Find a gene by name or ID">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#versioned-ids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Versioned IDs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1333,6 +1367,21 @@
 When you know the gene ID, <code>data.gene_by_id("ENSG00000141510")</code> selects it
 directly. <a href="../aliases/">Alias lookup</a> adds names from a separate source, such as
 HGNC.</p>
+<h3 id="versioned-ids">Versioned IDs <a id="versioned-ids"></a><a class="headerlink" href="#versioned-ids" title="Permanent link">&para;</a></h3>
+<p>Ensembl IDs can carry a version, which changes when a feature's structure or
+sequence changes. Every method that takes a gene, transcript, exon or protein
+ID accepts it with or without one:</p>
+<div class="highlight"><pre><span></span><code><span class="n">gene</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">gene_by_id</span><span class="p">(</span><span class="s2">"ENSG00000141510.16"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">gene</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">gene</span><span class="o">.</span><span class="n">versioned_id</span><span class="p">)</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>ENSG00000141510 ENSG00000141510.16
+</code></pre></div>
+<p>An ID without a version matches whatever version this release has. An ID with
+a version must match it: <code>data.gene_by_id("ENSG00000141510.15")</code> raises
+<code>ValueError: ENSG00000141510.15 is not in this annotation, which has
+ENSG00000141510.16</code>, so an ID copied from another release can't silently match
+a changed feature. Releases before Ensembl 77 record no versions, so they
+accept only IDs without one.</p>
 <h2 id="find-genes-at-a-position">Find genes at a position <a id="query-a-genomic-interval"></a><a class="headerlink" href="#find-genes-at-a-position" title="Permanent link">&para;</a></h2>
 <p>Give a position, or add <code>end</code> to search an interval:</p>
 <div class="highlight"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">gene_names_at_locus</span><span class="p">(</span><span class="n">contig</span><span class="o">=</span><span class="s2">"17"</span><span class="p">,</span> <span class="n">position</span><span class="o">=</span><span class="mi">7668402</span><span class="p">))</span>

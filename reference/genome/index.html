@@ -3158,7 +3158,8 @@
 <p>These methods apply to <code>EnsemblRelease</code>, <code>EnsemblAnnotation</code> and custom
 <a href="../../guides/custom-genomes/"><code>Genome</code></a> objects. Find a method in the tables
 below; the <a href="#pyensembl.Genome">complete reference</a> follows them. Coordinates are
-one-based and inclusive.</p>
+one-based and inclusive. Gene, transcript, exon and protein IDs may include a
+<a href="../../guides/features/#versioned-ids">version</a>, which must match the annotation's.</p>
 <h2 id="find-a-method">Find a method<a class="headerlink" href="#find-a-method" title="Permanent link">&para;</a></h2>
 <h3 id="genes">Genes<a class="headerlink" href="#genes" title="Permanent link">&para;</a></h3>
 <table>
@@ -4319,8 +4320,8 @@ copied. Return <code>(path, size_in_bytes)</code> pairs for the removed files.</
     <div class="doc doc-contents ">
 
         <p>Return cDNA nucleotide sequence of transcript, or None if
-transcript doesn't have cDNA sequence. Accepts both versioned
-(<code>ENST00000123456.7</code>) and unversioned identifiers.</p>
+transcript doesn't have cDNA sequence. A versioned ID such as
+<code>ENST00000269305.8</code> must match this annotation's version.</p>
 
 
     </div>
@@ -4341,8 +4342,8 @@ transcript doesn't have cDNA sequence. Accepts both versioned
     <div class="doc doc-contents ">
 
         <p>Return amino-acid sequence of protein, or None if the protein is
-absent from the FASTA. Accepts both versioned
-(<code>ENSP00000123456.3</code>) and unversioned identifiers.</p>
+absent from the FASTA. A versioned ID such as <code>ENSP00000269305.4</code>
+must match this annotation's version.</p>
 
 
     </div>
@@ -4800,7 +4801,9 @@ particular contig/chromosome, strand, or biotype.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Construct a Gene object for the given gene ID.</p>
+        <p>Construct a Gene object for the given gene ID, such as
+<code>"ENSG00000141510"</code>. A versioned ID such as
+<code>"ENSG00000141510.16"</code> must match this annotation's version.</p>
 
 
     </div>
@@ -5045,7 +5048,9 @@ or <code>transcript_biotype</code> (e.g. <code>"protein_coding"</code>).</p>
 
     <div class="doc doc-contents ">
 
-        <p>Construct Transcript object with given transcript ID</p>
+        <p>Construct a Transcript object for the given transcript ID, such as
+<code>"ENST00000269305"</code>. A versioned ID such as
+<code>"ENST00000269305.8"</code> must match this annotation's version.</p>
 
 
     </div>
@@ -5293,8 +5298,8 @@ restrict to a particular chromosome using the <code>contig</code> argument.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Construct an Exon object from its ID by looking up the exon's
-properties in the given Database.</p>
+        <p>Construct an Exon object for the given exon ID. A versioned ID
+must match this annotation's version.</p>
 
 
     </div>

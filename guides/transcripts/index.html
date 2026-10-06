@@ -1346,10 +1346,10 @@ directly:</p>
 TP53-201
 TP53
 </code></pre></div>
-<p>These lookups take the stable ID. <code>protein_sequence</code> also accepts a versioned
-ID such as <code>ENSP00000269305.4</code>, but it returns this release's sequence whatever
-the version number, so compare versions yourself when IDs come from another
-release.</p>
+<p>Each lookup also accepts a <a href="../features/#versioned-ids">versioned ID</a> such as
+<code>ENSP00000269305.4</code>. A version that differs from this release's, such as
+<code>ENSP00000269305.3</code>, raises <code>ValueError</code> instead of returning this release's
+protein.</p>
 <p>Noncoding transcripts have no protein, so their <code>protein</code>, <code>protein_id</code> and
 <code>protein_sequence</code> are <code>None</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="n">noncoding</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">transcript_by_id</span><span class="p">(</span><span class="s2">"ENST00000505014"</span><span class="p">)</span>

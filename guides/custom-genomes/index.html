@@ -1203,9 +1203,12 @@ require <code>data.download()</code> before <code>data.index()</code>.</p>
 <h2 id="match-files-and-identifiers">Match files and identifiers<a class="headerlink" href="#match-files-and-identifiers" title="Permanent link">&para;</a></h2>
 <p>Keep annotation source, assembly, version and file provenance with your
 analysis. A GTF should identify genes and transcripts using <code>gene_id</code> and
-<code>transcript_id</code>; sequence lookup uses matching FASTA record IDs. Ensembl
-version-suffix fallback supports matching a stable identifier to one versioned
-record, but ambiguous versions are not chosen arbitrarily. Gene-only GTF files
+<code>transcript_id</code>; sequence lookup uses matching FASTA record IDs. Ensembl IDs
+match with or without a version suffix, whether the files store versions in
+separate <code>*_version</code> attributes (Ensembl) or in the IDs themselves (GENCODE). A
+supplied version must match the stored one. When FASTA headers carry no version,
+or several versions of one ID, sequence lookups use the version the GTF records;
+an ID that still matches several versions raises an error. Gene-only GTF files
 can support gene queries without transcript identifiers.</p>
 <p>GFF3 requires conversion to GTF before indexing. Unsupported or missing GTF
 attributes can limit which queries work. <a href="../cache/#inspect-data-without-installing">Data inspection</a>
