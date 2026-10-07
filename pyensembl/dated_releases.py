@@ -21,25 +21,21 @@ catalogue is 37 MB and omits some installable datasets, so it is not used.
 
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import timedelta
 import logging
 import os
 import re
-import time
 
 from .download_cache import cache_root
 from .ensembl_url_templates import ENSEMBL_PLATFORM_FTP_SERVER, make_dated_releases_directory
 from .ensembl_versions import is_dated_release
-from .genome_fasta import _read_json, _write_json
 from .species import Species, check_species_object, find_species_by_name
 
 logger = logging.getLogger(__name__)
 
 LISTING_TIMEOUT_SECONDS = 30
-_LISTING_RETRIES = 2
-_LISTING_RETRY_MAX_DELAY = 10.0
 # `pyensembl available` checks listings again once they are this old.
-AVAILABLE_MAX_AGE_SECONDS = 24 * 60 * 60
+AVAILABLE_EXPIRE_AFTER = timedelta(days=1)
 
 _warned_unwritable_cache = False
 
@@ -98,51 +94,43 @@ def available_annotation_dates(assembly_accession, provider="ensembl", refresh=F
         If the dates must be fetched and the server can't be reached or
         returns a page that lists no dates.
     """
-    if not refresh:
-        record = _cached_listing(assembly_accession, provider)
-        if record is not None:
-            return record["dates"]
-    return _fetch_listing(assembly_accession, provider, LISTING_TIMEOUT_SECONDS)
+    return _listing_dates(assembly_accession, provider, refresh=refresh)
 
 
-def fetch_all_dated_releases(max_age=AVAILABLE_MAX_AGE_SECONDS, timeout=10):
+def fetch_all_dated_releases(expire_after=AVAILABLE_EXPIRE_AFTER, timeout=10):
     """
     Dates of every species with dated releases, by latin name, or None when
     they can't be fetched and none are cached.
 
-    Cached dates younger than ``max_age`` seconds are used as they are; older
-    ones are fetched again. Human is fetched first: if its listing can't be
-    read, the platform is treated as unreachable and cached dates are used,
-    so going offline costs one timeout rather than one per species.
+    Cached dates newer than ``expire_after`` are used as they are; older ones
+    are fetched again, keeping the cached dates if that fails. Human is
+    fetched first: if its listing can't be read, the platform is treated as
+    unreachable and every species uses its cached dates, so going offline
+    costs one failed request rather than one per species.
     """
     species = [
         find_species_by_name(name) for name in sorted(Species.all_registered_latin_names())
     ]
     species = [s for s in species if s.dated_releases is not None]
     species.sort(key=lambda s: s.latin_name != "homo_sapiens")  # Stable: human first.
-    records = {s.latin_name: _cached_listing(*s.dated_releases) for s in species}
-    dates = {
-        name: None if record is None else record["dates"] for name, record in records.items()
-    }
-    stale = [s for s in species if _age(records[s.latin_name]) > max_age]
-    if not stale:
-        return dates
-
     probe = species[0]
     try:
-        dates[probe.latin_name] = _fetch_listing(*probe.dated_releases, timeout=timeout)
+        dates = {probe.latin_name: _listing_dates(
+            *probe.dated_releases, timeout=timeout, expire_after=expire_after)}
     except OSError as error:
         logger.info("Using cached dated releases: %s", error)
-        return dates
+        return {s.latin_name: _cached_dates(*s.dated_releases) for s in species}
 
     def fetch(s):
         try:
-            return _fetch_listing(*s.dated_releases, timeout=timeout)
+            return _listing_dates(
+                *s.dated_releases, timeout=timeout, expire_after=expire_after,
+                stale_if_error=True)
         except OSError as error:
             logger.debug("Dated releases of %s: %s", s.latin_name, error)
-            return dates[s.latin_name]
+            return None
 
-    rest = [s for s in stale if s is not probe]
+    rest = species[1:]
     with ThreadPoolExecutor(4) as pool:
         dates.update(zip((s.latin_name for s in rest), pool.map(fetch, rest)))
     return dates
@@ -202,78 +190,65 @@ def _dated_release_dataset(species):
 def _listing_location(assembly_accession, provider):
     url = make_dated_releases_directory(assembly_accession, provider) + "/"
     path = os.path.join(
-        cache_root(), "dated_releases", "%s_%s.json" % (assembly_accession, provider)
+        cache_root(), "dated_releases", "%s_%s.html" % (assembly_accession, provider)
     )
     return url, path
 
 
-def _cached_listing(assembly_accession, provider):
-    """The cached {"url", "fetched", "dates"} record, or None; offline."""
-    url, path = _listing_location(assembly_accession, provider)
-    record = _read_json(path)
-    if not isinstance(record, dict) or record.get("url") != url:
-        return None  # From another source or unreadable; fetch again.
-    dates = record.get("dates")
-    if not isinstance(dates, list) or not dates or not all(map(is_dated_release, dates)):
+def _dates_in(path):
+    with open(path, encoding="utf-8", errors="replace") as handle:
+        return parse_dated_release_listing(handle.read())
+
+
+def _require_dates(path):
+    """datacache validator: every dataset directory lists at least one date,
+    so a page without one (a proxy error, a new listing format) is rejected
+    rather than cached."""
+    if not _dates_in(path):
+        raise ValueError("no annotation dates listed")
+
+
+def _cached_dates(assembly_accession, provider):
+    """Dates from the cached listing, or None; never uses the network."""
+    _, path = _listing_location(assembly_accession, provider)
+    try:
+        return _dates_in(path) or None
+    except OSError:
         return None
-    return record
 
 
-def _age(record):
-    """Seconds since a cached listing was fetched; infinite if unknown."""
-    try:
-        fetched = datetime.fromisoformat(record["fetched"])
-    except (TypeError, KeyError, ValueError):
-        return float("inf")
-    return (datetime.now(timezone.utc) - fetched).total_seconds()
-
-
-def _fetch_listing(assembly_accession, provider, timeout):
+def _listing_dates(
+    assembly_accession, provider, refresh=False, *,
+    timeout=LISTING_TIMEOUT_SECONDS, expire_after=None, stale_if_error=False,
+):
+    """
+    Dates from the cached listing, fetched when it's missing, when refresh is
+    true, or when it's older than expire_after. Raises OSError if the listing
+    can't be fetched or lists no dates.
+    """
     global _warned_unwritable_cache
+    import datacache
+
     url, path = _listing_location(assembly_accession, provider)
-    dates = parse_dated_release_listing(_get(url, timeout))
-    if not dates:
-        # Every dataset directory has at least one date; this page is
-        # something else (a proxy error, a new listing format), so don't
-        # cache it as the truth.
-        raise OSError("No annotation dates found at %s" % (url,))
-    record = {
-        "url": url,
-        "fetched": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "dates": dates,
-    }
     try:
-        _write_json(path, record)
-    except OSError as error:  # e.g. a read-only shared cache
+        path = datacache.fetch_file(
+            url, destination=path, raw=True, force=refresh, timeout=timeout,
+            record_provenance=True, expire_after=expire_after,
+            stale_if_error=stale_if_error, validator=_require_dates,
+        )
+    except datacache.FileValidationError as error:
+        if refresh or not os.path.exists(path):
+            raise OSError("No annotation dates found at %s" % (url,)) from error
+        # A cached listing without dates, e.g. from another tool: fetch it again.
+        return _listing_dates(assembly_accession, provider, refresh=True, timeout=timeout)
+    except PermissionError as error:
+        # A read-only shared cache: read the listing without caching it.
         level = logging.DEBUG if _warned_unwritable_cache else logging.WARNING
         logger.log(level, "Couldn't cache annotation dates in %s: %s", path, error)
         _warned_unwritable_cache = True
-    return dates
-
-
-def _get(url, timeout):
-    """
-    A listing page, fetched with requests (so TLS trust matches downloads)
-    and retried like datacache downloads: connection errors, 408, 429 and
-    5xx, honoring Retry-After. A timeout is not retried; a listing is a few
-    kilobytes, so it means the server is unreachable. Errors are OSErrors.
-    """
-    import requests
-    from datacache.retries import is_retryable_http_error, retry_delay
-
-    backoff = 1.0
-    for attempt in range(_LISTING_RETRIES + 1):
-        try:
-            response = requests.get(url, timeout=timeout)
-            response.raise_for_status()
-            return response.text
-        except requests.Timeout:
-            raise
-        except requests.RequestException as error:
-            delay = None
-            if attempt < _LISTING_RETRIES and is_retryable_http_error(error):
-                delay = retry_delay(error, backoff, _LISTING_RETRY_MAX_DELAY)
-            if delay is None:
-                raise
-            time.sleep(delay)
-            backoff *= 2
+        listing = datacache.fetch_bytes(url, timeout=timeout)
+        dates = parse_dated_release_listing(listing.decode("utf-8", "replace"))
+        if not dates:
+            raise OSError("No annotation dates found at %s" % (url,)) from error
+        return dates
+    return _dates_in(path)

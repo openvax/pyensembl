@@ -1,12 +1,12 @@
 """Discovering dated releases on the new Ensembl platform (#447 phase 2)."""
 
 from datetime import datetime, timedelta, timezone
-import json
 import logging
 import os
 from pathlib import Path
 import re
 
+import datacache.download
 import pytest
 import requests
 
@@ -24,7 +24,6 @@ from pyensembl.dated_releases import (
     fetch_all_dated_releases,
     parse_dated_release_listing,
 )
-from pyensembl.ensembl_url_templates import make_dated_releases_directory
 from pyensembl.genome import Genome
 from pyensembl.genome_fasta import GenomeFasta
 from pyensembl.species import Species, find_species_by_name
@@ -46,28 +45,29 @@ def http_error(status, headers=None):
 
 
 class Server:
-    """Stands in for requests.get: serves listings by URL, records requests.
-
-    A listing may also be an exception, or a list of responses served in turn.
-    """
+    """Stands in for requests.get, as datacache calls it: serves listings by
+    URL and records requests. A listing may be HTML, an int HTTP status, an
+    exception, or a list of these served in turn (the last repeats)."""
 
     def __init__(self, **listings):
         self.listings = listings
         self.requests = []
         self.offline = False
 
-    def get(self, url, timeout=None):
+    def get(self, url, timeout=None, **options):
         self.requests.append(url)
         if self.offline:
             raise requests.ConnectionError("offline")
-        served = self.listings.get(url, http_error(404))
+        served = self.listings.get(url, 404)
         if isinstance(served, list):
             served = served.pop(0) if len(served) > 1 else served[0]
         if isinstance(served, Exception):
             raise served
         response = requests.Response()
-        response.status_code = 200
-        response._content = served.encode()
+        response.url = url
+        response.status_code, body = (served, b"") if isinstance(served, int) else (200, served.encode())
+        response._content = body
+        response._content_consumed = True  # iter_content serves _content.
         return response
 
 
@@ -76,7 +76,7 @@ def server(tmp_path, monkeypatch):
     monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path / "cache"))
     fake = Server(**{HUMAN_LISTING: listing("2023_03", "2026_04")})
     monkeypatch.setattr(requests, "get", fake.get)
-    monkeypatch.setattr(dated_releases.time, "sleep", lambda seconds: None)
+    monkeypatch.setattr(datacache.download.time, "sleep", lambda seconds: None)
     return fake
 
 
@@ -123,12 +123,12 @@ def test_dates_by_accession_and_provider(server):
     assert available_annotation_dates("GCA_000001405.29", "ensembl") == ["2023_03", "2026_04"]
 
 
-def test_unusable_cache_is_fetched_again(server, tmp_path):
-    path = tmp_path / "cache/pyensembl/dated_releases/GCA_000001405.29_ensembl.json"
+def test_cached_listing_without_dates_is_fetched_again(server, tmp_path):
+    path = tmp_path / "cache/pyensembl/dated_releases/GCA_000001405.29_ensembl.html"
     path.parent.mkdir(parents=True)
-    path.write_text(json.dumps({"url": "https://mirror/", "dates": ["1999_01"]}))
+    path.write_text("<html>Proxy error</html>")
     assert available_dated_releases("human") == ["2023_03", "2026_04"]
-    assert json.loads(path.read_text())["url"] == HUMAN_LISTING
+    assert "2026_04" in path.read_text()
 
 
 def test_species_without_dated_releases():
@@ -136,43 +136,43 @@ def test_species_without_dated_releases():
         available_dated_releases("toxoplasma_gondii")
 
 
-def test_page_without_dates_is_not_trusted(server):
+def test_page_without_dates_is_not_trusted(server, tmp_path):
     server.listings[HUMAN_LISTING] = "<html>Proxy error</html>"
     with pytest.raises(OSError, match="No annotation dates"):
         available_dated_releases("human")
+    assert not list((tmp_path / "cache/pyensembl/dated_releases").glob("*.html"))
     server.listings[HUMAN_LISTING] = listing("2026_04")
     assert available_dated_releases("human") == ["2026_04"]
 
 
-@pytest.mark.parametrize("failure", [
-    requests.ConnectionError("refused"),
-    http_error(503, {"Retry-After": "1"}),
-    http_error(429),
-])
+@pytest.mark.parametrize("failure", [requests.ConnectionError("refused"), 503, 429])
 def test_transient_listing_failures_are_retried(server, failure):
     server.listings[HUMAN_LISTING] = [failure, failure, listing("2026_04")]
     assert available_dated_releases("human") == ["2026_04"]
     assert len(server.requests) == 3
 
 
-@pytest.mark.parametrize("failure", [requests.Timeout("slow"), http_error(404)])
-def test_timeouts_and_missing_listings_are_not_retried(server, failure):
-    server.listings[HUMAN_LISTING] = failure
+def test_missing_listings_are_not_retried(server):
+    server.listings[HUMAN_LISTING] = 404
     with pytest.raises(OSError):
         available_dated_releases("human")
     assert len(server.requests) == 1
 
 
-def test_unwritable_cache_returns_dates_and_warns_once(server, monkeypatch, caplog):
-    def read_only(path, value):
-        raise PermissionError(path)
-
-    monkeypatch.setattr(dated_releases, "_write_json", read_only)
+@pytest.mark.skipif(os.geteuid() == 0, reason="root ignores directory permissions")
+def test_read_only_cache_returns_dates_and_warns_once(server, tmp_path, monkeypatch, caplog):
+    cache = tmp_path / "cache/pyensembl/dated_releases"
+    cache.mkdir(parents=True)
+    cache.chmod(0o555)
     monkeypatch.setattr(dated_releases, "_warned_unwritable_cache", False)
-    with caplog.at_level(logging.DEBUG, logger="pyensembl"):
-        assert available_dated_releases("human") == ["2023_03", "2026_04"]
-        assert available_dated_releases("human") == ["2023_03", "2026_04"]
-    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    try:
+        with caplog.at_level(logging.DEBUG, logger="pyensembl"):
+            assert available_dated_releases("human") == ["2023_03", "2026_04"]
+            assert available_dated_releases("human") == ["2023_03", "2026_04"]
+    finally:
+        cache.chmod(0o755)
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING
+                and r.name.startswith("pyensembl")]
     assert len(warnings) == 1 and "Couldn't cache annotation dates" in warnings[0].message
 
 
@@ -255,11 +255,12 @@ def test_install_reports_an_unpublished_date(server, monkeypatch, capsys):
 
 
 def cache_listing(species, dates, age):
-    url = make_dated_releases_directory(*species.dated_releases) + "/"
+    """Cache a listing of dates as if fetched `age` seconds ago."""
     path = Path(dated_releases._listing_location(*species.dated_releases)[1])
     path.parent.mkdir(parents=True, exist_ok=True)
-    fetched = datetime.now(timezone.utc) - timedelta(seconds=age)
-    path.write_text(json.dumps({"url": url, "fetched": fetched.isoformat(), "dates": dates}))
+    path.write_text(listing(*dates))
+    fetched = (datetime.now(timezone.utc) - timedelta(seconds=age)).timestamp()
+    os.utime(path, (fetched, fetched))
 
 
 def test_available_uses_fresh_cached_dates_offline(server):
