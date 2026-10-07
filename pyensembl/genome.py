@@ -16,6 +16,7 @@ around an arbitrary genomic database.
 """
 
 
+from contextlib import nullcontext
 from dataclasses import replace
 from numbers import Integral
 from os import lstat, remove
@@ -225,7 +226,8 @@ class Genome(Serializable):
         show_progress displays progress bars for the download and decompression.
         """
         genome_fasta = self._require_genome_fasta()
-        genome_fasta.prepare(download=True, overwrite=overwrite, show_progress=show_progress)
+        with self._explain_download_failure():
+            genome_fasta.prepare(download=True, overwrite=overwrite, show_progress=show_progress)
         genome_fasta.remember()
 
     def index_genome_fasta(self, overwrite=False, show_progress=False):
@@ -388,12 +390,18 @@ class Genome(Serializable):
             overwrite=overwrite,
             show_progress=show_progress,
         )
-        if self.requires_gtf:
-            self.gtf_path = self._get_gtf_path(**options)
-        if self.requires_transcript_fasta:
-            self.transcript_fasta_paths = self._get_transcript_fasta_paths(**options)
-        if self.requires_protein_fasta:
-            self.protein_fasta_paths = self._get_protein_fasta_paths(**options)
+        with self._explain_download_failure():
+            if self.requires_gtf:
+                self.gtf_path = self._get_gtf_path(**options)
+            if self.requires_transcript_fasta:
+                self.transcript_fasta_paths = self._get_transcript_fasta_paths(**options)
+            if self.requires_protein_fasta:
+                self.protein_fasta_paths = self._get_protein_fasta_paths(**options)
+
+    def _explain_download_failure(self):
+        """Context around downloads; subclasses can replace a failure with
+        a clearer error, e.g. naming the dates Ensembl publishes."""
+        return nullcontext()
 
     def _local_source_path(self, path_or_url):
         """Where a source file is, or will be, on disk; never downloads or copies.

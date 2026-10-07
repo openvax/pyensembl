@@ -50,10 +50,29 @@ describes coordinates, strand and masking.
 
 ## Find a date <a id="choose-the-dataset-explicitly"></a>
 
-The new platform's [FTP layout](https://www.ensembl.info/2026/06/26/updates-to-ftp-site-of-the-new-ensembl-website/)
-groups data by GCA/GCF assembly accession, provider and annotation date. Browse
-an assembly's directory for its dates, for example
-[human GRCh38](https://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/29/ensembl/).
+`pyensembl available` lists each species' annotation dates beside its numbered
+releases. In Python, `available_dated_releases` returns them oldest first:
+
+```python
+from pyensembl import available_dated_releases
+
+print(available_dated_releases("human"))
+```
+
+```text
+['2023_03', '2024_11', '2025_12', '2026_04']
+```
+
+The dates come from the directory of the species' current assembly and
+provider on the new platform's [FTP site](https://www.ensembl.info/2026/06/26/updates-to-ftp-site-of-the-new-ensembl-website/),
+for example [human GRCh38](https://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/29/ensembl/),
+which is where dated releases download from. They are cached on first use and
+read offline afterwards; pass `refresh=True` to check for new dates.
+`pyensembl available` checks again when its cached dates are a day old, and
+uses the cached dates offline. Downloading a date that Ensembl doesn't publish
+raises `UnpublishedDateError`, which lists the dates that exist, once the
+download finds the file missing.
+
 An annotation date records when the annotation was built, not when it was
 published: Arabidopsis's current annotation is dated `2010_09`, and fly's
 `2022_07` annotation is older than release 116's. A website release label such
@@ -78,6 +97,9 @@ with EnsemblAnnotation(
     data.download()
     data.index()
 ```
+
+`available_annotation_dates("GCA_000001405.14", "ensembl")` lists the dates of
+an accession and provider, as `available_dated_releases` does for a species.
 
 `include_alt=True` selects `genes-including_alt.gtf.gz`; the default selects
 `genes.gtf.gz`. Alternative loci can add name matches. Confirm that the chosen

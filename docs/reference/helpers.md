@@ -6,6 +6,12 @@ version. See [assembly selection](../guides/assembly-selection.md).
 
 ::: pyensembl.cached_release
 
+::: pyensembl.available_dated_releases
+
+::: pyensembl.available_annotation_dates
+
+::: pyensembl.UnpublishedDateError
+
 ::: pyensembl.find_species_by_name
 
 ::: pyensembl.find_species_by_reference

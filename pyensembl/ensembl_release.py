@@ -19,6 +19,7 @@ import os
 import shlex
 import warnings
 
+from .dated_releases import explain_unpublished_date
 from .genome import Genome
 from .genome_fasta_cache import canonical_source_options, release_genome_fasta
 from .genome_fasta import GenomeFasta
@@ -226,6 +227,15 @@ class EnsemblRelease(Genome):
             source,
             self.download_cache.cache_directory_path,
             install_string_function=self.genome_fasta_install_string,
+        )
+
+    def _explain_download_failure(self):
+        if not is_dated_release(self.release):
+            return Genome._explain_download_failure(self)
+        accession, provider = self.species.dated_releases
+        return explain_unpublished_date(
+            accession, provider, self.release, self.server,
+            description="%s %s" % (self.species.latin_name, self.reference_name),
         )
 
     def install_string(self):

@@ -242,6 +242,17 @@ DatedReleaseUrls = namedtuple(
 DATED_GENOME_FASTA_MASKS = {"none": "unmasked", "soft": "softmasked", "hard": "hardmasked"}
 
 
+def make_dated_releases_directory(
+    assembly_accession, provider, server=ENSEMBL_PLATFORM_FTP_SERVER
+):
+    """Directory listing one assembly/provider's annotation dates, e.g.
+    .../GCA/000/001/405/29/ensembl for GCA_000001405.29 and "ensembl"."""
+    prefix, digits = assembly_accession.split("_")
+    number, version = digits.split(".")
+    accession_path = "/".join([prefix, number[:3], number[3:6], number[6:9], version])
+    return "/".join([server.rstrip("/"), accession_path, provider])
+
+
 def make_dated_release_urls(
     assembly_accession, provider, annotation_date, include_alt=False,
     genome_fasta_mask="none", server=ENSEMBL_PLATFORM_FTP_SERVER,
@@ -254,10 +265,10 @@ def make_dated_release_urls(
     """
     if genome_fasta_mask not in DATED_GENOME_FASTA_MASKS:
         raise ValueError("genome_fasta_mask must be 'none', 'soft', or 'hard'")
-    prefix, digits = assembly_accession.split("_")
-    number, version = digits.split(".")
-    accession_path = "/".join([prefix, number[:3], number[3:6], number[6:9], version])
-    directory = "/".join([server.rstrip("/"), accession_path, provider, annotation_date])
+    directory = "%s/%s" % (
+        make_dated_releases_directory(assembly_accession, provider, server),
+        annotation_date,
+    )
     geneset = directory + "/geneset/"
     return DatedReleaseUrls(
         directory=directory,
