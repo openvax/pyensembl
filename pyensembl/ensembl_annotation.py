@@ -3,6 +3,7 @@
 from datetime import datetime
 import re
 
+from .dated_releases import explain_unpublished_date
 from .ensembl_url_templates import ENSEMBL_PLATFORM_FTP_SERVER, make_dated_release_urls
 from .genome import Genome
 from .species import find_species_by_name
@@ -84,6 +85,11 @@ class EnsemblAnnotation(Genome):
             protein_fasta_paths_or_urls=[urls.pep],
             genome_fasta_path_or_url=urls.genome_fasta if genome_fasta else None,
             cache_directory_path=cache_directory_path,
+        )
+
+    def _explain_download_failure(self):
+        return explain_unpublished_date(
+            self.assembly_accession, self.provider, self.annotation_date, self.server
         )
 
     def to_dict(self):

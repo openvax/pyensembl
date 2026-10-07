@@ -13,7 +13,11 @@
 import logging
 
 from .database import Database
-from .dated_releases import available_dated_releases
+from .dated_releases import (
+    UnpublishedDateError,
+    available_annotation_dates,
+    available_dated_releases,
+)
 from .download_cache import DownloadCache
 from .ensembl_annotation import EnsemblAnnotation
 from .ensembl_release import EnsemblRelease, cached_release
@@ -50,7 +54,9 @@ logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = [
     "__version__",
+    "available_annotation_dates",
     "available_dated_releases",
+    "UnpublishedDateError",
     "DownloadCache",
     "Database",
     "EnsemblAnnotation",

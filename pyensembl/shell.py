@@ -22,7 +22,7 @@ import re
 import sys
 
 from .database import is_complete_database
-from .dated_releases import fetch_all_dated_releases, require_published_date
+from .dated_releases import UnpublishedDateError, fetch_all_dated_releases
 from .download_cache import cache_root
 from .ensembl_release import EnsemblRelease
 from .ensembl_versions import is_dated_release, normalize_release
@@ -444,8 +444,10 @@ def format_installed_genomes(check_genome_fasta=False, use_color=None):
     """A table of genomes in the local cache, or a note that there are none."""
     rows = []
     ensembl_directories = set()
+    ensembl_named = set()
     for genome in _ensembl_releases():
         directory = genome.download_cache.cache_directory_path
+        ensembl_named.add(os.path.normpath(directory))
         annotation = genome._annotation_status()
         dna = _dna_status(directory, check=check_genome_fasta)
         if not _has_data(annotation, dna):
@@ -472,7 +474,11 @@ def format_installed_genomes(check_genome_fasta=False, use_color=None):
             dna = _dna_status(directory, check=check_genome_fasta)
             if not _has_data(annotation, dna):
                 continue
-            species, release = _other_genome_labels(reference.name, directory.name)
+            if os.path.normpath(directory) in ensembl_named:
+                # Named like an Ensembl release, but holding other files.
+                species, release = "custom", directory.name
+            else:
+                species, release = _other_genome_labels(reference.name, directory.name)
             rows.append((
                 species,
                 reference.name,
@@ -757,7 +763,10 @@ def format_available_species(use_color=None, dated_releases=None):
                         latin_cell,
                     )
                 )
-    if dated_releases is not None and None in dated_releases.values():
+    if any(
+        dates_cell(species, asm) == "?"
+        for species in all_species for asm in species.reference_assemblies
+    ):
         lines.append("")
         lines.append("? = dates could not be fetched and none are cached")
     return "\n".join(lines)
@@ -864,11 +873,6 @@ def run():
     else:
         try:
             genomes = collect_selected_genomes(args)
-            if args.action == "install":
-                # Report a date Ensembl doesn't publish before installing anything.
-                for genome in genomes:
-                    if isinstance(genome, EnsemblRelease) and is_dated_release(genome.release):
-                        require_published_date(genome)
         except ValueError as error:
             parser.error(str(error))
 
@@ -884,9 +888,12 @@ def run():
             if args.action in ("delete-all-files", "delete-index-files"):
                 _delete_genome_files(genome, args.action)
             elif args.action == "install":
-                _install(
-                    genome, args.only_genome_fasta, args.overwrite,
-                    show_progress=_progress_available(),
-                )
+                try:
+                    _install(
+                        genome, args.only_genome_fasta, args.overwrite,
+                        show_progress=_progress_available(),
+                    )
+                except UnpublishedDateError as error:
+                    parser.error(str(error))
             else:
                 raise ValueError("Invalid action: %s" % args.action)
