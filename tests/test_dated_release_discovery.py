@@ -232,6 +232,8 @@ def test_all_dates_are_fetched_with_per_species_fallback(server):
 
 
 def test_install_rejects_an_unpublished_date_before_installing(server, monkeypatch, capsys):
+    # run() would attach a handler to this test's captured stderr for good.
+    monkeypatch.setattr(shell, "configure_logging", lambda **kwargs: None)
     monkeypatch.setattr("sys.argv", ["pyensembl", "install", "--release", "2026_04", "2013_09"])
     with pytest.raises(SystemExit):
         shell.run()
