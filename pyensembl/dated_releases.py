@@ -125,7 +125,7 @@ def fetch_all_dated_releases(expire_after=AVAILABLE_EXPIRE_AFTER, timeout=10):
         try:
             return _listing_dates(
                 *s.dated_releases, timeout=timeout, expire_after=expire_after,
-                stale_if_error=True)
+                return_stale_on_error=True)
         except OSError as error:
             logger.debug("Dated releases of %s: %s", s.latin_name, error)
             return None
@@ -219,7 +219,7 @@ def _cached_dates(assembly_accession, provider):
 
 def _listing_dates(
     assembly_accession, provider, refresh=False, *,
-    timeout=LISTING_TIMEOUT_SECONDS, expire_after=None, stale_if_error=False,
+    timeout=LISTING_TIMEOUT_SECONDS, expire_after=None, return_stale_on_error=False,
 ):
     """
     Dates from the cached listing, fetched when it's missing, when refresh is
@@ -234,7 +234,7 @@ def _listing_dates(
         path = datacache.fetch_file(
             url, destination=path, raw=True, force=refresh, timeout=timeout,
             record_provenance=True, expire_after=expire_after,
-            stale_if_error=stale_if_error, validator=_require_dates,
+            return_stale_on_error=return_stale_on_error, validator=_require_dates,
         )
     except datacache.FileValidationError as error:
         if refresh or not os.path.exists(path):
