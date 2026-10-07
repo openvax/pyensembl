@@ -240,8 +240,9 @@ class EnsemblRelease(Genome):
         )
 
     def download_genome_fasta(self, overwrite=False, show_progress=False):
-        if is_dated_release(self.release) and self.requires_genome_fasta and (
-            overwrite or not os.path.exists(self._genome_fasta.expected_path)
+        dna = self._genome_fasta
+        if is_dated_release(self.release) and dna is not None and dna.remote and (
+            overwrite or not os.path.exists(dna.expected_path)
         ):
             require_published_date(self)
         Genome.download_genome_fasta(self, overwrite=overwrite, show_progress=show_progress)

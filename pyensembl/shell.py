@@ -13,7 +13,6 @@
 """Command-line tool for installing and managing PyEnsembl data."""
 
 import argparse
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import fields
 import json
 import logging
@@ -23,7 +22,7 @@ import re
 import sys
 
 from .database import is_complete_database
-from .dated_releases import available_dated_releases
+from .dated_releases import fetch_all_dated_releases, require_published_date
 from .download_cache import cache_root
 from .ensembl_release import EnsemblRelease
 from .ensembl_versions import is_dated_release, normalize_release
@@ -447,11 +446,11 @@ def format_installed_genomes(check_genome_fasta=False, use_color=None):
     ensembl_directories = set()
     for genome in _ensembl_releases():
         directory = genome.download_cache.cache_directory_path
-        ensembl_directories.add(os.path.normpath(directory))
         annotation = genome._annotation_status()
         dna = _dna_status(directory, check=check_genome_fasta)
         if not _has_data(annotation, dna):
-            continue
+            continue  # Possibly a custom genome with the same name; listed below.
+        ensembl_directories.add(os.path.normpath(directory))
         rows.append((
             _species_display_name(genome.species),
             genome.reference_name,
@@ -764,25 +763,6 @@ def format_available_species(use_color=None, dated_releases=None):
     return "\n".join(lines)
 
 
-def fetch_available_dated_releases():
-    """
-    Current annotation dates of every species with dated releases, by latin
-    name. Fetched again because listing what is available is an explicit
-    request; cached dates are used when offline, and None when there are none.
-    """
-    def dates(species):
-        for refresh in (True, False):
-            try:
-                return available_dated_releases(species, refresh=refresh)
-            except OSError as error:
-                logger.debug("Dated releases of %s: %s", species.latin_name, error)
-        return None
-
-    species = [s for s in Species._latin_names_to_species.values() if s.dated_releases]
-    with ThreadPoolExecutor(8) as pool:
-        return dict(zip((s.latin_name for s in species), pool.map(dates, species)))
-
-
 def _genome_description(genome):
     if isinstance(genome, EnsemblRelease):
         species = genome.species
@@ -879,10 +859,16 @@ def run():
     if args.action == "list":
         print(format_installed_genomes(check_genome_fasta=args.check_genome_fasta))
     elif args.action == "available":
-        print(format_available_species(dated_releases=fetch_available_dated_releases()))
+        # Listing what is available is an explicit request, so check again.
+        print(format_available_species(dated_releases=fetch_all_dated_releases()))
     else:
         try:
             genomes = collect_selected_genomes(args)
+            if args.action == "install":
+                # Report a date Ensembl doesn't publish before installing anything.
+                for genome in genomes:
+                    if isinstance(genome, EnsemblRelease) and is_dated_release(genome.release):
+                        require_published_date(genome)
         except ValueError as error:
             parser.error(str(error))
 

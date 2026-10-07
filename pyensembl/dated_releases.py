@@ -19,17 +19,23 @@ which is exactly what dated releases download from. Ensembl's species.json
 catalogue is 37 MB and omits some installable datasets, so it is not used.
 """
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
-import json
+import http.client
+import logging
 import os
 import re
+import time
+import urllib.error
 import urllib.request
 
-from .common import _atomic_output
 from .download_cache import cache_root
 from .ensembl_url_templates import ENSEMBL_PLATFORM_FTP_SERVER, make_dated_releases_directory
 from .ensembl_versions import is_dated_release
-from .species import check_species_object
+from .genome_fasta import _read_json, _write_json
+from .species import check_species_object, find_species_by_name, Species
+
+logger = logging.getLogger(__name__)
 
 LISTING_TIMEOUT_SECONDS = 30
 
@@ -56,48 +62,112 @@ def available_dated_releases(species="human", refresh=False):
     ValueError
         If the species has no dated releases.
     OSError
-        If the dates must be fetched and the server can't be reached.
+        If the dates must be fetched and the server can't be reached or
+        returns a page that lists no dates.
     """
+    if not refresh:
+        cached = cached_dated_releases(species)
+        if cached is not None:
+            return cached
+    return _fetch_dated_releases(species, LISTING_TIMEOUT_SECONDS)
+
+
+def cached_dated_releases(species="human"):
+    """Dates from the last listing fetched for this species, or None; offline."""
+    url, path = _listing_location(species)
+    record = _read_json(path)
+    if not isinstance(record, dict) or record.get("url") != url:
+        return None  # From another source or unreadable; fetch again.
+    dates = record.get("dates")
+    if not isinstance(dates, list) or not dates or not all(map(is_dated_release, dates)):
+        return None
+    return dates
+
+
+def _listing_location(species):
     species = check_species_object(species)
     if species.dated_releases is None:
         raise ValueError("No dated Ensembl releases for %s" % (species.latin_name,))
     accession, provider = species.dated_releases
     url = make_dated_releases_directory(accession, provider) + "/"
     path = os.path.join(cache_root(), "dated_releases", "%s_%s.json" % (accession, provider))
-    if not refresh:
-        cached = _read_listing(path, url)
-        if cached is not None:
-            return cached
-    with urllib.request.urlopen(url, timeout=LISTING_TIMEOUT_SECONDS) as response:
-        dates = parse_dated_release_listing(response.read().decode("utf-8", "replace"))
+    return url, path
+
+
+def _fetch_dated_releases(species, timeout):
+    url, path = _listing_location(species)
+    html = _read_listing_page(url, timeout)
+    dates = parse_dated_release_listing(html)
+    if not dates:
+        # Every species with dated releases has at least one; this page is
+        # something else (a proxy error, a new listing format), so don't
+        # cache it as the truth.
+        raise OSError("No annotation dates found at %s" % (url,))
     record = {
         "url": url,
         "fetched": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "dates": dates,
     }
-    with _atomic_output(path, "w") as handle:
-        json.dump(record, handle, indent=1)
+    try:
+        _write_json(path, record)
+    except OSError as error:  # e.g. a read-only shared cache
+        logger.warning("Couldn't cache dated releases in %s: %s", path, error)
     return dates
+
+
+def fetch_all_dated_releases(timeout=10):
+    """
+    Dates of every species with dated releases, by latin name, fetched again
+    and falling back to cached dates, or None when none are cached. Human is
+    fetched first: if its listing can't be read, the platform is treated as
+    unreachable and every species is read from the cache, so going offline
+    costs one timeout rather than one per species.
+    """
+    species = [
+        find_species_by_name(name) for name in sorted(Species.all_registered_latin_names())
+    ]
+    species = [s for s in species if s.dated_releases is not None]
+    species.sort(key=lambda s: s.latin_name != "homo_sapiens")  # Stable: human first.
+
+    def fetch(s):
+        try:
+            return _fetch_dated_releases(s, timeout)
+        except OSError as error:
+            logger.debug("Dated releases of %s: %s", s.latin_name, error)
+            return cached_dated_releases(s)
+
+    try:
+        dates = {species[0].latin_name: _fetch_dated_releases(species[0], timeout)}
+    except OSError as error:
+        logger.info("Using cached dated releases: %s", error)
+        return {s.latin_name: cached_dated_releases(s) for s in species}
+    with ThreadPoolExecutor(4) as pool:
+        dates.update(zip((s.latin_name for s in species[1:]), pool.map(fetch, species[1:])))
+    return dates
+
+
+def _read_listing_page(url, timeout):
+    """The listing's HTML. EBI sometimes refuses bursts of connections, so a
+    refused or reset connection is retried; other failures raise OSError."""
+    for delay in (0.5, 1.0, None):
+        try:
+            with urllib.request.urlopen(url, timeout=timeout) as response:
+                return response.read().decode("utf-8", "replace")
+        except http.client.HTTPException as error:  # e.g. a truncated response
+            raise OSError("Couldn't read %s: %s" % (url, error)) from error
+        except OSError as error:
+            reason = error.reason if isinstance(error, urllib.error.URLError) else error
+            if delay is None or not isinstance(
+                reason, (ConnectionRefusedError, ConnectionResetError)
+            ):
+                raise
+            time.sleep(delay)
 
 
 def parse_dated_release_listing(html):
     """Annotation dates linked from an HTML directory listing, oldest first."""
     links = re.findall(r'href="([^"/?]+)/"', html)
     return sorted({link for link in links if is_dated_release(link)})
-
-
-def _read_listing(path, url):
-    try:
-        with open(path) as handle:
-            record = json.load(handle)
-    except (OSError, ValueError):
-        return None
-    if not isinstance(record, dict) or record.get("url") != url:
-        return None  # From another source or unreadable; fetch again.
-    dates = record.get("dates")
-    if not isinstance(dates, list) or not all(is_dated_release(date) for date in dates):
-        return None
-    return dates
 
 
 def require_published_date(genome):
@@ -123,6 +193,6 @@ def require_published_date(genome):
             "available dates: %s"
             % (
                 genome.species.latin_name, genome.reference_name, accession, provider,
-                genome.release, ", ".join(dates) or "none",
+                genome.release, ", ".join(dates),
             )
         )

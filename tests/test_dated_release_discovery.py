@@ -1,16 +1,22 @@
 """Discovering dated releases on the new Ensembl platform (#447 phase 2)."""
 
+import http.client
 import io
 import json
 import os
 from pathlib import Path
 import re
+import urllib.error
 
 import pytest
 
 from pyensembl import EnsemblRelease, available_dated_releases, shell
 from pyensembl import dated_releases
-from pyensembl.dated_releases import parse_dated_release_listing, require_published_date
+from pyensembl.dated_releases import (
+    fetch_all_dated_releases,
+    parse_dated_release_listing,
+    require_published_date,
+)
 
 HUMAN_LISTING = "https://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/29/ensembl/"
 
@@ -32,7 +38,12 @@ class Server:
         self.requests.append(url)
         if self.offline:
             raise OSError("offline")
-        return io.BytesIO(self.listings[url].encode())
+        if url not in self.listings:
+            raise OSError("404 %s" % url)
+        response = self.listings[url]
+        if isinstance(response, Exception):
+            raise response
+        return io.BytesIO(response.encode())
 
 
 @pytest.fixture
@@ -142,6 +153,100 @@ def test_available_table_shows_current_assembly_dates():
     grcm39 = next(line for line in table.splitlines() if "GRCm39" in line)
     assert " ? " in grcm39
     assert table.endswith("? = dates could not be fetched and none are cached")
+
+
+def test_page_without_dates_is_not_trusted(server):
+    server.listings[HUMAN_LISTING] = "<html>Proxy error</html>"
+    with pytest.raises(OSError, match="No annotation dates"):
+        available_dated_releases("human")
+    require_published_date(EnsemblRelease("2026_04"))  # Fails open.
+    server.listings[HUMAN_LISTING] = listing("2026_04")
+    assert available_dated_releases("human") == ["2026_04"]
+
+
+def test_truncated_response_counts_as_unreachable(server):
+    server.listings[HUMAN_LISTING] = http.client.IncompleteRead(b"")
+    with pytest.raises(OSError):
+        available_dated_releases("human")
+    require_published_date(EnsemblRelease("2013_09"))
+
+
+def test_refused_connections_are_retried(server, monkeypatch):
+    monkeypatch.setattr(dated_releases.time, "sleep", lambda seconds: None)
+    refusals = [urllib.error.URLError(ConnectionRefusedError()), ConnectionResetError()]
+    original = server.urlopen
+
+    def flaky(url, timeout=None):
+        if refusals:
+            server.requests.append(url)
+            raise refusals.pop(0)
+        return original(url, timeout)
+
+    monkeypatch.setattr(dated_releases.urllib.request, "urlopen", flaky)
+    assert available_dated_releases("human") == ["2023_03", "2026_04"]
+    assert len(server.requests) == 3
+
+
+def test_timeouts_are_not_retried(server, monkeypatch):
+    def timeout(url, timeout=None):
+        server.requests.append(url)
+        raise urllib.error.URLError(TimeoutError())
+
+    monkeypatch.setattr(dated_releases.urllib.request, "urlopen", timeout)
+    with pytest.raises(OSError):
+        available_dated_releases("human")
+    assert len(server.requests) == 1
+
+
+def test_dates_are_returned_when_the_cache_is_not_writable(server, monkeypatch):
+    def read_only(path, value):
+        raise PermissionError(path)
+
+    monkeypatch.setattr(dated_releases, "_write_json", read_only)
+    assert available_dated_releases("human") == ["2023_03", "2026_04"]
+    with pytest.raises(ValueError, match="dated 2013_09"):
+        require_published_date(EnsemblRelease("2013_09"))
+
+
+def test_local_dna_is_not_checked(server, tmp_path):
+    fasta = tmp_path / "local.fa"
+    fasta.write_text(">1\nACGT\n")
+    EnsemblRelease("2013_09", genome_fasta=str(fasta)).download_genome_fasta()
+    assert server.requests == []
+
+
+def test_all_dates_fall_back_to_the_cache_after_one_failed_request(server):
+    available_dated_releases("human")
+    server.offline = True
+    dates = fetch_all_dated_releases()
+    assert len(server.requests) == 2  # The cached fetch, then one failed request.
+    assert dates["homo_sapiens"] == ["2023_03", "2026_04"]
+    assert dates["mus_musculus"] is None
+
+
+def test_all_dates_are_fetched_with_per_species_fallback(server):
+    dates = fetch_all_dated_releases()
+    assert dates["homo_sapiens"] == ["2023_03", "2026_04"]
+    assert dates["mus_musculus"] is None  # Not served here, and never cached.
+    assert len(dates) == 42
+
+
+def test_install_rejects_an_unpublished_date_before_installing(server, monkeypatch, capsys):
+    monkeypatch.setattr("sys.argv", ["pyensembl", "install", "--release", "2026_04", "2013_09"])
+    with pytest.raises(SystemExit):
+        shell.run()
+    assert "dated 2013_09; available dates: 2023_03, 2026_04" in capsys.readouterr().err
+    assert not os.path.exists(EnsemblRelease("2026_04").download_cache.cache_directory_path)
+
+
+def test_custom_genome_named_like_a_dated_release_stays_listed(tmp_path, monkeypatch):
+    monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
+    directory = Path(EnsemblRelease("2026_04").download_cache.cache_directory_path)
+    directory.mkdir(parents=True)
+    (directory / "custom.gtf").write_text("")
+    rows = shell.format_installed_genomes(use_color=False).splitlines()[1:]
+    assert [row.split()[:3] for row in rows] == [["human", "GRCh38", "2026_04"]]
+    assert shell.collect_all_installed_ensembl_releases() == []
 
 
 @pytest.mark.skipif(
