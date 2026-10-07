@@ -902,6 +902,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pyensembl.available_dated_releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        available_dated_releases
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyensembl.available_annotation_dates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        available_annotation_dates
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyensembl.UnpublishedDateError" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UnpublishedDateError
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pyensembl.find_species_by_name" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1149,6 +1182,17 @@
     <span class="md-ellipsis">
       
         is_bacterium
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.species.Species.current_reference_name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        current_reference_name
       
     </span>
   </a>
@@ -1478,6 +1522,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#pyensembl.available_dated_releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        available_dated_releases
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyensembl.available_annotation_dates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        available_annotation_dates
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyensembl.UnpublishedDateError" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UnpublishedDateError
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pyensembl.find_species_by_name" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1732,6 +1809,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.species.Species.current_reference_name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        current_reference_name
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.species.Species.register" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1867,6 +1955,269 @@ version. See <a href="../../guides/assembly-selection/">assembly selection</a>.<
 otherwise returns the old instance.
 Keeping this function for backwards compatibility but this functionality
 has been moving into the cached method of EnsemblRelease.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="pyensembl.available_dated_releases" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">available_dated_releases</span>
+
+
+<a href="#pyensembl.available_dated_releases" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">available_dated_releases</span><span class="p">(</span><span class="n">species</span><span class="o">=</span><span class="s1">'human'</span><span class="p">,</span> <span class="n">refresh</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Annotation dates published for the species' current assembly, oldest first.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>species</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <a class="autorefs autorefs-internal" title="Species (pyensembl.species.Species)" href="#pyensembl.species.Species">Species</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Species name, e.g. "human" or "mus_musculus".</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;human&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>refresh</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Fetch the dates again. Otherwise cached dates are used without network
+access; dates are fetched and cached on first use.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>list of str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dates in YYYY_MM form, each usable as <code>EnsemblRelease(date)</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="ValueError">ValueError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the species has no dated releases.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="OSError">OSError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the dates must be fetched and the server can't be reached or
+returns a page that lists no dates.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="pyensembl.available_annotation_dates" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">available_annotation_dates</span>
+
+
+<a href="#pyensembl.available_annotation_dates" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">available_annotation_dates</span><span class="p">(</span><span class="n">assembly_accession</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="s1">'ensembl'</span><span class="p">,</span> <span class="n">refresh</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>Annotation dates published for one assembly accession and provider on the
+new Ensembl platform, oldest first; see <code>EnsemblAnnotation</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>assembly_accession</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Versioned GCA or GCF accession, e.g. "GCA_000001405.29".</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>provider</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Provider directory, e.g. "ensembl" or "community".</p>
+              </div>
+            </td>
+            <td>
+                  <code>&#39;ensembl&#39;</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>refresh</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Fetch the dates again rather than using cached dates.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="OSError">OSError</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the dates must be fetched and the server can't be reached or
+returns a page that lists no dates.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="pyensembl.UnpublishedDateError" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">UnpublishedDateError</span>
+
+
+<a href="#pyensembl.UnpublishedDateError" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents first">
+
+
+
+        <p>Ensembl doesn't publish an annotation with this date; the message lists
+the dates it does publish.</p>
+
+
+
+
+
+
+
 
 
     </div>
@@ -2520,6 +2871,30 @@ assembly of the last numbered release, e.g.
 </code></pre></div>
 
     <div class="doc doc-contents ">
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="pyensembl.species.Species.current_reference_name" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">current_reference_name</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#pyensembl.species.Species.current_reference_name" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">current_reference_name</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Assembly of the last numbered release, which dated releases annotate.</p>
 
     </div>
 
