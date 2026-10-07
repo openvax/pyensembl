@@ -204,17 +204,21 @@ class Species(Serializable):
     def is_bacterium(self):
         return self.division == "bacteria"
 
+    @property
+    def current_reference_name(self):
+        """Assembly of the last numbered release, which dated releases annotate."""
+        return max(
+            self.reference_assemblies,
+            key=lambda name: self.reference_assemblies[name][1],
+        )
+
     def which_reference(self, ensembl_release):
         if is_dated_release(ensembl_release):
             if self.dated_releases is None:
                 raise ValueError(
                     "No dated Ensembl releases for %s" % (self.latin_name,)
                 )
-            # Dates select annotation of the last numbered release's assembly.
-            return max(
-                self.reference_assemblies,
-                key=lambda name: self.reference_assemblies[name][1],
-            )
+            return self.current_reference_name
         if ensembl_release not in self._release_to_genome:
             raise ValueError(
                 "No genome for %s in Ensembl release %s"

@@ -19,6 +19,7 @@ import os
 import shlex
 import warnings
 
+from .dated_releases import require_published_date
 from .genome import Genome
 from .genome_fasta_cache import canonical_source_options, release_genome_fasta
 from .genome_fasta import GenomeFasta
@@ -227,6 +228,23 @@ class EnsemblRelease(Genome):
             self.download_cache.cache_directory_path,
             install_string_function=self.genome_fasta_install_string,
         )
+
+    def _set_local_paths(self, download_if_missing=True, overwrite=False, show_progress=False):
+        if download_if_missing and is_dated_release(self.release) and (
+            overwrite or not all(map(os.path.exists, self._annotation_source_paths()))
+        ):
+            require_published_date(self)
+        Genome._set_local_paths(
+            self, download_if_missing=download_if_missing, overwrite=overwrite,
+            show_progress=show_progress,
+        )
+
+    def download_genome_fasta(self, overwrite=False, show_progress=False):
+        if is_dated_release(self.release) and self.requires_genome_fasta and (
+            overwrite or not os.path.exists(self._genome_fasta.expected_path)
+        ):
+            require_published_date(self)
+        Genome.download_genome_fasta(self, overwrite=overwrite, show_progress=show_progress)
 
     def install_string(self):
         return self._install_command(only_genome_fasta=False)

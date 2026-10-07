@@ -13,6 +13,7 @@
 """Command-line tool for installing and managing PyEnsembl data."""
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import fields
 import json
 import logging
@@ -22,6 +23,7 @@ import re
 import sys
 
 from .database import is_complete_database
+from .dated_releases import available_dated_releases
 from .download_cache import cache_root
 from .ensembl_release import EnsemblRelease
 from .ensembl_versions import is_dated_release, normalize_release
@@ -396,10 +398,32 @@ def inspect_genomes(genomes, check_genome_fasta=False, json_output=False):
 
 
 def _ensembl_releases():
-    return [
+    """Every numbered release, plus dated releases with a cache directory."""
+    numbered = [
         EnsemblRelease(release, species=species)
         for species, release in Species.all_species_release_pairs()
     ]
+    return numbered + _cached_dated_releases()
+
+
+def _cached_dated_releases():
+    """Dated releases whose <reference>/ensembl<YYYY_MM> directory exists."""
+    root = Path(cache_root())
+    genomes = []
+    for species in Species._latin_names_to_species.values():
+        if species.dated_releases is None:
+            continue
+        for directory in _subdirectories(root / species.current_reference_name):
+            date = directory.name[len("ensembl"):]
+            if directory.name.startswith("ensembl") and is_dated_release(date):
+                genomes.append(EnsemblRelease(date, species=species))
+    return genomes
+
+
+def _release_sort_key(release):
+    """Numbered releases in order, then annotation dates in order."""
+    release = str(release)
+    return (0, int(release), "") if release.isdigit() else (1, 0, release)
 
 
 def _has_data(annotation, dna):
@@ -413,7 +437,7 @@ def collect_all_installed_ensembl_releases():
             genome for genome in _ensembl_releases()
             if _has_data(genome._annotation_status(), genome_fasta_status(genome))
         ),
-        key=lambda genome: (genome.species.latin_name, genome.release),
+        key=lambda genome: (genome.species.latin_name, _release_sort_key(genome.release)),
     )
 
 
@@ -436,7 +460,7 @@ def format_installed_genomes(check_genome_fasta=False, use_color=None):
             dna or "-",
             _display_path(directory),
         ))
-    rows.sort(key=lambda row: (row[0], row[1], int(row[2])))
+    rows.sort(key=lambda row: (row[0], row[1], _release_sort_key(row[2])))
     # Custom genomes (e.g. install --gtf ...) live beside Ensembl releases.
     root = Path(cache_root())
     for reference in _subdirectories(root):
@@ -633,13 +657,15 @@ def _species_display_name(species):
     return species.latin_name
 
 
-def format_available_species(use_color=None):
+def format_available_species(use_color=None, dated_releases=None):
     """
     Render the table printed by the "available" CLI action: every registered
     species and its supported Ensembl release ranges, grouped by division.
 
     When ``use_color`` is ``None`` (the default), ANSI styling is applied if
-    stdout is a TTY and suppressed otherwise.
+    stdout is a TTY and suppressed otherwise. ``dated_releases`` optionally
+    maps latin names to the annotation dates of their current assembly
+    (``None`` when unknown) and adds a column for them.
     """
     if use_color is None:
         use_color = sys.stdout.isatty()
@@ -673,17 +699,31 @@ def format_available_species(use_color=None):
     )
     latin_w = _w([s.latin_name for s in all_species], 8)
 
+    def dates_cell(species, assembly):
+        if dated_releases is None or species.dated_releases is None:
+            return ""
+        if assembly != species.current_reference_name:
+            return ""
+        dates = dated_releases.get(species.latin_name)
+        return "?" if dates is None else ", ".join(dates)
+
+    dates_w = _w(
+        [dates_cell(s, asm) for s in all_species for asm in s.reference_assemblies], 0
+    )
+
     col_name = max(name_w, len("Species")) + 2
     col_asm = max(asm_w, len("Assembly")) + 2
     col_rng = max(rng_w, len("Releases")) + 2
+    col_dates = max(dates_w, len("Dated releases")) + 2 if dated_releases is not None else 0
     col_latin = max(latin_w, len("Latin name"))
-    total_w = col_name + col_asm + col_rng + col_latin
+    total_w = col_name + col_asm + col_rng + col_dates + col_latin
 
     lines = []
-    header_row = "%-*s%-*s%-*s%s" % (
+    header_row = "%-*s%-*s%-*s%-*s%s" % (
         col_name, "Species",
         col_asm, "Assembly",
         col_rng, "Releases",
+        col_dates, "Dated releases" if col_dates else "",
         "Latin name",
     )
     lines.append("%s%s%s" % (BOLD, header_row, RESET))
@@ -709,15 +749,38 @@ def format_available_species(use_color=None):
                     name_cell = ""
                     latin_cell = ""
                 lines.append(
-                    "%-*s%-*s%-*s%s"
+                    "%-*s%-*s%-*s%-*s%s"
                     % (
                         col_name, name_cell,
                         col_asm, asm,
                         col_rng, _format_release_range(start, end),
+                        col_dates, dates_cell(species, asm),
                         latin_cell,
                     )
                 )
+    if dated_releases is not None and None in dated_releases.values():
+        lines.append("")
+        lines.append("? = dates could not be fetched and none are cached")
     return "\n".join(lines)
+
+
+def fetch_available_dated_releases():
+    """
+    Current annotation dates of every species with dated releases, by latin
+    name. Fetched again because listing what is available is an explicit
+    request; cached dates are used when offline, and None when there are none.
+    """
+    def dates(species):
+        for refresh in (True, False):
+            try:
+                return available_dated_releases(species, refresh=refresh)
+            except OSError as error:
+                logger.debug("Dated releases of %s: %s", species.latin_name, error)
+        return None
+
+    species = [s for s in Species._latin_names_to_species.values() if s.dated_releases]
+    with ThreadPoolExecutor(8) as pool:
+        return dict(zip((s.latin_name for s in species), pool.map(dates, species)))
 
 
 def _genome_description(genome):
@@ -816,7 +879,7 @@ def run():
     if args.action == "list":
         print(format_installed_genomes(check_genome_fasta=args.check_genome_fasta))
     elif args.action == "available":
-        print(format_available_species())
+        print(format_available_species(dated_releases=fetch_available_dated_releases()))
     else:
         try:
             genomes = collect_selected_genomes(args)
