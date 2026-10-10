@@ -1,12 +1,14 @@
 """One cache root on every platform, chosen by datacache.
 
-Windows is simulated through appdirs, which datacache uses to find the
+Windows is simulated through whichever of appdirs and platformdirs is
+installed, so these tests pass whichever one datacache uses to find the
 platform cache directory.
 """
 
+import importlib
 from pathlib import Path
+import sys
 
-import appdirs
 import datacache
 import pytest
 
@@ -21,10 +23,20 @@ from .test_genome_fasta import list_rows
 def windows(tmp_path, monkeypatch):
     monkeypatch.delenv("PYENSEMBL_CACHE_DIR", raising=False)
     local_app_data = tmp_path / "Local"
-    monkeypatch.setattr(appdirs, "system", "win32")
-    monkeypatch.setattr(
-        appdirs, "_get_win_folder", lambda name: str(local_app_data), raising=False
-    )
+    folder = lambda name: str(local_app_data)  # noqa: E731
+    try:
+        platformdirs = importlib.import_module("platformdirs")
+        windows = importlib.import_module("platformdirs.windows")
+        monkeypatch.setattr(platformdirs, "PlatformDirs", windows.Windows)
+        monkeypatch.setattr(windows, "get_win_folder", folder)
+    except ImportError:
+        pass
+    try:
+        appdirs = importlib.import_module("appdirs")
+        monkeypatch.setattr(appdirs, "system", "win32")
+        monkeypatch.setattr(appdirs, "_get_win_folder", folder, raising=False)
+    except ImportError:
+        pass
     return local_app_data
 
 
@@ -54,7 +66,7 @@ def test_windows_list_shows_custom_genomes(windows, monkeypatch, capsys):
     assert rows["custom81"]["Annotation"] == "indexed"
 
 
-@pytest.mark.skipif(appdirs.system == "win32", reason="checks Linux and macOS paths")
+@pytest.mark.skipif(sys.platform == "win32", reason="checks Linux and macOS paths")
 @pytest.mark.parametrize(
     "genome", [("GRCh38", "ensembl", 81), ("GRCm38", "custom", None), (None, None, None)]
 )
