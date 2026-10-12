@@ -561,6 +561,10 @@ class Transcript(LocusWithGenome):
 
     @memoized_property
     def protein_id(self):
+        # Noncoding-only/custom annotations can legitimately have no CDS table,
+        # and custom CDS annotations need not carry protein identifiers.
+        if not self.db.column_exists("CDS", "protein_id"):
+            return None
         result_tuple = self.db.query_one(
             select_column_names=["protein_id"],
             filter_column="transcript_id",
