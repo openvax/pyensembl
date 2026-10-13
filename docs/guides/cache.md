@@ -43,13 +43,18 @@ human    GRCh38    82       not indexed  -                  ~/Library/Caches/pye
 custom   GRCm38    mine1    indexed      -                  ~/Library/Caches/pyensembl/GRCm38/mine1
 ```
 
-**Annotation** is `indexed` when everything is downloaded and indexed, so
-queries need no network access or setup. `not indexed` means the files are
-downloaded but the first query would spend minutes indexing them, and
-`incomplete` means some downloads are missing. `invalid` means a source is
-empty or not a regular file; `inaccessible` means it cannot be read. Run
-`pyensembl install` for that release to finish (add `--species` for non-human
-genomes; custom genomes need their original install options).
+The Annotation column shows whether a release is ready to query:
+
+| Annotation | Meaning |
+| --- | --- |
+| `indexed` | Everything is downloaded and indexed; queries need no network access or setup |
+| `not indexed` | Files are downloaded, but the first query would spend minutes indexing them |
+| `incomplete` | Some downloads are missing |
+| `invalid` | A source is empty or not a regular file |
+| `inaccessible` | A source cannot be read |
+
+Run `pyensembl install` for that release to finish. Add `--species` for
+non-human genomes; custom genomes need their original install options.
 
 In Python, `installed()` is `True` when everything a genome is configured with,
 reference DNA included, is downloaded and indexed. It only reads the cache.
@@ -92,11 +97,14 @@ pyensembl prune --dry-run                  # list unused shared DNA
 pyensembl prune
 ```
 
-Add `--species` for non-human releases. Compatible releases share one copy of
-Ensembl DNA, so deleting a release keeps DNA that other releases still use, and
-`prune` removes DNA that no release references. It skips DNA that is being
-downloaded or indexed, never touches local FASTA files, and deletes nothing if
-any release's DNA metadata is malformed (`pyensembl list` shows which one).
+Add `--species` for non-human releases.
+
+Compatible releases share one copy of Ensembl DNA, so deleting a release keeps
+DNA that other releases still use, and `prune` removes DNA that no release
+references. `prune` skips DNA that is being downloaded or indexed, never
+touches local FASTA files, and deletes nothing if any release's DNA metadata is
+malformed (`pyensembl list` shows which one).
+
 `delete-index-files` keeps shared DNA indexes because other releases may use
 them; rebuild one with `index_genome_fasta(overwrite=True)`. In Python,
 `prune_genome_fastas(dry_run=True)` returns `(path, bytes)` candidates, and

@@ -104,8 +104,11 @@ an accession and provider, as `available_dated_releases` does for a species.
 `include_alt=True` selects `genes-including_alt.gtf.gz`; the default selects
 `genes.gtf.gz`. Alternative loci can add name matches. Confirm that the chosen
 coverage file exists for your dataset, and use stable gene IDs when a name is
-ambiguous. Accession, provider, date and coverage have separate default caches.
-If overriding `cache_directory_path`, use a distinct directory for each dataset.
+ambiguous.
+
+Accession, provider, date and coverage have separate default caches. If
+overriding `cache_directory_path`, use a distinct directory for each dataset.
+
 The optional `species` label guards species-specific alias sources; it does not
 select or verify the assembly's species. Keep it consistent with the accession.
 `genome_fasta=True` and `genome_fasta_mask` select reference DNA as above.
