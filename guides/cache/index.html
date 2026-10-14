@@ -1311,13 +1311,39 @@ human    GRCh38    81       indexed      toplevel, indexed  ~/Library/Caches/pye
 human    GRCh38    82       not indexed  -                  ~/Library/Caches/pyensembl/GRCh38/ensembl82
 custom   GRCm38    mine1    indexed      -                  ~/Library/Caches/pyensembl/GRCm38/mine1
 </code></pre></div>
-<p><strong>Annotation</strong> is <code>indexed</code> when everything is downloaded and indexed, so
-queries need no network access or setup. <code>not indexed</code> means the files are
-downloaded but the first query would spend minutes indexing them, and
-<code>incomplete</code> means some downloads are missing. <code>invalid</code> means a source is
-empty or not a regular file; <code>inaccessible</code> means it cannot be read. Run
-<code>pyensembl install</code> for that release to finish (add <code>--species</code> for non-human
-genomes; custom genomes need their original install options).</p>
+<p>The Annotation column shows whether a release is ready to query:</p>
+<table>
+<thead>
+<tr>
+<th>Annotation</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>indexed</code></td>
+<td>Everything is downloaded and indexed; queries need no network access or setup</td>
+</tr>
+<tr>
+<td><code>not indexed</code></td>
+<td>Files are downloaded, but the first query would spend minutes indexing them</td>
+</tr>
+<tr>
+<td><code>incomplete</code></td>
+<td>Some downloads are missing</td>
+</tr>
+<tr>
+<td><code>invalid</code></td>
+<td>A source is empty or not a regular file</td>
+</tr>
+<tr>
+<td><code>inaccessible</code></td>
+<td>A source cannot be read</td>
+</tr>
+</tbody>
+</table>
+<p>Run <code>pyensembl install</code> for that release to finish. Add <code>--species</code> for
+non-human genomes; custom genomes need their original install options.</p>
 <p>In Python, <code>installed()</code> is <code>True</code> when everything a genome is configured with,
 reference DNA included, is downloaded and indexed. It only reads the cache.
 <code>genome_for_reference_name</code> picks the newest installed release of an assembly,
@@ -1348,12 +1374,13 @@ pyensembl<span class="w"> </span>delete-all-files<span class="w"> </span>--relea
 pyensembl<span class="w"> </span>prune<span class="w"> </span>--dry-run<span class="w">                  </span><span class="c1"># list unused shared DNA</span>
 pyensembl<span class="w"> </span>prune
 </code></pre></div>
-<p>Add <code>--species</code> for non-human releases. Compatible releases share one copy of
-Ensembl DNA, so deleting a release keeps DNA that other releases still use, and
-<code>prune</code> removes DNA that no release references. It skips DNA that is being
-downloaded or indexed, never touches local FASTA files, and deletes nothing if
-any release's DNA metadata is malformed (<code>pyensembl list</code> shows which one).
-<code>delete-index-files</code> keeps shared DNA indexes because other releases may use
+<p>Add <code>--species</code> for non-human releases.</p>
+<p>Compatible releases share one copy of Ensembl DNA, so deleting a release keeps
+DNA that other releases still use, and <code>prune</code> removes DNA that no release
+references. <code>prune</code> skips DNA that is being downloaded or indexed, never
+touches local FASTA files, and deletes nothing if any release's DNA metadata is
+malformed (<code>pyensembl list</code> shows which one).</p>
+<p><code>delete-index-files</code> keeps shared DNA indexes because other releases may use
 them; rebuild one with <code>index_genome_fasta(overwrite=True)</code>. In Python,
 <code>prune_genome_fastas(dry_run=True)</code> returns <code>(path, bytes)</code> candidates, and
 <code>pyensembl list --check-genome-fasta</code> verifies each release's DNA index.</p>
