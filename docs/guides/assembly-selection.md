@@ -41,6 +41,7 @@ Reference names are case-insensitive, and species is inferred from the
 reference. GRCh37 selects human release 75. An explicit `--release` can select
 an older compatible annotation; conflicting species, reference and release
 selections are rejected. Deletion commands require an explicit release.
+
 The Python helper `genome_for_reference_name` prefers the newest installed
 release, then a downloaded release, then the newest supported release; see
 [cache readiness](cache.md#list-installed-genomes).
