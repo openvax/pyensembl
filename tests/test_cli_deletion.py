@@ -144,7 +144,7 @@ def test_explicit_custom_genome_deletion(tmp_path, monkeypatch, action, run_cli)
     genome = Genome("TestAssembly", "custom", gtf_path_or_url=str(source))
     directory = Path(genome.download_cache.cache_directory_path)
     directory.mkdir(parents=True)
-    index = directory / "custom.db"
+    index = Path(genome._annotation_index_paths()[0])
     index.write_bytes(b"index")
     arguments = [
         action, "--reference-name", "TestAssembly", "--annotation-name", "custom",
@@ -186,9 +186,9 @@ def test_orphan_index_paths_follow_cache_policy(
 
     monkeypatch.setattr(genome.download_cache, "download_or_copy_if_necessary", no_source_access)
     if decompress and (remote or copy_local):
-        indexes = [cache / "test.db", cache / "test.fa.pickle"]
+        indexes = [Path(genome._annotation_index_paths()[0]), cache / "test.fa.pickle"]
     else:
-        indexes = [cache / "test.gtf.db", cache / "test.fa.gz.pickle"]
+        indexes = [Path(genome._annotation_index_paths()[0]), cache / "test.fa.gz.pickle"]
     for index in indexes:
         index.write_bytes(b"index")
 
