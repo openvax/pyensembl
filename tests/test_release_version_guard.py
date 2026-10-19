@@ -31,7 +31,12 @@ def test_invalid_version_file_is_rejected():
         release.version_from_text('__version__ = "2.27.7rc1"')
 
 
-def test_pr_check_uses_current_main_and_tags(monkeypatch, capsys):
+@pytest.mark.parametrize("candidate,expected", [("2.27.7", 1), ("2.27.8", 0)])
+def test_pr_check_uses_current_main_and_tags(tmp_path, monkeypatch, capsys, candidate, expected):
+    monkeypatch.chdir(tmp_path)
+    version_file = tmp_path / release.VERSION_FILE
+    version_file.parent.mkdir()
+    version_file.write_text(f'__version__ = "{candidate}"\n')
     calls = []
 
     def fake_git(*args):
@@ -44,9 +49,14 @@ def test_pr_check_uses_current_main_and_tags(monkeypatch, capsys):
 
     monkeypatch.setattr(release, "git", fake_git)
     monkeypatch.setattr(release, "published_version", lambda: "2.27.6")
-    assert release.main(["--base-ref", "origin/main"]) == 1
+    assert release.main(["--base-ref", "origin/main"]) == expected
     assert ("show", "origin/main:pyensembl/version.py") in calls
-    assert "current main" in capsys.readouterr().err
+    assert ("tag", "--list", "v*") in calls
+    output = capsys.readouterr()
+    if expected:
+        assert "current main" in output.err
+    else:
+        assert f"Release version {candidate} is new" in output.out
 
 
 def test_pr_check_fails_closed_when_pypi_unavailable(monkeypatch, capsys):

@@ -13,7 +13,7 @@
 
 from os import environ
 from dataclasses import replace
-from os.path import join, split, abspath, isdir, normpath
+from os.path import join, split, abspath, isdir, lexists, normpath
 from pathlib import Path
 from shutil import rmtree
 from urllib.parse import urlsplit
@@ -251,23 +251,34 @@ class DownloadCache(object):
         return filename
 
     def cached_path(self, path_or_url):
-        """Source-specific download path, without inspecting or creating files.
+        """Reuse existing cache paths in place; never migrate or create files.
 
-        The full URL and download mode identify remote files. Keep the key in
-        the filename so SQLite and FASTA indexes inherit the same identity,
-        even when their directory is explicitly shared by several genomes.
-        Legacy basename-only downloads cannot establish that identity.
+        New remote entries use full URL/mode identity. Existing basename-only
+        entries retain their historical lookup contract and derived indexes,
+        including mirror installs and entries without recorded provenance.
         """
+        path = self._cache_path(path_or_url)
+        if self.is_url_format(path_or_url) and not lexists(path):
+            legacy = self._cache_path(path_or_url, legacy=True)
+            if lexists(legacy):
+                return legacy
+        return path
+
+    def _cache_path(self, path_or_url, legacy=False):
+        """Compute a destination in either layout without filesystem access."""
         if path_or_url is None or path_or_url == "":
             raise ValueError("Expected non-empty string for path_or_url")
         remote = self.is_url_format(path_or_url)
-        remote_filename = split(urlsplit(path_or_url).path if remote else path_or_url)[1]
+        source = urlsplit(path_or_url).path if remote and not legacy else path_or_url
+        remote_filename = split(source)[1]
         if remote:
             # passing `decompress=False` since there is logic below
             # for stripping decompression extensions for both local
             # and remote files
             local_filename = datacache.build_local_filename(
-                download_url=path_or_url, filename=remote_filename or "download", decompress=False
+                download_url=path_or_url,
+                filename=remote_filename if legacy else (remote_filename or "download"),
+                decompress=False,
             )
         else:
             local_filename = remote_filename
@@ -280,7 +291,7 @@ class DownloadCache(object):
         if len(local_filename) == 0:
             raise ValueError("Can't determine local filename for %s" % (path_or_url,))
 
-        if remote:
+        if remote and not legacy:
             mode = "decompressed" if self.decompress_on_download else "raw"
             key = hashlib.sha256((mode + "\0" + path_or_url).encode("utf-8")).hexdigest()
             # Leave room for the key and datacache's sidecar/lock suffixes on
@@ -320,6 +331,9 @@ class DownloadCache(object):
         cached_path = self.cached_path(url)
         inspection = self.inspect(url)
         if download_if_missing and (overwrite or inspection.status == "missing"):
+            # Even an explicit refresh leaves legacy sources and indexes intact.
+            # Subsequent lookups prefer this URL-specific destination.
+            cached_path = self._cache_path(url)
             return self._fetch(url, cached_path, overwrite, show_progress)
         if inspection.status == "missing":
             raise MissingRemoteFile(url)
