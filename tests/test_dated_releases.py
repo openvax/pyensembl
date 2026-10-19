@@ -1,12 +1,14 @@
 """Dated releases: annotation dates on the new Ensembl platform (#447)."""
 
 import gzip
-import os
+from io import BytesIO
 from pathlib import Path
 import re
 from types import SimpleNamespace
+import urllib.error
 import urllib.request
 
+import gtfparse
 import pytest
 
 from pyensembl import EnsemblRelease, shell
@@ -35,11 +37,20 @@ def test_install_index_query_and_reopen_dated_release(tmp_path, monkeypatch):
         '1\tensembl\tgene\t3\t12\t.\t-\t.\tgene_id "ENSG1"; gene_name "TEST";\n'
     )
     # GRCh38 selects the counterpart of the complete patch/haplotype GTF.
-    (root / "geneset/genes-including_alt.gtf.gz").write_bytes(gzip.compress(rows.encode()))
+    gtf = root / "geneset/genes-including_alt.gtf.gz"
+    gtf.write_bytes(gzip.compress(rows.encode()))
     (root / "geneset/cdna.fa.bgz").write_bytes(bgzf(b">ENST1.2\nCCCCGGTT\n"))
     (root / "geneset/pep.fa.bgz").write_bytes(bgzf(b">ENSP1.1\nMP\n"))
     (root / "genome/unmasked.fa.bgz").write_bytes(bgzf(b">1\nAAAACCCCGGGG\n"))
 
+    parsed = []
+    read_gtf = gtfparse.read_gtf
+
+    def record_parse(path, **kwargs):
+        parsed.append(Path(path))
+        return read_gtf(path, **kwargs)
+
+    monkeypatch.setattr(gtfparse, "read_gtf", record_parse)
     genome = EnsemblRelease("2026_04", server=mirror.as_uri(), genome_fasta=True)
     assert genome.reference_name == "GRCh38"
     directory = Path(genome.download_cache.cache_directory_path)
@@ -47,6 +58,9 @@ def test_install_index_query_and_reopen_dated_release(tmp_path, monkeypatch):
     assert not directory.exists()  # Construction is offline.
     genome.download()
     genome.index()
+    assert len(parsed) == 1
+    assert parsed[0].stat().st_size < 1024
+    assert gzip.decompress(parsed[0].read_bytes()).decode() == rows
     assert genome.gene_by_id("ENSG1").strand == "-"
     transcript = genome.transcript_by_id("ENST1")
     assert transcript.sequence == "CCCCGGTT"
@@ -216,14 +230,67 @@ def _dated_release_problems(species):
     return problems
 
 
-@pytest.mark.skipif(
-    not os.environ.get("PYENSEMBL_NETWORK_TESTS"),
-    reason="set PYENSEMBL_NETWORK_TESTS=1 to check the new Ensembl platform",
-)
-def test_every_dated_release_table_entry_publishes_its_files():
-    from concurrent.futures import ThreadPoolExecutor
-
+def test_every_dated_release_table_entry_uses_platform_layout(monkeypatch):
     species = [s for s in Species._latin_names_to_species.values() if s.dated_releases]
-    with ThreadPoolExecutor(6) as pool:
-        problems = [p for found in pool.map(_dated_release_problems, species) for p in found]
-    assert problems == []
+    directories = {}
+    for entry in species:
+        accession, provider = entry.dated_releases
+        match = re.fullmatch(r"(GCA)_(\d{9})\.(\d+)", accession)
+        assert match is not None
+        prefix, number, version = match.groups()
+        directory = (
+            f"{PLATFORM}/{prefix}/{number[:3]}/{number[3:6]}/{number[6:]}/"
+            f"{int(version)}/{provider}/"
+        )
+        assert directory not in directories
+        directories[directory] = entry
+
+    listed = set()
+    headed = set()
+
+    def offline_platform(request, timeout):
+        assert timeout == 60
+        if isinstance(request, str):
+            assert request in directories
+            listed.add(request)
+            return BytesIO(b'<a href="2023_03/">old</a><a href="2026_04/">latest</a>')
+        assert request.get_method() == "HEAD"
+        for directory, entry in directories.items():
+            base = directory + "2026_04/"
+            if request.full_url.startswith(base):
+                expected = {
+                    base + "geneset/" + (
+                        "genes-including_alt.gtf.gz" if entry.latin_name == "homo_sapiens"
+                        else "genes.gtf.gz"
+                    ),
+                    base + "geneset/cdna.fa.bgz",
+                    base + "geneset/pep.fa.bgz",
+                    base + "genome/unmasked.fa.bgz",
+                }
+                assert request.full_url in expected
+                headed.add(request.full_url)
+                return BytesIO()
+        raise AssertionError("Unexpected platform URL: %s" % request.full_url)
+
+    monkeypatch.setattr(urllib.request, "urlopen", offline_platform)
+    assert [p for entry in species for p in _dated_release_problems(entry)] == []
+    assert listed == set(directories)
+    assert len(headed) == 4 * len(species)
+
+
+def test_missing_dated_release_file_is_reported(monkeypatch):
+    species = find_species_by_name("human")
+    missing = (
+        PLATFORM + "/GCA/000/001/405/29/ensembl/2026_04/geneset/"
+        "genes-including_alt.gtf.gz"
+    )
+
+    def offline_platform(request, timeout):
+        if isinstance(request, str):
+            return BytesIO(b'<a href="2026_04/">2026_04/</a>')
+        if request.full_url == missing:
+            raise urllib.error.HTTPError(missing, 404, "Not Found", {}, None)
+        return BytesIO()
+
+    monkeypatch.setattr(urllib.request, "urlopen", offline_platform)
+    assert _dated_release_problems(species) == [missing + ": HTTP Error 404: Not Found"]
