@@ -1,4 +1,4 @@
-# 2.27.6
+# 2.27.7
 
 Restore in-place reuse of existing basename-only remote caches and their
 SQLite/FASTA indexes after the 2.27.5 compatibility regression. Existing

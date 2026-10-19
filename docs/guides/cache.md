@@ -96,7 +96,7 @@ parameters use separate new files, even in the same genome directory. Changing a
 signed URL also selects a new cache entry. Query parameters and credentials
 are included in the hash but are not copied into the filename.
 
-**Existing installations remain usable in place.** Version 2.27.6 restores
+**Existing installations remain usable in place.** Version 2.27.7 restores
 reuse of basename-only downloads and their original indexes, correcting the
 2.27.5 regression. No reinstall, migration, renaming, provenance rewrite or
 reindexing is required, including for read-only shared caches. Files already
