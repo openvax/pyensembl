@@ -18,7 +18,8 @@ from pyensembl.shell import all_combinations_of_ensembl_genomes, parser
 
 def snapshot(directory):
     return {str(p.relative_to(directory)): (hashlib.sha256(p.read_bytes()).hexdigest(),
-                                          p.stat().st_mtime_ns)
+                                          p.stat().st_mtime_ns, p.stat().st_ctime_ns,
+                                          p.stat().st_ino, p.stat().st_mode)
             for p in directory.rglob("*") if p.is_file()}
 
 
@@ -57,11 +58,15 @@ def test_cli_install_reopens_from_python_in_fresh_process(tmp_path):
 import sys
 from pyensembl import EnsemblRelease, Genome
 from pyensembl.download_cache import DownloadCache
+from pyensembl.database import Database
+import pyensembl.sequence_data as sequence_data
 
 def forbid(*args, **kwargs):
     raise AssertionError('Reopening installed mirror data must not download or index')
 
-DownloadCache.download = forbid
+DownloadCache._fetch = forbid
+Database.create = forbid
+sequence_data.parse_fasta_dictionary = forbid
 Genome.index = forbid
 canonical = EnsemblRelease(81, species='mouse')
 genome = canonical.with_mirror(sys.argv[1])
