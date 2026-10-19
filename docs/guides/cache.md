@@ -113,6 +113,41 @@ despite an existing legacy basename, use `download(overwrite=True)` or
 and leaves the legacy files intact. New `--custom-mirror` downloads belong to
 that mirror's URLs; use the same mirror to access them through the CLI.
 
+## Reuse a mirror installation
+
+For a flat directory containing the original Ensembl filenames, install with
+an explicit mirror:
+
+```sh
+pyensembl install --release 75 --species human --custom-mirror https://github.com/openvax/ensembl-data/releases/download/GRCh37.75/
+```
+
+In later Python processes, select that same source with `with_mirror`:
+
+```python
+from pyensembl import EnsemblRelease
+
+mirror = "https://github.com/openvax/ensembl-data/releases/download/GRCh37.75/"
+data = EnsemblRelease(75, species="human").with_mirror(mirror)
+assert data.installed()
+print(data.gene_by_id("ENSG00000141510").name)
+```
+
+`with_mirror` returns a `Genome` whose GTF, transcript and protein URLs point
+at the mirror. Pass this object explicitly to downstream tools; for example,
+`Variant("1", 53513530, "A", "C", genome=data)` in Varcode. To reuse the data
+through the CLI, repeat `--custom-mirror` for the same release and species.
+Requested Ensembl reference DNA is also read from the mirror; explicitly
+attached local DNA is preserved.
+
+New mirror installations do **not** populate the source-specific cache used by
+`EnsemblRelease(75)` or Varcode's `genome=75`. If those default constructors are
+needed, install canonical sources with `pyensembl install --release 75 --species
+human`. Existing URL-specific mirror installs from 2.27.5 onward need no
+redownload or reindexing when opened with the same mirror. The legacy
+basename-cache compatibility behavior described above still applies; this API
+does not copy indexes or change existing files' source identity.
+
 ## Free disk space <a id="managing-disk-space"></a>
 
 ```sh

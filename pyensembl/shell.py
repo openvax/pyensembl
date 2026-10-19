@@ -174,7 +174,9 @@ release_group.add_argument(
 release_group.add_argument(
     "--custom-mirror",
     default=None,
-    help="URL and directory to use instead of the default Ensembl FTP server",
+    help=("Flat mirror URL/directory; repeat it to reuse mirror data. In Python use "
+          "EnsemblRelease(...).with_mirror(URL). New mirror caches are separate "
+          "from default EnsemblRelease caches."),
 )
 
 parser.add_argument(
@@ -561,40 +563,10 @@ def all_combinations_of_ensembl_genomes(args):
             if not args.custom_mirror:
                 genomes.append(ensembl_release)
             else:
-                # if we're using a custom mirror then we expect the provided
-                # URL to be a directory with all the same filenames as
-                # would be provided by Ensembl
-                gtf_url = os.path.join(
-                    args.custom_mirror, os.path.basename(ensembl_release.gtf_url)
-                )
-                transcript_fasta_urls = [
-                    os.path.join(
-                        args.custom_mirror, os.path.basename(transcript_fasta_url)
-                    )
-                    for transcript_fasta_url in ensembl_release.transcript_fasta_urls
-                ]
-                protein_fasta_urls = [
-                    os.path.join(
-                        args.custom_mirror, os.path.basename(protein_fasta_url)
-                    )
-                    for protein_fasta_url in ensembl_release.protein_fasta_urls
-                ]
-                reference_name = ensembl_release.reference_name
-                genome_fasta_source = args.genome_fasta_path
-                if genome_fasta_source is None and ensembl_release.genome_fasta_urls:
-                    genome_fasta_source = os.path.join(
-                        args.custom_mirror, os.path.basename(ensembl_release.genome_fasta_urls[0])
-                    )
-                genome = Genome(
-                    reference_name=reference_name,
-                    annotation_name="ensembl",
-                    annotation_version=version,
-                    gtf_path_or_url=gtf_url,
-                    transcript_fasta_paths_or_urls=transcript_fasta_urls,
-                    protein_fasta_paths_or_urls=protein_fasta_urls,
-                    genome_fasta_path_or_url=genome_fasta_source,
-                )
-                genomes.append(genome)
+                genomes.append(ensembl_release.with_mirror(
+                    args.custom_mirror,
+                    genome_fasta_path_or_url=args.genome_fasta_path,
+                ))
     return genomes
 
 

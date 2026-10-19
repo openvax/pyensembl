@@ -46,8 +46,10 @@ Ensembl release options:
                         (default=inferred from --reference-name, otherwise
                         human)
   --custom-mirror CUSTOM_MIRROR
-                        URL and directory to use instead of the default
-                        Ensembl FTP server
+                        Flat mirror URL/directory; repeat it to reuse mirror
+                        data. In Python use EnsemblRelease(...).with_mirror(URL).
+                        New mirror caches are separate from default
+                        EnsemblRelease caches.
 
 Custom genome options:
   --annotation-name ANNOTATION_NAME
