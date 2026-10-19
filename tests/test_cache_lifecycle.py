@@ -184,8 +184,10 @@ def test_index_overwrite_rebuilds_the_database(tmp_path):
     first.close()
     gtf.write_text(OVERWRITE_GTF.replace('gene_name "g"', 'gene_name "renamed"'))
     second = genome()
-    second.index()  # An existing complete database is reused.
-    assert second.gene_names() == ["g"]
-    second.index(overwrite=True)  # #412: overwrite rebuilds it from the GTF.
+    second.index()  # Changed GTFs now rebuild automatically.
+    assert second.gene_names() == ["renamed"]
+    with sqlite3.connect(second.db.local_db_path) as connection:
+        connection.execute('UPDATE gene SET gene_name = "tampered"')
+    second.index(overwrite=True)  # #412: explicit overwrite still rebuilds.
     assert second.gene_names() == ["renamed"]
     second.close()

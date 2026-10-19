@@ -11,7 +11,10 @@
 # limitations under the License.
 
 from contextlib import contextmanager
+import hashlib
+import json
 import logging
+import os
 from os.path import basename, split, join, exists, splitext
 import sqlite3
 
@@ -23,8 +26,10 @@ from .normalization import normalize_chromosome, normalize_strand
 from .locus import Locus
 from .versioned_ids import _split_ens_version, match_version
 
-# any time we update the database schema, increment this version number
+# Increment when feature-table layout changes. Local source identity is an
+# additional PyEnsembl check, so existing remote databases remain reusable.
 DATABASE_SCHEMA_VERSION = 3
+_SOURCE_TABLE = "_pyensembl_gtf_source"
 
 
 logger = logging.getLogger(__name__)
@@ -56,10 +61,85 @@ def _gtf_progress(gtf_path, enabled):
         yield report
 
 
-def is_complete_database(path):
+def _file_state(path):
+    """File identity that changes for ordinary in-place edits and replacements."""
+    stat = os.stat(path)
+    return [stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns, stat.st_ino]
+
+
+def _source_state(gtf_path, source):
+    state = {"source": source, "gtf": _file_state(gtf_path)}
+    if "://" not in source:
+        try:
+            state["original"] = _file_state(source)
+        except FileNotFoundError:
+            if os.path.abspath(gtf_path) == source:
+                raise
+            # A copied local source remains usable after its original is removed.
+            state["original"] = None
+    return state
+
+
+def _source_digest(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _stored_source(connection):
+    try:
+        row = connection.execute(
+            'SELECT state, sha256 FROM "' + _SOURCE_TABLE + '"'
+        ).fetchone()
+        if row:
+            state = json.loads(row[0])
+            if (isinstance(state, dict) and isinstance(row[1], str)
+                    and len(row[1]) == 64
+                    and all(char in "0123456789abcdef" for char in row[1])):
+                return state, row[1]
+        return None
+    except (sqlite3.Error, ValueError, TypeError):
+        return None
+
+
+def _source_matches(connection, gtf_path, source, verify_hash=False):
+    stored = _stored_source(connection)
+    if stored is None:
+        return False
+    try:
+        current = _source_state(gtf_path, source)
+    except OSError:
+        return False
+    previous, sha256 = stored
+    if current["source"] != previous.get("source") or current["gtf"] != previous.get("gtf"):
+        return False
+    if "original" in current and current["original"] is not None:
+        if current["original"] != previous.get("original"):
+            return False
+    if not verify_hash:
+        return True
+    try:
+        return _source_digest(gtf_path) == sha256
+    except OSError:
+        return False
+
+
+def annotation_db_filename(gtf_path, source):
+    """Separate attached local GTFs even when they share a basename."""
+    base = splitext(basename(gtf_path))[0]
+    if "://" in source:
+        return base + ".db"
+    source = os.path.abspath(source)
+    return "%s-%s.db" % (base, hashlib.sha256(source.encode()).hexdigest()[:16])
+
+
+def is_complete_database(path, gtf_path=None, source=None):
     """Whether a GTF database finished building; reads without writing.
 
-    datacache stores the schema version last, so it marks a complete build.
+    datacache stores the schema version last, marking a complete build. When
+    given a local source, also compare its recorded identity without hashing.
     """
     try:
         connection = datacache.connect_if_correct_version(
@@ -69,8 +149,11 @@ def is_complete_database(path):
         return False
     if connection is None:
         return False
-    connection.close()
-    return True
+    try:
+        return (gtf_path is None or source is None or "://" in source
+                or _source_matches(connection, gtf_path, os.path.abspath(source)))
+    finally:
+        connection.close()
 
 
 class Database(object):
@@ -87,6 +170,7 @@ class Database(object):
         cache_directory_path=None,
         restrict_gtf_columns=None,
         restrict_gtf_features=None,
+        source=None,
     ):
         """
         Parameters
@@ -109,8 +193,15 @@ class Database(object):
         restrict_gtf_features : list/set of str or None
             If provided then only create tables for these features.
 
+        source : str, optional
+            Configured GTF path or URL, before an optional local copy into
+            the cache. Local paths distinguish same-basename indexes.
+
         """
-        self.gtf_path = gtf_path
+        self.gtf_path = os.fspath(gtf_path)
+        self.source = os.fspath(source or gtf_path)
+        if "://" not in self.source:
+            self.source = os.path.abspath(self.source)
         self.restrict_gtf_columns = restrict_gtf_columns
         self.restrict_gtf_features = restrict_gtf_features
         self.gtf_directory_path, self.gtf_filename = split(self.gtf_path)
@@ -169,7 +260,7 @@ class Database(object):
 
     @property
     def local_db_filename(self):
-        return self.gtf_base_filename + ".db"
+        return annotation_db_filename(self.gtf_path, self.source)
 
     @property
     def local_db_path(self):
@@ -283,8 +374,15 @@ class Database(object):
 
         Returns a connection to the database.
         """
+        if not overwrite and exists(self.local_db_path):
+            connection = self._get_connection()
+            if connection is not None:
+                return connection
+            overwrite = True
         logger.info("Creating database: %s", self.local_db_path)
         datacache.ensure_dir(self.cache_directory_path)
+        local_source = "://" not in self.source
+        source_before = _source_state(self.gtf_path, self.source) if local_source else None
 
         df = self._load_gtf_as_dataframe(
             usecols=self.restrict_gtf_columns,
@@ -330,9 +428,31 @@ class Database(object):
             version=DATABASE_SCHEMA_VERSION,
             show_progress=show_progress,
         )
+        if local_source:
+            if _source_state(self.gtf_path, self.source) != source_before:
+                self.close()
+                raise OSError("GTF source changed while its index was being built")
+            digest = _source_digest(self.gtf_path)
+            if _source_state(self.gtf_path, self.source) != source_before:
+                self.close()
+                raise OSError("GTF source changed while its index was being built")
+            self._connection.execute(
+                'CREATE TABLE IF NOT EXISTS "' + _SOURCE_TABLE + '" (state TEXT, sha256 TEXT)'
+            )
+            self._connection.execute('DELETE FROM "' + _SOURCE_TABLE + '"')
+            self._connection.execute(
+                'INSERT INTO "' + _SOURCE_TABLE + '" VALUES (?, ?)',
+                (json.dumps(source_before, sort_keys=True), digest),
+            )
+            self._connection.commit()
         return self._connection
 
     def _get_connection(self):
+        if self._connection is not None and "://" not in self.source and not _source_matches(
+            self._connection, self.gtf_path, self.source
+        ):
+            self.close()
+            self.clear_cache()
         if self._connection is None:
             if exists(self.local_db_path):
                 # since version metadata is filled in last in datacache,
@@ -344,6 +464,11 @@ class Database(object):
                 self._connection = datacache.connect_if_correct_version(
                     self.local_db_path, DATABASE_SCHEMA_VERSION
                 )
+                if self._connection is not None and "://" not in self.source:
+                    if not _source_matches(
+                        self._connection, self.gtf_path, self.source, verify_hash=True
+                    ):
+                        self.close()
         return self._connection
 
     @property

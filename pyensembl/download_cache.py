@@ -16,6 +16,7 @@ from dataclasses import replace
 from os.path import join, split, abspath, isdir, normpath
 from pathlib import Path
 from shutil import rmtree
+import hashlib
 import logging
 
 import datacache
@@ -48,6 +49,18 @@ def _require_available(inspection):
     if inspection.status != "available":
         raise inspection.error
     return inspection.path
+
+
+def _same_file_bytes(first, second):
+    """Compare copied local input with its cached counterpart."""
+    def digest(path):
+        value = hashlib.sha256()
+        with open(path, "rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                value.update(chunk)
+        return value.digest()
+
+    return digest(first) == digest(second)
 
 
 def cache_subdirectory(
@@ -308,7 +321,14 @@ class DownloadCache(object):
             cached_path = self.cached_path(local_path)
             cached = inspect_data_file(cached_path)
             if not overwrite and cached.status != "missing":
-                return _require_available(cached)
+                _require_available(cached)
+                source = inspect_data_file(local_path)
+                if source.status == "missing":
+                    return cached.path
+                _require_available(source)
+                if source.size == cached.size and _same_file_bytes(local_path, cached_path):
+                    return cached.path
+                overwrite = True
         source = inspect_data_file(local_path)
         if source.status == "missing":
             raise MissingLocalFile(local_path)

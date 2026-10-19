@@ -20,7 +20,7 @@ from contextlib import nullcontext
 from dataclasses import replace
 from numbers import Integral
 from os import lstat, remove
-from os.path import basename, join, lexists, splitext
+from os.path import basename, join, lexists
 from pathlib import Path
 import warnings
 
@@ -29,7 +29,7 @@ from datacache import FileValidationError
 
 from .download_cache import DownloadCache, inspect_data_file
 from .common import merge_intervals
-from .database import Database, is_complete_database
+from .database import Database, annotation_db_filename, is_complete_database
 from .exon import Exon
 from .gene import Gene
 from .gene_name_aliases import GeneNameAliases, normalize_aliases, stable_ensembl_gene_id
@@ -41,12 +41,12 @@ from .versioned_ids import _split_ens_version, match_version
 from .transcript import Transcript
 
 
-def _inspect_annotation_index(path):
+def _inspect_annotation_index(path, gtf_path=None, source=None):
     inspection = inspect_data_file(path)
     if (inspection.status == "available" and path.endswith(".db")
-            and not is_complete_database(path)):
+            and not is_complete_database(path, gtf_path=gtf_path, source=source)):
         return replace(inspection, status="corrupt", error=FileValidationError(
-            path, "incomplete or incompatible annotation database; rebuild the index"
+            path, "incomplete, incompatible, or stale annotation database; rebuild the index"
         ))
     return inspection
 
@@ -445,8 +445,12 @@ class Genome(Serializable):
     def _inspect_annotation(self):
         sources = {role: self.download_cache.inspect(source)
                    for role, source in self._annotation_sources().items()}
-        indexes = {role + "_index": _inspect_annotation_index(path)
-                   for role, path in zip(sources, self._annotation_index_paths())}
+        indexes = {}
+        for role, path in zip(sources, self._annotation_index_paths()):
+            options = {}
+            if role == "gtf":
+                options = {"gtf_path": sources[role].path, "source": self._gtf_path_or_url}
+            indexes[role + "_index"] = _inspect_annotation_index(path, **options)
         return sources, indexes
 
     @staticmethod
@@ -479,7 +483,8 @@ class Genome(Serializable):
         Return readiness and role-keyed datacache ``FileInspection`` objects.
         Never downloads, imports, builds indexes, creates directories or loads
         pickle contents. Availability checks regular, readable, nonempty files;
-        SQLite completeness and reference-DNA fingerprints are also checked.
+        SQLite completeness, local GTF identity, and reference-DNA fingerprints
+        are also checked.
         ``verified`` is not inferred from an acquisition provenance receipt.
         """
         sources, indexes = self._inspect_annotation()
@@ -556,10 +561,17 @@ class Genome(Serializable):
         show_progress displays progress bars while the GTF is read, the database
         is filled, and sequence files are read.
         """
-        if overwrite:
-            self.clear_cache()  # Genes etc. may come from the old indexes.
+        # Another Genome may have rebuilt a shared index since this instance
+        # memoized its genes, even when this call itself can reuse the index.
+        self.clear_cache()
         if self.requires_gtf:
-            self.db.connect_or_create(overwrite=overwrite, show_progress=show_progress)
+            if self._db is not None:
+                with self._explain_download_failure():
+                    self.gtf_path = self._get_gtf_path(
+                        download_if_missing=True, show_progress=show_progress
+                    )
+            database = self.db
+            database.connect_or_create(overwrite=overwrite, show_progress=show_progress)
         if self.requires_transcript_fasta:
             self.transcript_sequences.index(overwrite=overwrite, show_progress=show_progress)
         if self.requires_protein_fasta:
@@ -602,6 +614,7 @@ class Genome(Serializable):
             # and wraps them with methods like `query_one`
             self._db = Database(
                 gtf_path=self.gtf_path,
+                source=self._gtf_path_or_url,
                 install_string=self.install_string(),
                 cache_directory_path=self.download_cache.cache_directory_path,
                 restrict_gtf_columns={
@@ -809,7 +822,9 @@ class Genome(Serializable):
             if self._db is not None:
                 paths.append(self._db.local_db_path)
             else:
-                filename = splitext(source_filename(self._gtf_path_or_url))[0] + ".db"
+                filename = annotation_db_filename(
+                    self._local_source_path(self._gtf_path_or_url), self._gtf_path_or_url
+                )
                 paths.append(join(cache.cache_directory_path, filename))
         for sequences, sources in (
             (self._transcript_sequences, self._transcript_fasta_paths_or_urls),

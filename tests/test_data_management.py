@@ -148,11 +148,11 @@ def test_inventory_is_read_only_and_reports_database_completeness(tmp_path, monk
     source = tmp_path / "source.gtf"
     source.write_bytes(b"data")
     cache = tmp_path / "cache"
-    database = cache / "source.db"
-    complete_database(database)
     genome = Genome("test", "imports", gtf_path_or_url=str(source),
                     transcript_fasta_paths_or_urls=["https://example.org/transcripts.fa"],
                     cache_directory_path=str(cache))
+    database = Path(genome._annotation_index_paths()[0])
+    complete_database(database)  # Legacy index has no source identity.
     before = {str(path): path.stat().st_mtime_ns for path in tmp_path.rglob("*")}
 
     def forbidden(*args, **kwargs):
@@ -166,7 +166,7 @@ def test_inventory_is_read_only_and_reports_database_completeness(tmp_path, monk
     assert not report["installed"]
     assert report["reference_dna"] is None
     assert report["files"]["gtf"].status == "available"
-    assert report["files"]["gtf_index"].status == "available"
+    assert report["files"]["gtf_index"].status == "corrupt"
     assert report["files"]["transcript_fasta_1"].status == "missing"
     assert {str(path): path.stat().st_mtime_ns for path in tmp_path.rglob("*")} == before
     database.write_bytes(b"broken SQLite")
