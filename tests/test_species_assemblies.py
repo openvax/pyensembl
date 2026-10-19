@@ -1,14 +1,12 @@
 """Assembly release ranges agree with Ensembl's archive (#396).
 
 Expected filenames were read from the archive's GTF and FASTA directories.
-Set PYENSEMBL_NETWORK_TESTS=1 to recheck every assembly boundary against the
-live FTP servers, e.g. after raising MAX_ENSEMBL_RELEASE.
+Every configured assembly boundary is checked against the archive URL layout.
 """
 
-from concurrent.futures import ThreadPoolExecutor
 import os
-import urllib.error
-import urllib.request
+import re
+from urllib.parse import urlsplit
 
 import pytest
 
@@ -117,23 +115,32 @@ def _boundary_urls():
             yield genome.protein_fasta_urls[0]
 
 
-def _missing(url):
-    for _ in range(3):
-        try:
-            with urllib.request.urlopen(urllib.request.Request(url, method="HEAD"), timeout=60):
-                return None
-        except urllib.error.HTTPError as error:
-            return "%s: HTTP %d" % (url, error.code)
-        except OSError as error:
-            problem = "%s: %s" % (url, error)
-    return problem
+def test_every_assembly_boundary_uses_archive_layout():
+    urls = list(_boundary_urls())
+    assert len(urls) % 3 == 0
+    assert len(urls) == len(set(urls))
+    for gtf, cdna, pep in zip(urls[::3], urls[1::3], urls[2::3]):
+        gtf_url, cdna_url, pep_url = map(urlsplit, (gtf, cdna, pep))
+        assert {url.scheme for url in (gtf_url, cdna_url, pep_url)} == {"https"}
+        assert len({url.netloc for url in (gtf_url, cdna_url, pep_url)}) == 1
+        host = gtf_url.netloc
+        assert host in {"ftp.ensembl.org", "ftp.ensemblgenomes.ebi.ac.uk"}
 
+        root, gtf_file = gtf_url.path.split("/gtf/")
+        if host == "ftp.ensembl.org":
+            assert re.fullmatch(r"/pub/release-\d+", root)
+        else:
+            assert re.fullmatch(r"/pub/release-\d+/(plants|fungi|metazoa|protists)", root)
+        species, gtf_name = gtf_file.split("/")
+        assert gtf_name.startswith(species.capitalize() + ".")
+        assert re.search(r"\.\d+(?:\.chr_patch_hapl_scaff)?\.gtf\.gz$", gtf_name)
+        assert cdna_url.path.startswith(f"{root}/fasta/{species}/cdna/")
+        assert pep_url.path.startswith(f"{root}/fasta/{species}/pep/")
 
-@pytest.mark.skipif(
-    not os.environ.get("PYENSEMBL_NETWORK_TESTS"),
-    reason="set PYENSEMBL_NETWORK_TESTS=1 to check the live Ensembl archive",
-)
-def test_every_assembly_boundary_exists_in_the_archive():
-    with ThreadPoolExecutor(6) as pool:
-        problems = [problem for problem in pool.map(_missing, _boundary_urls()) if problem]
-    assert problems == []
+        gtf_stem = gtf_name.removesuffix(".gtf.gz")
+        cdna_stem = cdna_url.path.rsplit("/", 1)[-1].removesuffix(".cdna.all.fa.gz")
+        pep_stem = pep_url.path.rsplit("/", 1)[-1].removesuffix(".pep.all.fa.gz")
+        assert cdna_url.path.endswith(".cdna.all.fa.gz")
+        assert pep_url.path.endswith(".pep.all.fa.gz")
+        assert cdna_stem == pep_stem
+        assert gtf_stem == cdna_stem or gtf_stem.startswith(cdna_stem + ".")

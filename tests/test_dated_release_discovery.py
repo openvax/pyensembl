@@ -339,11 +339,10 @@ def test_other_files_in_a_release_directory_are_listed_as_custom(tmp_path, monke
     assert shell.collect_all_installed_ensembl_releases() == []
 
 
-@pytest.mark.skipif(
-    not os.environ.get("PYENSEMBL_NETWORK_TESTS"),
-    reason="set PYENSEMBL_NETWORK_TESTS=1 to check the new Ensembl platform",
-)
-def test_dates_on_the_platform(tmp_path, monkeypatch):
-    monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
-    assert {"2023_03", "2025_12", "2026_04"} <= set(available_dated_releases("human"))
+def test_dates_on_the_platform_listing(server):
+    server.listings[HUMAN_LISTING] = listing("2023_03", "2025_12", "2026_04")
+    grch37 = PLATFORM + "/GCA/000/001/405/14/ensembl/"
+    server.listings[grch37] = listing("2013_09")
+    assert available_dated_releases("human") == ["2023_03", "2025_12", "2026_04"]
     assert available_annotation_dates("GCA_000001405.14") == ["2013_09"]
+    assert server.requests == [HUMAN_LISTING, grch37]
