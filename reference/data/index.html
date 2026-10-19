@@ -1068,6 +1068,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.Database.source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        source
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.Database.restrict_gtf_columns" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1996,6 +2007,17 @@
     <span class="md-ellipsis">
       
         gtf_path
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.Database.source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        source
       
     </span>
   </a>
@@ -3139,7 +3161,7 @@ self.copy_local_to_cache is True, and then copy it to the cache first.</p>
 
 
 <a href="#pyensembl.Database" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Database</span><span class="p">(</span><span class="n">gtf_path</span><span class="p">,</span> <span class="n">install_string</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cache_directory_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">restrict_gtf_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">restrict_gtf_features</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Database</span><span class="p">(</span><span class="n">gtf_path</span><span class="p">,</span> <span class="n">install_string</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cache_directory_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">restrict_gtf_columns</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">restrict_gtf_features</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3246,6 +3268,23 @@ a database.</p>
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>source</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Configured GTF path or URL, before an optional local copy into
+the cache. Local paths distinguish same-basename indexes.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -3280,7 +3319,29 @@ a database.</p>
   </span>
 
 <a href="#pyensembl.Database.gtf_path" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">gtf_path</span> <span class="o">=</span> <span class="n">gtf_path</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">gtf_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">fspath</span><span class="p">(</span><span class="n">gtf_path</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="pyensembl.Database.source" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">source</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#pyensembl.Database.source" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">source</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">fspath</span><span class="p">(</span><span class="n">source</span> <span class="ow">or</span> <span class="n">gtf_path</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
