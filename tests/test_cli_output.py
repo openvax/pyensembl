@@ -2,7 +2,6 @@
 
 from contextlib import closing
 import logging
-import os
 from pathlib import Path
 import sqlite3
 
@@ -36,9 +35,9 @@ def ensembl_files(release, sources=True, indexes=True, database=complete_databas
     """Files as a real install names them, derived from Ensembl's URLs."""
     genome = EnsemblRelease(release)
     directory = Path(genome.download_cache.cache_directory_path)
-    names = [os.path.basename(url) for url in genome.transcript_fasta_urls]
-    names += [os.path.basename(url) for url in genome.protein_fasta_urls]
-    gtf = os.path.basename(genome.gtf_url)
+    names = [Path(genome.download_cache.cached_path(url)).name
+             for url in genome.transcript_fasta_urls + genome.protein_fasta_urls]
+    gtf = Path(genome.download_cache.cached_path(genome.gtf_url)).name
     if sources:
         for name in [gtf] + names:
             write(directory / name)

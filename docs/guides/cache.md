@@ -88,6 +88,23 @@ export PYENSEMBL_CACHE_DIR=/custom/cache/dir
 
 In Python, set `os.environ["PYENSEMBL_CACHE_DIR"]` before creating a genome.
 
+Downloaded annotation and transcript/protein FASTA filenames have a SHA-256
+prefix identifying the complete source URL and decompression mode, followed by
+the remote filename (for example, `<key>-annotation.gtf.gz`). Their SQLite and
+FASTA indexes retain that prefix. URLs with different hosts, paths or query
+parameters use separate files, even in the same genome directory. Changing a
+signed URL also selects a new cache entry. Query parameters and credentials
+are included in the hash but are not copied into the filename.
+
+**Upgrading to 2.27.5:** rerun `pyensembl install` for remote datasets installed
+by older versions. Basename-only downloads and indexes are left intact but are
+not reused: their provenance cannot establish the complete URL they came from.
+After verifying the new installation, you can remove those old files manually.
+Local attached files and the shared reference-DNA store keep their existing
+behavior. A `--custom-mirror` install now belongs to that mirror's URLs; use the
+same mirror when accessing it through the CLI. It does not populate the default
+`EnsemblRelease` URLs' cache.
+
 ## Free disk space <a id="managing-disk-space"></a>
 
 ```sh

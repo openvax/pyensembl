@@ -185,7 +185,10 @@ def test_orphan_index_paths_follow_cache_policy(
         pytest.fail("Index deletion attempted to download or copy a source")
 
     monkeypatch.setattr(genome.download_cache, "download_or_copy_if_necessary", no_source_access)
-    if decompress and (remote or copy_local):
+    if remote:
+        fasta = Path(genome.download_cache.cached_path(prefix + "test.fa.gz"))
+        indexes = [Path(genome._annotation_index_paths()[0]), Path(str(fasta) + ".pickle")]
+    elif decompress and copy_local:
         indexes = [Path(genome._annotation_index_paths()[0]), cache / "test.fa.pickle"]
     else:
         indexes = [Path(genome._annotation_index_paths()[0]), cache / "test.fa.gz.pickle"]

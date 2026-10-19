@@ -195,7 +195,8 @@ def test_unreadable_source_is_reported_and_cannot_be_used(tmp_path):
 def test_cli_inspects_multiple_releases_offline_as_json(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
     location = ensembl_files(93)
-    (location / Path(EnsemblRelease(93).gtf_url).name).write_bytes(b"")
+    genome = EnsemblRelease(93)
+    Path(genome.download_cache.cached_path(genome.gtf_url)).write_bytes(b"")
     run_cli(monkeypatch, "inspect", "--release", "93", "94", "--json")
     reports = json.loads(capsys.readouterr().out)
     assert [report["annotation_version"] for report in reports] == [93, 94]
