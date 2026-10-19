@@ -1482,7 +1482,7 @@ overwrite keeps the previous file; replace an invalid file with
 can be read-only for other users. A download or index build locks only the
 file it writes; registering, deleting and pruning releases briefly lock the
 whole cache.</p>
-<p>New files follow your umask, as do lock files on Python 3.10+, so set
+<p>New files and lock files follow your umask, so set
 <code>umask 002</code> (or default ACLs) before installing into a group-shared cache.
 Files downloaded before PyEnsembl 2.13.1 were readable only by their owner;
 share them with <code>chmod -R g+rX "$PYENSEMBL_CACHE_DIR/pyensembl"</code> (or the
