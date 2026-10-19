@@ -1083,12 +1083,16 @@
 
 <h1 id="publish-a-release">Publish a release <a id="releasing-pyensembl"></a><a class="headerlink" href="#publish-a-release" title="Permanent link">&para;</a></h1>
 <p>Every PR includes a version bump in <code>pyensembl/version.py</code>, including
-documentation changes. Once lint, tests and review have passed:</p>
+documentation changes. The Release version check compares a PR with current
+main, existing tags, and PyPI. It is required on an up-to-date branch; if
+another PR merges first, update the version and rerun CI before merging.
+Once lint, tests and review have passed:</p>
 <ol>
 <li>Merge the PR into main.</li>
 <li>Check out main, pull the merged commit, and ensure the working tree is clean.</li>
-<li>Run <code>./deploy.sh</code>. It reruns lint and tests, builds the package, uploads to
-   PyPI, and pushes the version tag.</li>
+<li>Run <code>./deploy.sh</code>. It reruns lint and tests, builds the package, checks that
+   main is clean and current and the version is still new, uploads to PyPI,
+   and pushes the version tag.</li>
 </ol>
 <p>The release is shipped after the upload succeeds. Documentation changes also
 publish through the Documentation workflow; check the live site after it runs.</p>
