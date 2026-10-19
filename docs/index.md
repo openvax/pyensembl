@@ -6,7 +6,7 @@ annotations or your own files. Once the data is installed, queries run locally.
 
 ## Install <a id="install-pyensembl-and-reference-data"></a>
 
-Use Python 3.9 or later. Run these commands in a terminal:
+Use Python 3.11 or later. Run these commands in a terminal:
 
 ```sh
 python -m pip install pyensembl
