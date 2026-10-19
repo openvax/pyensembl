@@ -94,6 +94,10 @@ def test_reported_patch_gene_survives_selection_indexing_and_cached_upgrade(
             sources / ("Homo_sapiens.GRCh38." + suffix),
             (DATA / ("human.ensembl.97.patch." + fixture)).read_text(),
         )
+    if not custom_mirror:
+        # Seed the configured remote sources using the real download layout.
+        for url in [release.gtf_url] + release.transcript_fasta_urls + release.protein_fasta_urls:
+            (sources / Path(url).name).rename(release.download_cache.cached_path(url))
 
     with Genome(
         "GRCh38", "ensembl", 97,

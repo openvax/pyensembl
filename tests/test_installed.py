@@ -85,7 +85,8 @@ def test_reference_name_falls_back_to_downloads_then_the_newest_release(cache):
 
 def test_invalid_newer_release_is_not_selected(cache):
     ensembl_files(93)
-    newer = ensembl_files(110)
-    (newer / Path(EnsemblRelease(110).gtf_url).name).write_bytes(b"")
+    ensembl_files(110)
+    genome = EnsemblRelease(110)
+    Path(genome.download_cache.cached_path(genome.gtf_url)).write_bytes(b"")
     assert genome_for_reference_name("GRCh38").release == 93
     assert "invalid" in format_installed_genomes(use_color=False)

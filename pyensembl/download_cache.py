@@ -16,6 +16,7 @@ from dataclasses import replace
 from os.path import join, split, abspath, isdir, normpath
 from pathlib import Path
 from shutil import rmtree
+from urllib.parse import urlsplit
 import hashlib
 import logging
 
@@ -250,19 +251,23 @@ class DownloadCache(object):
         return filename
 
     def cached_path(self, path_or_url):
-        """
-        When downloading remote files, the default behavior is to name local
-        files the same as their remote counterparts.
+        """Source-specific download path, without inspecting or creating files.
+
+        The full URL and download mode identify remote files. Keep the key in
+        the filename so SQLite and FASTA indexes inherit the same identity,
+        even when their directory is explicitly shared by several genomes.
+        Legacy basename-only downloads cannot establish that identity.
         """
         if path_or_url is None or path_or_url == "":
             raise ValueError("Expected non-empty string for path_or_url")
-        remote_filename = split(path_or_url)[1]
-        if self.is_url_format(path_or_url):
+        remote = self.is_url_format(path_or_url)
+        remote_filename = split(urlsplit(path_or_url).path if remote else path_or_url)[1]
+        if remote:
             # passing `decompress=False` since there is logic below
             # for stripping decompression extensions for both local
             # and remote files
             local_filename = datacache.build_local_filename(
-                download_url=path_or_url, filename=remote_filename, decompress=False
+                download_url=path_or_url, filename=remote_filename or "download", decompress=False
             )
         else:
             local_filename = remote_filename
@@ -274,6 +279,14 @@ class DownloadCache(object):
 
         if len(local_filename) == 0:
             raise ValueError("Can't determine local filename for %s" % (path_or_url,))
+
+        if remote:
+            mode = "decompressed" if self.decompress_on_download else "raw"
+            key = hashlib.sha256((mode + "\0" + path_or_url).encode("utf-8")).hexdigest()
+            # Leave room for the key and datacache's sidecar/lock suffixes on
+            # filesystems with a 255-byte component limit; preserve extensions.
+            name = local_filename.encode("utf-8")[-160:].decode("utf-8", errors="ignore")
+            local_filename = key + "-" + name
 
         return join(self.cache_directory_path, local_filename)
 
