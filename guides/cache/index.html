@@ -615,6 +615,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#reuse-a-mirror-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reuse a mirror installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#free-disk-space" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1219,6 +1230,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#reuse-a-mirror-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reuse a mirror installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#free-disk-space" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1390,6 +1412,32 @@ despite an existing legacy basename, use <code>download(overwrite=True)</code> o
 <code>pyensembl install --overwrite</code>: the download uses a URL-specific destination
 and leaves the legacy files intact. New <code>--custom-mirror</code> downloads belong to
 that mirror's URLs; use the same mirror to access them through the CLI.</p>
+<h2 id="reuse-a-mirror-installation">Reuse a mirror installation<a class="headerlink" href="#reuse-a-mirror-installation" title="Permanent link">&para;</a></h2>
+<p>For a flat directory containing the original Ensembl filenames, install with
+an explicit mirror:</p>
+<div class="highlight"><pre><span></span><code>pyensembl<span class="w"> </span>install<span class="w"> </span>--release<span class="w"> </span><span class="m">75</span><span class="w"> </span>--species<span class="w"> </span>human<span class="w"> </span>--custom-mirror<span class="w"> </span>https://github.com/openvax/ensembl-data/releases/download/GRCh37.75/
+</code></pre></div>
+<p>In later Python processes, select that same source with <code>with_mirror</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyensembl</span><span class="w"> </span><span class="kn">import</span> <span class="n">EnsemblRelease</span>
+
+<span class="n">mirror</span> <span class="o">=</span> <span class="s2">"https://github.com/openvax/ensembl-data/releases/download/GRCh37.75/"</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">EnsemblRelease</span><span class="p">(</span><span class="mi">75</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="s2">"human"</span><span class="p">)</span><span class="o">.</span><span class="n">with_mirror</span><span class="p">(</span><span class="n">mirror</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">data</span><span class="o">.</span><span class="n">installed</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">gene_by_id</span><span class="p">(</span><span class="s2">"ENSG00000141510"</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</code></pre></div>
+<p><code>with_mirror</code> returns a <code>Genome</code> whose GTF, transcript and protein URLs point
+at the mirror. Pass this object explicitly to downstream tools; for example,
+<code>Variant("1", 53513530, "A", "C", genome=data)</code> in Varcode. To reuse the data
+through the CLI, repeat <code>--custom-mirror</code> for the same release and species.
+Requested Ensembl reference DNA is also read from the mirror; explicitly
+attached local DNA is preserved.</p>
+<p>New mirror installations do <strong>not</strong> populate the source-specific cache used by
+<code>EnsemblRelease(75)</code> or Varcode's <code>genome=75</code>. If those default constructors are
+needed, install canonical sources with <code>pyensembl install --release 75 --species
+human</code>. Existing URL-specific mirror installs from 2.27.5 onward need no
+redownload or reindexing when opened with the same mirror. The legacy
+basename-cache compatibility behavior described above still applies; this API
+does not copy indexes or change existing files' source identity.</p>
 <h2 id="free-disk-space">Free disk space <a id="managing-disk-space"></a><a class="headerlink" href="#free-disk-space" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>pyensembl<span class="w"> </span>delete-index-files<span class="w"> </span>--release<span class="w"> </span><span class="m">93</span><span class="w">  </span><span class="c1"># keep downloads, reindex on use</span>
 pyensembl<span class="w"> </span>delete-all-files<span class="w"> </span>--release<span class="w"> </span><span class="m">93</span><span class="w">    </span><span class="c1"># all of release 93's files</span>

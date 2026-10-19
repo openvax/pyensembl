@@ -862,6 +862,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.EnsemblRelease.with_mirror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        with_mirror
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.EnsemblRelease.install_string" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1507,6 +1518,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.EnsemblRelease.with_mirror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        with_mirror
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.EnsemblRelease.install_string" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1960,6 +1982,101 @@ genome.</p>
 
         <p>Construct EnsemblRelease if it's never been made before, otherwise
 return an old instance.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pyensembl.EnsemblRelease.with_mirror" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">with_mirror</span>
+
+
+<a href="#pyensembl.EnsemblRelease.with_mirror" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">with_mirror</span><span class="p">(</span><span class="n">mirror</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">genome_fasta_path_or_url</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return a Genome using this release's filenames at a flat mirror.</p>
+<p>Use the same mirror when installing and reopening data. New mirror
+downloads have their own source identities and do not populate the
+canonical EnsemblRelease cache. This is also the constructor used by
+the CLI's <code>--custom-mirror</code> option.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>mirror</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <span title="Path">Path</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>URL or directory containing the Ensembl filenames for this release.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>genome_fasta_path_or_url</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or <span title="Path">Path</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Explicit reference DNA source. Otherwise mirror requested Ensembl
+DNA, or preserve a local DNA file attached to this release.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="Genome (pyensembl.genome.Genome)" href="../genome/#pyensembl.Genome">Genome</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A source-explicit genome, usable across processes and in Varcode.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>
