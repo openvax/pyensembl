@@ -374,6 +374,11 @@ class Database(object):
 
         Returns a connection to the database.
         """
+        if not overwrite and exists(self.local_db_path):
+            connection = self._get_connection()
+            if connection is not None:
+                return connection
+            overwrite = True
         logger.info("Creating database: %s", self.local_db_path)
         datacache.ensure_dir(self.cache_directory_path)
         local_source = "://" not in self.source
@@ -493,10 +498,7 @@ class Database(object):
         # and don't answer later queries from results cached before the rebuild.
         self.close()
         self.clear_cache()
-        return self.create(
-            overwrite=overwrite or exists(self.local_db_path),
-            show_progress=show_progress,
-        )
+        return self.create(overwrite=overwrite, show_progress=show_progress)
 
     def columns(self, table_name):
         if self._columns.get(table_name) is None:

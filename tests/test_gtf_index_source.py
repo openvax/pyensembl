@@ -7,7 +7,7 @@ import sqlite3
 import pytest
 
 from pyensembl import Genome
-from pyensembl.database import DATABASE_SCHEMA_VERSION
+from pyensembl.database import DATABASE_SCHEMA_VERSION, Database
 
 
 def write_gtf(path, name):
@@ -57,6 +57,17 @@ def test_same_basename_sources_keep_separate_indexes(tmp_path):
         assert first.gene_name_of_gene_id("g1") == "FIRST"
         assert second.gene_name_of_gene_id("g1") == "SECOND"
         assert first.installed() and second.installed()
+
+
+def test_direct_database_create_cannot_bless_stale_rows(tmp_path):
+    source = tmp_path / "annotation.gtf"
+    write_gtf(source, "FIRST")
+    with Database(str(source), cache_directory_path=str(tmp_path / "cache")) as database:
+        database.create()
+        assert database.connection.execute("SELECT gene_name FROM gene").fetchone()[0] == "FIRST"
+        write_gtf(source, "SECOND")
+        database.create()
+        assert database.connection.execute("SELECT gene_name FROM gene").fetchone()[0] == "SECOND"
 
 
 def test_changed_copied_gtf_refreshes_copy_and_index(tmp_path):
