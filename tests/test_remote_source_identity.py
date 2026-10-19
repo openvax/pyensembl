@@ -92,7 +92,7 @@ def test_long_remote_filename_leaves_room_for_provenance_and_indexes(tmp_path, f
 
 
 @pytest.mark.parametrize("receipt", [False, True])
-def test_legacy_basename_is_not_assumed_to_belong_to_url(tmp_path, receipt):
+def test_existing_legacy_download_is_reused_in_place(tmp_path, receipt):
     source = tmp_path / "source.fa"
     source.write_bytes(b">t\nOLD\n")
     directory = tmp_path / "cache"
@@ -104,11 +104,9 @@ def test_legacy_basename_is_not_assumed_to_belong_to_url(tmp_path, receipt):
         legacy.write_bytes(source.read_bytes())
     source.write_bytes(b">t\nNEW\n")
     cache = make_cache(directory)
-    assert cache.inspect(source.as_uri()).status == "missing"
-    with pytest.raises(MissingRemoteFile):
-        cache.download_or_copy_if_necessary(source.as_uri())
-    downloaded = cache.download_or_copy_if_necessary(source.as_uri(), True)
-    assert Path(downloaded).read_bytes() == source.read_bytes()
+    assert cache.inspect(source.as_uri()).status == "available"
+    assert cache.download_or_copy_if_necessary(source.as_uri()) == str(legacy)
+    assert cache.download_or_copy_if_necessary(source.as_uri(), True) == str(legacy)
     assert legacy.read_bytes() == b">t\nOLD\n"
 
 

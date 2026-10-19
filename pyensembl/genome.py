@@ -546,6 +546,11 @@ class Genome(Serializable):
         show_progress : bool, optional
             Display download progress bars.
         """
+        if overwrite:
+            # A legacy source may refresh into a URL-specific path. Discard
+            # loaded readers, not files, so queries use the selected sources.
+            self.close()
+            self._init_lazy_fields()
         self._set_local_paths(
             download_if_missing=True, overwrite=overwrite, show_progress=show_progress
         )
