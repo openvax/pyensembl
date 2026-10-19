@@ -1,3 +1,11 @@
+# 2.28.0
+
+Add `EnsemblRelease(...).with_mirror(URL)` to reopen the same source-specific
+Genome installed by `pyensembl install --custom-mirror URL` (#470). The CLI
+uses this shared constructor. Mirror downloads and indexes retain their own
+identity; the default EnsemblRelease constructor continues to select canonical
+sources. See the cache guide for installation, Python/Varcode use and migration.
+
 # 2.27.8
 
 Restore in-place reuse of existing basename-only remote caches and their

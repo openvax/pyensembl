@@ -206,6 +206,50 @@ class EnsemblRelease(Genome):
             genome_fasta_path_or_url=genome_fasta_source,
         )
 
+    def with_mirror(self, mirror, *, genome_fasta_path_or_url=None):
+        """Return a Genome using this release's filenames at a flat mirror.
+
+        Use the same mirror when installing and reopening data. New mirror
+        downloads have their own source identities and do not populate the
+        canonical EnsemblRelease cache. This is also the constructor used by
+        the CLI's ``--custom-mirror`` option.
+
+        Parameters
+        ----------
+        mirror : str or Path
+            URL or directory containing the Ensembl filenames for this release.
+        genome_fasta_path_or_url : str or Path, optional
+            Explicit reference DNA source. Otherwise mirror requested Ensembl
+            DNA, or preserve a local DNA file attached to this release.
+
+        Returns
+        -------
+        Genome
+            A source-explicit genome, usable across processes and in Varcode.
+        """
+        mirror = os.fspath(mirror)
+        if not mirror:
+            raise ValueError("mirror must be a nonempty URL or directory")
+
+        def mirrored(source):
+            return os.path.join(mirror, os.path.basename(source))
+
+        dna = genome_fasta_path_or_url
+        if dna is None:
+            if self.genome_fasta_urls:
+                dna = mirrored(self.genome_fasta_urls[0])
+            elif isinstance(self._genome_fasta_option, str):
+                dna = self._genome_fasta_option
+        return Genome(
+            reference_name=self.reference_name,
+            annotation_name="ensembl",
+            annotation_version=self.release,
+            gtf_path_or_url=mirrored(self.gtf_url),
+            transcript_fasta_paths_or_urls=[mirrored(u) for u in self.transcript_fasta_urls],
+            protein_fasta_paths_or_urls=[mirrored(u) for u in self.protein_fasta_urls],
+            genome_fasta_path_or_url=dna,
+        )
+
     def _dated_release_urls(self):
         """Files of a dated release of the species' current assembly."""
         if self._genome_fasta_option is True and self.genome_fasta_type != "toplevel":
