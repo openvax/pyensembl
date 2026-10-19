@@ -206,7 +206,7 @@ can be read-only for other users. A download or index build locks only the
 file it writes; registering, deleting and pruning releases briefly lock the
 whole cache.
 
-New files follow your umask, as do lock files on Python 3.10+, so set
+New files and lock files follow your umask, so set
 `umask 002` (or default ACLs) before installing into a group-shared cache.
 Files downloaded before PyEnsembl 2.13.1 were readable only by their owner;
 share them with `chmod -R g+rX "$PYENSEMBL_CACHE_DIR/pyensembl"` (or the

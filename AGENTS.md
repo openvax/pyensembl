@@ -29,7 +29,7 @@ Do not tell the user you are "done" or that changes are "complete" until both pa
 
 - Use ruff for linting (there is no `format.sh`; formatting is not currently enforced in CI).
 - Configuration is in `pyproject.toml`.
-- Python support: 3.9+.
+- Python support: 3.11+.
 
 ---
 

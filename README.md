@@ -10,7 +10,7 @@ new-platform annotations and custom matched GTF/FASTA files.
 
 ## Installation
 
-Use Python 3.9 or later. Install the package and one explicit annotation:
+Use Python 3.11 or later. Install the package and one explicit annotation:
 
 ```sh
 python -m pip install pyensembl
