@@ -1368,21 +1368,28 @@ directories and keep working. To use another location, set
 <div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">PYENSEMBL_CACHE_DIR</span><span class="o">=</span>/custom/cache/dir
 </code></pre></div>
 <p>In Python, set <code>os.environ["PYENSEMBL_CACHE_DIR"]</code> before creating a genome.</p>
-<p>Downloaded annotation and transcript/protein FASTA filenames have a SHA-256
+<p>New annotation and transcript/protein FASTA downloads have a SHA-256
 prefix identifying the complete source URL and decompression mode, followed by
 the remote filename (for example, <code>&lt;key&gt;-annotation.gtf.gz</code>). Their SQLite and
 FASTA indexes retain that prefix. URLs with different hosts, paths or query
-parameters use separate files, even in the same genome directory. Changing a
+parameters use separate new files, even in the same genome directory. Changing a
 signed URL also selects a new cache entry. Query parameters and credentials
 are included in the hash but are not copied into the filename.</p>
-<p><strong>Upgrading to 2.27.5:</strong> rerun <code>pyensembl install</code> for remote datasets installed
-by older versions. Basename-only downloads and indexes are left intact but are
-not reused: their provenance cannot establish the complete URL they came from.
-After verifying the new installation, you can remove those old files manually.
-Local attached files and the shared reference-DNA store keep their existing
-behavior. A <code>--custom-mirror</code> install now belongs to that mirror's URLs; use the
-same mirror when accessing it through the CLI. It does not populate the default
-<code>EnsemblRelease</code> URLs' cache.</p>
+<p><strong>Existing installations remain usable in place.</strong> Version 2.27.8 restores
+reuse of basename-only downloads and their original indexes, correcting the
+2.27.5 regression. No reinstall, migration, renaming, provenance rewrite or
+reindexing is required, including for read-only shared caches. Files already
+downloaded with URL-specific names also remain usable and take precedence
+when both layouts exist. Local attached files and the shared reference-DNA
+store keep their existing behavior.</p>
+<p>Legacy entries retain their historical basename lookup and source assumptions,
+including installations from mirrors. Their original full URL cannot always
+be recovered from absent or redacted provenance. The new URL-identity guarantee
+applies to the new layout. If you explicitly need to acquire a different URL
+despite an existing legacy basename, use <code>download(overwrite=True)</code> or
+<code>pyensembl install --overwrite</code>: the download uses a URL-specific destination
+and leaves the legacy files intact. New <code>--custom-mirror</code> downloads belong to
+that mirror's URLs; use the same mirror to access them through the CLI.</p>
 <h2 id="free-disk-space">Free disk space <a id="managing-disk-space"></a><a class="headerlink" href="#free-disk-space" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>pyensembl<span class="w"> </span>delete-index-files<span class="w"> </span>--release<span class="w"> </span><span class="m">93</span><span class="w">  </span><span class="c1"># keep downloads, reindex on use</span>
 pyensembl<span class="w"> </span>delete-all-files<span class="w"> </span>--release<span class="w"> </span><span class="m">93</span><span class="w">    </span><span class="c1"># all of release 93's files</span>
