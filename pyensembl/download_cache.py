@@ -18,6 +18,7 @@ from pathlib import Path
 from shutil import rmtree
 from urllib.parse import urlsplit
 import hashlib
+import gzip
 import logging
 
 import datacache
@@ -52,16 +53,17 @@ def _require_available(inspection):
     return inspection.path
 
 
-def _same_file_bytes(first, second):
+def _same_file_bytes(first, second, decompress=False):
     """Compare copied local input with its cached counterpart."""
-    def digest(path):
+    def digest(path, opener=open):
         value = hashlib.sha256()
-        with open(path, "rb") as handle:
+        with opener(path, "rb") as handle:
             for chunk in iter(lambda: handle.read(1024 * 1024), b""):
                 value.update(chunk)
         return value.digest()
 
-    return digest(first) == digest(second)
+    opener = gzip.open if decompress and first.lower().endswith(".gz") else open
+    return digest(first, opener) == digest(second)
 
 
 def cache_subdirectory(
@@ -253,12 +255,13 @@ class DownloadCache(object):
     def cached_path(self, path_or_url):
         """Reuse existing cache paths in place; never migrate or create files.
 
-        New remote entries use full URL/mode identity. Existing basename-only
+        New entries use full URL or original local path plus mode identity.
+        Existing basename-only
         entries retain their historical lookup contract and derived indexes,
         including mirror installs and entries without recorded provenance.
         """
         path = self._cache_path(path_or_url)
-        if self.is_url_format(path_or_url) and not lexists(path):
+        if not lexists(path):
             legacy = self._cache_path(path_or_url, legacy=True)
             if lexists(legacy):
                 return legacy
@@ -291,9 +294,10 @@ class DownloadCache(object):
         if len(local_filename) == 0:
             raise ValueError("Can't determine local filename for %s" % (path_or_url,))
 
-        if remote and not legacy:
+        if not legacy and (remote or self.copy_local_files_to_cache):
             mode = "decompressed" if self.decompress_on_download else "raw"
-            key = hashlib.sha256((mode + "\0" + path_or_url).encode("utf-8")).hexdigest()
+            identity = path_or_url if remote else "local\0" + abspath(path_or_url)
+            key = hashlib.sha256((mode + "\0" + identity).encode("utf-8")).hexdigest()
             # Leave room for the key and datacache's sidecar/lock suffixes on
             # filesystems with a 255-byte component limit; preserve extensions.
             name = local_filename.encode("utf-8")[-160:].decode("utf-8", errors="ignore")
@@ -353,7 +357,7 @@ class DownloadCache(object):
                 if source.status == "missing":
                     return cached.path
                 _require_available(source)
-                if source.size == cached.size and _same_file_bytes(local_path, cached_path):
+                if _same_file_bytes(local_path, cached_path, self.decompress_on_download):
                     return cached.path
                 overwrite = True
         source = inspect_data_file(local_path)
@@ -362,6 +366,8 @@ class DownloadCache(object):
         _require_available(source)
         if not self.copy_local_files_to_cache or local_path == abspath(cached_path):
             return local_path
+        # A refresh must not overwrite another legacy basename's saved bytes.
+        cached_path = self._cache_path(local_path)
         return self._fetch(Path(local_path).as_uri(), cached_path, overwrite, show_progress)
 
     def download_or_copy_if_necessary(

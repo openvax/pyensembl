@@ -8,9 +8,9 @@ import datacache
 import pytest
 
 from pyensembl import Genome
+from pyensembl.common import dump_pickle
 from pyensembl.database import Database
 from pyensembl.download_cache import DownloadCache
-from pyensembl.sequence_data import SequenceData
 from .test_gtf_index_source import write_gtf
 
 
@@ -52,7 +52,9 @@ def legacy_genome(directory, origin, compressed=False):
     with Database(str(gtf), source=settings["gtf_path_or_url"],
                   cache_directory_path=str(directory)) as database:
         database.create()
-    SequenceData([str(transcript), str(protein)], str(directory)).index()
+    # Build historical dictionaries directly, independent of current naming.
+    for path, sequences in ((transcript, {"t": "ACGT"}), (protein, {"p": "MAV"})):
+        dump_pickle(sequences, str(path) + ".pickle")
     return settings
 
 
