@@ -660,10 +660,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#other-assemblies-and-providers" class="md-nav__link">
+  <a href="#why-ensemblannotation-exists" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Other assemblies and providers
+        Why EnsemblAnnotation exists
       
     </span>
   </a>
@@ -1175,10 +1175,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#other-assemblies-and-providers" class="md-nav__link">
+  <a href="#why-ensemblannotation-exists" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Other assemblies and providers
+        Why EnsemblAnnotation exists
       
     </span>
   </a>
@@ -1221,6 +1221,8 @@
 genome assembly and date instead of numbered releases. PyEnsembl treats each
 annotation date as a release: <code>EnsemblRelease("2026_04", species="human")</code>
 works like <code>EnsemblRelease(116, species="human")</code> and selects GRCh38.
+<strong>You do not need <code>EnsemblAnnotation</code> to use dates.</strong> Keep using
+<code>EnsemblRelease</code> for registered species and their current assemblies.
 <a href="../guides/assembly-selection/">Choose a reference</a> compares both with custom
 files. Installed datasets are not affected by the transition.</p>
 <h2 id="install-a-dated-release">Install a dated release<a class="headerlink" href="#install-a-dated-release" title="Permanent link">&para;</a></h2>
@@ -1276,10 +1278,30 @@ download finds the file missing.</p>
 published: Arabidopsis's current annotation is dated <code>2010_09</code>, and fly's
 <code>2022_07</code> annotation is older than release 116's. A website release label such
 as 2026-07 is different from an annotation date and is rejected.</p>
-<h2 id="other-assemblies-and-providers">Other assemblies and providers<a class="headerlink" href="#other-assemblies-and-providers" title="Permanent link">&para;</a></h2>
-<p><code>EnsemblAnnotation</code> selects any dataset by assembly accession, provider and
-date: an older assembly such as GRCh37 (<code>2013_09</code>), a species PyEnsembl does
-not list, or another provider's annotation.</p>
+<h2 id="why-ensemblannotation-exists">Why EnsemblAnnotation exists<a class="headerlink" href="#why-ensemblannotation-exists" title="Permanent link">&para;</a></h2>
+<p>Both classes return the same <code>Genome</code> query interface. They select datasets
+at different levels:</p>
+<table>
+<thead>
+<tr>
+<th>Selection</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Registered species, current assembly, standard annotation coverage</td>
+<td><code>EnsemblRelease("2026_04", species="human")</code></td>
+</tr>
+<tr>
+<td>Explicit older or unregistered assembly accession, provider or coverage</td>
+<td><code>EnsemblAnnotation(accession, date, provider=...)</code></td>
+</tr>
+</tbody>
+</table>
+<p>For example, <code>EnsemblRelease("2013_09", species="human")</code> still selects the
+registered current human assembly, GRCh38. A date does not select GRCh37.
+Use its accession explicitly instead:</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyensembl</span><span class="w"> </span><span class="kn">import</span> <span class="n">EnsemblAnnotation</span>
 
 <span class="k">with</span> <span class="n">EnsemblAnnotation</span><span class="p">(</span>
@@ -1302,7 +1324,12 @@ ambiguous.</p>
 overriding <code>cache_directory_path</code>, use a distinct directory for each dataset.</p>
 <p>The optional <code>species</code> label guards species-specific alias sources; it does not
 select or verify the assembly's species. Keep it consistent with the accession.
-<code>genome_fasta=True</code> and <code>genome_fasta_mask</code> select reference DNA as above.</p>
+<code>genome_fasta=True</code> and <code>genome_fasta_mask</code> select reference DNA as above.
+Both constructors share new official dated DNA downloads when the accession,
+provider, masking, MD5 and size match, even if their annotation dates differ.
+For example, the published GRCh38 <code>2025_12</code> and <code>2026_04</code> DNA can share one
+download and index. Existing private copies stay usable where they are; no
+reinstall or migration is needed. See <a href="../guides/cache/#how-the-shared-dna-cache-works">DNA cache storage</a>.</p>
 <p>Community providers may have different available files. Check the directory
 before installation. Use <code>Genome</code> with explicitly matched files when a dataset
 does not provide the standard GTF, cDNA and peptide filenames. GFF3 and other

@@ -2186,10 +2186,13 @@ DNA, or preserve a local DNA file attached to this release.</p>
 
 
         <p>A dated geneset for one assembly on the new Ensembl platform.</p>
-<p>Select an existing assembly accession, provider and annotation date from
-Ensembl's downloads page. These are not numbered <code>EnsemblRelease</code> values
-or the website's YYYY-MM release label. Construction never downloads data;
-call <code>download()</code> then <code>index()</code> to install the selected files.</p>
+<p>Most callers should use <code>EnsemblRelease("2026_04", species="human")</code>:
+it selects the registered species' current assembly and standard coverage.
+This class is for explicit older or unregistered assembly accessions,
+annotation providers, and coverage choices. Both accept annotation dates
+in YYYY_MM form, not the website's YYYY-MM release label.</p>
+<p>Select an existing dataset from Ensembl's downloads page. Construction
+never downloads data; call <code>download()</code> then <code>index()</code> to install it.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>

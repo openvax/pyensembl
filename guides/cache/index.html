@@ -1534,7 +1534,7 @@ platform cache directory). <code>dna_cache</code> may be a symlink, e.g. to a la
       object.json        full identity of the upstream file
       index.json
 </code></pre></div>
-<p>Before downloading, PyEnsembl reads Ensembl's small README and CHECKSUMS files
+<p>For numbered releases, before downloading PyEnsembl reads Ensembl's small README and CHECKSUMS files
 to see whether another release already has the same file. The versioned
 assembly accession distinguishes assembly patches, and the 16-character file
 key (a SHA-256 prefix of the assembly, Ensembl's checksum and compressed size)
@@ -1542,6 +1542,21 @@ distinguishes upstream revisions. These are metadata checks: Ensembl's Unix
 checksums are not cryptographic hashes. If the metadata is incomplete, the
 assembly directory ends in <code>-unverified</code> and each release keeps its own copy.
 Local FASTA files and custom mirrors are never shared.</p>
+<p>For dated releases, new installs read the official <code>genome/md5sum.txt</code> and
+compressed size. Matching versioned accession, provider, masking, MD5 and size
+share one download and index across dates. Downloaded compressed bytes must
+match the MD5 before the FASTA is published. The date is excluded from a
+verified file identity, so a new annotation date does not duplicate unchanged
+DNA. Changed checksums select a separate object; missing or ambiguous metadata
+keeps each source URL separate. These objects live under
+<code>dna_cache/ensemblorganisms/ftp.ebi.ac.uk/&lt;accession&gt;/&lt;provider&gt;/toplevel/&lt;mask&gt;/fasta/&lt;file key&gt;/</code>.</p>
+<p><strong>Existing dated DNA installations remain usable in place.</strong> Their private
+files, indexes and manifests are neither migrated nor rewritten. Repeated
+<code>download_genome_fasta()</code> and <code>index_genome_fasta()</code> calls reuse them, including
+offline and read-only caches. New sharing therefore prevents future duplicates;
+it does not automatically reclaim existing copies. Numbered and dated DNA
+are not assumed interchangeable solely because their accessions match: their
+file formats and upstream checksum schemes differ.</p>
 <p>Downloads retry transient HTTP failures and stalls of five minutes, and are
 checked against the upstream size. An interrupted DNA download resumes on the
 next install on POSIX systems, using only bytes the server confirms come from
