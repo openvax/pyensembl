@@ -1,0 +1,13 @@
+{
+  "species": "canis_lupus_familiarisbasenji",
+  "release": 116,
+  "url": "https://ftp.ensembl.org/pub/release-116/gtf/canis_lupus_familiarisbasenji/Canis_lupus_familiarisbasenji.Basenji_breed-1.1.116.gtf.gz",
+  "headers": [
+    "#!genome-build Basenji_breed-1.1",
+    "#!genome-version Basenji_breed-1.1",
+    "#!genome-date 2019-04",
+    "#!genome-build-accession GCA_004886185.1",
+    "#!genebuild-last-updated 2019-08"
+  ],
+  "prefix_sha256": "b278eeefdc45e87f091dc30b7a7a15948de65675fc9f34e3e27c659ff2925a7f"
+}

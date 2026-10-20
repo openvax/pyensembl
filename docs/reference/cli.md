@@ -5,7 +5,7 @@ Run `pyensembl ACTION [options]`. [Installation](../index.md#install),
 and [reference DNA](../guides/reference-dna.md) explain the main workflows.
 Dated releases of the new platform use `--release YYYY_MM`, e.g.
 `--release 2026_04`; other new-platform datasets use the Python constructor
-described in the [platform guide](../ensembl-platform.md).
+described in the [platform guide](../guides/assembly-selection.md#dated-releases).
 
 ## Commands and options
 

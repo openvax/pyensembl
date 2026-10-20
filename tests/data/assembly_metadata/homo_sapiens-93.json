@@ -1,0 +1,13 @@
+{
+  "species": "homo_sapiens",
+  "release": 93,
+  "url": "https://ftp.ensembl.org/pub/release-93/gtf/homo_sapiens/Homo_sapiens.GRCh38.93.chr_patch_hapl_scaff.gtf.gz",
+  "headers": [
+    "#!genome-build GRCh38.p12",
+    "#!genome-version GRCh38",
+    "#!genome-date 2013-12",
+    "#!genome-build-accession NCBI:GCA_000001405.27",
+    "#!genebuild-last-updated 2018-01"
+  ],
+  "prefix_sha256": "4f59e94f4b80e1c6ddd02a1e0941d1b51db73c17cc165d0c5cb35ef108eb70ae"
+}

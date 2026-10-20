@@ -1,0 +1,26 @@
+[
+  {
+    "json": "{\"release\": 75, \"species\": {\"latin_name\": \"homo_sapiens\", \"__class__\": {\"__module__\": \"pyensembl.species\", \"__name__\": \"Species\"}}, \"server\": \"file:///private/tmp/pyensembl-482-legacy/mirror\", \"genome_fasta\": null, \"genome_fasta_type\": \"toplevel\", \"genome_fasta_mask\": \"none\", \"__class__\": {\"__module__\": \"pyensembl.ensembl_release\", \"__name__\": \"EnsemblRelease\"}}",
+    "pickle": "gASVRQEAAAAAAACMCGJ1aWx0aW5zlIwHZ2V0YXR0cpSTlIwZcHllbnNlbWJsLmVuc2VtYmxfcmVsZWFzZZSMDkVuc2VtYmxSZWxlYXNllJOUjAlmcm9tX2RpY3SUhpRSlH2UKIwHcmVsZWFzZZRLS4wHc3BlY2llc5RoAowRcHllbnNlbWJsLnNwZWNpZXOUjAdTcGVjaWVzlJOUaAaGlFKUfZSMCmxhdGluX25hbWWUjAxob21vX3NhcGllbnOUc4WUUpSMBnNlcnZlcpSML2ZpbGU6Ly8vcHJpdmF0ZS90bXAvcHllbnNlbWJsLTQ4Mi1sZWdhY3kvbWlycm9ylIwMZ2Vub21lX2Zhc3RhlE6MEWdlbm9tZV9mYXN0YV90eXBllIwIdG9wbGV2ZWyUjBFnZW5vbWVfZmFzdGFfbWFza5SMBG5vbmWUdYWUUpQu",
+    "reference_name": "GRCh37",
+    "cache": "/private/tmp/pyensembl-482-legacy/cache/pyensembl/GRCh37/ensembl75"
+  },
+  {
+    "json": "{\"release\": \"2026_04\", \"species\": {\"latin_name\": \"homo_sapiens\", \"__class__\": {\"__module__\": \"pyensembl.species\", \"__name__\": \"Species\"}}, \"server\": \"file:///private/tmp/pyensembl-482-legacy/mirror\", \"genome_fasta\": null, \"genome_fasta_type\": \"toplevel\", \"genome_fasta_mask\": \"none\", \"__class__\": {\"__module__\": \"pyensembl.ensembl_release\", \"__name__\": \"EnsemblRelease\"}}",
+    "pickle": "gASVTQEAAAAAAACMCGJ1aWx0aW5zlIwHZ2V0YXR0cpSTlIwZcHllbnNlbWJsLmVuc2VtYmxfcmVsZWFzZZSMDkVuc2VtYmxSZWxlYXNllJOUjAlmcm9tX2RpY3SUhpRSlH2UKIwHcmVsZWFzZZSMBzIwMjZfMDSUjAdzcGVjaWVzlGgCjBFweWVuc2VtYmwuc3BlY2llc5SMB1NwZWNpZXOUk5RoBoaUUpR9lIwKbGF0aW5fbmFtZZSMDGhvbW9fc2FwaWVuc5RzhZRSlIwGc2VydmVylIwvZmlsZTovLy9wcml2YXRlL3RtcC9weWVuc2VtYmwtNDgyLWxlZ2FjeS9taXJyb3KUjAxnZW5vbWVfZmFzdGGUTowRZ2Vub21lX2Zhc3RhX3R5cGWUjAh0b3BsZXZlbJSMEWdlbm9tZV9mYXN0YV9tYXNrlIwEbm9uZZR1hZRSlC4=",
+    "reference_name": "GRCh38",
+    "cache": "/private/tmp/pyensembl-482-legacy/cache/pyensembl/GRCh38/ensembl2026_04"
+  },
+  {
+    "json": "{\"assembly_accession\": \"GCA_000001405.29\", \"annotation_date\": \"2023_03\", \"provider\": \"ensembl\", \"include_alt\": false, \"genome_fasta\": false, \"genome_fasta_mask\": \"none\", \"species\": null, \"reference_name\": \"GCA_000001405.29\", \"cache_directory_path\": null, \"server\": \"file:///private/tmp/pyensembl-482-legacy/mirror\", \"__class__\": {\"__module__\": \"pyensembl.ensembl_annotation\", \"__name__\": \"EnsemblAnnotation\"}}",
+    "pickle": "gASVaQEAAAAAAACMCGJ1aWx0aW5zlIwHZ2V0YXR0cpSTlIwccHllbnNlbWJsLmVuc2VtYmxfYW5ub3RhdGlvbpSMEUVuc2VtYmxBbm5vdGF0aW9ulJOUjAlmcm9tX2RpY3SUhpRSlH2UKIwSYXNzZW1ibHlfYWNjZXNzaW9ulIwQR0NBXzAwMDAwMTQwNS4yOZSMD2Fubm90YXRpb25fZGF0ZZSMBzIwMjNfMDOUjAhwcm92aWRlcpSMB2Vuc2VtYmyUjAtpbmNsdWRlX2FsdJSJjAxnZW5vbWVfZmFzdGGUiYwRZ2Vub21lX2Zhc3RhX21hc2uUjARub25llIwHc3BlY2llc5ROjA5yZWZlcmVuY2VfbmFtZZRoC4wUY2FjaGVfZGlyZWN0b3J5X3BhdGiUTowGc2VydmVylIwvZmlsZTovLy9wcml2YXRlL3RtcC9weWVuc2VtYmwtNDgyLWxlZ2FjeS9taXJyb3KUdYWUUpQu",
+    "reference_name": "GCA_000001405.29",
+    "cache": "/private/tmp/pyensembl-482-legacy/cache/pyensembl/GCA_000001405.29/ensembl-ensembl-GCA_000001405.29-primary-2023_03"
+  },
+  {
+    "json": "{\"assembly_accession\": \"GCA_000001405.29\", \"annotation_date\": \"2023_03\", \"provider\": \"ensembl\", \"include_alt\": true, \"genome_fasta\": false, \"genome_fasta_mask\": \"none\", \"species\": \"homo_sapiens\", \"reference_name\": \"custom-label\", \"cache_directory_path\": \"/private/tmp/pyensembl-482-legacy/custom-cache\", \"server\": \"file:///private/tmp/pyensembl-482-legacy/mirror\", \"__class__\": {\"__module__\": \"pyensembl.ensembl_annotation\", \"__name__\": \"EnsemblAnnotation\"}}",
+    "pickle": "gASVtAEAAAAAAACMCGJ1aWx0aW5zlIwHZ2V0YXR0cpSTlIwccHllbnNlbWJsLmVuc2VtYmxfYW5ub3RhdGlvbpSMEUVuc2VtYmxBbm5vdGF0aW9ulJOUjAlmcm9tX2RpY3SUhpRSlH2UKIwSYXNzZW1ibHlfYWNjZXNzaW9ulIwQR0NBXzAwMDAwMTQwNS4yOZSMD2Fubm90YXRpb25fZGF0ZZSMBzIwMjNfMDOUjAhwcm92aWRlcpSMB2Vuc2VtYmyUjAtpbmNsdWRlX2FsdJSIjAxnZW5vbWVfZmFzdGGUiYwRZ2Vub21lX2Zhc3RhX21hc2uUjARub25llIwHc3BlY2llc5SMDGhvbW9fc2FwaWVuc5SMDnJlZmVyZW5jZV9uYW1llIwMY3VzdG9tLWxhYmVslIwUY2FjaGVfZGlyZWN0b3J5X3BhdGiUjC4vcHJpdmF0ZS90bXAvcHllbnNlbWJsLTQ4Mi1sZWdhY3kvY3VzdG9tLWNhY2hllIwGc2VydmVylIwvZmlsZTovLy9wcml2YXRlL3RtcC9weWVuc2VtYmwtNDgyLWxlZ2FjeS9taXJyb3KUdYWUUpQu",
+    "reference_name": "custom-label",
+    "cache": "/private/tmp/pyensembl-482-legacy/custom-cache"
+  }
+]

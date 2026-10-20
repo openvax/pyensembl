@@ -1,0 +1,13 @@
+{
+  "species": "mus_musculus",
+  "release": 81,
+  "url": "https://ftp.ensembl.org/pub/release-81/gtf/mus_musculus/Mus_musculus.GRCm38.81.gtf.gz",
+  "headers": [
+    "#!genome-build GRCm38.p4",
+    "#!genome-version GRCm38",
+    "#!genome-date 2012-01",
+    "#!genome-build-accession NCBI:GCA_000001635.6",
+    "#!genebuild-last-updated 2015-07"
+  ],
+  "prefix_sha256": "b6cee30a5b094b90149fda6469c53abc093fafcb87d4081fc5019ae6ad921647"
+}

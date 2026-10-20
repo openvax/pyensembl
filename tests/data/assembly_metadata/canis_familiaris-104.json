@@ -1,0 +1,13 @@
+{
+  "species": "canis_familiaris",
+  "release": 104,
+  "url": "https://ftp.ensembl.org/pub/release-104/gtf/canis_lupus_familiaris/Canis_lupus_familiaris.CanFam3.1.104.gtf.gz",
+  "headers": [
+    "#!genome-build CanFam3.1",
+    "#!genome-version CanFam3.1",
+    "#!genome-date 2011-09",
+    "#!genome-build-accession GCA_000002285.2",
+    "#!genebuild-last-updated 2019-06"
+  ],
+  "prefix_sha256": "98a4edaf828e889189be3a47821d3dafc41bd12bae2cb4d17854c0d9937b912d"
+}
