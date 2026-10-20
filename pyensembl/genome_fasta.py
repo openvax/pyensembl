@@ -130,13 +130,14 @@ class GenomeFasta:
                         report_progress()
                         chunk = reader.read(_CHUNK_SIZE)
 
-    def _download(self, expected_size=None, show_progress=False):
+    def _download(self, expected_size=None, show_progress=False, *, expected_md5=None):
         """Fetch with datacache retries, then publish the decompressed FASTA.
 
         expected_size describes the downloaded (compressed) bytes. When it is
         known, an interrupted download resumes where it stopped, even in a
         later process: datacache appends only bytes the server confirms are
-        from the same file (strong ETag), then checks the size.
+        from the same file (strong ETag), then checks the size. A dated
+        platform MD5, when supplied, is checked before publishing any FASTA.
         """
         self.directory.mkdir(parents=True, exist_ok=True)
         # A stable name lets a later attempt find the partial download, and a
@@ -163,6 +164,13 @@ class GenomeFasta:
                     self.source,
                 )
                 fetch_file(self.source, **options)
+            if expected_md5 is not None:
+                with open(raw, "rb") as handle:
+                    digest = hashlib.file_digest(
+                        handle, lambda: hashlib.md5(usedforsecurity=False)
+                    ).hexdigest()
+                if digest != expected_md5:
+                    raise FileValidationError(str(raw), "MD5 does not match upstream manifest")
             self._write_uncompressed(raw, self.materialized_path, show_progress)
         finally:
             _remove(raw)

@@ -4,6 +4,8 @@ Ensembl's [new platform](https://www.ensembl.org/) publishes annotations by
 genome assembly and date instead of numbered releases. PyEnsembl treats each
 annotation date as a release: `EnsemblRelease("2026_04", species="human")`
 works like `EnsemblRelease(116, species="human")` and selects GRCh38.
+**You do not need `EnsemblAnnotation` to use dates.** Keep using
+`EnsemblRelease` for registered species and their current assemblies.
 [Choose a reference](guides/assembly-selection.md) compares both with custom
 files. Installed datasets are not affected by the transition.
 
@@ -78,11 +80,19 @@ published: Arabidopsis's current annotation is dated `2010_09`, and fly's
 `2022_07` annotation is older than release 116's. A website release label such
 as 2026-07 is different from an annotation date and is rejected.
 
-## Other assemblies and providers
+## Why EnsemblAnnotation exists
 
-`EnsemblAnnotation` selects any dataset by assembly accession, provider and
-date: an older assembly such as GRCh37 (`2013_09`), a species PyEnsembl does
-not list, or another provider's annotation.
+Both classes return the same `Genome` query interface. They select datasets
+at different levels:
+
+| Selection | Use |
+| --- | --- |
+| Registered species, current assembly, standard annotation coverage | `EnsemblRelease("2026_04", species="human")` |
+| Explicit older or unregistered assembly accession, provider or coverage | `EnsemblAnnotation(accession, date, provider=...)` |
+
+For example, `EnsemblRelease("2013_09", species="human")` still selects the
+registered current human assembly, GRCh38. A date does not select GRCh37.
+Use its accession explicitly instead:
 
 ```python
 from pyensembl import EnsemblAnnotation
@@ -112,6 +122,11 @@ overriding `cache_directory_path`, use a distinct directory for each dataset.
 The optional `species` label guards species-specific alias sources; it does not
 select or verify the assembly's species. Keep it consistent with the accession.
 `genome_fasta=True` and `genome_fasta_mask` select reference DNA as above.
+Both constructors share new official dated DNA downloads when the accession,
+provider, masking, MD5 and size match, even if their annotation dates differ.
+For example, the published GRCh38 `2025_12` and `2026_04` DNA can share one
+download and index. Existing private copies stay usable where they are; no
+reinstall or migration is needed. See [DNA cache storage](guides/cache.md#how-the-shared-dna-cache-works).
 
 Community providers may have different available files. Check the directory
 before installation. Use `Genome` with explicitly matched files when a dataset

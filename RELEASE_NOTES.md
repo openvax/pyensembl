@@ -1,3 +1,14 @@
+# 2.28.3
+
+Share new reference DNA downloads and indexes across dated Ensembl releases
+when accession, provider, masking, upstream MD5 and compressed size agree
+(#454). Verify downloaded bytes against the manifest before publication.
+Missing metadata keeps URLs separate. Existing private dated DNA stays usable
+in place, without migration, reindexing or metadata rewrites; numbered-release
+shared caches retain their paths. Both EnsemblRelease and EnsemblAnnotation
+benefit. Clarify that ordinary dated releases need only EnsemblRelease;
+EnsemblAnnotation is for explicit assembly, provider and coverage selection.
+
 # 2.28.2
 
 Fix local transcript/protein FASTA index collisions (#467). Newly created

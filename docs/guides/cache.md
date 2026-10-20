@@ -244,7 +244,7 @@ pyensembl/dna_cache/
       index.json
 ```
 
-Before downloading, PyEnsembl reads Ensembl's small README and CHECKSUMS files
+For numbered releases, before downloading PyEnsembl reads Ensembl's small README and CHECKSUMS files
 to see whether another release already has the same file. The versioned
 assembly accession distinguishes assembly patches, and the 16-character file
 key (a SHA-256 prefix of the assembly, Ensembl's checksum and compressed size)
@@ -252,6 +252,23 @@ distinguishes upstream revisions. These are metadata checks: Ensembl's Unix
 checksums are not cryptographic hashes. If the metadata is incomplete, the
 assembly directory ends in `-unverified` and each release keeps its own copy.
 Local FASTA files and custom mirrors are never shared.
+
+For dated releases, new installs read the official `genome/md5sum.txt` and
+compressed size. Matching versioned accession, provider, masking, MD5 and size
+share one download and index across dates. Downloaded compressed bytes must
+match the MD5 before the FASTA is published. The date is excluded from a
+verified file identity, so a new annotation date does not duplicate unchanged
+DNA. Changed checksums select a separate object; missing or ambiguous metadata
+keeps each source URL separate. These objects live under
+`dna_cache/ensemblorganisms/ftp.ebi.ac.uk/<accession>/<provider>/toplevel/<mask>/fasta/<file key>/`.
+
+**Existing dated DNA installations remain usable in place.** Their private
+files, indexes and manifests are neither migrated nor rewritten. Repeated
+`download_genome_fasta()` and `index_genome_fasta()` calls reuse them, including
+offline and read-only caches. New sharing therefore prevents future duplicates;
+it does not automatically reclaim existing copies. Numbered and dated DNA
+are not assumed interchangeable solely because their accessions match: their
+file formats and upstream checksum schemes differ.
 
 Downloads retry transient HTTP failures and stalls of five minutes, and are
 checked against the upstream size. An interrupted DNA download resumes on the
