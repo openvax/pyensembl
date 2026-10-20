@@ -99,6 +99,10 @@ def test_species_default_and_accession_compatibility_layouts():
     assert plain.download_cache.cache_directory_path == named.download_cache.cache_directory_path
     assert explicit.download_cache.cache_directory_path == legacy.download_cache.cache_directory_path
     assert plain.download_cache.cache_directory_path != explicit.download_cache.cache_directory_path
+    for selector in ["GCA_000001405.29", "gca_000001405.29", " GCA_000001405.29 "]:
+        selected = EnsemblRelease("2026_04", assembly=selector)
+        assert selected.gtf_url == explicit.gtf_url
+        assert selected.download_cache.cache_directory_path == explicit.download_cache.cache_directory_path
 
 
 def test_existing_dated_directory_and_mirror_keep_original_selection(tmp_path):

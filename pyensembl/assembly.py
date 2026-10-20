@@ -104,6 +104,10 @@ def validate_assembly(record, assembly=None, accession=None):
 def dated_assembly(date, species=None, assembly=None, accession=None, provider=None,
                    infer_historical=True):
     """Return a record and whether this is the registered species selection."""
+    if isinstance(assembly, str):
+        assembly = assembly.strip()
+        if _ACCESSION.fullmatch(assembly.upper()):
+            assembly = assembly.upper()
     if accession is not None:
         check_accession(accession)
     if provider is not None and (
