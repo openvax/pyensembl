@@ -618,10 +618,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#compatibility-with-ensemblannotation" class="md-nav__link">
+  <a href="#removed-constructor" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Compatibility with EnsemblAnnotation
+        Removed constructor
       
     </span>
   </a>
@@ -1252,10 +1252,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#compatibility-with-ensemblannotation" class="md-nav__link">
+  <a href="#removed-constructor" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Compatibility with EnsemblAnnotation
+        Removed constructor
       
     </span>
   </a>
@@ -1462,20 +1462,15 @@ an explicit accession uses the accession layout. Supplying
 this API change. <a href="../cache/#how-the-shared-dna-cache-works">Shared DNA caching</a>
 continues to share new verified downloads while preserving existing private
 copies. No reinstall is needed.</p>
-<h2 id="compatibility-with-ensemblannotation">Compatibility with EnsemblAnnotation<a class="headerlink" href="#compatibility-with-ensemblannotation" title="Permanent link">&para;</a></h2>
-<p><code>EnsemblAnnotation</code> is now a compatibility subclass of <code>EnsemblRelease</code>, with
-its original signature, default coverage, optional species label, reference
-label, and cache paths. Its imports and saved objects remain supported without
-runtime deprecation warnings. New code can replace:</p>
-<div class="highlight"><pre><span></span><code><span class="n">EnsemblAnnotation</span><span class="p">(</span><span class="n">accession</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
-</code></pre></div>
-<p>with:</p>
+<h2 id="removed-constructor">Removed constructor<a class="headerlink" href="#removed-constructor" title="Permanent link">&para;</a></h2>
+<p><code>EnsemblAnnotation</code> was removed in 2.30.0. Select the same dataset with:</p>
 <div class="highlight"><pre><span></span><code><span class="n">EnsemblRelease</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">assembly_accession</span><span class="o">=</span><span class="n">accession</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
 </code></pre></div>
-<p>The replacement preserves dataset and cache choices; the new constructor also
-infers known species and validates explicit species constraints. The wrapper
-retains its historical optional species label. <code>reference_name=</code> remains a
-label, while <code>assembly=</code> selects or checks biological assembly identity.</p>
+<p>The equivalent call reuses its existing cache files, including custom labels,
+directories, and coverage. No reinstall or migration is needed. Imports and
+serialized objects naming the removed class are no longer supported; recreate
+the dataset using <code>EnsemblRelease</code>. Existing <code>EnsemblRelease</code> saved objects
+continue to load.</p>
 <p>Ensembl's <a href="https://www.ensembl.info/2025/12/02/updates-to-programmatic-access-to-ensembl-and-transitioning-to-the-new-ensembl-platform/">transition announcement</a>
 describes the frozen numbered services and the new platform. Both remain
 accessible through this one constructor.</p>

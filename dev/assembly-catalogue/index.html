@@ -1289,8 +1289,9 @@ Old states retain their prior species selection and receive metadata only in
 memory. The accession inferred for an ordinary call must never cause its
 deserializer to switch to the explicit-accession cache layout.</p>
 <p><code>reference_name</code> remains the installed display/cache label. An upstream name
-change cannot rename it. Keep legacy <code>EnsemblAnnotation</code> signature, optional
-species label, equality/hash behavior, imports, and serialization loaders.
+change cannot rename it. The unused <code>EnsemblAnnotation</code> class was removed in
+2.30.0; its historical cache files remain reusable through <code>EnsemblRelease</code>.
+Keep existing <code>EnsemblRelease</code> signatures and serialized objects supported.
 All URL generation and DNA preparation belong to <code>EnsemblRelease</code>.</p>
 <p>For release validation, reopen actual old-version installed caches with
 downloads and parsing forbidden and compare their contents, paths, permissions,
