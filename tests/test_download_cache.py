@@ -8,7 +8,6 @@ from pyensembl.download_cache import DownloadCache, MissingLocalFile, MissingRem
 
 
 from .data import data_path
-from .common import ok_
 
 download_cache = DownloadCache(
     reference_name="__test_reference",
@@ -54,17 +53,15 @@ def test_download_cache_custom_location(tmp_path, monkeypatch):
 
     # clean up
     download_cache.delete_cache_directory()
-    download_cache.download_or_copy_if_necessary(
+    full_path = download_cache.download_or_copy_if_necessary(
         download_if_missing=True, path_or_url=data_path(test_file)
     )
-
-    full_path = os.path.join(
-        tmp_dir, "pyensembl", "test_reference", "test_annotation", test_file
+    assert os.path.dirname(full_path) == os.path.join(
+        tmp_dir, "pyensembl", "test_reference", "test_annotation"
     )
-    print("FULL PATH: %s" % full_path)
-    assert len(full_path) > 0
-
-    ok_(os.path.exists(full_path))
+    assert full_path == download_cache.cached_path(data_path(test_file))
+    with open(full_path, "rb") as copied, open(data_path(test_file), "rb") as source:
+        assert copied.read() == source.read()
 
 
 @pytest.mark.parametrize("decompress", [False, True])

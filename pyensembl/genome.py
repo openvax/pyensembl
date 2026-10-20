@@ -20,7 +20,7 @@ from contextlib import nullcontext
 from dataclasses import replace
 from numbers import Integral
 from os import lstat, remove
-from os.path import basename, join, lexists
+from os.path import isfile, join, lexists
 from pathlib import Path
 import warnings
 
@@ -36,7 +36,7 @@ from .gene_name_aliases import GeneNameAliases, normalize_aliases, stable_ensemb
 from .genome_fasta import GenomeFasta, MissingGenomeFastaError
 from .normalization import normalize_chromosome, normalize_strand
 from .search import find_nearest_locus
-from .sequence_data import SequenceData
+from .sequence_data import SequenceData, fasta_index_path, fasta_index_files
 from .versioned_ids import _split_ens_version, match_version
 from .transcript import Transcript
 
@@ -395,8 +395,14 @@ class Genome(Serializable):
                 self.gtf_path = self._get_gtf_path(**options)
             if self.requires_transcript_fasta:
                 self.transcript_fasta_paths = self._get_transcript_fasta_paths(**options)
+                if (self._transcript_sequences is not None
+                        and self._transcript_sequences.fasta_paths != self.transcript_fasta_paths):
+                    self._transcript_sequences = None
             if self.requires_protein_fasta:
                 self.protein_fasta_paths = self._get_protein_fasta_paths(**options)
+                if (self._protein_sequences is not None
+                        and self._protein_sequences.fasta_paths != self.protein_fasta_paths):
+                    self._protein_sequences = None
 
     def _explain_download_failure(self):
         """Context around downloads; subclasses can replace a failure with
@@ -578,8 +584,14 @@ class Genome(Serializable):
             database = self.db
             database.connect_or_create(overwrite=overwrite, show_progress=show_progress)
         if self.requires_transcript_fasta:
+            paths = self._get_transcript_fasta_paths(show_progress=show_progress)
+            if self._transcript_sequences is not None and self._transcript_sequences.fasta_paths != paths:
+                self._transcript_sequences = None
             self.transcript_sequences.index(overwrite=overwrite, show_progress=show_progress)
         if self.requires_protein_fasta:
+            paths = self._get_protein_fasta_paths(show_progress=show_progress)
+            if self._protein_sequences is not None and self._protein_sequences.fasta_paths != paths:
+                self._protein_sequences = None
             self.protein_sequences.index(overwrite=overwrite, show_progress=show_progress)
         if self.requires_genome_fasta:
             self.index_genome_fasta(overwrite=overwrite, show_progress=show_progress)
@@ -672,6 +684,7 @@ class Genome(Serializable):
             self._protein_sequences = SequenceData(
                 fasta_paths=self.protein_fasta_paths,
                 cache_directory_path=self.download_cache.cache_directory_path,
+                sources=self._protein_fasta_paths_or_urls,
             )
         return self._protein_sequences
 
@@ -690,6 +703,7 @@ class Genome(Serializable):
             self._transcript_sequences = SequenceData(
                 fasta_paths=self.transcript_fasta_paths,
                 cache_directory_path=self.download_cache.cache_directory_path,
+                sources=self._transcript_fasta_paths_or_urls,
             )
         return self._transcript_sequences
 
@@ -811,16 +825,21 @@ class Genome(Serializable):
         genome_fasta_indexes = (
             Path(self.download_cache.cache_directory_path) / "genome_fasta"
         ).glob("*/sequence.fa.fai")
-        return [str(path) for path in genome_fasta_indexes] + self._annotation_index_paths()
+        paths = [str(path) for path in genome_fasta_indexes] + self._annotation_index_paths()
+        for source in self._transcript_fasta_paths_or_urls + self._protein_fasta_paths_or_urls:
+            cache = self.download_cache
+            indexes = fasta_index_files(self._local_source_path(source), cache.cache_directory_path, source)
+            if not indexes and cache.copy_local_files_to_cache and not cache.is_url_format(source):
+                # A legacy copied FASTA may be gone while its old index remains.
+                indexes = fasta_index_files(
+                    cache._cache_path(source, legacy=True), cache.cache_directory_path, source,
+                )
+            paths.extend(indexes)
+        return list(dict.fromkeys(paths))
 
     def _annotation_index_paths(self):
-        """The SQLite and FASTA indexes this genome's annotation data needs."""
+        """Current indexes, identifying attached local FASTAs by their bytes."""
         cache = self.download_cache
-
-        def source_filename(path_or_url):
-            # Uncopied local sources retain their compression suffix even when
-            # downloaded files would be decompressed.
-            return basename(self._local_source_path(path_or_url))
 
         paths = []
         if self.requires_gtf:
@@ -831,17 +850,13 @@ class Genome(Serializable):
                     self._local_source_path(self._gtf_path_or_url), self._gtf_path_or_url
                 )
                 paths.append(join(cache.cache_directory_path, filename))
-        for sequences, sources in (
-            (self._transcript_sequences, self._transcript_fasta_paths_or_urls),
-            (self._protein_sequences, self._protein_fasta_paths_or_urls),
-        ):
-            if sequences is not None:
-                paths.extend(sequences.fasta_dictionary_pickle_paths)
-            else:
-                paths.extend(
-                    join(cache.cache_directory_path, source_filename(source) + ".pickle")
-                    for source in sources
-                )
+        for source in self._transcript_fasta_paths_or_urls + self._protein_fasta_paths_or_urls:
+            local = self._local_source_path(source)
+            # A changed original means its copied FASTA needs refreshing first.
+            content = source if cache.copy_local_files_to_cache and isfile(source) else local
+            paths.append(fasta_index_path(
+                local, cache.cache_directory_path, source, content_path=content,
+            ))
         return paths
 
     def delete_index_files(self):

@@ -101,8 +101,8 @@ reuse of basename-only downloads and their original indexes, correcting the
 2.27.5 regression. No reinstall, migration, renaming, provenance rewrite or
 reindexing is required, including for read-only shared caches. Files already
 downloaded with URL-specific names also remain usable and take precedence
-when both layouts exist. Local attached files and the shared reference-DNA
-store keep their existing behavior.
+when both layouts exist. The shared reference-DNA store keeps its existing
+behavior.
 
 Legacy entries retain their historical basename lookup and source assumptions,
 including installations from mirrors. Their original full URL cannot always
@@ -112,6 +112,24 @@ despite an existing legacy basename, use `download(overwrite=True)` or
 `pyensembl install --overwrite`: the download uses a URL-specific destination
 and leaves the legacy files intact. New `--custom-mirror` downloads belong to
 that mirror's URLs; use the same mirror to access them through the CLI.
+
+## Local transcript and protein FASTA indexes
+
+Starting with 2.28.2, new local FASTA indexes identify both the original absolute
+source path and a SHA-256 of the indexed bytes. Two local files named
+`sequences.fa` can safely use the same cache directory. Changed bytes select
+a fresh index even if the file size and modification time stay the same;
+older index generations are retained until explicit deletion. New cached
+copies also identify their original paths and remain usable when the original
+file disappears. Call `download()` or `index()` to refresh a copied input.
+
+Existing basename-only local copies and pickle indexes continue to work in
+place, including in read-only caches. No migration or reindexing is required.
+Their original source identity cannot be recovered reliably, so they retain
+the historical basename assumptions; the new isolation guarantee applies to
+new entries. Explicitly deleting an index and reindexing adopts the new layout.
+Refreshing a changed legacy copy writes a new destination and leaves the
+legacy files intact.
 
 ## Reuse a mirror installation
 

@@ -10,8 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from os import remove
-from os.path import dirname, exists, abspath, split, join
+from functools import lru_cache
+import hashlib
+from os import remove, stat
+from os.path import dirname, exists, lexists, abspath, split, join
+from pathlib import Path
 
 import datacache
 import logging
@@ -24,6 +27,64 @@ from .versioned_ids import _split_ens_version, match_version
 
 
 logger = logging.getLogger(__name__)
+
+
+def _file_state(path):
+    info = stat(path)
+    return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns
+
+
+@lru_cache(maxsize=128)
+def _file_digest(path, state):
+    """Reuse a digest only while the source's complete stat identity agrees."""
+    with open(path, "rb") as handle:
+        digest = hashlib.file_digest(handle, "sha256").hexdigest()
+    if _file_state(path) != state:
+        raise ValueError("FASTA changed while hashing: %s" % path)
+    return digest
+
+
+def _local_index_prefix(source):
+    return "local-" + hashlib.sha256(abspath(source).encode()).hexdigest() + "-"
+
+
+def fasta_index_files(fasta_path, cache_directory=None, source=None):
+    """Existing indexes owned by this source, including older byte revisions."""
+    directory = Path(cache_directory or dirname(fasta_path))
+    source = source or fasta_path
+    if "://" not in source:
+        paths = sorted(directory.glob(_local_index_prefix(source) + "*.pickle"))
+        if paths:
+            return [str(path) for path in paths]
+    legacy = directory / (Path(fasta_path).name + ".pickle")
+    return [str(legacy)] if lexists(legacy) else []
+
+
+def fasta_index_path(fasta_path, cache_directory=None, source=None, *, content_path=None):
+    """Select an index without creating or migrating files.
+
+    New local indexes identify the original path and indexed bytes. Remote
+    downloads already carry URL identity in their filename. Unidentified
+    legacy dictionaries keep their historical lookup contract in place.
+    """
+    source = source or fasta_path
+    directory = cache_directory or dirname(fasta_path)
+    legacy = join(directory, Path(fasta_path).name + ".pickle")
+    if "://" in source:
+        return legacy
+    prefix = _local_index_prefix(source)
+    if lexists(legacy) and not any(Path(directory).glob(prefix + "*.pickle")):
+        return legacy
+    content_path = abspath(content_path or fasta_path)
+    try:
+        digest = _file_digest(content_path, _file_state(content_path))
+    except OSError:
+        # Inspection of a missing/unreadable source must remain read-only.
+        # Explicit index deletion finds its generations via fasta_index_files.
+        digest = "missing"
+    # Leave room for atomic staging names on filesystems with 255-byte limits.
+    name = Path(source).name.encode()[-72:].decode(errors="ignore")
+    return join(directory, prefix + digest + "-" + name + ".pickle")
 
 
 def lookup_sequence_with_version_fallback(sequence_data, identifier, version=None):
@@ -106,11 +167,14 @@ class SequenceData(object):
     Container for reference nucleotide and amino acid sequenes.
     """
 
-    def __init__(self, fasta_paths, cache_directory_path=None):
+    def __init__(self, fasta_paths, cache_directory_path=None, *, sources=None):
         if type(fasta_paths) is str:
             fasta_paths = [fasta_paths]
 
         self.fasta_paths = [abspath(path) for path in fasta_paths]
+        self.sources = list(sources) if sources is not None else self.fasta_paths
+        if len(self.sources) != len(self.fasta_paths):
+            raise ValueError("Expected one source for each FASTA path")
         self.fasta_directory_paths = [split(path)[0] for path in self.fasta_paths]
         self.fasta_filenames = [split(path)[1] for path in self.fasta_paths]
         if cache_directory_path:
@@ -120,16 +184,22 @@ class SequenceData(object):
         for path in self.fasta_paths:
             if not exists(path):
                 raise ValueError("Couldn't find FASTA file %s" % (path,))
-        self.fasta_dictionary_filenames = [
-            filename + ".pickle" for filename in self.fasta_filenames
-        ]
-        self.fasta_dictionary_pickle_paths = [
-            join(cache_path, filename)
-            for cache_path, filename in zip(
-                self.cache_directory_paths, self.fasta_dictionary_filenames
+        self.fasta_dictionary_pickle_paths = []
+        self._refresh_index_paths()
+        self._init_lazy_fields()
+
+    def _refresh_index_paths(self):
+        paths = [
+            fasta_index_path(path, directory, source)
+            for path, directory, source in zip(
+                self.fasta_paths, self.cache_directory_paths,
+                getattr(self, "sources", self.fasta_paths),
             )
         ]
-        self._init_lazy_fields()
+        if paths != self.fasta_dictionary_pickle_paths:
+            self.fasta_dictionary_pickle_paths = paths
+            self.fasta_dictionary_filenames = [Path(path).name for path in paths]
+            self._init_lazy_fields()
 
     def _init_lazy_fields(self):
         self._fasta_dictionary = None
@@ -153,8 +223,11 @@ class SequenceData(object):
     def delete_index_files(self):
         """Delete cached FASTA dictionaries while preserving source files."""
         self.clear_cache()
-        for path in self.fasta_dictionary_pickle_paths:
-            if exists(path):
+        for fasta_path, directory, source in zip(
+            self.fasta_paths, self.cache_directory_paths,
+            getattr(self, "sources", self.fasta_paths),
+        ):
+            for path in fasta_index_files(fasta_path, directory, source):
                 remove(path)
 
     def __str__(self):
@@ -164,6 +237,7 @@ class SequenceData(object):
         return str(self)
 
     def __contains__(self, sequence_id):
+        _ = self.fasta_dictionary
         if self._fasta_keys is None:
             self._fasta_keys = set(self.fasta_dictionary.keys())
         return sequence_id in self._fasta_keys
@@ -207,12 +281,14 @@ class SequenceData(object):
                 self._versions[identifier] = version
 
     def _load_or_create_fasta_dictionary_pickle(self, show_progress=False):
+        self._refresh_index_paths()
         self._fasta_dictionary = dict()
         self._stripped_index = dict()
         self._versions = dict()
         self._version_conflicts = dict()
-        for fasta_path, pickle_path in zip(
-            self.fasta_paths, self.fasta_dictionary_pickle_paths
+        for fasta_path, pickle_path, directory, source in zip(
+            self.fasta_paths, self.fasta_dictionary_pickle_paths,
+            self.cache_directory_paths, getattr(self, "sources", self.fasta_paths),
         ):
             if exists(pickle_path):
                 # try loading the cached file
@@ -241,6 +317,9 @@ class SequenceData(object):
             logger.info("Parsing sequences from FASTA file at %s", fasta_path)
 
             fasta_dictionary_tmp = parse_fasta_dictionary(fasta_path, show_progress)
+            if fasta_index_path(fasta_path, directory, source) != pickle_path:
+                self._init_lazy_fields()
+                raise ValueError("FASTA changed while indexing: %s" % fasta_path)
             self._add_to_fasta_dictionary(fasta_dictionary_tmp)
             logger.debug("Saving sequence dictionary to %s", pickle_path)
             try:
@@ -257,7 +336,8 @@ class SequenceData(object):
 
     @property
     def fasta_dictionary(self):
-        if not self._fasta_dictionary:
+        self._refresh_index_paths()
+        if self._fasta_dictionary is None:
             self._load_or_create_fasta_dictionary_pickle()
         return self._fasta_dictionary
 
