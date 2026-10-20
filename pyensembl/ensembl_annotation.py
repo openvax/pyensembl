@@ -6,16 +6,21 @@ import re
 from .dated_releases import explain_unpublished_date
 from .ensembl_url_templates import ENSEMBL_PLATFORM_FTP_SERVER, make_dated_release_urls
 from .genome import Genome
+from .genome_fasta_cache import release_genome_fasta
 from .species import find_species_by_name
 
 
 class EnsemblAnnotation(Genome):
     """A dated geneset for one assembly on the new Ensembl platform.
 
-    Select an existing assembly accession, provider and annotation date from
-    Ensembl's downloads page. These are not numbered ``EnsemblRelease`` values
-    or the website's YYYY-MM release label. Construction never downloads data;
-    call ``download()`` then ``index()`` to install the selected files.
+    Most callers should use ``EnsemblRelease("2026_04", species="human")``:
+    it selects the registered species' current assembly and standard coverage.
+    This class is for explicit older or unregistered assembly accessions,
+    annotation providers, and coverage choices. Both accept annotation dates
+    in YYYY_MM form, not the website's YYYY-MM release label.
+
+    Select an existing dataset from Ensembl's downloads page. Construction
+    never downloads data; call ``download()`` then ``index()`` to install it.
 
     Parameters
     ----------
@@ -85,6 +90,12 @@ class EnsemblAnnotation(Genome):
             protein_fasta_paths_or_urls=[urls.pep],
             genome_fasta_path_or_url=urls.genome_fasta if genome_fasta else None,
             cache_directory_path=cache_directory_path,
+        )
+
+    def _make_genome_fasta(self, source):
+        return release_genome_fasta(
+            source, self.download_cache.cache_directory_path,
+            install_string_function=self.genome_fasta_install_string,
         )
 
     def _explain_download_failure(self):

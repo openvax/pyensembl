@@ -30,6 +30,12 @@ from .genome_fasta import GenomeFasta, _read_json, _write_json
 logger = logging.getLogger(__name__)
 _KEY = re.compile(r"^[0-9a-f]{64}$")
 _SOURCE_PATH = re.compile(r"^/pub/release-(\d+)/(?:[^/]+/)?fasta/([^/]+)/dna/([^/]+)$")
+_DATED_PATH = re.compile(
+    r"^/pub/ensemblorganisms/(GC[AF])/(\d{3})/(\d{3})/(\d{3})/([1-9]\d*)/"
+    r"([a-z][a-z0-9_]*)/(\d{4}_(?:0[1-9]|1[0-2]))/genome/"
+    r"(unmasked|softmasked|hardmasked)\.fa\.bgz$"
+)
+_DATED_MASKS = {"unmasked": "none", "softmasked": "soft", "hardmasked": "hard"}
 _PROVIDERS = {"ftp.ensembl.org", "ftp.ensemblgenomes.ebi.ac.uk"}
 _COMPONENT = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
 _ACCESSION = re.compile(r"GCA_\d+\.\d+")
@@ -59,19 +65,35 @@ def shared_dna_root(cache_directory):
     return root if Path(cache_directory).parent.parent == root.parent else None
 
 
+def _dated_source(source):
+    url = urlsplit(source)
+    if (url.scheme == "https" and url.netloc == "ftp.ebi.ac.uk"
+            and not url.query and not url.fragment):
+        return _DATED_PATH.fullmatch(url.path)
+    return None
+
+
+def _dated_dimensions(match):
+    prefix, first, second, third, version, provider, _, masking = match.groups()
+    return "%s_%s%s%s.%s" % (prefix, first, second, third, version), provider, masking
+
+
 def is_canonical_source(source):
     url = urlsplit(source)
     return (
         url.scheme == "https"
         and url.netloc in _PROVIDERS
         and _SOURCE_PATH.fullmatch(url.path) is not None
-    )
+    ) or _dated_source(source) is not None
 
 
 def canonical_source_options(source):
     """(genome_fasta_type, genome_fasta_mask) of official Ensembl DNA, or None."""
     if not is_canonical_source(source):
         return None
+    dated = _dated_source(source)
+    if dated is not None:
+        return "toplevel", _DATED_MASKS[dated.group(8)]
     _, species, filename = _SOURCE_PATH.fullmatch(urlsplit(source).path).groups()
     prefix = species.capitalize() + "."
     match = filename.startswith(prefix) and _DNA_FILENAME.fullmatch(filename[len(prefix):])
@@ -87,6 +109,14 @@ def release_genome_fasta(source, cache_directory, install_string_function=None):
         cls = SharedGenomeFasta
     else:
         cls = GenomeFasta
+    if cls is SharedGenomeFasta and _dated_source(source) is not None:
+        # Before dated sharing, these files were private to each release.
+        # Keep using an installed private copy in place, including read-only
+        # indexes/manifests. A registered shared reference takes precedence.
+        private = GenomeFasta(source, cache_directory, install_string_function)
+        reference = Path(cache_directory) / "genome_fasta_refs" / (private.directory.name + ".json")
+        if os.path.lexists(private.materialized_path) and not os.path.lexists(reference):
+            return private
     return cls(source, cache_directory, install_string_function)
 
 
@@ -96,6 +126,10 @@ def _identity_key(identity):
 
 def _object_directory(root, identity):
     """Expose biological dimensions in the path; keep file revisions distinct."""
+    if identity.get("platform") == "ensemblorganisms" or (
+        isinstance(identity.get("source"), str) and _dated_source(identity["source"]) is not None
+    ):
+        return _dated_object_directory(root, identity)
     if "source" in identity:
         source = identity["source"]
         if not isinstance(source, str) or not is_canonical_source(source):
@@ -139,6 +173,52 @@ def _object_directory(root, identity):
     )
 
 
+def _dated_object_directory(root, identity):
+    if "source" in identity:
+        source = identity["source"]
+        match = _dated_source(source) if isinstance(source, str) else None
+        if match is None:
+            raise ValueError("Invalid source in dated shared genome FASTA identity")
+        accession, provider, masking = _dated_dimensions(match)
+        accession += "-unverified"
+    else:
+        accession = identity.get("assembly")
+        provider = identity.get("annotation_provider")
+        masking = identity.get("masking")
+        if (identity.get("provider") != "ftp.ebi.ac.uk"
+                or not isinstance(accession, str)
+                or not re.fullmatch(r"GC[AF]_\d{9}\.[1-9]\d*", accession)
+                or not isinstance(provider, str)
+                or not re.fullmatch(r"[a-z][a-z0-9_]*", provider)
+                or not isinstance(masking, str) or masking not in _DATED_MASKS
+                or not isinstance(identity.get("md5"), str)
+                or not re.fullmatch(r"[0-9a-f]{32}", identity["md5"])
+                or type(identity.get("compressed_size")) is not int
+                or identity["compressed_size"] <= 0):
+            raise ValueError("Invalid dated shared genome FASTA identity")
+    return (Path(root) / "ensemblorganisms" / "ftp.ebi.ac.uk" / accession
+            / provider / "toplevel" / masking / "fasta" / _identity_key(identity)[:16])
+
+
+def _dated_remote_identity(source, match):
+    accession, provider, masking = _dated_dimensions(match)
+    directory, filename = source.rsplit("/", 1)
+    with urlopen(directory + "/md5sum.txt", timeout=60) as response:
+        manifest = response.read(4 * 1024 * 1024).decode("utf-8")
+    entries = [line.split() for line in manifest.splitlines()]
+    matches = [fields[0].lower() for fields in entries
+               if len(fields) == 2 and fields[1].removeprefix("*").removeprefix("./") == filename]
+    if len(matches) != 1 or not re.fullmatch(r"[0-9a-f]{32}", matches[0]):
+        raise ValueError("No unique MD5 for this FASTA")
+    with urlopen(Request(source, method="HEAD"), timeout=60) as response:
+        length = int(response.headers["Content-Length"])
+    if length <= 0:
+        raise ValueError("No compressed size for this FASTA")
+    return dict(platform="ensemblorganisms", provider="ftp.ebi.ac.uk",
+                assembly=accession, annotation_provider=provider, masking=masking,
+                md5=matches[0], compressed_size=length)
+
+
 def _check_object_identity(root, directory, identity):
     # Metadata-derived paths may never traverse links out of the owned tree.
     # The root itself may be a link, e.g. to a larger disk.
@@ -167,9 +247,12 @@ def _remote_identity(source):
     if not is_canonical_source(source):
         return fallback
     url = urlsplit(source)
-    release, species, filename = _SOURCE_PATH.fullmatch(url.path).groups()
-    directory = source.rsplit("/", 1)[0]
     try:
+        dated = _dated_source(source)
+        if dated is not None:
+            return _dated_remote_identity(source, dated)
+        release, species, filename = _SOURCE_PATH.fullmatch(url.path).groups()
+        directory = source.rsplit("/", 1)[0]
         with urlopen(directory + "/README", timeout=60) as response:
             readme = response.read(1024 * 1024).decode("utf-8")
         assembly = _README_ACCESSION.search(readme)
@@ -316,6 +399,7 @@ class SharedGenomeFasta(GenomeFasta):
                 self._download(
                     expected_size=self.identity.get("compressed_size"),
                     show_progress=show_progress,
+                    expected_md5=self.identity.get("md5"),
                 )
             # Register before releasing the object lock so pruning cannot
             # remove the object in between.
