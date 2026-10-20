@@ -1,3 +1,21 @@
+# 2.30.0
+
+Remove the unused `EnsemblAnnotation` class, module, and package export. Use
+`EnsemblRelease(date, assembly_accession=accession, **options)` for the same
+explicit dated selection. The removed class's imports and serialized objects
+are no longer supported. Existing cache files, directory layouts, and indexes
+remain reusable in place; no reinstall or migration is needed.
+
+Exercise numbered, dated, inferred and explicit assembly choices by installing
+tiny GTF/FASTA datasets, querying the resulting indexes, and reopening the
+caches offline. Cover human, dog breeds, providers, coverage, optional DNA,
+custom labels/directories and serialization.
+
+Fix reopening previously installed private DNA attachments rewriting the
+current attachment manifest (#485). Reuse existing indexed/materialized
+sources without writes, and track new download-only local attachments
+individually so switching between them also preserves the manifest.
+
 # 2.28.3
 
 Share new reference DNA downloads and indexes across dated Ensembl releases

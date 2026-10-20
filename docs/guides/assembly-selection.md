@@ -199,27 +199,19 @@ this API change. [Shared DNA caching](cache.md#how-the-shared-dna-cache-works)
 continues to share new verified downloads while preserving existing private
 copies. No reinstall is needed.
 
-## Compatibility with EnsemblAnnotation
+## Removed constructor
 
-`EnsemblAnnotation` is now a compatibility subclass of `EnsemblRelease`, with
-its original signature, default coverage, optional species label, reference
-label, and cache paths. Its imports and saved objects remain supported without
-runtime deprecation warnings. New code can replace:
-
-```python
-EnsemblAnnotation(accession, date, **options)
-```
-
-with:
+`EnsemblAnnotation` was removed in 2.30.0. Select the same dataset with:
 
 ```python
 EnsemblRelease(date, assembly_accession=accession, **options)
 ```
 
-The replacement preserves dataset and cache choices; the new constructor also
-infers known species and validates explicit species constraints. The wrapper
-retains its historical optional species label. `reference_name=` remains a
-label, while `assembly=` selects or checks biological assembly identity.
+The equivalent call reuses its existing cache files, including custom labels,
+directories, and coverage. No reinstall or migration is needed. Imports and
+serialized objects naming the removed class are no longer supported; recreate
+the dataset using `EnsemblRelease`. Existing `EnsemblRelease` saved objects
+continue to load.
 
 Ensembl's [transition announcement](https://www.ensembl.info/2025/12/02/updates-to-programmatic-access-to-ensembl-and-transitioning-to-the-new-ensembl-platform/)
 describes the frozen numbered services and the new platform. Both remain
