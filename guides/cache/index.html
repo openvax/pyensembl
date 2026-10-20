@@ -615,6 +615,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#local-transcript-and-protein-fasta-indexes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local transcript and protein FASTA indexes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#reuse-a-mirror-installation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1230,6 +1241,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#local-transcript-and-protein-fasta-indexes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local transcript and protein FASTA indexes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#reuse-a-mirror-installation" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1402,8 +1424,8 @@ reuse of basename-only downloads and their original indexes, correcting the
 2.27.5 regression. No reinstall, migration, renaming, provenance rewrite or
 reindexing is required, including for read-only shared caches. Files already
 downloaded with URL-specific names also remain usable and take precedence
-when both layouts exist. Local attached files and the shared reference-DNA
-store keep their existing behavior.</p>
+when both layouts exist. The shared reference-DNA store keeps its existing
+behavior.</p>
 <p>Legacy entries retain their historical basename lookup and source assumptions,
 including installations from mirrors. Their original full URL cannot always
 be recovered from absent or redacted provenance. The new URL-identity guarantee
@@ -1412,6 +1434,21 @@ despite an existing legacy basename, use <code>download(overwrite=True)</code> o
 <code>pyensembl install --overwrite</code>: the download uses a URL-specific destination
 and leaves the legacy files intact. New <code>--custom-mirror</code> downloads belong to
 that mirror's URLs; use the same mirror to access them through the CLI.</p>
+<h2 id="local-transcript-and-protein-fasta-indexes">Local transcript and protein FASTA indexes<a class="headerlink" href="#local-transcript-and-protein-fasta-indexes" title="Permanent link">&para;</a></h2>
+<p>Starting with 2.28.2, new local FASTA indexes identify both the original absolute
+source path and a SHA-256 of the indexed bytes. Two local files named
+<code>sequences.fa</code> can safely use the same cache directory. Changed bytes select
+a fresh index even if the file size and modification time stay the same;
+older index generations are retained until explicit deletion. New cached
+copies also identify their original paths and remain usable when the original
+file disappears. Call <code>download()</code> or <code>index()</code> to refresh a copied input.</p>
+<p>Existing basename-only local copies and pickle indexes continue to work in
+place, including in read-only caches. No migration or reindexing is required.
+Their original source identity cannot be recovered reliably, so they retain
+the historical basename assumptions; the new isolation guarantee applies to
+new entries. Explicitly deleting an index and reindexing adopts the new layout.
+Refreshing a changed legacy copy writes a new destination and leaves the
+legacy files intact.</p>
 <h2 id="reuse-a-mirror-installation">Reuse a mirror installation<a class="headerlink" href="#reuse-a-mirror-installation" title="Permanent link">&para;</a></h2>
 <p>For a flat directory containing the original Ensembl filenames, install with
 an explicit mirror:</p>

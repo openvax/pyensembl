@@ -1393,6 +1393,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.SequenceData.sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sources
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.SequenceData.fasta_directory_paths" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1419,17 +1430,6 @@
     <span class="md-ellipsis">
       
         cache_directory_paths
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pyensembl.SequenceData.fasta_dictionary_filenames" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        fasta_dictionary_filenames
       
     </span>
   </a>
@@ -2339,6 +2339,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.SequenceData.sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sources
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.SequenceData.fasta_directory_paths" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2365,17 +2376,6 @@
     <span class="md-ellipsis">
       
         cache_directory_paths
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pyensembl.SequenceData.fasta_dictionary_filenames" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        fasta_dictionary_filenames
       
     </span>
   </a>
@@ -2972,7 +2972,8 @@ and the global cache directory determined by datacache.</p>
     <div class="doc doc-contents ">
 
         <p>Reuse existing cache paths in place; never migrate or create files.</p>
-<p>New remote entries use full URL/mode identity. Existing basename-only
+<p>New entries use full URL or original local path plus mode identity.
+Existing basename-only
 entries retain their historical lookup contract and derived indexes,
 including mirror installs and entries without recorded provenance.</p>
 
@@ -4277,7 +4278,7 @@ one locus in the database.</p>
 
 
 <a href="#pyensembl.SequenceData" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">SequenceData</span><span class="p">(</span><span class="n">fasta_paths</span><span class="p">,</span> <span class="n">cache_directory_path</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">SequenceData</span><span class="p">(</span><span class="n">fasta_paths</span><span class="p">,</span> <span class="n">cache_directory_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sources</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -4318,6 +4319,28 @@ one locus in the database.</p>
 
 <a href="#pyensembl.SequenceData.fasta_paths" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="n">fasta_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">abspath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">fasta_paths</span><span class="p">]</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="pyensembl.SequenceData.sources" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">sources</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#pyensembl.SequenceData.sources" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">sources</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span> <span class="k">if</span> <span class="n">sources</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">fasta_paths</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4396,28 +4419,6 @@ one locus in the database.</p>
 
 
 
-<h3 id="pyensembl.SequenceData.fasta_dictionary_filenames" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">fasta_dictionary_filenames</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#pyensembl.SequenceData.fasta_dictionary_filenames" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">fasta_dictionary_filenames</span> <span class="o">=</span> <span class="p">[</span><span class="n">filename</span> <span class="o">+</span> <span class="s1">'.pickle'</span> <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fasta_filenames</span><span class="p">]</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
 <h3 id="pyensembl.SequenceData.fasta_dictionary_pickle_paths" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">fasta_dictionary_pickle_paths</span>
 
@@ -4427,7 +4428,7 @@ one locus in the database.</p>
   </span>
 
 <a href="#pyensembl.SequenceData.fasta_dictionary_pickle_paths" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">fasta_dictionary_pickle_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">join</span><span class="p">(</span><span class="n">cache_path</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span> <span class="k">for</span> <span class="n">cache_path</span><span class="p">,</span> <span class="n">filename</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_directory_paths</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fasta_dictionary_filenames</span><span class="p">)]</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">fasta_dictionary_pickle_paths</span> <span class="o">=</span> <span class="p">[]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
