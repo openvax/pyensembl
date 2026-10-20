@@ -3,7 +3,8 @@
 Fix local transcript/protein FASTA index collisions (#467). Newly created
 indexes identify the original source path and file contents; new cached copies
 also identify their original paths. Changed local inputs select fresh indexes,
-including in loaded readers, without deleting older generations. Existing
+including in loaded readers, without deleting older generations. Unchanged
+gzip copies with decompression enabled are reused without copying again. Existing
 basename-only sources and indexes stay usable in place, with no reinstall or
 automatic migration; they retain their historical source assumptions.
 

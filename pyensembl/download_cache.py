@@ -18,6 +18,7 @@ from pathlib import Path
 from shutil import rmtree
 from urllib.parse import urlsplit
 import hashlib
+import gzip
 import logging
 
 import datacache
@@ -52,16 +53,17 @@ def _require_available(inspection):
     return inspection.path
 
 
-def _same_file_bytes(first, second):
+def _same_file_bytes(first, second, decompress=False):
     """Compare copied local input with its cached counterpart."""
-    def digest(path):
+    def digest(path, opener=open):
         value = hashlib.sha256()
-        with open(path, "rb") as handle:
+        with opener(path, "rb") as handle:
             for chunk in iter(lambda: handle.read(1024 * 1024), b""):
                 value.update(chunk)
         return value.digest()
 
-    return digest(first) == digest(second)
+    opener = gzip.open if decompress and first.lower().endswith(".gz") else open
+    return digest(first, opener) == digest(second)
 
 
 def cache_subdirectory(
@@ -355,7 +357,7 @@ class DownloadCache(object):
                 if source.status == "missing":
                     return cached.path
                 _require_available(source)
-                if source.size == cached.size and _same_file_bytes(local_path, cached_path):
+                if _same_file_bytes(local_path, cached_path, self.decompress_on_download):
                     return cached.path
                 overwrite = True
         source = inspect_data_file(local_path)

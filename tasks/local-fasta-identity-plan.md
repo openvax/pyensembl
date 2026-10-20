@@ -36,7 +36,7 @@ the historical assumptions, as in the remote-cache compatibility correction.
 Reproduce the published 2.28.1 collision before the fix. Cover transcript and
 protein collisions, separate instances and offline reuse, changed content with
 unchanged size/mtime, loaded readers, compressed/plain and copied/attached
-sources, missing originals, deletion isolation, interrupted/changed inputs,
+sources, decompressed copies, missing originals, deletion isolation, interrupted/changed inputs,
 long names and read-only legacy/current caches. Snapshot legacy bytes, names,
 permissions, inodes and timestamps, forbidding acquisition/rebuild on reuse.
 Keep full legacy fixtures independent of the new path selection code.

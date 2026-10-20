@@ -196,3 +196,39 @@ def test_source_changed_during_parse_is_not_published(tmp_path, monkeypatch):
     with pytest.raises(ValueError, match="FASTA changed while indexing"):
         SequenceData(str(source), str(cache)).index()
     assert not list(cache.glob("*.pickle"))
+
+
+@pytest.mark.parametrize("legacy", [False, True])
+def test_decompressed_copy_reuses_index_until_original_changes(tmp_path, monkeypatch, legacy):
+    source = tmp_path / "source.fa.gz"
+    write_fasta(source, "ACGT")
+    cache = tmp_path / "cache"
+    if legacy:
+        cache.mkdir()
+        (cache / "source.fa").write_bytes(gzip.decompress(source.read_bytes()))
+        dump_pickle({"t": "ACGT"}, cache / "source.fa.pickle")
+    def make():
+        return Genome("test", "local-fasta", cache_directory_path=str(cache),
+                      transcript_fasta_paths_or_urls=[str(source)],
+                      copy_local_files_to_cache=True, decompress_on_download=True)
+    with make() as genome:
+        genome.index()
+        assert genome.installed()
+        assert genome.transcript_sequence("t") == "ACGT"
+    before = snapshot(cache)
+    with monkeypatch.context() as patch:
+        def forbidden(*args, **kwargs):
+            pytest.fail("unchanged decompressed copies must not be copied or reindexed")
+        patch.setattr("datacache.fetch_file", forbidden)
+        patch.setattr("pyensembl.sequence_data.parse_fasta_dictionary", forbidden)
+        with make() as restored:
+            assert restored.installed()
+            restored.download()
+            restored.index()
+            assert restored.transcript_sequence("t") == "ACGT"
+        assert snapshot(cache) == before
+    write_fasta(source, "GGCC")
+    with make() as changed:
+        changed.index()
+        assert changed.installed()
+        assert changed.transcript_sequence("t") == "GGCC"

@@ -27,7 +27,7 @@ import warnings
 from serializable import Serializable
 from datacache import FileValidationError
 
-from .download_cache import DownloadCache, inspect_data_file
+from .download_cache import DownloadCache, inspect_data_file, _same_file_bytes
 from .common import merge_intervals
 from .database import Database, annotation_db_filename, is_complete_database
 from .exon import Exon
@@ -853,7 +853,11 @@ class Genome(Serializable):
         for source in self._transcript_fasta_paths_or_urls + self._protein_fasta_paths_or_urls:
             local = self._local_source_path(source)
             # A changed original means its copied FASTA needs refreshing first.
-            content = source if cache.copy_local_files_to_cache and isfile(source) else local
+            content = local
+            if cache.copy_local_files_to_cache and isfile(source) and (
+                not isfile(local) or not _same_file_bytes(source, local, cache.decompress_on_download)
+            ):
+                content = source
             paths.append(fasta_index_path(
                 local, cache.cache_directory_path, source, content_path=content,
             ))
