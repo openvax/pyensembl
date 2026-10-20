@@ -17,7 +17,7 @@ from pyensembl.genome_fasta import GenomeFasta
 from pyensembl.ensembl_versions import check_release_number
 from pyensembl.species import Species, find_species_by_name
 
-from .test_ensembl_annotation import bgzf
+from .test_explicit_ensembl_release import bgzf
 
 PLATFORM = "https://ftp.ebi.ac.uk/pub/ensemblorganisms"
 

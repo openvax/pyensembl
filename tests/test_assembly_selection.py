@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import pytest
 
-from pyensembl import EnsemblAnnotation, EnsemblRelease, Genome, shell
+from pyensembl import EnsemblRelease, Genome, shell
 from pyensembl import assembly as assemblies
 from pyensembl.species import Species
 
@@ -91,13 +91,11 @@ def test_species_default_and_accession_compatibility_layouts():
     plain = EnsemblRelease("2026_04")
     named = EnsemblRelease("2026_04", assembly="GRCh38.p14")
     explicit = EnsemblRelease("2026_04", assembly_accession="GCA_000001405.29")
-    legacy = EnsemblAnnotation("GCA_000001405.29", "2026_04")
     assert plain.reference_name == named.reference_name == "GRCh38"
     assert plain.include_alt is named.include_alt is True
-    assert explicit.reference_name == legacy.reference_name == "GCA_000001405.29"
-    assert explicit.include_alt is legacy.include_alt is False
+    assert explicit.reference_name == "GCA_000001405.29"
+    assert explicit.include_alt is False
     assert plain.download_cache.cache_directory_path == named.download_cache.cache_directory_path
-    assert explicit.download_cache.cache_directory_path == legacy.download_cache.cache_directory_path
     assert plain.download_cache.cache_directory_path != explicit.download_cache.cache_directory_path
     for selector in ["GCA_000001405.29", "gca_000001405.29", " GCA_000001405.29 "]:
         selected = EnsemblRelease("2026_04", assembly=selector)
@@ -155,8 +153,10 @@ def test_unknown_accession_does_not_become_human():
 
 
 @pytest.mark.parametrize("serializer", ["json", "pickle"])
-def test_published_2283_objects_load_with_old_class_paths(serializer):
+def test_published_2283_release_objects_still_load(serializer):
     for state in json.loads((DATA / "pyensembl-2.28.3.json").read_text()):
+        if json.loads(state["json"])["__class__"]["__name__"] != "EnsemblRelease":
+            continue  # The explicitly retired class no longer has a loader.
         if serializer == "json":
             genome = Genome.from_json(state["json"])
         else:
@@ -164,8 +164,6 @@ def test_published_2283_objects_load_with_old_class_paths(serializer):
         assert genome.reference_name == state["reference_name"]
         assert genome.assembly_name
         assert genome.assembly_accession
-        if type(genome) is EnsemblAnnotation:
-            assert isinstance(genome, EnsemblRelease)
         restored = type(genome).from_json(genome.to_json())
         assert restored == genome
         assert restored.download_cache.cache_directory_path == genome.download_cache.cache_directory_path
@@ -298,7 +296,15 @@ def test_published_installed_caches_reopen_without_mutation(tmp_path, monkeypatc
             encoded = state["json"].replace(
                 "/private/tmp/pyensembl-482-legacy/custom-cache", str(root / "custom-cache")
             )
-            with Genome.from_json(encoded) as genome:
+            settings = json.loads(encoded)
+            if settings["__class__"]["__name__"] == "EnsemblRelease":
+                genome = Genome.from_json(encoded)
+            else:
+                # Reopen files created by the retired constructor through the
+                # supported API; keep the historical fixture itself unchanged.
+                settings.pop("__class__")
+                genome = EnsemblRelease(settings.pop("annotation_date"), **settings)
+            with genome:
                 genome.download()
                 genome.index()
                 assert genome.transcript_by_id("ENST1").sequence == "CCCCGGTT"

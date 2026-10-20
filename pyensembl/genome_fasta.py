@@ -60,6 +60,16 @@ class GenomeFasta:
         source_key = hashlib.sha256(self.source.encode()).hexdigest()
         self._use_directory(Path(cache_directory) / "genome_fasta" / source_key)
         self.manifest_path = Path(cache_directory) / "genome_fasta.json"
+        # A different attachment may now occupy the advisory manifest. Keep
+        # reopening an existing source read-only, including pre-receipt caches.
+        self._attachment_known = self.materialized_path.is_file() or self.index_path.is_file()
+        if not self._attachment_known:
+            state = {"source": self.source}
+            manifest = _read_json(self.manifest_path)
+            self._attachment_known = (
+                _read_json(self.directory / "attachment.json") == state
+                or isinstance(manifest, dict) and manifest.get("source") == self.source
+            )
         self._forget_reader()
 
     def _use_directory(self, directory):
@@ -207,9 +217,16 @@ class GenomeFasta:
 
     def remember(self):
         """Record the attachment for CLI inspection, without changing defaults."""
+        if self._attachment_known:
+            return
         state = {"source": self.source}
         if _read_json(self.manifest_path) != state:
             _write_json(self.manifest_path, state)
+        if not self.materialized_path.is_file() and not self.index_path.is_file():
+            # Download-only local input has no owned FASTA/index yet. Record it
+            # per source so later attachments cannot make it appear new again.
+            _write_json(self.directory / "attachment.json", state)
+        self._attachment_known = True
 
     def _index_is_current(self, fingerprint):
         return self.index_path.exists() and _read_json(self.index_state_path) == fingerprint

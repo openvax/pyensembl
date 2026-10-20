@@ -11,7 +11,6 @@ import pytest
 import requests
 
 from pyensembl import (
-    EnsemblAnnotation,
     EnsemblRelease,
     UnpublishedDateError,
     available_annotation_dates,
@@ -204,7 +203,7 @@ def test_accession_datasets_are_explained_too(server, monkeypatch):
         "dated 2013_09; available dates: 2023_03, 2026_04"
     )
     with pytest.raises(UnpublishedDateError, match=re.escape(message)):
-        EnsemblAnnotation("GCA_000001405.29", "2013_09").download()
+        EnsemblRelease("2013_09", assembly_accession="GCA_000001405.29").download()
 
 
 def test_missing_file_of_a_published_date_is_not_explained(server):

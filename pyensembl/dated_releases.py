@@ -77,7 +77,7 @@ def available_dated_releases(species="human", refresh=False):
 def available_annotation_dates(assembly_accession, provider="ensembl", refresh=False):
     """
     Annotation dates published for one assembly accession and provider on the
-    new Ensembl platform, oldest first; see ``EnsemblAnnotation``.
+    new Ensembl platform, oldest first; use with ``EnsemblRelease``.
 
     Parameters
     ----------

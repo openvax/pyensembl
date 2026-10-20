@@ -7,7 +7,7 @@ import zlib
 
 import pytest
 
-from pyensembl import EnsemblAnnotation
+from pyensembl import EnsemblRelease
 
 
 def bgzf(data):
@@ -47,7 +47,7 @@ def test_install_index_query_and_reopen_dated_annotation(tmp_path, include_alt):
     options = dict(include_alt=include_alt, genome_fasta=True, genome_fasta_mask="soft",
                    species="human", server=mirror.as_uri(),
                    cache_directory_path=str(tmp_path / "cache"))
-    with EnsemblAnnotation("GCA_000001405.29", "2023_03", **options) as annotation:
+    with EnsemblRelease("2023_03", assembly_accession="GCA_000001405.29", **options) as annotation:
         # Construction is offline and does not create the cache.
         assert not Path(options["cache_directory_path"]).exists()
         annotation.download()
@@ -61,7 +61,7 @@ def test_install_index_query_and_reopen_dated_annotation(tmp_path, include_alt):
         assert annotation.sequence("1", 3, 6, strand="-", mask="raw") == "ggTT"
         encoded = annotation.to_json()
     # Local indexes and optional DNA survive a JSON round trip.
-    with EnsemblAnnotation.from_json(encoded) as reopened:
+    with EnsemblRelease.from_json(encoded) as reopened:
         assert reopened.species.latin_name == "homo_sapiens"
         assert reopened.transcript_by_id("ENST1").sequence == "CCCCGGTT"
         assert reopened.sequence("1", 9, 12, strand="-") == "CCCC"
@@ -70,12 +70,12 @@ def test_install_index_query_and_reopen_dated_annotation(tmp_path, include_alt):
 def test_cache_selections_are_distinct_and_dna_is_optional(tmp_path, monkeypatch):
     monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
     options = [dict(), dict(include_alt=True), dict(provider="community"),
-               dict(annotation_date="2023_04"), dict(assembly_accession="GCF_000001405.29")]
+               dict(release="2023_04"), dict(assembly_accession="GCF_000001405.29")]
     directories = set()
     for changes in options:
-        kwargs = dict(assembly_accession="GCA_000001405.29", annotation_date="2023_03",
+        kwargs = dict(assembly_accession="GCA_000001405.29", release="2023_03",
                       reference_name="GRCh38")
-        with EnsemblAnnotation(**{**kwargs, **changes}) as annotation:
+        with EnsemblRelease(**{**kwargs, **changes}) as annotation:
             assert not annotation.requires_genome_fasta
             directories.add(annotation.download_cache.cache_directory_path)
     assert len(directories) == len(options)
@@ -84,15 +84,15 @@ def test_cache_selections_are_distinct_and_dna_is_optional(tmp_path, monkeypatch
 
 @pytest.mark.parametrize("options", [
     {"assembly_accession": "GRCh38"}, {"assembly_accession": "GCA_000001405.0"},
-    {"annotation_date": "2026-07"}, {"annotation_date": "2023_13"},
+    {"release": "2026-07"}, {"release": "2023_13"},
     {"provider": "../community"}, {"genome_fasta_mask": "invalid"},
 ])
 def test_invalid_dataset_selection_rejected(options):
-    kwargs = dict(assembly_accession="GCA_000001405.29", annotation_date="2023_03")
+    kwargs = dict(assembly_accession="GCA_000001405.29", release="2023_03")
     with pytest.raises(ValueError):
-        EnsemblAnnotation(**{**kwargs, **options})
+        EnsemblRelease(**{**kwargs, **options})
 
 
 def test_non_boolean_coverage_rejected():
     with pytest.raises(TypeError):
-        EnsemblAnnotation("GCA_000001405.29", "2023_03", include_alt="False")
+        EnsemblRelease("2023_03", assembly_accession="GCA_000001405.29", include_alt="False")

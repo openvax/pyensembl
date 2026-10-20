@@ -11,7 +11,7 @@ import shutil
 import pytest
 from datacache import FileValidationError
 
-from pyensembl import EnsemblAnnotation, EnsemblRelease, prune_genome_fastas
+from pyensembl import EnsemblRelease, prune_genome_fastas
 from pyensembl import genome_fasta_cache as cache
 from pyensembl.genome_fasta import GenomeFasta
 from .test_genome_fasta import DNA, forbid_downloads, serve_downloads
@@ -20,7 +20,8 @@ from .test_legacy_cache_compatibility import snapshot
 
 def dated(date="2026_04", explicit=False, **kwargs):
     if explicit:
-        return EnsemblAnnotation("GCA_000001405.29", date, genome_fasta=True, **kwargs)
+        return EnsemblRelease(date, assembly_accession="GCA_000001405.29",
+                              genome_fasta=True, **kwargs)
     return EnsemblRelease(date, genome_fasta=True, **kwargs)
 
 
@@ -110,8 +111,8 @@ def test_distinct_artifacts_never_alias(platform, change):
         accession = {"version": "GCA_000001405.28", "gcf": "GCF_000001405.29"}.get(
             change, "GCA_000001405.29"
         )
-        second = EnsemblAnnotation(accession, "2026_04", genome_fasta=True,
-                                   provider="community" if change == "provider" else "ensembl")
+        second = EnsemblRelease("2026_04", assembly_accession=accession, genome_fasta=True,
+                                provider="community" if change == "provider" else "ensembl")
     try:
         second.download_genome_fasta()
         assert first.genome_fasta_path != second.genome_fasta_path

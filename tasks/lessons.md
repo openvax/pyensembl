@@ -28,3 +28,10 @@
   such as GRCh37 does not identify one patch/accession across every release.
   Explain which object attributes exist today, which are proposed, and where
   unknown legacy/custom metadata must stay None to preserve offline use.
+
+- When the user explicitly says an unused compatibility API can be removed,
+  retire its class/module/export rather than keeping a shim by default. Treat
+  that as permission to remove its import and serialized-class compatibility,
+  while retaining separately requested cache-file and active-API guarantees.
+  Exercise argument combinations by installing and querying real tiny caches;
+  checking constructor paths alone does not prove correct cache reuse.

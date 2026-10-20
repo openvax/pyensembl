@@ -153,7 +153,7 @@ class EnsemblRelease(Genome):
         download_genome_fasta=None, genome_fasta_path=None,
         assembly=None, assembly_accession=None, provider=None, include_alt=None,
         reference_name=None, cache_directory_path=None,
-        _resolved=None, _legacy_annotation=False, _preserve_legacy=False,
+        _resolved=None, _preserve_legacy=False,
     ):
         """
         release : int or str
@@ -171,8 +171,6 @@ class EnsemblRelease(Genome):
         self.species = normalize_species(species, assembly, assembly_accession)
         if _resolved is not None and species is None:
             self.species = None
-        if _legacy_annotation and species is None:
-            self.species = None
         dated = is_dated_release(release)
         if dated:
             if server in (None, ENSEMBL_FTP_SERVER, ENSEMBL_GENOMES_FTP_SERVER):
@@ -185,7 +183,7 @@ class EnsemblRelease(Genome):
             raise ValueError("A numbered release requires a known species")
         # Numbered releases historically preserved the exact mirror URL,
         # including trailing slashes. Changing it changes source/cache identity.
-        self.server = server.rstrip("/") if _legacy_annotation else server
+        self.server = server
         if include_alt is not None and not isinstance(include_alt, bool):
             raise TypeError("include_alt must be bool")
         if _resolved is not None:
@@ -195,7 +193,7 @@ class EnsemblRelease(Genome):
                 raise ValueError("Serialized assembly selection has a different release")
         else:
             if dated:
-                infer_historical = not (_preserve_legacy or _legacy_annotation)
+                infer_historical = not _preserve_legacy
                 if self.species is not None and not (assembly or assembly_accession):
                     # Existing installations and mirrors keep the old selection.
                     existing = _default_cache_directory(
@@ -205,12 +203,10 @@ class EnsemblRelease(Genome):
                         os.path.isdir(existing) or self.server.rstrip("/") != ENSEMBL_PLATFORM_FTP_SERVER
                     )
                 metadata, standard = dated_assembly(
-                    release, None if _legacy_annotation else self.species,
+                    release, self.species,
                     assembly, assembly_accession, provider,
                     infer_historical=infer_historical,
                 )
-                if _legacy_annotation:
-                    standard = False
                 if standard and include_alt is not None:
                     standard = include_alt == (self.species.current_reference_name == "GRCh38")
                 selected_reference = (

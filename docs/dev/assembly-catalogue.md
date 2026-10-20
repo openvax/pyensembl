@@ -84,8 +84,9 @@ memory. The accession inferred for an ordinary call must never cause its
 deserializer to switch to the explicit-accession cache layout.
 
 `reference_name` remains the installed display/cache label. An upstream name
-change cannot rename it. Keep legacy `EnsemblAnnotation` signature, optional
-species label, equality/hash behavior, imports, and serialization loaders.
+change cannot rename it. The unused `EnsemblAnnotation` class was removed in
+2.30.0; its historical cache files remain reusable through `EnsemblRelease`.
+Keep existing `EnsemblRelease` signatures and serialized objects supported.
 All URL generation and DNA preparation belong to `EnsemblRelease`.
 
 For release validation, reopen actual old-version installed caches with

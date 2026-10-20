@@ -9,12 +9,3 @@ provide the shared [Genome methods](genome.md).
 ::: pyensembl.EnsemblRelease
     options:
       inherited_members: false
-
-## Compatibility constructor
-
-`EnsemblAnnotation` retains its historical signature, imports, serialization,
-and cache defaults. New code should use `EnsemblRelease`.
-
-::: pyensembl.EnsemblAnnotation
-    options:
-      inherited_members: false
