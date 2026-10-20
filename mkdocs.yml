@@ -28,7 +28,6 @@ nav:
       - Choose a reference: guides/assembly-selection.md
       - Install and manage data: guides/cache.md
       - Use your own annotations: guides/custom-genomes.md
-      - Use dated Ensembl annotations: ensembl-platform.md
   - API reference:
       - reference/index.md
       - Select data: reference/datasets.md
@@ -42,6 +41,7 @@ nav:
       - dev/contributing.md
       - Documentation style: dev/documentation-style.md
       - Releasing: dev/releasing.md
+      - Assembly catalogue: dev/assembly-catalogue.md
 exclude_docs: |
   /getting-started.md
 plugins:
@@ -49,6 +49,7 @@ plugins:
   - redirects:
       redirect_maps:
         getting-started.md: index.md
+        ensembl-platform.md: guides/assembly-selection.md
         reference/lookups.md: reference/genome.md
   - mkdocstrings:
       handlers:

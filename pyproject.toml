@@ -62,6 +62,9 @@ dev = [
 [tool.setuptools]
 packages = ["pyensembl"]
 
+[tool.setuptools.package-data]
+pyensembl = ["assembly_catalog.json"]
+
 [tool.setuptools.dynamic]
 version = {attr = "pyensembl.version.__version__"}
 

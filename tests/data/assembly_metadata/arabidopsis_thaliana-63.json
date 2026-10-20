@@ -1,0 +1,13 @@
+{
+  "species": "arabidopsis_thaliana",
+  "release": 63,
+  "url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/plants/gtf/arabidopsis_thaliana/Arabidopsis_thaliana.TAIR10.63.gtf.gz",
+  "headers": [
+    "#!genome-build TAIR10",
+    "#!genome-version TAIR10",
+    "#!genome-date 2008-04",
+    "#!genome-build-accession GCA_000001735.1",
+    "#!genebuild-last-updated 2010-09"
+  ],
+  "prefix_sha256": "ed1626b407b6b103515df7f29b5b9e0e64699af7ab22cf01242b933ebb2028b9"
+}

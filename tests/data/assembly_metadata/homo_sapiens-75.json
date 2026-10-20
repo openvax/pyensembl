@@ -1,0 +1,13 @@
+{
+  "species": "homo_sapiens",
+  "release": 75,
+  "url": "https://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz",
+  "headers": [
+    "#!genome-build GRCh37.p13",
+    "#!genome-version GRCh37",
+    "#!genome-date 2009-02",
+    "#!genome-build-accession NCBI:GCA_000001405.14",
+    "#!genebuild-last-updated 2013-09"
+  ],
+  "prefix_sha256": "5c1b12bdba900ff0503b631ed06c6ff40893e14b0df1348e940eeed72fe76b24"
+}

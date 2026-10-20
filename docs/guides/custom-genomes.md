@@ -53,4 +53,4 @@ checks files and index readiness, not biological validity or assembly identity.
 To read genomic DNA, add `genome_fasta_path_or_url="/data/reference.fa"` using
 the same assembly. See [local reference DNA](reference-dna.md#local-fasta-files)
 for compression, read-only source files and contig validation. For a standard
-new-platform geneset, use [Ensembl's dated annotations](../ensembl-platform.md).
+new-platform geneset, use [Ensembl's dated annotations](../guides/assembly-selection.md#dated-releases).

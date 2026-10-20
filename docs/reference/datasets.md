@@ -1,14 +1,19 @@
 # Dataset constructors
 
-`EnsemblRelease` selects a numbered [Ensembl](https://ftp.ensembl.org/pub/)
-release, such as 116, or a dated release of [the new platform](../ensembl-platform.md),
-such as `"2026_04"`. `EnsemblAnnotation` selects any assembly accession,
-provider and dated geneset from the new platform. Both provide the shared
-[Genome methods](genome.md).
+`EnsemblRelease` selects numbered and dated Ensembl datasets, infers assemblies,
+and supports explicit assembly/provider choices. See
+[assembly selection](../guides/assembly-selection.md) for examples, metadata,
+API discovery, and cache compatibility. Both it and custom `Genome` objects
+provide the shared [Genome methods](genome.md).
 
 ::: pyensembl.EnsemblRelease
     options:
       inherited_members: false
+
+## Compatibility constructor
+
+`EnsemblAnnotation` retains its historical signature, imports, serialization,
+and cache defaults. New code should use `EnsemblRelease`.
 
 ::: pyensembl.EnsemblAnnotation
     options:

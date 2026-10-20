@@ -172,6 +172,27 @@ release_group.add_argument(
 )
 
 release_group.add_argument(
+    "--assembly", help="Optional build, full assembly name, or versioned GCA/GCF accession",
+)
+release_group.add_argument(
+    "--assembly-accession", help="Explicit accession (uses the compatible accession cache layout)",
+)
+release_group.add_argument("--provider", help="Annotation provider for a dated release")
+release_group.add_argument(
+    "--server", help="Mirror root preserving Ensembl's directory structure (advanced)",
+)
+release_group.add_argument(
+    "--include-alt", action=argparse.BooleanOptionalAction, default=None,
+    help="Select dated annotation coverage explicitly",
+)
+release_group.add_argument(
+    "--cache-reference-name", help="Preserve a custom reference label when reopening an accession dataset",
+)
+release_group.add_argument(
+    "--cache-directory", help="Explicit existing cache directory for one selected dataset",
+)
+
+release_group.add_argument(
     "--custom-mirror",
     default=None,
     help=("Flat mirror URL/directory; repeat it to reuse mirror data. In Python use "
@@ -510,7 +531,13 @@ def all_combinations_of_ensembl_genomes(args):
     The results will typically be of type EnsemblRelease unless the
     --custom-mirror argument was given.
     """
-    species_list = args.species if args.species else ["human"]
+    assembly = getattr(args, "assembly", None)
+    accession = getattr(args, "assembly_accession", None)
+    if getattr(args, "server", None) and args.custom_mirror:
+        raise ValueError("Choose --server for a structured mirror or --custom-mirror for a flat mirror")
+    if (assembly or accession) and len(args.species) > 1:
+        raise ValueError("An explicit assembly requires at most one --species")
+    species_list = args.species or ([None] if assembly or accession else ["human"])
     release_list = args.release
     if args.reference_name is not None:
         reference_name = normalize_reference_name(args.reference_name)
@@ -527,12 +554,8 @@ def all_combinations_of_ensembl_genomes(args):
         release_list = args.release or [last_release]
         for version in release_list:
             if is_dated_release(version):
-                provided = reference_species.which_reference(version)
-                if provided != reference_name:
-                    raise ValueError(
-                        "Dated release %s of %s provides %s, not %s"
-                        % (version, reference_species.latin_name, provided, reference_name)
-                    )
+                # The shared resolver handles historical dated assemblies too.
+                EnsemblRelease(version, species=reference_species, assembly=reference_name)
             elif not first_release <= version <= last_release:
                 raise ValueError(
                     "Reference %s supports Ensembl releases %d-%d, not --release %d"
@@ -552,12 +575,33 @@ def all_combinations_of_ensembl_genomes(args):
     genomes = []
     for species in species_list:
         # Otherwise, use Ensembl release information
+        if not release_list and (assembly or accession):
+            raise ValueError("--assembly requires an explicit --release")
         for version in release_list or [_newest_release(species)]:
+            selected_assembly = assembly
+            if args.reference_name is not None:
+                if assembly is not None:
+                    probe = EnsemblRelease(version, species=species, assembly=assembly,
+                                           assembly_accession=accession)
+                    if probe.assembly != reference_name and probe.reference_name != reference_name:
+                        raise ValueError("--assembly conflicts with --reference-name")
+                else:
+                    selected_assembly = reference_name
+            if getattr(args, "cache_directory", None) and (
+                len(species_list) != 1 or len(release_list or [version]) != 1
+            ):
+                raise ValueError("--cache-directory requires exactly one dataset")
             ensembl_release = EnsemblRelease(
                 version, species=species,
                 genome_fasta=genome_fasta,
                 genome_fasta_type=args.genome_fasta_type,
                 genome_fasta_mask=args.masked,
+                assembly=selected_assembly, assembly_accession=accession,
+                provider=getattr(args, "provider", None),
+                include_alt=getattr(args, "include_alt", None),
+                reference_name=getattr(args, "cache_reference_name", None),
+                cache_directory_path=getattr(args, "cache_directory", None),
+                server=getattr(args, "server", None),
             )
 
             if not args.custom_mirror:
@@ -575,6 +619,11 @@ def collect_selected_genomes(args):
     if args.gtf or args.transcript_fasta or args.protein_fasta or (
         args.genome_fasta_path and args.annotation_name
     ):
+        if any(getattr(args, key, None) is not None for key in (
+            "assembly", "assembly_accession", "provider", "include_alt",
+            "cache_reference_name", "cache_directory", "server",
+        )):
+            raise ValueError("Ensembl assembly options cannot be combined with custom source files")
         if args.release:
             raise ValueError(
                 "An Ensembl release cannot be specified if "
@@ -747,7 +796,9 @@ def format_available_species(use_color=None, dated_releases=None):
 def _genome_description(genome):
     if isinstance(genome, EnsemblRelease):
         species = genome.species
-        name = species.synonyms[0] if species.synonyms else species.latin_name
+        name = (
+            species.synonyms[0] if species.synonyms else species.latin_name
+        ) if species is not None else "assembly"
         return "%s %s release %s" % (name, genome.reference_name, genome.release)
     description = "%s %s" % (genome.reference_name, genome.annotation_name)
     if genome.annotation_version is not None:

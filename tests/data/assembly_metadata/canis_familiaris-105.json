@@ -1,0 +1,13 @@
+{
+  "species": "canis_familiaris",
+  "release": 105,
+  "url": "https://ftp.ensembl.org/pub/release-105/gtf/canis_lupus_familiaris/Canis_lupus_familiaris.ROS_Cfam_1.0.105.gtf.gz",
+  "headers": [
+    "#!genome-build ROS_Cfam_1.0",
+    "#!genome-version ROS_Cfam_1.0",
+    "#!genome-date 2020-09",
+    "#!genome-build-accession GCA_014441545.1",
+    "#!genebuild-last-updated 2020-10"
+  ],
+  "prefix_sha256": "6def88d576fa41874a41852c7dca6d2201ac889af3809beeb3ae6000c51c6743"
+}

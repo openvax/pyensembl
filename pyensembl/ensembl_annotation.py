@@ -1,118 +1,53 @@
-"""Explicit assembly/date selections from the new Ensembl FTP platform."""
+"""Compatibility import for the original explicit assembly/date constructor."""
 
-from datetime import datetime
-import re
-
-from .dated_releases import explain_unpublished_date
-from .ensembl_url_templates import ENSEMBL_PLATFORM_FTP_SERVER, make_dated_release_urls
+from .ensembl_release import EnsemblRelease
+from .ensembl_url_templates import ENSEMBL_PLATFORM_FTP_SERVER
+from .ensembl_versions import is_dated_release
 from .genome import Genome
-from .genome_fasta_cache import release_genome_fasta
-from .species import find_species_by_name
 
 
-class EnsemblAnnotation(Genome):
-    """A dated geneset for one assembly on the new Ensembl platform.
+class EnsemblAnnotation(EnsemblRelease):
+    """Compatibility wrapper; new code should use :class:`EnsemblRelease`.
 
-    Most callers should use ``EnsemblRelease("2026_04", species="human")``:
-    it selects the registered species' current assembly and standard coverage.
-    This class is for explicit older or unregistered assembly accessions,
-    annotation providers, and coverage choices. Both accept annotation dates
-    in YYYY_MM form, not the website's YYYY-MM release label.
-
-    Select an existing dataset from Ensembl's downloads page. Construction
-    never downloads data; call ``download()`` then ``index()`` to install it.
-
-    Parameters
-    ----------
-    assembly_accession : str
-        Versioned INSDC accession, e.g. GCA_000001405.29.
-    annotation_date : str
-        Annotation directory in YYYY_MM form, e.g. 2023_03.
-    provider : str
-        Existing provider directory, usually "ensembl" or "community".
-    include_alt : bool
-        Select genes-including_alt.gtf.gz instead of genes.gtf.gz. Check that
-        this file exists for the selected dataset; coverage is never inferred.
-    genome_fasta : bool
-        Also install combined reference DNA. False keeps DNA optional.
-    genome_fasta_mask : str
-        "none", "soft" or "hard", selecting the corresponding genome FASTA.
-    species : str, optional
-        Known species name, used to guard species-specific alias lookups.
-        The assembly accession remains the authoritative dataset selection.
-    reference_name : str, optional
-        Display name for the assembly; defaults to the accession.
-    cache_directory_path : str, optional
-        Explicit cache directory. Use a distinct directory per dataset.
-    server : str
-        Root of a mirror using the same accession/provider/date layout.
+    Replace ``EnsemblAnnotation(accession, date, **options)`` with
+    ``EnsemblRelease(date, assembly_accession=accession, **options)``.
+    This wrapper retains its original defaults, cache identity, and serialized
+    class path. It emits no warning, including when loading old saved objects.
     """
 
     def __init__(
         self, assembly_accession, annotation_date, *, provider="ensembl",
         include_alt=False, genome_fasta=False, genome_fasta_mask="none",
         species=None, reference_name=None, cache_directory_path=None,
-        server=ENSEMBL_PLATFORM_FTP_SERVER,
+        server=ENSEMBL_PLATFORM_FTP_SERVER, _resolved=None,
     ):
-        match = re.fullmatch(r"(GC[AF])_(\d{3})(\d{3})(\d{3})\.(\d+)", assembly_accession)
-        if match is None or int(match.group(5)) < 1:
-            raise ValueError("Expected a versioned GCA/GCF assembly accession")
-        if not re.fullmatch(r"\d{4}_\d{2}", annotation_date):
-            raise ValueError("annotation_date must use YYYY_MM")
-        try:
-            datetime.strptime(annotation_date, "%Y_%m")
-        except ValueError as error:
-            raise ValueError("annotation_date must be a valid YYYY_MM date") from error
-        if not re.fullmatch(r"[a-z][a-z0-9_]*", provider):
-            raise ValueError("provider must be one lowercase directory name")
-        if not isinstance(include_alt, bool) or not isinstance(genome_fasta, bool):
-            raise TypeError("include_alt and genome_fasta must be bool values")
-        self.assembly_accession = assembly_accession
-        self.annotation_date = annotation_date
-        self.provider = provider
-        self.include_alt = include_alt
-        self._genome_fasta_option = genome_fasta
-        self.genome_fasta_mask = genome_fasta_mask
-        self.species = find_species_by_name(species) if species is not None else None
-        self.server = server.rstrip("/")
-        urls = make_dated_release_urls(
-            assembly_accession, provider, annotation_date, include_alt=include_alt,
-            genome_fasta_mask=genome_fasta_mask, server=self.server,
-        )
-        self.download_url = urls.directory
-        coverage = "including-alt" if include_alt else "primary"
+        if not isinstance(genome_fasta, bool) or not isinstance(include_alt, bool):
+            raise TypeError("include_alt and genome_fasta must be bool")
+        if not isinstance(annotation_date, str) or not is_dated_release(annotation_date):
+            raise ValueError("annotation_date must use a valid YYYY_MM date")
         super().__init__(
-            reference_name=reference_name or assembly_accession,
-            annotation_name="ensembl-%s-%s-%s-" % (provider, assembly_accession, coverage),
-            annotation_version=annotation_date,
-            gtf_path_or_url=urls.gtf,
-            transcript_fasta_paths_or_urls=[urls.cdna],
-            protein_fasta_paths_or_urls=[urls.pep],
-            genome_fasta_path_or_url=urls.genome_fasta if genome_fasta else None,
+            annotation_date, species=species, server=server,
+            assembly_accession=assembly_accession, provider=provider,
+            include_alt=include_alt, genome_fasta=genome_fasta,
+            genome_fasta_mask=genome_fasta_mask, reference_name=reference_name,
             cache_directory_path=cache_directory_path,
+            _resolved=_resolved, _legacy_annotation=True,
         )
 
-    def _make_genome_fasta(self, source):
-        return release_genome_fasta(
-            source, self.download_cache.cache_directory_path,
-            install_string_function=self.genome_fasta_install_string,
-        )
-
-    def _explain_download_failure(self):
-        return explain_unpublished_date(
-            self.assembly_accession, self.provider, self.annotation_date, self.server
-        )
+    # Preserve the original identity for saved sets/dictionaries.
+    __eq__ = Genome.__eq__
+    __hash__ = Genome.__hash__
+    __str__ = Genome.__str__
 
     def to_dict(self):
-        """Preserve dataset selection and optional DNA during serialization."""
         return dict(
             assembly_accession=self.assembly_accession,
             annotation_date=self.annotation_date, provider=self.provider,
-            include_alt=self.include_alt, genome_fasta=self._genome_fasta_option,
+            include_alt=self.include_alt, genome_fasta=bool(self._genome_fasta_option),
             genome_fasta_mask=self.genome_fasta_mask,
             species=self.species.latin_name if self.species is not None else None,
             reference_name=self.reference_name, cache_directory_path=self.cache_directory_path,
-            server=self.server,
+            server=self.server, _resolved=self._resolved,
         )
 
     @classmethod

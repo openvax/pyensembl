@@ -8,7 +8,7 @@ a [separate reference](cli.md).
 | Interface | Purpose | Complete reference |
 | --- | --- | --- |
 | `EnsemblRelease` | Select a species and numbered release | [Select data](datasets.md) |
-| `EnsemblAnnotation` | Select an assembly and dated annotation | [Select data](datasets.md) |
+| `EnsemblAnnotation` | Compatibility constructor for saved code and objects | [Select data](datasets.md) |
 | `Genome` | Shared annotation queries and custom data | [Query a genome](genome.md) |
 | `Gene`, `Transcript`, `Exon`, `Protein`, `Locus` | Annotated features and intervals | [Features](features.md) |
 | `GeneNameAliases` | Explicit alias source | [Aliases](aliases.md) |

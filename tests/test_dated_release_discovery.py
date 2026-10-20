@@ -183,18 +183,18 @@ def test_missing_download_of_an_unpublished_date_lists_the_dates(server, monkeyp
     monkeypatch.setattr(Genome, "_get_gtf_path", missing_file)
     message = (
         "Ensembl publishes no homo_sapiens GRCh38 annotation (GCA_000001405.29, "
-        "provider ensembl) dated 2013_09; available dates: 2023_03, 2026_04"
+        "provider ensembl) dated 1900_01; available dates: 2023_03, 2026_04"
     )
     with pytest.raises(UnpublishedDateError, match=re.escape(message)) as raised:
-        EnsemblRelease("2013_09").download()
+        EnsemblRelease("1900_01").download()
     assert raised.value.__cause__.response.status_code == 404
     assert isinstance(raised.value, ValueError)
 
 
 def test_missing_dna_of_an_unpublished_date_lists_the_dates(server, monkeypatch):
     monkeypatch.setattr(GenomeFasta, "prepare", missing_file)
-    with pytest.raises(UnpublishedDateError, match="dated 2013_09"):
-        EnsemblRelease("2013_09", genome_fasta=True).download_genome_fasta()
+    with pytest.raises(UnpublishedDateError, match="dated 1900_01"):
+        EnsemblRelease("1900_01", genome_fasta=True).download_genome_fasta()
 
 
 def test_accession_datasets_are_explained_too(server, monkeypatch):
@@ -245,10 +245,10 @@ def test_install_reports_an_unpublished_date(server, monkeypatch, capsys):
     # run() would attach a handler to this test's captured stderr for good.
     monkeypatch.setattr(shell, "configure_logging", lambda **kwargs: None)
     monkeypatch.setattr(Genome, "_get_gtf_path", missing_file)
-    monkeypatch.setattr("sys.argv", ["pyensembl", "install", "--release", "2013_09"])
+    monkeypatch.setattr("sys.argv", ["pyensembl", "install", "--release", "1900_01"])
     with pytest.raises(SystemExit):
         shell.run()
-    assert "dated 2013_09; available dates: 2023_03, 2026_04" in capsys.readouterr().err
+    assert "dated 1900_01; available dates: 2023_03, 2026_04" in capsys.readouterr().err
 
 
 # `pyensembl available`
