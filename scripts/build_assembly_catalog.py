@@ -96,14 +96,19 @@ def build(root):
                 elif species.latin_name.startswith("mus_musculus_"):
                     record["species_aliases"] = ["mus_musculus"]
                 dated.append(record)
-    # species.json omits this published historical dataset. Its GTF header
-    # and accession/provider directory are independently verified.
+    # Retain the independently verified historical dataset even if a future
+    # species.json omits it, without discarding any newly published dates.
     historical = dict(
         species="homo_sapiens", assembly="GRCh37", assembly_name="GRCh37.p13",
         assembly_accession="GCA_000001405.14", provider="ensembl", dates=["2013_09"],
         reference_name="GRCh37",
         source="https://ftp.ebi.ac.uk/pub/ensemblorganisms/GCA/000/001/405/14/ensembl/2013_09/geneset/genes.gtf.gz",
     )
+    historical["dates"] = sorted(set(historical["dates"]).union(
+        date for record in dated for date in record["dates"]
+        if (record["assembly_accession"], record["provider"]) ==
+        (historical["assembly_accession"], historical["provider"])
+    ))
     dated = [r for r in dated if (r["assembly_accession"], r["provider"]) !=
              (historical["assembly_accession"], historical["provider"])]
     dated.append(historical)
