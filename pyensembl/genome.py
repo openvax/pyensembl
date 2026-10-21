@@ -225,7 +225,9 @@ class Genome(Serializable):
 
     def genetic_code(self, contig=None, *, compartment=None):
         """Resolve a reference default offline, with provenance or a reason
-        it is unknown. Transcript annotation declarations take precedence;
+        it is unknown. An omitted or unrecognized contig uses the species'
+        nuclear table unless a compartment is explicitly supplied.
+        Transcript annotation declarations take precedence;
         use ``transcript.genetic_code`` when working with a transcript.
         """
         return genetic_code(self._reference_metadata, contig, compartment=compartment)

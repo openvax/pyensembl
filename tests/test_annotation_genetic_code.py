@@ -96,12 +96,38 @@ def test_conflicting_cds_rows_are_not_silently_deduplicated(tmp_path):
             _ = genome.transcript_by_id('ENST1').translation_table
 
 
-def test_source_overrides_reference_even_on_unknown_contig(tmp_path):
+@pytest.mark.parametrize('indexed', [False, True])
+def test_source_overrides_reference_on_unplaced_contig(tmp_path, indexed):
     write_gtf(tmp_path / 'source.gtf', cds='transl_table "5";', contig='scaffold_42')
     with open_genome(tmp_path, reference_metadata={'translation_tables': {'nuclear': 4}}) as genome:
-        genome.index()
-        result = genome.transcript_by_id('ENST1').genetic_code
-        assert (result.table_id, result.compartment, result.source) == (5, None, 'annotation')
+        if indexed:
+            genome.index()
+            tx = genome.transcript_by_id('ENST1')
+        else:
+            tx = Transcript('ENST1', None, 'scaffold_42', 1, 9, '+', None, 'g', genome)
+        result = tx.genetic_code
+        assert (result.table_id, result.compartment, result.source) == (5, 'nuclear', 'annotation')
+
+
+@pytest.mark.parametrize('indexed', [False, True])
+@pytest.mark.parametrize('taxon,expected', [(9606, 1), (237561, 12)])
+def test_unplaced_transcript_uses_species_default_without_cache_changes(tmp_path, indexed, taxon, expected):
+    path = tmp_path / 'source.gtf'
+    write_gtf(path, contig='unplaced_42')
+    with Genome('custom', 'test', gtf_path_or_url=str(path),
+                cache_directory_path=str(tmp_path / 'cache'),
+                reference_metadata={'taxon_id': taxon}) as genome:
+        if indexed:
+            genome.index()
+            tx = genome.transcript_by_id('ENST1')
+        else:
+            tx = Transcript('ENST1', None, 'unplaced_42', 1, 9, '+', None, 'g', genome)
+        before = snapshot(tmp_path)
+        assert tx.source_translation_table is None
+        assert tx.translation_table == expected
+        assert tx.genetic_code.compartment == 'nuclear'
+        assert tx.genetic_code.source == 'taxonomy'
+        assert snapshot(tmp_path) == before
 
 
 @pytest.mark.parametrize('compressed', [False, True])

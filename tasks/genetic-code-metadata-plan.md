@@ -1,5 +1,11 @@
 # Offline source and taxonomy genetic-code metadata (#481)
 
+Policy correction in 2.31.1: the arbitrary-contig unknown behavior below is
+superseded by [the species-default plan](species-genetic-code-default-plan.md).
+Unplaced scaffolds and no-contig lookups now use the species' nuclear code.
+The original Varcode #623 scaffold example was intended fallback behavior;
+that issue now covers only explicitly unset reference tables.
+
 ## Scope and invariants
 
 Expose translation-table assignments and provenance from PyEnsembl, without

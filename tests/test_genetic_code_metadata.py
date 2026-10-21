@@ -38,6 +38,11 @@ def test_reference_assignments(species, release, taxon, parent, nuclear, mitocho
     assert genome.nuclear_translation_table == nuclear
     assert genome.mitochondrial_translation_table == mitochondrial
     assert genome.plastid_translation_table == plastid
+    for contig in (None, "unplaced_42", "GL000220.1", "chr1_KI270706v1_random"):
+        assignment = genome.genetic_code(contig)
+        assert (assignment.table_id, assignment.compartment, assignment.source) == (nuclear, "nuclear", "taxonomy")
+        assert assignment.taxon_id == taxon
+        assert assignment.reason is None
     for compartment, expected in zip(codes.COMPARTMENTS, (nuclear, mitochondrial, plastid)):
         assignment = genome.genetic_code(compartment=compartment)
         assert assignment.table_id == expected
@@ -60,6 +65,7 @@ def test_snapshot_rebuilds_from_captured_primary_evidence():
         genome = EnsemblRelease(release, species=species)
         assert genome.taxon_id and genome.species_taxon_id
         assert genome.nuclear_translation_table is not None
+        assert genome.genetic_code("scaffold_42").table_id == genome.nuclear_translation_table
 
 
 @pytest.mark.parametrize("contig,compartment", [
@@ -77,10 +83,14 @@ def test_explicit_compartments_precede_aliases():
     })
     assert genome.genetic_code("MT").table_id == 1
     assert genome.genetic_code("SCAFFOLD_42").table_id == 5
-    assert genome.genetic_code("unplaced").table_id is None
+    assert genome.genetic_code("unplaced").table_id == 1
     assert genome.genetic_code("unplaced", compartment="nuclear").table_id == 1
+    assert genome.genetic_code("unplaced", compartment="mitochondrial").table_id == 5
+    assert genome.genetic_code(compartment="mitochondrial").table_id == 5
     with pytest.raises(ValueError, match="conflicts"):
         genome.genetic_code("MT", compartment="mitochondrial")
+    with pytest.raises(ValueError, match="conflicts"):
+        genome.genetic_code("chr1", compartment="mitochondrial")
     with pytest.raises(ValueError, match="Unknown cellular"):
         genome.genetic_code(compartment="cytoplasm")
     ambiguous = Genome("custom", "test", reference_metadata={"contig_compartments": {
@@ -96,7 +106,8 @@ def test_unknowns_are_not_silently_standard_or_vertebrate():
     assert unknown.species_taxon_id is None
     assert unknown.genetic_code("1").table_id is None
     assert unknown.genetic_code("MT").table_id is None
-    assert EnsemblRelease(75).genetic_code("scaffold_7").table_id is None
+    assert unknown.genetic_code("scaffold_7").table_id is None
+    assert unknown.genetic_code().table_id is None
     assert Genome("custom", "test").genetic_code("chr1").table_id is None
     # A display label on an unregistered assembly is not evidence of taxonomy.
     unknown = EnsemblRelease("2026_04", assembly="GCA_999999999.1", reference_name="GRCh38")
@@ -145,13 +156,26 @@ def test_taxon_parent_constraints_and_unrelated_conflicts():
         EnsemblRelease(75, reference_metadata={"species_taxon_id": 9605})
 
 
-def test_explicit_unknown_table_remains_unknown():
+@pytest.mark.parametrize("contig", [None, "1", "scaffold_42"])
+def test_explicit_unknown_table_remains_unknown(contig):
     genome = Genome("GRCh38", "test", reference_metadata={"translation_tables": {"nuclear": None}})
     assert genome.nuclear_translation_table is None
-    assignment = genome.genetic_code("1")
+    assignment = genome.genetic_code(contig)
     assert assignment.table_id is None and assignment.source == "reference"
     assert assignment.reason
     assert genome.genetic_code("MT").table_id == 2
+
+
+def test_missing_organelle_table_does_not_use_nuclear_default():
+    genome = Genome("GRCh38", "test", reference_metadata={
+        "translation_tables": {"mitochondrial": None},
+        "contig_compartments": {"scaffold_42": "mitochondrial"},
+    })
+    assert genome.genetic_code("unplaced_1").table_id == 1
+    for contig in ("MT", "scaffold_42", "Pt"):
+        assignment = genome.genetic_code(contig)
+        assert assignment.table_id is None
+        assert assignment.reason
 
 
 def test_pinned_json_pickle_mirror_and_older_objects(monkeypatch):
@@ -162,12 +186,16 @@ def test_pinned_json_pickle_mirror_and_older_objects(monkeypatch):
     assert EnsemblRelease.from_dict(old).taxon_id == 9615
     changed = deepcopy(codes.catalogue())
     changed["taxa"]["9615"]["translation_tables"]["mitochondrial"] = 4
+    changed["taxa"]["9615"]["translation_tables"]["nuclear"] = 12
     monkeypatch.setattr(codes, "catalogue", lambda: changed)
     for restored in [EnsemblRelease.from_json(encoded), pickle.loads(payload), genome.with_mirror("https://example.org/data")]:
         assert restored.reference_metadata == expected
         assert restored.genetic_code("MT").table_id == 2
+        assert restored.genetic_code("unplaced_42").table_id == 1
+        assert restored.genetic_code().table_id == 1
         assert type(restored).from_json(restored.to_json()).reference_metadata == expected
     assert EnsemblRelease("2020_10", species="dog").genetic_code("MT").table_id == 4
+    assert EnsemblRelease("2020_10", species="dog").genetic_code("unplaced_42").table_id == 12
 
 
 def test_overrides_distinguish_objects_but_preserve_storage_identity(tmp_path):
