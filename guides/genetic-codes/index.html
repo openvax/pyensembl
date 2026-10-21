@@ -1287,6 +1287,8 @@ declaration in its annotation takes precedence over the reference default.</p>
 <span class="k">assert</span> <span class="n">yeast</span><span class="o">.</span><span class="n">taxon_id</span> <span class="o">==</span> <span class="mi">559292</span>           <span class="c1"># the S288C reference strain</span>
 <span class="k">assert</span> <span class="n">yeast</span><span class="o">.</span><span class="n">species_taxon_id</span> <span class="o">==</span> <span class="mi">4932</span>     <span class="c1"># Saccharomyces cerevisiae</span>
 <span class="k">assert</span> <span class="n">yeast</span><span class="o">.</span><span class="n">genetic_code</span><span class="p">(</span><span class="s2">"MT"</span><span class="p">)</span><span class="o">.</span><span class="n">table_id</span> <span class="o">==</span> <span class="mi">3</span>
+<span class="k">assert</span> <span class="n">yeast</span><span class="o">.</span><span class="n">genetic_code</span><span class="p">(</span><span class="s2">"unplaced_42"</span><span class="p">)</span><span class="o">.</span><span class="n">table_id</span> <span class="o">==</span> <span class="mi">1</span>
+<span class="k">assert</span> <span class="n">yeast</span><span class="o">.</span><span class="n">genetic_code</span><span class="p">()</span><span class="o">.</span><span class="n">table_id</span> <span class="o">==</span> <span class="mi">1</span>
 <span class="k">assert</span> <span class="n">yeast</span><span class="o">.</span><span class="n">genetic_code</span><span class="p">(</span><span class="n">compartment</span><span class="o">=</span><span class="s2">"nuclear"</span><span class="p">)</span><span class="o">.</span><span class="n">table_id</span> <span class="o">==</span> <span class="mi">1</span>
 
 <span class="n">plant</span> <span class="o">=</span> <span class="n">EnsemblRelease</span><span class="p">(</span><span class="mi">63</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="s2">"tomato"</span><span class="p">)</span>
@@ -1301,8 +1303,11 @@ has nuclear table 12. A mitochondrial contig name alone does not select a
 table. The reference's taxon or an explicit assignment is also needed.</p>
 <p><code>genetic_code()</code> returns an immutable <code>GeneticCodeAssignment</code> with <code>table_id</code>,
 <code>compartment</code>, <code>source</code>, <code>taxon_id</code>, <code>source_url</code>, and <code>reason</code>. Unknown
-assignments have <code>table_id=None</code> and an explanation. There is no automatic
-standard-code fallback for arbitrary unplaced contigs or unknown taxa.</p>
+assignments have <code>table_id=None</code> and an explanation. An omitted contig or an
+unrecognized name, including an unplaced scaffold, uses the species' nuclear
+table. This is the species' main code, not necessarily table 1: Candida
+albicans defaults to table 12. Unknown taxa still need an explicit assignment;
+they do not silently receive table 1.</p>
 <h2 id="transcript-source-declarations">Transcript source declarations<a class="headerlink" href="#transcript-source-declarations" title="Permanent link">&para;</a></h2>
 <p>After the annotation has been <a href="../cache/">installed</a>, read:</p>
 <div class="highlight"><pre><span></span><code><span class="n">transcript</span> <span class="o">=</span> <span class="n">yeast</span><span class="o">.</span><span class="n">transcript_by_id</span><span class="p">(</span><span class="n">yeast</span><span class="o">.</span><span class="n">transcript_ids</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
@@ -1314,10 +1319,11 @@ standard-code fallback for arbitrary unplaced contigs or unknown taxa.</p>
 transcript and its CDS rows. It returns <code>None</code> when no declaration is present.
 Repeated agreeing values are accepted; different values or invalid NCBI IDs
 raise <code>ValueError</code>. A valid source declaration wins over a different taxonomy
-default or explicit reference default, even on an unknown compartment.
+default or explicit reference default, including on an unplaced scaffold.
 <code>assignment.source</code> is <code>annotation</code>, <code>reference</code>, <code>taxonomy</code>, or <code>unresolved</code>.
 For an annotation declaration, <code>source_url</code> identifies the configured GTF
-path or URL. The compartment can still be <code>None</code> if it cannot be established.</p>
+path or URL. <code>compartment</code> describes the selected compartment, including the
+nuclear default; it is not proof of the contig's physical localization.</p>
 <p>New annotation indexes retain these optional attributes. Old indexes remain
 usable unchanged: the first lookup scans the installed GTF for the sparse
 declarations and keeps them only in memory. There is no download, migration,
@@ -1337,7 +1343,7 @@ Reference-only <code>genome.genetic_code()</code> does not need a GTF.</p>
     <span class="p">},</span>
 <span class="p">)</span>
 <span class="k">assert</span> <span class="n">genome</span><span class="o">.</span><span class="n">genetic_code</span><span class="p">(</span><span class="s2">"scaffold_42"</span><span class="p">)</span><span class="o">.</span><span class="n">table_id</span> <span class="o">==</span> <span class="mi">5</span>
-<span class="k">assert</span> <span class="n">genome</span><span class="o">.</span><span class="n">genetic_code</span><span class="p">(</span><span class="s2">"unplaced_1"</span><span class="p">)</span><span class="o">.</span><span class="n">table_id</span> <span class="ow">is</span> <span class="kc">None</span>
+<span class="k">assert</span> <span class="n">genome</span><span class="o">.</span><span class="n">genetic_code</span><span class="p">(</span><span class="s2">"unplaced_1"</span><span class="p">)</span><span class="o">.</span><span class="n">table_id</span> <span class="o">==</span> <span class="mi">1</span>
 </code></pre></div>
 <p>An optional <code>translation_tables</code> mapping can explicitly set <code>nuclear</code>,
 <code>mitochondrial</code>, or <code>plastid</code> to a valid integer table ID. <code>None</code> explicitly
@@ -1368,11 +1374,13 @@ then case-insensitive; conflicting case aliases raise. Fallback names are:</p>
 </tr>
 </tbody>
 </table>
-<p>These names are conventions, not assembly evidence. Supply reference
-metadata for nonstandard names. You can also call
+<p>Other names default to nuclear. These names are conventions, not assembly
+evidence; supply reference metadata for nonstandard organelle names. You can also call
 <code>genome.genetic_code(compartment="plastid")</code> without a contig. When both are
 given, an inconsistent known compartment raises rather than ignoring the
-constraint.</p>
+constraint. An arbitrary scaffold name does not conflict with an explicitly
+requested compartment. An identified organelle whose table is missing remains
+unresolved rather than using the nuclear default.</p>
 <h2 id="taxonomy-and-saved-objects">Taxonomy and saved objects<a class="headerlink" href="#taxonomy-and-saved-objects" title="Permanent link">&para;</a></h2>
 <p>Registered species infer taxon identity offline. A custom <code>Genome</code> can infer
 it from an exact registered <code>reference_name</code>; arbitrary labels and filename
