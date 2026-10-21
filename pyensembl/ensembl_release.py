@@ -463,7 +463,7 @@ class EnsemblRelease(Genome):
 
     def _annotation_identity(self):
         if self._resolved["standard"]:
-            return self.release, self.species, json.dumps(self._reference_metadata, sort_keys=True)
+            return self.release, self.species, self._reference_metadata_key
         return self._fields()
 
     def _genome_fasta_setup_hint(self):

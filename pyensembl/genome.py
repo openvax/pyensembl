@@ -163,6 +163,9 @@ class Genome(Serializable):
         self._transcript_fasta_paths_or_urls = transcript_fasta_paths_or_urls
         self._protein_fasta_paths_or_urls = protein_fasta_paths_or_urls
         self._reference_metadata = self._resolve_reference_metadata(reference_metadata)
+        # Public access returns copies, so this pinned identity is immutable.
+        # Compute it once: genes/transcripts hash their genome frequently.
+        self._reference_metadata_key = json.dumps(self._reference_metadata, sort_keys=True)
 
         self.download_cache = DownloadCache(
             reference_name=self.reference_name,
@@ -852,7 +855,7 @@ class Genome(Serializable):
             self._gtf_path_or_url,
             tuple(self._protein_fasta_paths_or_urls),
             tuple(self._transcript_fasta_paths_or_urls),
-            json.dumps(self._reference_metadata, sort_keys=True),
+            self._reference_metadata_key,
         )
 
     def __eq__(self, other):
