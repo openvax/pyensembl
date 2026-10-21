@@ -618,6 +618,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#tomato-numbered-and-dated-assemblies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tomato numbered and dated assemblies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#removed-constructor" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1252,6 +1263,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#tomato-numbered-and-dated-assemblies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tomato numbered and dated assemblies
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#removed-constructor" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1462,6 +1484,13 @@ an explicit accession uses the accession layout. Supplying
 this API change. <a href="../cache/#how-the-shared-dna-cache-works">Shared DNA caching</a>
 continues to share new verified downloads while preserving existing private
 copies. No reinstall is needed.</p>
+<h2 id="tomato-numbered-and-dated-assemblies">Tomato numbered and dated assemblies<a class="headerlink" href="#tomato-numbered-and-dated-assemblies" title="Permanent link">&para;</a></h2>
+<p>Tomato illustrates why numbered and dated assembly defaults are separate:
+<code>EnsemblRelease(63, species="tomato")</code> selects SL4.0, while the registered dated
+<code>EnsemblRelease("2018_10", species="tomato")</code> retains SL3.0 and its existing
+cache path. SL4.0 publishes cDNA and peptide FASTAs without a separate ncRNA
+FASTA. PyEnsembl declares that source difference explicitly; other missing
+required files remain errors.</p>
 <h2 id="removed-constructor">Removed constructor<a class="headerlink" href="#removed-constructor" title="Permanent link">&para;</a></h2>
 <p><code>EnsemblAnnotation</code> was removed in 2.30.0. Select the same dataset with:</p>
 <div class="highlight"><pre><span></span><code><span class="n">EnsemblRelease</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="n">assembly_accession</span><span class="o">=</span><span class="n">accession</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
