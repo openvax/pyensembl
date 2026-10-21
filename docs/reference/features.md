@@ -9,6 +9,11 @@ one-based inclusive bounds. The guides show how to
 
 ::: pyensembl.Transcript
 
+See [genetic-code assignments](../guides/genetic-codes.md) for transcript
+source declarations, reference defaults and unknown results.
+
+::: pyensembl.GeneticCodeAssignment
+
 ::: pyensembl.Exon
 
 ::: pyensembl.Protein

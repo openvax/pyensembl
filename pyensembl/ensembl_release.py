@@ -26,6 +26,7 @@ from .assembly import (
 )
 from .download_cache import _default_cache_directory
 from .genome import Genome
+from .genetic_code import resolve_reference_metadata
 from .genome_fasta_cache import canonical_source_options, release_genome_fasta
 from .genome_fasta import GenomeFasta
 from .ensembl_versions import MAX_ENSEMBL_RELEASE, is_dated_release, normalize_release
@@ -152,7 +153,7 @@ class EnsemblRelease(Genome):
         *, genome_fasta=None, genome_fasta_type="toplevel", genome_fasta_mask="none",
         download_genome_fasta=None, genome_fasta_path=None,
         assembly=None, assembly_accession=None, provider=None, include_alt=None,
-        reference_name=None, cache_directory_path=None,
+        reference_name=None, cache_directory_path=None, reference_metadata=None,
         _resolved=None, _preserve_legacy=False,
     ):
         """
@@ -287,6 +288,16 @@ class EnsemblRelease(Genome):
             protein_fasta_paths_or_urls=self.protein_fasta_urls,
             genome_fasta_path_or_url=genome_fasta_source,
             cache_directory_path=cache_directory_path,
+            reference_metadata=reference_metadata,
+        )
+
+    def _resolve_reference_metadata(self, value):
+        metadata = self._resolved["metadata"]
+        return resolve_reference_metadata(
+            value, species=self.species,
+            source_taxon_id=metadata.get("taxon_id"),
+            species_taxon_id=metadata.get("species_taxon_id"),
+            taxon_source=metadata.get("source"),
         )
 
     @property
@@ -361,6 +372,7 @@ class EnsemblRelease(Genome):
             transcript_fasta_paths_or_urls=[mirrored(u) for u in self.transcript_fasta_urls],
             protein_fasta_paths_or_urls=[mirrored(u) for u in self.protein_fasta_urls],
             genome_fasta_path_or_url=dna,
+            reference_metadata=self.reference_metadata,
         )
 
     def _dated_release_urls(self):
@@ -451,7 +463,7 @@ class EnsemblRelease(Genome):
 
     def _annotation_identity(self):
         if self._resolved["standard"]:
-            return self.release, self.species
+            return self.release, self.species, self._reference_metadata_key
         return self._fields()
 
     def _genome_fasta_setup_hint(self):
@@ -522,6 +534,7 @@ class EnsemblRelease(Genome):
             "genome_fasta_mask": self.genome_fasta_mask,
             "cache_directory_path": self.cache_directory_path,
             "_resolved": self._resolved,
+            "reference_metadata": self.reference_metadata,
         }
 
     @classmethod

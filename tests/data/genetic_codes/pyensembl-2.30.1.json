@@ -1,0 +1,12 @@
+{
+  "reference_name": "GRCh38",
+  "annotation_name": "legacy-code",
+  "annotation_version": null,
+  "gtf_path_or_url": "https://example.invalid/genes.gtf",
+  "transcript_fasta_paths_or_urls": [],
+  "protein_fasta_paths_or_urls": [],
+  "decompress_on_download": false,
+  "copy_local_files_to_cache": false,
+  "cache_directory_path": "{cache}",
+  "genome_fasta_path_or_url": null
+}

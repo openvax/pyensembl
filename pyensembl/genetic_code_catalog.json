@@ -1,0 +1,1991 @@
+{
+  "code_names": {
+    "1": "Standard",
+    "10": "Euplotid Nuclear",
+    "11": "Bacterial, Archaeal and Plant Plastid",
+    "12": "Alternative Yeast Nuclear",
+    "13": "Ascidian Mitochondrial",
+    "14": "Alternative Flatworm Mitochondrial",
+    "15": "Blepharisma Macronuclear",
+    "16": "Chlorophycean Mitochondrial",
+    "2": "Vertebrate Mitochondrial",
+    "21": "Trematode Mitochondrial",
+    "22": "Scenedesmus obliquus Mitochondrial",
+    "23": "Thraustochytrium Mitochondrial",
+    "24": "Rhabdopleuridae Mitochondrial",
+    "25": "Candidate Division SR1 and Gracilibacteria",
+    "26": "Pachysolen tannophilus Nuclear",
+    "27": "Karyorelict Nuclear",
+    "28": "Condylostoma Nuclear",
+    "29": "Mesodinium Nuclear",
+    "3": "Yeast Mitochondrial",
+    "30": "Peritrich Nuclear",
+    "31": "Blastocrithidia Nuclear",
+    "32": "Balanophoraceae Plastid",
+    "33": "Cephalodiscidae Mitochondrial",
+    "4": "Mold Mitochondrial; Protozoan Mitochondrial; Coelenterate\n Mitochondrial; Mycoplasma; Spiroplasma",
+    "5": "Invertebrate Mitochondrial",
+    "6": "Ciliate Nuclear; Dasycladacean Nuclear; Hexamita Nuclear",
+    "9": "Echinoderm Mitochondrial; Flatworm Mitochondrial"
+  },
+  "retrieved_at": "2026-10-21T02:35:24.276533+00:00",
+  "schema_version": 1,
+  "sources": {
+    "fungi.tsv": {
+      "sha256": "c8025b9b8da06025505f3e173553e0a0de3dc0646eaba3162c54fc918b401f55",
+      "url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/fungi/species_EnsemblFungi.txt"
+    },
+    "gc.prt": {
+      "sha256": "2aecbdd09ecc5e0d233c105090a593737298ef93d88f6bc0c1bef26df6051a04",
+      "url": "https://ftp.ncbi.nlm.nih.gov/entrez/misc/data/gc.prt"
+    },
+    "metazoa.tsv": {
+      "sha256": "b1a6fd95a5b52b73624d421737246568d33dcc9a59e2952c7732952d3ca27fec",
+      "url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/metazoa/species_EnsemblMetazoa.txt"
+    },
+    "plants.tsv": {
+      "sha256": "fbbddcb0b90089e7fa65c24e6bf7f1dbd60efa789561a1a67f7c5604fbc9cb44",
+      "url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/plants/species_EnsemblPlants.txt"
+    },
+    "protists.tsv": {
+      "sha256": "0eeee414fd031d63c0ee6490232b5f3b64c06547b213867182214b3541ff1869",
+      "url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/protists/species_EnsemblProtists.txt"
+    },
+    "taxonomy.xml": {
+      "sha256": "1d8212baaa474cf7fe066b3b4beb988c01eef8f1704ea43b5990d7bbdd850717",
+      "url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=taxonomy&id=3702%2C3847%2C4081%2C4530%2C4565%2C4577%2C4896%2C4932%2C5476%2C5811%2C5833%2C6239%2C7165%2C7227%2C7955%2C8364%2C9031%2C9541%2C9544%2C9606%2C9612%2C9615%2C9685%2C9823%2C9986%2C10029%2C10036%2C10047%2C10090%2C10116%2C10141%2C10181%2C36329%2C39947%2C60711%2C162425%2C227321%2C237561%2C284812%2C286419%2C508771%2C559292&retmode=xml"
+    },
+    "vertebrates.tsv": {
+      "sha256": "1a4545d1e2ede494fba0e97b0a60bbe0b094e834af972528ab6a3b2a50f02369",
+      "url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt"
+    }
+  },
+  "species": {
+    "anopheles_gambiae": {
+      "source_url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/metazoa/species_EnsemblMetazoa.txt",
+      "taxon_id": 7165
+    },
+    "arabidopsis_thaliana": {
+      "source_url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/plants/species_EnsemblPlants.txt",
+      "taxon_id": 3702
+    },
+    "aspergillus_nidulans": {
+      "source_url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/fungi/species_EnsemblFungi.txt",
+      "taxon_id": 227321
+    },
+    "caenorhabditis_elegans": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 6239
+    },
+    "candida_albicans": {
+      "source_url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/fungi/species_EnsemblFungi.txt",
+      "taxon_id": 237561
+    },
+    "canis_familiaris": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 9615
+    },
+    "canis_lupus_dingo": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 286419
+    },
+    "canis_lupus_familiarisbasenji": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 9615
+    },
+    "canis_lupus_familiarisboxer": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 9615
+    },
+    "canis_lupus_familiarisgreatdane": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 9615
+    },
+    "canis_lupus_familiarisgsd": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 9615
+    },
+    "cavia_porcellus": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 10141
+    },
+    "chlorocebus_sabaeus": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 60711
+    },
+    "cricetulus_griseus_chok1gshd": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 10029
+    },
+    "danio_rerio": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 7955
+    },
+    "drosophila_melanogaster": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 7227
+    },
+    "felis_catus": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 9685
+    },
+    "gallus_gallus": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 9031
+    },
+    "glycine_max": {
+      "source_url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/plants/species_EnsemblPlants.txt",
+      "taxon_id": 3847
+    },
+    "heterocephalus_glaber_female": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 10181
+    },
+    "homo_sapiens": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 9606
+    },
+    "macaca_fascicularis": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 9541
+    },
+    "macaca_mulatta": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 9544
+    },
+    "meriones_unguiculatus": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 10047
+    },
+    "mesocricetus_auratus": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 10036
+    },
+    "mus_musculus": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 10090
+    },
+    "mus_musculus_129s1svimj": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 10090
+    },
+    "mus_musculus_balbcj": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 10090
+    },
+    "mus_musculus_c57bl6nj": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 10090
+    },
+    "mus_musculus_fvbnj": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 10090
+    },
+    "mus_musculus_nodshiltj": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 10090
+    },
+    "oryctolagus_cuniculus": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 9986
+    },
+    "oryza_sativa": {
+      "source_url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/plants/species_EnsemblPlants.txt",
+      "taxon_id": 39947
+    },
+    "plasmodium_falciparum": {
+      "source_url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/protists/species_EnsemblProtists.txt",
+      "taxon_id": 36329
+    },
+    "rattus_norvegicus": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 10116
+    },
+    "saccharomyces_cerevisiae": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 559292
+    },
+    "schizosaccharomyces_pombe": {
+      "source_url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/fungi/species_EnsemblFungi.txt",
+      "taxon_id": 284812
+    },
+    "solanum_lycopersicum": {
+      "source_url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/plants/species_EnsemblPlants.txt",
+      "taxon_id": 4081
+    },
+    "sus_scrofa": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 9823
+    },
+    "toxoplasma_gondii": {
+      "source_url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/protists/species_EnsemblProtists.txt",
+      "taxon_id": 508771
+    },
+    "triticum_aestivum": {
+      "source_url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/plants/species_EnsemblPlants.txt",
+      "taxon_id": 4565
+    },
+    "xenopus_tropicalis": {
+      "source_url": "https://ftp.ensembl.org/pub/release-116/species_EnsemblVertebrates.txt",
+      "taxon_id": 8364
+    },
+    "zea_mays": {
+      "source_url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/plants/species_EnsemblPlants.txt",
+      "taxon_id": 4577
+    }
+  },
+  "taxa": {
+    "10029": {
+      "aliases": [
+        "chinese_hamster",
+        "chinese_hamsters",
+        "cricetulus_aureus",
+        "cricetulus_barabensis_griseus",
+        "cricetulus_griseus"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        40674,
+        32525,
+        9347,
+        1437010,
+        314146,
+        314147,
+        9989,
+        1963758,
+        337687,
+        337677,
+        10026,
+        10028
+      ],
+      "parent_id": 10028,
+      "scientific_name": "Cricetulus griseus",
+      "species_taxon_id": 10029,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "10036": {
+      "aliases": [
+        "cricetus_auratus",
+        "golden_hamster",
+        "golden_hamsters",
+        "mesocricetus_auratus",
+        "syrian_golden_hamster",
+        "syrian_golden_hamsters",
+        "syrian_hamster",
+        "syrian_hamsters"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        40674,
+        32525,
+        9347,
+        1437010,
+        314146,
+        314147,
+        9989,
+        1963758,
+        337687,
+        337677,
+        10026,
+        10035
+      ],
+      "parent_id": 10035,
+      "scientific_name": "Mesocricetus auratus",
+      "species_taxon_id": 10036,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "10047": {
+      "aliases": [
+        "gerbillus_unguiculatus",
+        "meriones_unguiculatus",
+        "mongolian_gerbil",
+        "mongolian_jird"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        40674,
+        32525,
+        9347,
+        1437010,
+        314146,
+        314147,
+        9989,
+        1963758,
+        337687,
+        10066,
+        10045,
+        10046
+      ],
+      "parent_id": 10046,
+      "scientific_name": "Meriones unguiculatus",
+      "species_taxon_id": 10047,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "10090": {
+      "aliases": [
+        "house_mouse",
+        "mouse",
+        "mus_musculus"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        40674,
+        32525,
+        9347,
+        1437010,
+        314146,
+        314147,
+        9989,
+        1963758,
+        337687,
+        10066,
+        39107,
+        10088,
+        862507
+      ],
+      "parent_id": 862507,
+      "scientific_name": "Mus musculus",
+      "species_taxon_id": 10090,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "10116": {
+      "aliases": [
+        "brown_rat",
+        "mus_norvegicus",
+        "norway_rat",
+        "rat",
+        "rats",
+        "rattus_norvegicus"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        40674,
+        32525,
+        9347,
+        1437010,
+        314146,
+        314147,
+        9989,
+        1963758,
+        337687,
+        10066,
+        39107,
+        10114
+      ],
+      "parent_id": 10114,
+      "scientific_name": "Rattus norvegicus",
+      "species_taxon_id": 10116,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "10141": {
+      "aliases": [
+        "cavia_aperea_porcellus",
+        "cavia_cobaya",
+        "cavia_porcellus",
+        "domestic_guinea_pig",
+        "guinea_pig",
+        "mus_porcellus"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        40674,
+        32525,
+        9347,
+        1437010,
+        314146,
+        314147,
+        9989,
+        33550,
+        10139,
+        10140
+      ],
+      "parent_id": 10140,
+      "scientific_name": "Cavia porcellus",
+      "species_taxon_id": 10141,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "10181": {
+      "aliases": [
+        "heterocephalus_glaber",
+        "naked_mole-rat",
+        "naked_mole_rat"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        40674,
+        32525,
+        9347,
+        1437010,
+        314146,
+        314147,
+        9989,
+        33550,
+        10167,
+        10180
+      ],
+      "parent_id": 10180,
+      "scientific_name": "Heterocephalus glaber",
+      "species_taxon_id": 10181,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "162425": {
+      "aliases": [
+        "aspergillus_nidulans",
+        "aspergillus_nidulans_(eidam)_g._winter,_1884",
+        "aspergillus_nidulellus",
+        "emericella_nidulans",
+        "sterigmatocystis_nidulans"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        4751,
+        451864,
+        4890,
+        716545,
+        147538,
+        716546,
+        147545,
+        451871,
+        5042,
+        1131492,
+        5052,
+        2720870
+      ],
+      "parent_id": 2720870,
+      "scientific_name": "Aspergillus nidulans",
+      "species_taxon_id": 162425,
+      "translation_tables": {
+        "mitochondrial": 4,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "227321": {
+      "aliases": [
+        "aspergillus_nidulans_fgsc_a4",
+        "emericella_nidulans_fgsc_a4"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        4751,
+        451864,
+        4890,
+        716545,
+        147538,
+        716546,
+        147545,
+        451871,
+        5042,
+        1131492,
+        5052,
+        2720870,
+        162425
+      ],
+      "parent_id": 162425,
+      "scientific_name": "Aspergillus nidulans FGSC A4",
+      "species_taxon_id": 162425,
+      "translation_tables": {
+        "mitochondrial": 4,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "237561": {
+      "aliases": [
+        "candida_albicans_sc5314"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        4751,
+        451864,
+        4890,
+        716545,
+        147537,
+        3239874,
+        2916678,
+        766764,
+        5475,
+        5476
+      ],
+      "parent_id": 5476,
+      "scientific_name": "Candida albicans SC5314",
+      "species_taxon_id": 5476,
+      "translation_tables": {
+        "mitochondrial": 4,
+        "nuclear": 12,
+        "plastid": null
+      }
+    },
+    "284812": {
+      "aliases": [
+        "schizosaccharomyces_pombe_972h-"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        4751,
+        451864,
+        4890,
+        451866,
+        147554,
+        34346,
+        4894,
+        4895,
+        4896
+      ],
+      "parent_id": 4896,
+      "scientific_name": "Schizosaccharomyces pombe 972h-",
+      "species_taxon_id": 4896,
+      "translation_tables": {
+        "mitochondrial": 4,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "286419": {
+      "aliases": [
+        "canis_dingo",
+        "canis_dingo_hallstromi",
+        "canis_familiaris_dingo",
+        "canis_lupus_dingo",
+        "dingo"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        40674,
+        32525,
+        9347,
+        1437010,
+        314145,
+        33554,
+        379584,
+        9608,
+        9611,
+        9612
+      ],
+      "parent_id": 9612,
+      "scientific_name": "Canis lupus dingo",
+      "species_taxon_id": 9612,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "36329": {
+      "aliases": [
+        "plasmodium_falciparum_(isolate_3d7)",
+        "plasmodium_falciparum_3d7"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        2698737,
+        33630,
+        5794,
+        422676,
+        5819,
+        1639119,
+        5820,
+        418107,
+        5833
+      ],
+      "parent_id": 5833,
+      "scientific_name": "Plasmodium falciparum 3D7",
+      "species_taxon_id": 5833,
+      "translation_tables": {
+        "mitochondrial": 4,
+        "nuclear": 1,
+        "plastid": 11
+      }
+    },
+    "3702": {
+      "aliases": [
+        "arabidopsis_thaliana",
+        "arabis_thaliana",
+        "mouse-ear_cress",
+        "thale-cress",
+        "thale_cress"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33090,
+        35493,
+        131221,
+        3193,
+        58023,
+        78536,
+        58024,
+        3398,
+        1437183,
+        71240,
+        91827,
+        1437201,
+        71275,
+        91836,
+        3699,
+        3700,
+        980083,
+        3701
+      ],
+      "parent_id": 3701,
+      "scientific_name": "Arabidopsis thaliana",
+      "species_taxon_id": 3702,
+      "translation_tables": {
+        "mitochondrial": 1,
+        "nuclear": 1,
+        "plastid": 11
+      }
+    },
+    "3847": {
+      "aliases": [
+        "glycine_max",
+        "phaseolus_max",
+        "soybean",
+        "soybeans"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33090,
+        35493,
+        131221,
+        3193,
+        58023,
+        78536,
+        58024,
+        3398,
+        1437183,
+        71240,
+        91827,
+        1437201,
+        71275,
+        91835,
+        72025,
+        3803,
+        3814,
+        2231393,
+        2231382,
+        2233855,
+        163735,
+        3846,
+        1462606
+      ],
+      "parent_id": 1462606,
+      "scientific_name": "Glycine max",
+      "species_taxon_id": 3847,
+      "translation_tables": {
+        "mitochondrial": 1,
+        "nuclear": 1,
+        "plastid": 11
+      }
+    },
+    "39947": {
+      "aliases": [
+        "japanese_rice",
+        "japonica_rice",
+        "oryza_sativa_(japonica_cultivar-group)",
+        "oryza_sativa_japonica_group",
+        "oryza_sativa_subsp._japonica"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33090,
+        35493,
+        131221,
+        3193,
+        58023,
+        78536,
+        58024,
+        3398,
+        1437183,
+        4447,
+        1437197,
+        4734,
+        38820,
+        4479,
+        359160,
+        147367,
+        147380,
+        1648021,
+        4527,
+        4530
+      ],
+      "parent_id": 4530,
+      "scientific_name": "Oryza sativa Japonica Group",
+      "species_taxon_id": 4530,
+      "translation_tables": {
+        "mitochondrial": 1,
+        "nuclear": 1,
+        "plastid": 11
+      }
+    },
+    "4081": {
+      "aliases": [
+        "lycopersicon_esculentum",
+        "lycopersicon_esculentum_var._esculentum",
+        "solanum_esculentum",
+        "solanum_lycopersicum",
+        "solanum_lycopersicum_var._humboldtii",
+        "tomato"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33090,
+        35493,
+        131221,
+        3193,
+        58023,
+        78536,
+        58024,
+        3398,
+        1437183,
+        71240,
+        91827,
+        1437201,
+        71274,
+        91888,
+        4069,
+        4070,
+        424551,
+        424574,
+        4107,
+        49274
+      ],
+      "parent_id": 49274,
+      "scientific_name": "Solanum lycopersicum",
+      "species_taxon_id": 4081,
+      "translation_tables": {
+        "mitochondrial": 1,
+        "nuclear": 1,
+        "plastid": 11
+      }
+    },
+    "4530": {
+      "aliases": [
+        "asian_cultivated_rice",
+        "oryza_sativa",
+        "red_rice",
+        "rice"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33090,
+        35493,
+        131221,
+        3193,
+        58023,
+        78536,
+        58024,
+        3398,
+        1437183,
+        4447,
+        1437197,
+        4734,
+        38820,
+        4479,
+        359160,
+        147367,
+        147380,
+        1648021,
+        4527
+      ],
+      "parent_id": 4527,
+      "scientific_name": "Oryza sativa",
+      "species_taxon_id": 4530,
+      "translation_tables": {
+        "mitochondrial": 1,
+        "nuclear": 1,
+        "plastid": 11
+      }
+    },
+    "4565": {
+      "aliases": [
+        "bread_wheat",
+        "canadian_hard_winter_wheat",
+        "common_wheat",
+        "triticum_aestivum",
+        "triticum_aestivum_subsp._aestivum",
+        "triticum_sativum",
+        "triticum_vulgare",
+        "wheat"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33090,
+        35493,
+        131221,
+        3193,
+        58023,
+        78536,
+        58024,
+        3398,
+        1437183,
+        4447,
+        1437197,
+        4734,
+        38820,
+        4479,
+        359160,
+        147368,
+        1648038,
+        147389,
+        1648030,
+        4564
+      ],
+      "parent_id": 4564,
+      "scientific_name": "Triticum aestivum",
+      "species_taxon_id": 4565,
+      "translation_tables": {
+        "mitochondrial": 1,
+        "nuclear": 1,
+        "plastid": 11
+      }
+    },
+    "4577": {
+      "aliases": [
+        "maize",
+        "zea_mays",
+        "zea_mays_var._japonica"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33090,
+        35493,
+        131221,
+        3193,
+        58023,
+        78536,
+        58024,
+        3398,
+        1437183,
+        4447,
+        1437197,
+        4734,
+        38820,
+        4479,
+        147370,
+        147369,
+        1648033,
+        147429,
+        1648029,
+        4575
+      ],
+      "parent_id": 4575,
+      "scientific_name": "Zea mays",
+      "species_taxon_id": 4577,
+      "translation_tables": {
+        "mitochondrial": 1,
+        "nuclear": 1,
+        "plastid": 11
+      }
+    },
+    "4896": {
+      "aliases": [
+        "fission_yeast",
+        "schizosaccharomyces_malidevorans",
+        "schizosaccharomyces_pombe"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        4751,
+        451864,
+        4890,
+        451866,
+        147554,
+        34346,
+        4894,
+        4895
+      ],
+      "parent_id": 4895,
+      "scientific_name": "Schizosaccharomyces pombe",
+      "species_taxon_id": 4896,
+      "translation_tables": {
+        "mitochondrial": 4,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "4932": {
+      "aliases": [
+        "baker's_yeast",
+        "brewer's_yeast",
+        "candida_robusta",
+        "mycoderma_cerevisiae",
+        "saccharomyces_boulardii",
+        "saccharomyces_boulardii_(nom._inval.)",
+        "saccharomyces_capensis",
+        "saccharomyces_cerevisiae",
+        "saccharomyces_cerevisiae_'var._diastaticus'",
+        "saccharomyces_cerevisiae_(desm.)_meyen_ex_e.c._hansen,_1883",
+        "saccharomyces_diastaticus",
+        "saccharomyces_italicus",
+        "saccharomyces_oviformis",
+        "saccharomyces_uvarum_var._melibiosus"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        4751,
+        451864,
+        4890,
+        716545,
+        147537,
+        4891,
+        4892,
+        4893,
+        4930
+      ],
+      "parent_id": 4930,
+      "scientific_name": "Saccharomyces cerevisiae",
+      "species_taxon_id": 4932,
+      "translation_tables": {
+        "mitochondrial": 3,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "508771": {
+      "aliases": [
+        "toxoplasma_gondii_me49",
+        "toxoplasma_gondii_strain_me49"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        2698737,
+        33630,
+        5794,
+        1280412,
+        5796,
+        75739,
+        423054,
+        5809,
+        5810,
+        5811
+      ],
+      "parent_id": 5811,
+      "scientific_name": "Toxoplasma gondii ME49",
+      "species_taxon_id": 5811,
+      "translation_tables": {
+        "mitochondrial": 4,
+        "nuclear": 1,
+        "plastid": 4
+      }
+    },
+    "5476": {
+      "aliases": [
+        "candida_albicans",
+        "candida_albicans_var._stellatoidea",
+        "candida_stellatoidea",
+        "dematium_albicans",
+        "endomyces_albicans",
+        "monilia_albicans",
+        "monilia_stellatoidea",
+        "myceloblastanon_albicans",
+        "mycotorula_albicans",
+        "oidium_albicans",
+        "parasaccharomyces_albicans",
+        "procandida_albicans",
+        "procandida_stellatoidea",
+        "saccharomyces_albicans",
+        "syringospora_albicans"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        4751,
+        451864,
+        4890,
+        716545,
+        147537,
+        3239874,
+        2916678,
+        766764,
+        5475
+      ],
+      "parent_id": 5475,
+      "scientific_name": "Candida albicans",
+      "species_taxon_id": 5476,
+      "translation_tables": {
+        "mitochondrial": 4,
+        "nuclear": 12,
+        "plastid": null
+      }
+    },
+    "559292": {
+      "aliases": [
+        "saccharomyces_cerevisiae_s288c"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        4751,
+        451864,
+        4890,
+        716545,
+        147537,
+        4891,
+        4892,
+        4893,
+        4930,
+        4932
+      ],
+      "parent_id": 4932,
+      "scientific_name": "Saccharomyces cerevisiae S288C",
+      "species_taxon_id": 4932,
+      "translation_tables": {
+        "mitochondrial": 3,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "5811": {
+      "aliases": [
+        "leishmania_gondii",
+        "toxoplasma_gondii"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        2698737,
+        33630,
+        5794,
+        1280412,
+        5796,
+        75739,
+        423054,
+        5809,
+        5810
+      ],
+      "parent_id": 5810,
+      "scientific_name": "Toxoplasma gondii",
+      "species_taxon_id": 5811,
+      "translation_tables": {
+        "mitochondrial": 4,
+        "nuclear": 1,
+        "plastid": 4
+      }
+    },
+    "5833": {
+      "aliases": [
+        "malaria_parasite_p._falciparum",
+        "plasmodium_(laverania)_falciparum",
+        "plasmodium_falciparum"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        2698737,
+        33630,
+        5794,
+        422676,
+        5819,
+        1639119,
+        5820,
+        418107
+      ],
+      "parent_id": 418107,
+      "scientific_name": "Plasmodium falciparum",
+      "species_taxon_id": 5833,
+      "translation_tables": {
+        "mitochondrial": 4,
+        "nuclear": 1,
+        "plastid": 11
+      }
+    },
+    "60711": {
+      "aliases": [
+        "cercopithecus_aethiops_sabaeus",
+        "cercopithecus_sabaeus",
+        "cercopithecus_sabeus",
+        "chlorocebus_aethiops_sabaeus",
+        "chlorocebus_aethiops_sabeus",
+        "chlorocebus_sabaeus",
+        "chlorocebus_sabeus",
+        "green_monkey",
+        "simia_sabaea"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        40674,
+        32525,
+        9347,
+        1437010,
+        314146,
+        9443,
+        376913,
+        314293,
+        9526,
+        314294,
+        9527,
+        9528,
+        392815
+      ],
+      "parent_id": 392815,
+      "scientific_name": "Chlorocebus sabaeus",
+      "species_taxon_id": 60711,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "6239": {
+      "aliases": [
+        "caenorhabditis_elegans",
+        "rhabditis_elegans"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33317,
+        1206794,
+        6231,
+        119089,
+        6236,
+        2301116,
+        2301119,
+        55879,
+        6243,
+        55885,
+        6237
+      ],
+      "parent_id": 6237,
+      "scientific_name": "Caenorhabditis elegans",
+      "species_taxon_id": 6239,
+      "translation_tables": {
+        "mitochondrial": 5,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "7165": {
+      "aliases": [
+        "african_malaria_mosquito",
+        "anopheles_gambiae"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33317,
+        1206794,
+        88770,
+        6656,
+        197563,
+        197562,
+        3701028,
+        3701030,
+        6960,
+        50557,
+        85512,
+        7496,
+        33340,
+        3701061,
+        33392,
+        3701062,
+        3701063,
+        7147,
+        7148,
+        43786,
+        41827,
+        7157,
+        43816,
+        7164,
+        44534,
+        44537,
+        44542
+      ],
+      "parent_id": 44542,
+      "scientific_name": "Anopheles gambiae",
+      "species_taxon_id": 7165,
+      "translation_tables": {
+        "mitochondrial": 5,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "7227": {
+      "aliases": [
+        "drosophila_melanogaster",
+        "fruit_fly",
+        "sophophora_melanogaster"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33317,
+        1206794,
+        88770,
+        6656,
+        197563,
+        197562,
+        3701028,
+        3701030,
+        6960,
+        50557,
+        85512,
+        7496,
+        33340,
+        3701061,
+        33392,
+        3701062,
+        3701063,
+        7147,
+        7203,
+        43733,
+        480118,
+        480117,
+        43738,
+        43741,
+        43746,
+        7214,
+        43845,
+        46877,
+        7215,
+        32341,
+        32346,
+        32351
+      ],
+      "parent_id": 32351,
+      "scientific_name": "Drosophila melanogaster",
+      "species_taxon_id": 7227,
+      "translation_tables": {
+        "mitochondrial": 5,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "7955": {
+      "aliases": [
+        "brachydanio_rerio",
+        "brachydanio_rerio_frankei",
+        "cyprinus_rerio",
+        "danio_frankei",
+        "danio_rerio",
+        "danio_rerio_frankei",
+        "leopard_danio",
+        "zebra_danio",
+        "zebra_fish",
+        "zebrafish"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        7898,
+        186623,
+        41665,
+        32443,
+        1489341,
+        186625,
+        186634,
+        32519,
+        186626,
+        186627,
+        7952,
+        30727,
+        2743709,
+        2743711,
+        7954
+      ],
+      "parent_id": 7954,
+      "scientific_name": "Danio rerio",
+      "species_taxon_id": 7955,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "8364": {
+      "aliases": [
+        "silurana_tropicalis",
+        "tropical_clawed_frog",
+        "western_clawed_frog",
+        "xenopus_(silurana)_tropicalis",
+        "xenopus_laevis_tropicalis",
+        "xenopus_tropicalis"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        8292,
+        41666,
+        8342,
+        30319,
+        8352,
+        8360,
+        8353,
+        8363
+      ],
+      "parent_id": 8363,
+      "scientific_name": "Xenopus tropicalis",
+      "species_taxon_id": 8364,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "9031": {
+      "aliases": [
+        "bantam",
+        "chicken",
+        "chickens",
+        "gallus_domesticus",
+        "gallus_gallus",
+        "gallus_gallus_domesticus",
+        "phasianus_gallus"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        8457,
+        32561,
+        1329799,
+        8492,
+        436486,
+        436489,
+        436491,
+        436492,
+        8782,
+        8825,
+        1549675,
+        8976,
+        9005,
+        9072,
+        9030
+      ],
+      "parent_id": 9030,
+      "scientific_name": "Gallus gallus",
+      "species_taxon_id": 9031,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "9541": {
+      "aliases": [
+        "crab-eating_macaque",
+        "cynomolgus_macaque",
+        "cynomolgus_monkey",
+        "cynomolgus_monkeys",
+        "long-tailed_macaque",
+        "macaca_cynomolgus",
+        "macaca_fascicularis",
+        "macaca_irus",
+        "simia_fascicularis"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        40674,
+        32525,
+        9347,
+        1437010,
+        314146,
+        9443,
+        376913,
+        314293,
+        9526,
+        314294,
+        9527,
+        9528,
+        9539
+      ],
+      "parent_id": 9539,
+      "scientific_name": "Macaca fascicularis",
+      "species_taxon_id": 9541,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "9544": {
+      "aliases": [
+        "cercopithecus_mulatta",
+        "macaca_mulatta",
+        "rhesus_macaque",
+        "rhesus_macaques",
+        "rhesus_monkey",
+        "rhesus_monkeys"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        40674,
+        32525,
+        9347,
+        1437010,
+        314146,
+        9443,
+        376913,
+        314293,
+        9526,
+        314294,
+        9527,
+        9528,
+        9539
+      ],
+      "parent_id": 9539,
+      "scientific_name": "Macaca mulatta",
+      "species_taxon_id": 9544,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "9606": {
+      "aliases": [
+        "homo_sapiens",
+        "human"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        40674,
+        32525,
+        9347,
+        1437010,
+        314146,
+        9443,
+        376913,
+        314293,
+        9526,
+        314295,
+        9604,
+        207598,
+        9605
+      ],
+      "parent_id": 9605,
+      "scientific_name": "Homo sapiens",
+      "species_taxon_id": 9606,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "9612": {
+      "aliases": [
+        "canis_lupus",
+        "gray_wolf",
+        "wolf"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        40674,
+        32525,
+        9347,
+        1437010,
+        314145,
+        33554,
+        379584,
+        9608,
+        9611
+      ],
+      "parent_id": 9611,
+      "scientific_name": "Canis lupus",
+      "species_taxon_id": 9612,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "9615": {
+      "aliases": [
+        "canis_borealis",
+        "canis_canis",
+        "canis_domesticus",
+        "canis_familiaris",
+        "canis_lupus_borealis",
+        "canis_lupus_familiaris",
+        "dog",
+        "dogs"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        40674,
+        32525,
+        9347,
+        1437010,
+        314145,
+        33554,
+        379584,
+        9608,
+        9611,
+        9612
+      ],
+      "parent_id": 9612,
+      "scientific_name": "Canis lupus familiaris",
+      "species_taxon_id": 9612,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "9685": {
+      "aliases": [
+        "cat",
+        "cats",
+        "domestic_cat",
+        "felis_catus",
+        "felis_domesticus",
+        "felis_silvestris_catus"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        40674,
+        32525,
+        9347,
+        1437010,
+        314145,
+        33554,
+        379583,
+        9681,
+        338152,
+        9682
+      ],
+      "parent_id": 9682,
+      "scientific_name": "Felis catus",
+      "species_taxon_id": 9685,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "9823": {
+      "aliases": [
+        "pig",
+        "pigs",
+        "sus_scrofa",
+        "swine",
+        "wild_boar"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        40674,
+        32525,
+        9347,
+        1437010,
+        314145,
+        91561,
+        35497,
+        9821,
+        9822
+      ],
+      "parent_id": 9822,
+      "scientific_name": "Sus scrofa",
+      "species_taxon_id": 9823,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    },
+    "9986": {
+      "aliases": [
+        "domestic_rabbit",
+        "european_rabbit",
+        "japanese_white_rabbit",
+        "lepus_cuniculus",
+        "oryctolagus_cuniculus",
+        "rabbit",
+        "rabbits"
+      ],
+      "lineage": [
+        131567,
+        2759,
+        33154,
+        33208,
+        6072,
+        33213,
+        33511,
+        7711,
+        89593,
+        7742,
+        7776,
+        117570,
+        117571,
+        8287,
+        1338369,
+        32523,
+        32524,
+        40674,
+        32525,
+        9347,
+        1437010,
+        314146,
+        314147,
+        9975,
+        9979,
+        9984
+      ],
+      "parent_id": 9984,
+      "scientific_name": "Oryctolagus cuniculus",
+      "species_taxon_id": 9986,
+      "translation_tables": {
+        "mitochondrial": 2,
+        "nuclear": 1,
+        "plastid": null
+      }
+    }
+  }
+}

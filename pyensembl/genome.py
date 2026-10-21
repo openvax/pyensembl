@@ -17,7 +17,9 @@ around an arbitrary genomic database.
 
 
 from contextlib import nullcontext
+from copy import deepcopy
 from dataclasses import replace
+import json
 from numbers import Integral
 from os import lstat, remove
 from os.path import isfile, join, lexists
@@ -32,6 +34,8 @@ from .common import merge_intervals
 from .database import Database, annotation_db_filename, is_complete_database
 from .exon import Exon
 from .gene import Gene
+from .genetic_code import genetic_code, resolve_reference_metadata
+from .annotation_genetic_code import AnnotationGeneticCodes
 from .gene_name_aliases import GeneNameAliases, normalize_aliases, stable_ensembl_gene_id
 from .genome_fasta import GenomeFasta, MissingGenomeFastaError
 from .normalization import normalize_chromosome, normalize_strand
@@ -95,6 +99,7 @@ class Genome(Serializable):
         copy_local_files_to_cache=False,
         cache_directory_path=None,
         genome_fasta_path_or_url=None,
+        reference_metadata=None,
     ):
         """
         Parameters
@@ -132,6 +137,11 @@ class Genome(Serializable):
         genome_fasta_path_or_url : str or Path, optional
             Combined reference DNA FASTA. Supports plain or gzip input;
             indexes and decompressed copies are stored in the cache.
+
+        reference_metadata : dict, optional
+            Taxon identity, compartment translation tables and contig
+            compartments. Inferred offline when possible and preserved on
+            serialization; independent of source URLs and cache paths.
         """
         if transcript_fasta_paths_or_urls is None:
             transcript_fasta_paths_or_urls = []
@@ -152,6 +162,10 @@ class Genome(Serializable):
         self._gtf_path_or_url = gtf_path_or_url
         self._transcript_fasta_paths_or_urls = transcript_fasta_paths_or_urls
         self._protein_fasta_paths_or_urls = protein_fasta_paths_or_urls
+        self._reference_metadata = self._resolve_reference_metadata(reference_metadata)
+        # Public access returns copies, so this pinned identity is immutable.
+        # Compute it once: genes/transcripts hash their genome frequently.
+        self._reference_metadata_key = json.dumps(self._reference_metadata, sort_keys=True)
 
         self.download_cache = DownloadCache(
             reference_name=self.reference_name,
@@ -170,6 +184,61 @@ class Genome(Serializable):
             self._genome_fasta.source if self._genome_fasta is not None else None
         )
         self._init_lazy_fields()
+
+    def _resolve_reference_metadata(self, value):
+        return resolve_reference_metadata(value, reference_name=self.reference_name)
+
+    @property
+    def reference_metadata(self):
+        """Copy of the pinned taxonomy, genetic-code and provenance record."""
+        return deepcopy(self._reference_metadata)
+
+    @property
+    def taxon_id(self):
+        """NCBI taxon of the reference, including a strain when known."""
+        return self._reference_metadata["taxon_id"]
+
+    @property
+    def species_taxon_id(self):
+        """NCBI species ancestor of the reference taxon, or None."""
+        return self._reference_metadata["species_taxon_id"]
+
+    @property
+    def nuclear_translation_table(self):
+        """Reference nuclear NCBI translation-table ID, or None."""
+        return self._reference_metadata["translation_tables"]["nuclear"]
+
+    @property
+    def mitochondrial_translation_table(self):
+        """Reference mitochondrial NCBI translation-table ID, or None."""
+        return self._reference_metadata["translation_tables"]["mitochondrial"]
+
+    @property
+    def plastid_translation_table(self):
+        """Reference plastid NCBI translation-table ID, or None."""
+        return self._reference_metadata["translation_tables"]["plastid"]
+
+    @property
+    def contig_compartments(self):
+        """Copy of explicitly supplied contig-to-compartment assignments."""
+        return dict(self._reference_metadata["contig_compartments"])
+
+    def genetic_code(self, contig=None, *, compartment=None):
+        """Resolve a reference default offline, with provenance or a reason
+        it is unknown. Transcript annotation declarations take precedence;
+        use ``transcript.genetic_code`` when working with a transcript.
+        """
+        return genetic_code(self._reference_metadata, contig, compartment=compartment)
+
+    def _source_translation_table(self, transcript_id):
+        if not self.requires_gtf:
+            return None
+        path = self._local_source_path(self._gtf_path_or_url)
+        if self._annotation_genetic_codes is None or self._annotation_genetic_codes.path != path:
+            self._annotation_genetic_codes = AnnotationGeneticCodes(
+                path, self._gtf_path_or_url, self.download_cache.cache_directory_path,
+            )
+        return self._annotation_genetic_codes.get(transcript_id)
 
     @property
     def requires_gtf(self):
@@ -303,6 +372,7 @@ class Genome(Serializable):
             copy_local_files_to_cache=self.copy_local_files_to_cache,
             cache_directory_path=self.cache_directory_path,
             genome_fasta_path_or_url=self._genome_fasta_path_or_url,
+            reference_metadata=self.reference_metadata,
         )
 
     def _init_lazy_fields(self):
@@ -313,6 +383,7 @@ class Genome(Serializable):
         self._protein_sequences = None
         self._transcript_sequences = None
         self._db = None
+        self._annotation_genetic_codes = None
         self.protein_fasta_paths = None
         self.transcript_fasta_paths = None
 
@@ -656,6 +727,8 @@ class Genome(Serializable):
                     "ccds_id",
                     "protein_id",
                     "protein_version",
+                    "transl_table",
+                    "translation_table",
                 },
                 # excluding 'UTR' and 'Selenocysteine'
                 restrict_gtf_features={
@@ -782,6 +855,7 @@ class Genome(Serializable):
             self._gtf_path_or_url,
             tuple(self._protein_fasta_paths_or_urls),
             tuple(self._transcript_fasta_paths_or_urls),
+            self._reference_metadata_key,
         )
 
     def __eq__(self, other):
@@ -795,6 +869,7 @@ class Genome(Serializable):
         self._genes.clear()
         self._transcripts.clear()
         self._exons.clear()
+        self._annotation_genetic_codes = None
         if self._db is not None:
             self._db.clear_cache()
         if self._transcript_sequences is not None:

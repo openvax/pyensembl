@@ -14,6 +14,7 @@ from memoized_property import memoized_property
 
 from .common import memoize, merge_intervals
 from .exon import Exon
+from .genetic_code import genetic_code
 from .locus_with_genome import LocusWithGenome
 from .sequence_data import lookup_sequence_with_version_fallback
 
@@ -53,6 +54,29 @@ class Transcript(LocusWithGenome):
         self.transcript_name = transcript_name
         self.gene_id = gene_id
         self.support_level = support_level
+
+    @property
+    def source_translation_table(self):
+        """NCBI table declared on this transcript or its CDS rows, or None.
+
+        Conflicting/invalid declarations raise ValueError. Reads installed
+        annotation data only; never downloads or changes an existing index.
+        """
+        return self.genome._source_translation_table(self.id)
+
+    @property
+    def genetic_code(self):
+        """Source declaration before reference defaults, with provenance."""
+        return genetic_code(
+            self.genome._reference_metadata, self.contig,
+            source_table=self.source_translation_table,
+            annotation_source=self.genome._gtf_path_or_url,
+        )
+
+    @property
+    def translation_table(self):
+        """Effective NCBI translation-table ID, or None when unresolved."""
+        return self.genetic_code.table_id
 
     @property
     def id(self):

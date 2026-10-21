@@ -26,6 +26,7 @@ from .genome import Genome
 from .genome_fasta import MissingGenomeFastaError
 from .genome_fasta_cache import prune_genome_fastas
 from .gene import Gene
+from .genetic_code import GeneticCodeAssignment
 from .gene_name_aliases import GeneNameAliases
 from .locus import Locus
 from .reference_name import (
@@ -62,6 +63,7 @@ __all__ = [
     "cached_release",
     "MAX_ENSEMBL_RELEASE",
     "Gene",
+    "GeneticCodeAssignment",
     "GeneNameAliases",
     "Transcript",
     "Protein",

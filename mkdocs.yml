@@ -22,6 +22,7 @@ nav:
   - Common tasks:
       - Find genes and transcripts: guides/features.md
       - Get protein and transcript sequences: guides/transcripts.md
+      - Find genetic-code assignments: guides/genetic-codes.md
       - Search gene aliases: guides/aliases.md
       - Read genomic DNA: guides/reference-dna.md
   - Reference data:
@@ -42,6 +43,7 @@ nav:
       - Documentation style: dev/documentation-style.md
       - Releasing: dev/releasing.md
       - Assembly catalogue: dev/assembly-catalogue.md
+      - Genetic-code catalogue: dev/genetic-code-catalogue.md
 exclude_docs: |
   /getting-started.md
 plugins:
