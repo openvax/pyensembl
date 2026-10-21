@@ -197,7 +197,7 @@ class EnsemblRelease(Genome):
                 if self.species is not None and not (assembly or assembly_accession):
                     # Existing installations and mirrors keep the old selection.
                     existing = _default_cache_directory(
-                        self.species.current_reference_name, "ensembl", release
+                        self.species.dated_reference_name, "ensembl", release
                     )
                     infer_historical = infer_historical and not (
                         os.path.isdir(existing) or self.server.rstrip("/") != ENSEMBL_PLATFORM_FTP_SERVER
@@ -208,9 +208,9 @@ class EnsemblRelease(Genome):
                     infer_historical=infer_historical,
                 )
                 if standard and include_alt is not None:
-                    standard = include_alt == (self.species.current_reference_name == "GRCh38")
+                    standard = include_alt == (self.species.dated_reference_name == "GRCh38")
                 selected_reference = (
-                    self.species.current_reference_name if standard
+                    self.species.dated_reference_name if standard
                     else metadata["assembly_accession"]
                 )
                 selected_coverage = (
@@ -264,7 +264,7 @@ class EnsemblRelease(Genome):
                     sequence_type=sequence_type,
                     server=self.server,
                 )
-                for sequence_type in ("cdna", "ncrna")
+                for sequence_type in self.species.transcript_sequence_types(self.release)
             ]
             self.protein_fasta_urls = [
                 make_fasta_url(

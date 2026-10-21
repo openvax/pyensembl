@@ -175,7 +175,7 @@ def dated_assembly(date, species=None, assembly=None, accession=None, provider=N
     elif default:
         known = [r for r in all_records if r["assembly_accession"] == default[0]]
         record = dict(known[0]) if known else dict(
-            assembly=species.current_reference_name, assembly_name=None,
+            assembly=species.dated_reference_name, assembly_name=None,
             assembly_accession=default[0], provider=provider or default[1],
             species=species.latin_name, dates=[],
         )

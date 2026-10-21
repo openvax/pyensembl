@@ -47,7 +47,7 @@ class UnpublishedDateError(ValueError):
 
 def available_dated_releases(species="human", refresh=False):
     """
-    Annotation dates published for the species' current assembly, oldest first.
+    Annotation dates of the species' registered dated assembly, oldest first.
 
     Parameters
     ----------

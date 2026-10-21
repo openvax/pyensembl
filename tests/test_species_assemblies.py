@@ -69,7 +69,6 @@ def test_assembly_transitions_name_archived_files(species, release, gtf, cdna):
         ("syrian_hamster", 89),  # Added in release 90.
         ("meriones_unguiculatus", 95),  # Added in release 96.
         ("mus_musculus_balbcj", 87),  # 87-91 kept release 86's filenames.
-        ("tomato", 63),  # Ensembl Genomes 63 removed SL3.0.
     ],
 )
 def test_releases_missing_from_the_archive_are_rejected(species, release):

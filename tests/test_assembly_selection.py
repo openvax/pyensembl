@@ -29,6 +29,7 @@ def isolated_cache(tmp_path, monkeypatch):
     ("homo_sapiens", 75), ("homo_sapiens", 93), ("mus_musculus", 81),
     ("canis_familiaris", 104), ("canis_familiaris", 105),
     ("canis_lupus_familiarisbasenji", 116), ("arabidopsis_thaliana", 63),
+    ("solanum_lycopersicum", 63),
 ])
 def test_numbered_metadata_matches_captured_upstream_header(species, release):
     capture = json.loads((DATA / ("%s-%s.json" % (species, release))).read_text())

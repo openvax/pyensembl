@@ -1,3 +1,10 @@
+# 2.30.1
+
+Support tomato SL4.0 in Ensembl Genomes 63 (#453). Use its renamed source
+directory and published cDNA/peptide files without requesting a nonexistent
+ncRNA FASTA. Missing required files still fail installation. Existing SL3.0
+numbered and dated selections keep their URLs, cache paths, and indexes.
+
 # 2.30.0
 
 Remove the unused `EnsemblAnnotation` class, module, and package export. Use

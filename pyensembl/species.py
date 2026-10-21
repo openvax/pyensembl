@@ -43,6 +43,8 @@ class Species(Serializable):
         ensembl_genomes=False,
         ensembl_names=None,
         dated_releases=None,
+        dated_reference_name=None,
+        assemblies_without_ncrna=(),
     ):
         """
         Create a Species object from the given arguments and enter into
@@ -56,6 +58,8 @@ class Species(Serializable):
             ensembl_genomes=ensembl_genomes,
             ensembl_names=ensembl_names,
             dated_releases=dated_releases,
+            dated_reference_name=dated_reference_name,
+            assemblies_without_ncrna=assemblies_without_ncrna,
         )
         cls._latin_names_to_species[species.latin_name] = species
         # Names Ensembl later published the species under also find it.
@@ -111,6 +115,8 @@ class Species(Serializable):
         ensembl_genomes=False,
         ensembl_names=None,
         dated_releases=None,
+        dated_reference_name=None,
+        assemblies_without_ncrna=(),
     ):
         """
         Parameters
@@ -143,8 +149,17 @@ class Species(Serializable):
         dated_releases : tuple of (str, str), optional
             Assembly accession and provider under which the new Ensembl
             platform publishes dated releases (e.g. "2026_04") of the
-            assembly of the last numbered release, e.g.
+            registered default assembly, e.g.
             ("GCA_000001405.29", "ensembl").
+
+        dated_reference_name : str, optional
+            Stable label of that dated assembly when it differs from the
+            latest numbered assembly. Existing dated cache paths retain it.
+
+        assemblies_without_ncrna : iterable of str
+            Numbered assemblies with no separately published ncRNA FASTA.
+            Their transcript sources contain only cDNA. Other missing files
+            remain installation errors.
         """
         if division not in self.VALID_DIVISIONS:
             raise ValueError(
@@ -158,6 +173,12 @@ class Species(Serializable):
         self.ensembl_genomes = ensembl_genomes
         self.ensembl_names = dict(ensembl_names or {})
         self.dated_releases = tuple(dated_releases) if dated_releases else None
+        self._dated_reference_name = dated_reference_name
+        self.assemblies_without_ncrna = frozenset(assemblies_without_ncrna)
+        if not self.assemblies_without_ncrna.issubset(reference_assemblies):
+            raise ValueError("assemblies_without_ncrna must name registered assemblies")
+        if dated_reference_name is not None and dated_reference_name not in reference_assemblies:
+            raise ValueError("dated_reference_name must name a registered assembly")
         self._release_to_genome = {}
         for genome_name, (start, end) in self.reference_assemblies.items():
             for i in range(start, end + 1):
@@ -205,8 +226,19 @@ class Species(Serializable):
         return self.division == "bacteria"
 
     @property
+    def dated_reference_name(self):
+        """Stable label of the registered dated dataset, independent of new releases."""
+        return self._dated_reference_name or self.current_reference_name
+
+    def transcript_sequence_types(self, release):
+        """Published transcript FASTAs; missing required files still fail."""
+        if is_dated_release(release) or self.which_reference(release) in self.assemblies_without_ncrna:
+            return ("cdna",)
+        return ("cdna", "ncrna")
+
+    @property
     def current_reference_name(self):
-        """Assembly of the last numbered release, which dated releases annotate."""
+        """Assembly of the last numbered release."""
         return max(
             self.reference_assemblies,
             key=lambda name: self.reference_assemblies[name][1],
@@ -218,7 +250,7 @@ class Species(Serializable):
                 raise ValueError(
                     "No dated Ensembl releases for %s" % (self.latin_name,)
                 )
-            return self.current_reference_name
+            return self.dated_reference_name
         if ensembl_release not in self._release_to_genome:
             raise ValueError(
                 "No genome for %s in Ensembl release %s"
@@ -243,6 +275,8 @@ class Species(Serializable):
             and self.ensembl_genomes == other.ensembl_genomes
             and self.ensembl_names == other.ensembl_names
             and self.dated_releases == other.dated_releases
+            and self._dated_reference_name == other._dated_reference_name
+            and self.assemblies_without_ncrna == other.assemblies_without_ncrna
         )
 
     def to_dict(self):
@@ -262,6 +296,8 @@ class Species(Serializable):
                 self.ensembl_genomes,
                 frozenset(self.ensembl_names.items()),
                 self.dated_releases,
+                self._dated_reference_name,
+                self.assemblies_without_ncrna,
             )
         )
 
@@ -622,10 +658,13 @@ tomato = Species.register(
     latin_name="solanum_lycopersicum",
     synonyms=["tomato"],
     reference_assemblies={
-        # Ensembl Genomes 63 removed SL3.0.
         "SL3.0": (42, 62),
+        "SL4.0": (63, MAX_ENSEMBL_GENOMES_RELEASE),
     },
+    ensembl_names={63: "solanum_lycopersicum_gca000188115v5cm"},
+    assemblies_without_ncrna=("SL4.0",),
     dated_releases=("GCA_000188115.3", "community_sol"),
+    dated_reference_name="SL3.0",
     division="plants",
     ensembl_genomes=True,
 )

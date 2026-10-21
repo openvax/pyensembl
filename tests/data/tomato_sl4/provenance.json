@@ -1,0 +1,9 @@
+{
+  "retrieved": "2026-10-20",
+  "gtf": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/plants/gtf/solanum_lycopersicum_gca000188115v5cm/Solanum_lycopersicum_gca000188115v5cm.SL4.0.63.gtf.gz",
+  "sha256": {
+    "gtf": "621c386fc2768cdc0b4a76ea93eaa78a8113787c5ddc0ddf0d7c269506d64bf3",
+    "cdna": "b68f76ad8232565260950f412cc0723377a18a23632b4d1bded863bf86713e79",
+    "pep": "6caeb5d981546c5a575f27093c62d2d7a2ed3509d635b49e43953570fd52191d"
+  }
+}

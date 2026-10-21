@@ -199,6 +199,15 @@ this API change. [Shared DNA caching](cache.md#how-the-shared-dna-cache-works)
 continues to share new verified downloads while preserving existing private
 copies. No reinstall is needed.
 
+## Tomato numbered and dated assemblies
+
+Tomato illustrates why numbered and dated assembly defaults are separate:
+`EnsemblRelease(63, species="tomato")` selects SL4.0, while the registered dated
+`EnsemblRelease("2018_10", species="tomato")` retains SL3.0 and its existing
+cache path. SL4.0 publishes cDNA and peptide FASTAs without a separate ncRNA
+FASTA. PyEnsembl declares that source difference explicitly; other missing
+required files remain errors.
+
 ## Removed constructor
 
 `EnsemblAnnotation` was removed in 2.30.0. Select the same dataset with:
