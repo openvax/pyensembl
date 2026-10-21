@@ -36,7 +36,7 @@ def test_grch37_selects_latest_matching_release(reference, species):
 @pytest.mark.parametrize(
     "species, release",
     [("human", MAX_ENSEMBL_RELEASE), ("arabidopsis", MAX_ENSEMBL_GENOMES_RELEASE),
-     ("tomato", 62)],
+     ("tomato", 63)],
 )
 def test_species_without_release_selects_its_newest(species, release):
     genome, = select("--species", species)

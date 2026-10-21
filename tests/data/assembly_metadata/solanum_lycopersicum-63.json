@@ -1,0 +1,11 @@
+{
+  "species": "solanum_lycopersicum",
+  "release": 63,
+  "url": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/plants/gtf/solanum_lycopersicum_gca000188115v5cm/Solanum_lycopersicum_gca000188115v5cm.SL4.0.63.gtf.gz",
+  "headers": [
+    "#!genome-build SL4.0",
+    "#!genome-version SL4.0",
+    "#!genome-build-accession GCA_000188115.5",
+    "#!genebuild-last-updated 2025-06"
+  ]
+}

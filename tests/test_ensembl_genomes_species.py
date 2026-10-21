@@ -102,12 +102,12 @@ def test_ensembl_genomes_species_route_through_genomes_server():
             release = EnsemblRelease(release=latest, species=species)
             assert release.server == ENSEMBL_GENOMES_FTP_SERVER
             assert release.gtf_url.startswith(ENSEMBL_GENOMES_FTP_SERVER)
-            assert "/%s/gtf/%s/" % (species.division, species.latin_name) in (
+            assert "/%s/gtf/%s/" % (species.division, species.ensembl_name(latest)) in (
                 release.gtf_url
             )
             for url in release.transcript_fasta_urls + release.protein_fasta_urls:
                 assert url.startswith(ENSEMBL_GENOMES_FTP_SERVER)
-                assert "/%s/fasta/%s/" % (species.division, species.latin_name) in url
+                assert "/%s/fasta/%s/" % (species.division, species.ensembl_name(latest)) in url
 
 
 def test_genomes_filenames_use_modern_layout_regardless_of_release():

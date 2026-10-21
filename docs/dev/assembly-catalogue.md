@@ -36,7 +36,7 @@ captures are reused, so use a new directory for a completely fresh audit.
 Inspect upstream errors and the generated diff before committing an update.
 Metadata acquisition must not become an import-time or constructor operation.
 
-The current snapshot audits **1,310 numbered combinations across 43 registered
+The current snapshot audits **1,311 numbered combinations across 43 registered
 species** and contains **52 dated assembly/provider records**. Every numbered
 entry has a build and full assembly name. Sources do not provide a verified
 accession for these 75 older combinations:

@@ -435,7 +435,7 @@ def _cached_dated_releases():
     for species in Species._latin_names_to_species.values():
         if species.dated_releases is None:
             continue
-        for directory in _subdirectories(root / species.current_reference_name):
+        for directory in _subdirectories(root / species.dated_reference_name):
             date = directory.name[len("ensembl"):]
             if directory.name.startswith("ensembl") and is_dated_release(date):
                 genomes.append(EnsemblRelease(date, species=species))
@@ -690,7 +690,7 @@ def format_available_species(use_color=None, dated_releases=None):
 
     When ``use_color`` is ``None`` (the default), ANSI styling is applied if
     stdout is a TTY and suppressed otherwise. ``dated_releases`` optionally
-    maps latin names to the annotation dates of their current assembly
+    maps latin names to the annotation dates of their registered dated assembly
     (``None`` when unknown) and adds a column for them.
     """
     if use_color is None:
@@ -728,7 +728,7 @@ def format_available_species(use_color=None, dated_releases=None):
     def dates_cell(species, assembly):
         if dated_releases is None or species.dated_releases is None:
             return ""
-        if assembly != species.current_reference_name:
+        if assembly != species.dated_reference_name:
             return ""
         dates = dated_releases.get(species.latin_name)
         return "?" if dates is None else ", ".join(dates)

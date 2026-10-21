@@ -10805,6 +10805,14 @@
         "reference_name": "SL3.0",
         "source": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-62/plants/gtf/solanum_lycopersicum/Solanum_lycopersicum.SL3.0.62.gtf.gz",
         "species": "solanum_lycopersicum"
+      },
+      "63": {
+        "assembly": "SL4.0",
+        "assembly_accession": "GCA_000188115.5",
+        "assembly_name": "SL4.0",
+        "reference_name": "SL4.0",
+        "source": "https://ftp.ensemblgenomes.ebi.ac.uk/pub/release-63/plants/gtf/solanum_lycopersicum_gca000188115v5cm/Solanum_lycopersicum_gca000188115v5cm.SL4.0.63.gtf.gz",
+        "species": "solanum_lycopersicum"
       }
     },
     "sus_scrofa": {

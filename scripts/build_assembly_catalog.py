@@ -79,7 +79,7 @@ def build(root):
                     assembly=assembly["name"], assembly_name=assembly["name"],
                     assembly_accession=accession, provider=provider,
                     dates=sorted(dates),
-                    reference_name=species.current_reference_name
+                    reference_name=species.dated_reference_name
                                    if accession in default_accessions
                                    else current["reference_name"] if current else assembly["name"],
                     source="https://ftp.ebi.ac.uk/pub/ensemblorganisms/species.json",
@@ -120,9 +120,9 @@ def build(root):
         accession, provider = species.dated_releases
         candidates = accessions.get(accession, [])
         record = dict(candidates[-1]) if candidates else dict(
-            species=species.latin_name, assembly=species.current_reference_name,
+            species=species.latin_name, assembly=species.dated_reference_name,
             assembly_name=None, assembly_accession=accession,
-            reference_name=species.current_reference_name, source=None,
+            reference_name=species.dated_reference_name, source=None,
         )
         record.update(provider=provider, dates=[])
         dated.append(record)
