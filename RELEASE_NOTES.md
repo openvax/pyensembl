@@ -1,3 +1,16 @@
+# 2.31.0
+
+Expose offline reference and transcript genetic-code metadata (#481).
+`Genome.genetic_code()` returns a compartment-specific NCBI table assignment
+with provenance or an explicit unknown reason. `Transcript.translation_table`
+uses annotation declarations before reference/taxonomy defaults. Retain taxon
+and species-ancestor IDs, including metadata returned by the new Ensembl API.
+One `reference_metadata` argument supports custom contigs and assignments.
+
+Pin metadata through JSON, pickle and mirrors. Existing source paths, cached
+files and indexes remain unchanged: old indexes can read source declarations
+from the installed GTF into memory without downloads, migration or reindexing.
+
 # 2.30.1
 
 Support tomato SL4.0 in Ensembl Genomes 63 (#453). Use its renamed source

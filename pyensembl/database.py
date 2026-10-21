@@ -30,6 +30,7 @@ from .versioned_ids import _split_ens_version, match_version
 # additional PyEnsembl check, so existing remote databases remain reusable.
 DATABASE_SCHEMA_VERSION = 3
 _SOURCE_TABLE = "_pyensembl_gtf_source"
+GENETIC_CODE_SOURCE_TABLE = "_pyensembl_genetic_code_source"
 
 
 logger = logging.getLogger(__name__)
@@ -383,6 +384,7 @@ class Database(object):
         datacache.ensure_dir(self.cache_directory_path)
         local_source = "://" not in self.source
         source_before = _source_state(self.gtf_path, self.source) if local_source else None
+        genetic_code_state = _file_state(self.gtf_path)
 
         df = self._load_gtf_as_dataframe(
             usecols=self.restrict_gtf_columns,
@@ -391,6 +393,12 @@ class Database(object):
         )
         if hasattr(df, "to_pandas"):
             df = df.to_pandas()
+        # Optional additive columns mark that source declarations were read.
+        # Old schema-3 databases remain valid; metadata lookup falls back to
+        # their local GTF without altering or rebuilding those databases.
+        for column in ("transl_table", "translation_table"):
+            if (self.restrict_gtf_columns is None or column in self.restrict_gtf_columns) and column not in df:
+                df[column] = ""
         all_index_groups = self._all_possible_indices(df.columns)
 
         if self.restrict_gtf_features:
@@ -428,6 +436,18 @@ class Database(object):
             version=DATABASE_SCHEMA_VERSION,
             show_progress=show_progress,
         )
+        if ({"transl_table", "translation_table"}.issubset(df.columns)
+                and (self.restrict_gtf_features is None
+                     or {"transcript", "CDS"}.issubset(self.restrict_gtf_features))):
+            if _file_state(self.gtf_path) != genetic_code_state:
+                self.close()
+                raise OSError("GTF source changed while its index was being built")
+            self._connection.execute('CREATE TABLE "' + GENETIC_CODE_SOURCE_TABLE + '" (state TEXT)')
+            self._connection.execute(
+                'INSERT INTO "' + GENETIC_CODE_SOURCE_TABLE + '" VALUES (?)',
+                (json.dumps(genetic_code_state),),
+            )
+            self._connection.commit()
         if local_source:
             if _source_state(self.gtf_path, self.source) != source_before:
                 self.close()

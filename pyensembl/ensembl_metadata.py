@@ -12,6 +12,7 @@ from uuid import UUID
 from .assembly import check_accession, records_for_selector
 from .ensembl_versions import normalize_release
 from .species import find_species_by_name
+from .genetic_code import taxon_id
 
 
 METADATA_API = "https://www.ensembl.org/api/metadata"
@@ -114,4 +115,7 @@ def resolve_genome(identifier):
         scientific_name=details.get("scientific_name"),
         source=METADATA_API + "/genome/%s/details" % genome_id, dates=[date],
     )
+    for incoming, field in (("taxonomy_id", "taxon_id"), ("species_taxonomy_id", "species_taxon_id")):
+        if details.get(incoming) is not None:
+            record[field] = taxon_id(details[incoming])
     return record, date
