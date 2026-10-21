@@ -13,6 +13,8 @@ yeast = EnsemblRelease(116, species="yeast")
 assert yeast.taxon_id == 559292           # the S288C reference strain
 assert yeast.species_taxon_id == 4932     # Saccharomyces cerevisiae
 assert yeast.genetic_code("MT").table_id == 3
+assert yeast.genetic_code("unplaced_42").table_id == 1
+assert yeast.genetic_code().table_id == 1
 assert yeast.genetic_code(compartment="nuclear").table_id == 1
 
 plant = EnsemblRelease(63, species="tomato")
@@ -29,8 +31,11 @@ table. The reference's taxon or an explicit assignment is also needed.
 
 `genetic_code()` returns an immutable `GeneticCodeAssignment` with `table_id`,
 `compartment`, `source`, `taxon_id`, `source_url`, and `reason`. Unknown
-assignments have `table_id=None` and an explanation. There is no automatic
-standard-code fallback for arbitrary unplaced contigs or unknown taxa.
+assignments have `table_id=None` and an explanation. An omitted contig or an
+unrecognized name, including an unplaced scaffold, uses the species' nuclear
+table. This is the species' main code, not necessarily table 1: Candida
+albicans defaults to table 12. Unknown taxa still need an explicit assignment;
+they do not silently receive table 1.
 
 ## Transcript source declarations
 
@@ -47,10 +52,11 @@ effective_id = transcript.translation_table
 transcript and its CDS rows. It returns `None` when no declaration is present.
 Repeated agreeing values are accepted; different values or invalid NCBI IDs
 raise `ValueError`. A valid source declaration wins over a different taxonomy
-default or explicit reference default, even on an unknown compartment.
+default or explicit reference default, including on an unplaced scaffold.
 `assignment.source` is `annotation`, `reference`, `taxonomy`, or `unresolved`.
 For an annotation declaration, `source_url` identifies the configured GTF
-path or URL. The compartment can still be `None` if it cannot be established.
+path or URL. `compartment` describes the selected compartment, including the
+nuclear default; it is not proof of the contig's physical localization.
 
 New annotation indexes retain these optional attributes. Old indexes remain
 usable unchanged: the first lookup scans the installed GTF for the sparse
@@ -75,7 +81,7 @@ genome = Genome(
     },
 )
 assert genome.genetic_code("scaffold_42").table_id == 5
-assert genome.genetic_code("unplaced_1").table_id is None
+assert genome.genetic_code("unplaced_1").table_id == 1
 ```
 
 An optional `translation_tables` mapping can explicitly set `nuclear`,
@@ -93,11 +99,13 @@ then case-insensitive; conflicting case aliases raise. Fallback names are:
 | Plastid | `Pt`, `CP`, `chrC`, `chrPt`, `chloroplast`, `plastid`, `apicoplast` |
 | Nuclear | Positive chromosome numbers, `X`, `Y`, `W`, `Z`, Roman numerals I–XVI, and chromosome arms 1L–4R; optionally prefixed by `chr` |
 
-These names are conventions, not assembly evidence. Supply reference
-metadata for nonstandard names. You can also call
+Other names default to nuclear. These names are conventions, not assembly
+evidence; supply reference metadata for nonstandard organelle names. You can also call
 `genome.genetic_code(compartment="plastid")` without a contig. When both are
 given, an inconsistent known compartment raises rather than ignoring the
-constraint.
+constraint. An arbitrary scaffold name does not conflict with an explicitly
+requested compartment. An identified organelle whose table is missing remains
+unresolved rather than using the nuclear default.
 
 ## Taxonomy and saved objects
 

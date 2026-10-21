@@ -140,7 +140,11 @@ def resolve_reference_metadata(value=None, *, species=None, reference_name=None,
 
 @dataclass(frozen=True)
 class GeneticCodeAssignment:
-    """An assignment or an explicit unresolved result; no sequence translation."""
+    """An assignment or an explicit unresolved result; no sequence translation.
+
+    The selected compartment defaults to nuclear when no compartment is known.
+    It describes code selection, not verified physical localization.
+    """
 
     table_id: int | None
     compartment: str | None
@@ -177,14 +181,13 @@ def genetic_code(metadata, contig=None, *, compartment=None, source_table=None,
             raise ValueError("Unknown cellular compartment: %r" % compartment)
         if inferred is not None and inferred != compartment:
             raise ValueError("Requested compartment conflicts with reference contig metadata")
-    compartment = compartment or inferred
+    # Apply the species' main table only after validating known compartments;
+    # an unfamiliar scaffold name must not conflict with an explicit request.
+    compartment = compartment or inferred or "nuclear"
     identifier = metadata["taxon_id"]
     if source_table is not None:
         return GeneticCodeAssignment(translation_table(source_table), compartment,
                                      "annotation", identifier, annotation_source)
-    if compartment is None:
-        return GeneticCodeAssignment(None, None, "unresolved", identifier,
-                                     reason="Unknown contig compartment; supply reference metadata")
     code = metadata["translation_tables"][compartment]
     source = metadata["translation_table_sources"][compartment]
     url = metadata.get("source_url") if source == "reference" else metadata["taxonomy_source"]["url"]

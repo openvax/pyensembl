@@ -1,3 +1,12 @@
+# 2.31.1
+
+Use the species' main (nuclear) genetic code for arbitrary scaffold names and
+reference lookups without a contig (#490). This corrects the unnecessarily
+unresolved result in 2.31.0. Preserve nonstandard nuclear codes, recognized
+mitochondrial/plastid assignments, and explicit source/reference overrides.
+Unknown species or explicitly unset tables remain unresolved. Existing caches
+and serialized metadata stay usable in place without migration or reindexing.
+
 # 2.31.0
 
 Expose offline reference and transcript genetic-code metadata (#481).

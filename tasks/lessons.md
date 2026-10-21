@@ -1,5 +1,12 @@
 # Test design lessons
 
+- An unfamiliar contig name is not a reason to discard a known species'
+  main genetic code. Default to its nuclear table unless explicit annotation,
+  reference metadata, or an organelle alias selects another code. Preserve
+  species-specific nonstandard nuclear codes; do not substitute table 1.
+  Distinguish genuinely missing taxonomy or explicitly unset codes from an
+  ordinary scaffold name before reporting a downstream fallback as a bug.
+
 - Keep release and archive tests deterministic and offline. Exercise the real parser on a tiny local GTF, and use independent published filename examples plus a simulated platform listing to cover URL selection.
 
 - Existing user caches are a compatibility contract. A cache-key fix must keep
