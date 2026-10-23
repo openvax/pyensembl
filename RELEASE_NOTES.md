@@ -1,3 +1,10 @@
+# 2.31.2
+
+Include required test helpers and fixtures in source distributions (#489).
+Exclude developer-local data and generated cache files. CI and deployment
+now extract the source archive and run offline tests before publication.
+Wheel contents and installed genome caches are unchanged.
+
 # 2.31.1
 
 Use the species' main (nuclear) genetic code for arbitrary scaffold names and

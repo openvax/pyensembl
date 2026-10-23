@@ -8,6 +8,7 @@ python -m pip install --upgrade build
 python -m pip install --upgrade twine
 rm -rf dist
 python -m build
+python scripts/check_sdist.py dist/pyensembl-*.tar.gz
 git fetch origin main:refs/remotes/origin/main --tags
 python scripts/check_release_version.py --deploy
 git --version
