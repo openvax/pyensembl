@@ -1158,6 +1158,17 @@ Once lint, tests and review have passed:</p>
 </ol>
 <p>The release is shipped after the upload succeeds. Documentation changes also
 publish through the Documentation workflow; check the live site after it runs.</p>
+<p>Source archives include the test package and its tracked fixtures. When adding
+a fixture, add its exact path to <code>MANIFEST.in</code>; avoid recursive fixture globs,
+which can package generated caches or developer-local data. CI and <code>deploy.sh</code>
+extract the sdist and run offline tests before upload. To check locally:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>build<span class="w"> </span>--sdist
+python<span class="w"> </span>scripts/check_sdist.py<span class="w"> </span>dist/pyensembl-*.tar.gz
+</code></pre></div>
+<p>From a Git checkout this also verifies all tracked test inputs against the
+archive and rejects extra test files. The extracted archive can run its own
+<code>./lint.sh</code> and <code>./test.sh</code>; the full suite still needs the Ensembl datasets
+listed in the Tests workflow.</p>
 
 
 
