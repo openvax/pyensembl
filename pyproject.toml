@@ -63,7 +63,7 @@ dev = [
 packages = ["pyensembl"]
 
 [tool.setuptools.package-data]
-pyensembl = ["assembly_catalog.json", "genetic_code_catalog.json"]
+pyensembl = ["assembly_catalog.json", "genetic_code_catalog.json", "release_comparisons.json"]
 
 [tool.setuptools.dynamic]
 version = {attr = "pyensembl.version.__version__"}

@@ -18,6 +18,9 @@ OFFLINE_TESTS = (
     "tests/test_annotation_genetic_code.py",
     "tests/test_legacy_cache_compatibility.py",
     "tests/test_release_cache_combinations.py",
+    "tests/test_release_catalogue.py",
+    "tests/test_release_comparisons.py",
+    "tests/test_annotation_integrity.py",
 )
 
 

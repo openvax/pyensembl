@@ -22,7 +22,7 @@ import re
 import sys
 
 from .database import is_complete_database
-from .dated_releases import UnpublishedDateError, fetch_all_dated_releases
+from .dated_releases import AVAILABLE_EXPIRE_AFTER, UnpublishedDateError, fetch_all_dated_releases
 from .download_cache import cache_root
 from .ensembl_release import EnsemblRelease
 from .ensembl_versions import is_dated_release, normalize_release
@@ -86,6 +86,7 @@ actions:
   install             download and index genome data (skips what is already done)
   list                show installed genomes, whether they are indexed, and their DNA
   inspect             inspect selected source files, indexes, and download provenance offline
+  verify              verify recorded dated-annotation checksums without repair
   available           show supported species, assemblies, and Ensembl releases
   delete-index-files  delete indexes, keeping downloaded files (needs --release)
   delete-all-files    delete all of a genome's local data (needs --release)
@@ -129,7 +130,7 @@ parser.add_argument(
 parser.add_argument(
     "--json",
     action="store_true",
-    help="With inspect, print a JSON inventory instead of a file table",
+    help="With inspect, available, or verify, print JSON",
 )
 
 parser.add_argument(
@@ -141,6 +142,8 @@ parser.add_argument(
 
 
 def _release_argument(value):
+    if value.strip() == "latest":
+        return "latest"
     try:
         return normalize_release(value)
     except ValueError as error:
@@ -154,7 +157,7 @@ release_group.add_argument(
     nargs="+",
     default=[],
     help=(
-        "Ensembl release version(s), numbered or a YYYY_MM annotation date on "
+        "Ensembl release version(s): numbered, YYYY_MM, or opt-in latest on "
         "the new Ensembl platform; required for deletion "
         "(install default=newest supported release for --reference-name, "
         "otherwise for each species)"
@@ -277,6 +280,7 @@ parser.add_argument(
         "install",
         "list",
         "inspect",
+        "verify",
         "available",
         "delete-index-files",
         "delete-all-files",
@@ -285,6 +289,34 @@ parser.add_argument(
     metavar="ACTION",
     help="one of the actions listed below",
 )
+
+
+parser.add_argument("--refresh", action="store_true",
+                    help="With available, refresh dated listings from Ensembl")
+parser.add_argument("--check-remote", action="store_true",
+                    help="With verify, compare recorded MD5s with current upstream manifests")
+
+
+def available_catalogue(args):
+    from .release_catalogue import available_releases
+    if args.reference_name and args.assembly and args.reference_name != args.assembly:
+        raise ValueError("Use one assembly selector with available")
+    rows = []
+    for species in args.species or [None]:
+        rows.extend(available_releases(
+            species=species, assembly=args.assembly or args.reference_name,
+            assembly_accession=args.assembly_accession, provider=args.provider,
+            include_alt=args.include_alt, refresh=args.refresh,
+        ))
+    if args.json:
+        return json.dumps(rows, indent=2)
+    return _format_table(("Release", "Assembly", "Provider", "Coverage", "Evidence", "Latest"), [
+        (r["release"], r.get("assembly_name") or r.get("assembly_accession"), r["provider"],
+         r["coverage"], "subset" if r["subset"] else
+         "; ".join(c["relationship"] + " to " + str(c["numbered"]) for c in r["comparisons"])
+         or ("frozen" if r["kind"] == "numbered" else "uncompared"),
+         "yes" if r["latest"] else "") for r in rows
+    ])
 
 
 def _dna_status(cache_directory, check=False):
@@ -429,17 +461,8 @@ def _ensembl_releases():
 
 
 def _cached_dated_releases():
-    """Dated releases whose <reference>/ensembl<YYYY_MM> directory exists."""
-    root = Path(cache_root())
-    genomes = []
-    for species in Species._latin_names_to_species.values():
-        if species.dated_releases is None:
-            continue
-        for directory in _subdirectories(root / species.dated_reference_name):
-            date = directory.name[len("ensembl"):]
-            if directory.name.startswith("ensembl") and is_dated_release(date):
-                genomes.append(EnsemblRelease(date, species=species))
-    return genomes
+    from .release_catalogue import cached_dated_releases
+    return cached_dated_releases()
 
 
 def _release_sort_key(release):
@@ -553,7 +576,7 @@ def all_combinations_of_ensembl_genomes(args):
         first_release, last_release = reference_species.reference_assemblies[reference_name]
         release_list = args.release or [last_release]
         for version in release_list:
-            if is_dated_release(version):
+            if version == "latest" or is_dated_release(version):
                 # The shared resolver handles historical dated assemblies too.
                 EnsemblRelease(version, species=reference_species, assembly=reference_name)
             elif not first_release <= version <= last_release:
@@ -865,8 +888,14 @@ def _delete_genome_files(genome, action):
 def run():
     args = parser.parse_args()
     configure_logging(verbose=args.verbose)
-    if args.json and args.action != "inspect":
-        parser.error("--json requires inspect")
+    if args.json and args.action not in ("inspect", "available", "verify"):
+        parser.error("--json requires inspect, available, or verify")
+    if args.refresh and args.action != "available":
+        parser.error("--refresh requires available")
+    if args.check_remote and args.action != "verify":
+        parser.error("--check-remote requires verify")
+    if args.action in ("delete-all-files", "delete-index-files") and "latest" in args.release:
+        parser.error("Deletion requires a concrete --release, not latest")
     if args.action == "prune":
         try:
             candidates = prune_genome_fastas(dry_run=args.dry_run)
@@ -891,8 +920,16 @@ def run():
     if args.action == "list":
         print(format_installed_genomes(check_genome_fasta=args.check_genome_fasta))
     elif args.action == "available":
-        # Listing what is available is an explicit request, so check again.
-        print(format_available_species(dated_releases=fetch_all_dated_releases()))
+        if (args.species or args.assembly or args.assembly_accession or args.provider
+                or args.reference_name or args.include_alt is not None or args.json):
+            try:
+                print(available_catalogue(args))
+            except ValueError as error:
+                parser.error(str(error))
+        else:
+            print(format_available_species(dated_releases=fetch_all_dated_releases(
+                expire_after=0 if args.refresh else AVAILABLE_EXPIRE_AFTER,
+            )))
     else:
         try:
             genomes = collect_selected_genomes(args)
@@ -902,6 +939,22 @@ def run():
         if len(genomes) == 0:
             logger.error("ERROR: No genomes selected!")
             parser.print_help()
+
+        if args.action == "verify":
+            if any(not isinstance(g, EnsemblRelease) for g in genomes):
+                parser.error("verify requires an Ensembl release; use inspect for custom sources")
+            reports = [dict(release=g.release, sources=g.verify_sources(args.check_remote)) for g in genomes]
+            if args.json:
+                print(json.dumps(reports, indent=2))
+            else:
+                print(_format_table(("Release", "Source", "Local", "Upstream"), [
+                    (r["release"], s["source"], s["status"], s.get("upstream_status", "not checked"))
+                    for r in reports for s in r["sources"]
+                ]))
+            if any(s["status"] not in ("verified", "unrecorded")
+                   or s.get("upstream_status") == "changed" for r in reports for s in r["sources"]):
+                raise SystemExit(1)
+            return
 
         if args.action == "inspect":
             print(inspect_genomes(genomes, args.check_genome_fasta, args.json))

@@ -9,3 +9,5 @@ provide the shared [Genome methods](genome.md).
 ::: pyensembl.EnsemblRelease
     options:
       inherited_members: false
+
+::: pyensembl.available_releases

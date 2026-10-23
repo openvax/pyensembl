@@ -150,7 +150,7 @@ def explain_unpublished_date(assembly_accession, provider, date, server, descrip
     try:
         yield
     except Exception as error:
-        status = getattr(getattr(error, "response", None), "status_code", None)
+        status = getattr(getattr(error, "response", None), "status_code", None) or getattr(error, "code", None)
         if status != 404 or server.rstrip("/") != ENSEMBL_PLATFORM_FTP_SERVER:
             raise
         try:

@@ -58,6 +58,11 @@ def genome_for_reference_name(reference_name, allow_older_downloaded_release=Tru
         for release in reversed(range(min_ensembl_release, max_ensembl_release + 1))
     ]
     if allow_older_downloaded_release:
+        from .release_catalogue import cached_dated_releases
+        dated = [g for g in cached_dated_releases()
+                 if g.species == species and (g.assembly == reference_name
+                                             or g.reference_name == reference_name)]
+        candidates += sorted(dated, key=lambda g: g.release, reverse=True)
         for ready in (EnsemblRelease.installed, EnsemblRelease.required_local_files_exist):
             for candidate in candidates:
                 if ready(candidate):

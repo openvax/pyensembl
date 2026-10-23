@@ -20,6 +20,7 @@ import os
 import shlex
 import warnings
 
+from . import annotation_integrity
 from .dated_releases import explain_unpublished_date
 from .assembly import (
     dated_assembly, normalize_species, numbered_assembly, validate_assembly,
@@ -167,6 +168,13 @@ class EnsemblRelease(Genome):
             plain or gzip FASTA. Nothing is downloaded until
             ``download_genome_fasta()``, ``download()``, or ``pyensembl install``.
         """
+        latest = None
+        if isinstance(release, str) and release.strip() == "latest":
+            from .release_catalogue import resolve_latest
+            latest = resolve_latest(species=species, assembly=assembly,
+                                    assembly_accession=assembly_accession,
+                                    provider=provider, include_alt=include_alt)
+            release = latest["release"]
         release = normalize_release(release)
         self.release = release
         self.species = normalize_species(species, assembly, assembly_accession)
@@ -275,6 +283,15 @@ class EnsemblRelease(Genome):
                     server=self.server,
                 )
             ]
+        if latest is not None:
+            self._resolved["selection"] = dict(policy="latest", reason=latest["selection_reason"])
+        if self.annotation_is_subset:
+            warnings.warn(
+                "Annotation %s (%s, provider %s) is a transcript subset; "
+                "it does not represent the complete annotation" % (
+                    release, self.assembly_accession, self.provider,
+                ), UserWarning, stacklevel=2,
+            )
         self.genome_fasta_urls = [genome_fasta_url] if genome_fasta is True else []
         genome_fasta_source = genome_fasta_url if genome_fasta is True else genome_fasta
 
@@ -290,6 +307,30 @@ class EnsemblRelease(Genome):
             cache_directory_path=cache_directory_path,
             reference_metadata=reference_metadata,
         )
+
+    def _uses_annotation_checksums(self):
+        return (is_dated_release(self.release)
+                and self.server.rstrip("/") == ENSEMBL_PLATFORM_FTP_SERVER.rstrip("/"))
+
+    def _get_cached_path(self, field_name, path_or_url, download_if_missing=False,
+                         overwrite=False, show_progress=False):
+        if (self._uses_annotation_checksums() and download_if_missing
+                and (overwrite or self.download_cache.inspect(path_or_url).status == "missing")):
+            return annotation_integrity.acquire(
+                self, field_name, path_or_url, overwrite, show_progress,
+            )
+        return super()._get_cached_path(
+            field_name, path_or_url, download_if_missing, overwrite, show_progress,
+        )
+
+    def verify_sources(self, check_remote=False):
+        """Check recorded annotation MD5s; optionally read upstream manifests.
+
+        Returns one report per GTF/sequence source. Existing files without a
+        checksum are ``unrecorded``, not corrupt. This never repairs data or
+        writes receipts. MD5 checks accidental changes, not authenticity.
+        """
+        return annotation_integrity.verify_sources(self, check_remote=check_remote)
 
     def _resolve_reference_metadata(self, value):
         metadata = self._resolved["metadata"]
@@ -319,6 +360,19 @@ class EnsemblRelease(Genome):
     def provider(self):
         """Dated FTP annotation provider (not its human-readable API label)."""
         return self._resolved["metadata"].get("provider", "ensembl")
+
+    @property
+    def annotation_label(self):
+        """Provider's API annotation label, e.g. GENCODE 50; not release."""
+        return self._resolved["metadata"].get("annotation_label")
+
+    @property
+    def annotation_is_subset(self):
+        """Whether upstream metadata or verified comparisons identify a subset."""
+        return (isinstance(self.annotation_label, str) and self.annotation_label.endswith("_subset")) or (
+            self.assembly_accession == "GCA_000001405.29"
+            and self.provider == "ensembl" and self.release == "2024_11"
+        )
 
     @property
     def genome_id(self):
@@ -527,13 +581,17 @@ class EnsemblRelease(Genome):
         )
 
     def to_dict(self):
+        resolved = dict(self._resolved)
+        checksums = annotation_integrity.source_checksums(self)
+        if checksums:
+            resolved["source_checksums"] = checksums
         return {
             "release": self.release, "species": self.species, "server": self.server,
             "genome_fasta": self._genome_fasta_option,
             "genome_fasta_type": self.genome_fasta_type,
             "genome_fasta_mask": self.genome_fasta_mask,
             "cache_directory_path": self.cache_directory_path,
-            "_resolved": self._resolved,
+            "_resolved": resolved,
             "reference_metadata": self.reference_metadata,
         }
 

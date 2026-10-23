@@ -58,3 +58,9 @@ include tests/data/tomato_sl4/pep.fa
 include tests/data/tomato_sl4/provenance.json
 include tests/data/tomato_sl4/pyensembl-2.30.0-cache.tar.gz
 include tests/data/tomato_sl4/pyensembl-2.30.0.json
+
+include tests/data/release_comparisons/README.md
+include tests/data/release_comparisons/dog-116.gtf
+include tests/data/release_comparisons/dog-2020_10.gtf
+include tests/data/release_comparisons/human-116.gtf
+include tests/data/release_comparisons/human-2026_04.gtf
