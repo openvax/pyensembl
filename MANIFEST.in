@@ -1,6 +1,60 @@
 include README.md
 include LICENSE
+include CONTRIBUTING.md RELEASING.md RELEASE_NOTES.md
 include mkdocs.yml
 include docs.sh
 recursive-include docs *.md *.css
 recursive-include scripts *.py
+
+# Keep source-archive tests runnable; list fixtures explicitly to exclude
+# developer-local data and generated databases, pickles and FASTA indexes.
+include lint.sh test.sh lint-and-test.sh
+include tests/__init__.py tests/common.py tests/data.py
+include tests/data/arabidopsis.tair10.partial.cdna.fa
+include tests/data/arabidopsis.tair10.partial.gtf
+include tests/data/assembly_metadata/arabidopsis_thaliana-63.json
+include tests/data/assembly_metadata/canis_familiaris-104.json
+include tests/data/assembly_metadata/canis_familiaris-105.json
+include tests/data/assembly_metadata/canis_lupus_familiarisbasenji-116.json
+include tests/data/assembly_metadata/dog-details.json
+include tests/data/assembly_metadata/dog-explain.json
+include tests/data/assembly_metadata/dog-ftplinks.json
+include tests/data/assembly_metadata/homo_sapiens-75.json
+include tests/data/assembly_metadata/homo_sapiens-93.json
+include tests/data/assembly_metadata/human-details.json
+include tests/data/assembly_metadata/human-explain.json
+include tests/data/assembly_metadata/human-ftplinks.json
+include tests/data/assembly_metadata/legacy-cache-2.28.3.tar.gz
+include tests/data/assembly_metadata/legacy-cache-objects.json
+include tests/data/assembly_metadata/mus_musculus-81.json
+include tests/data/assembly_metadata/pyensembl-2.28.3.json
+include tests/data/assembly_metadata/solanum_lycopersicum-63.json
+include tests/data/gencode.ucsc.small.gtf
+include tests/data/genetic_codes/README.md
+include tests/data/genetic_codes/capture.json
+include tests/data/genetic_codes/fungi.tsv.gz
+include tests/data/genetic_codes/gc.prt.gz
+include tests/data/genetic_codes/metazoa.tsv.gz
+include tests/data/genetic_codes/plants.tsv.gz
+include tests/data/genetic_codes/protists.tsv.gz
+include tests/data/genetic_codes/pyensembl-2.30.1-cache.tar.gz
+include tests/data/genetic_codes/pyensembl-2.30.1.json
+include tests/data/genetic_codes/taxonomy.xml.gz
+include tests/data/genetic_codes/vertebrates.tsv.gz
+include tests/data/human.ensembl.97.patch.cdna.fa
+include tests/data/human.ensembl.97.patch.gtf
+include tests/data/human.ensembl.97.patch.md
+include tests/data/human.ensembl.97.patch.ncrna.fa
+include tests/data/human.ensembl.97.patch.pep.fa
+include tests/data/mouse.ensembl.81.partial.ENSMUSG00000017167.fa
+include tests/data/mouse.ensembl.81.partial.ENSMUSG00000017167.gtf
+include tests/data/mouse.ensembl.81.partial.ENSMUSG00000017167.pep
+include tests/data/mouse.ensembl.81.partial.ncrna.ENSMUSG00000017167.fa
+include tests/data/refseq.ucsc.small.gtf
+include tests/data/tomato_sl4/README.md
+include tests/data/tomato_sl4/cdna.fa
+include tests/data/tomato_sl4/genes.gtf
+include tests/data/tomato_sl4/pep.fa
+include tests/data/tomato_sl4/provenance.json
+include tests/data/tomato_sl4/pyensembl-2.30.0-cache.tar.gz
+include tests/data/tomato_sl4/pyensembl-2.30.0.json
