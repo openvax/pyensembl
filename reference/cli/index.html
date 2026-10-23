@@ -1232,8 +1232,7 @@ options:
   --version             show program's version number and exit
   -v, --verbose         Show detailed progress, including download and
                         database steps
-  --json                With inspect, print a JSON inventory instead of a file
-                        table
+  --json                With inspect, available, or verify, print JSON
   --overwrite           Force download and indexing even if files already
                         exist locally
   --reference-name REFERENCE_NAME
@@ -1241,22 +1240,42 @@ options:
                         Ensembl). Selects its newest supported release unless
                         --release is given; with custom source files, names
                         the custom reference.
+  --refresh             With available, refresh dated listings from Ensembl
+  --check-remote        With verify, compare recorded MD5s with current
+                        upstream manifests
 
 Ensembl release options:
   --release RELEASE [RELEASE ...]
-                        Ensembl release version(s), numbered or a YYYY_MM
-                        annotation date on the new Ensembl platform; required
-                        for deletion (install default=newest supported release
-                        for --reference-name, otherwise for each species)
+                        Ensembl release version(s): numbered, YYYY_MM, or opt-
+                        in latest on the new Ensembl platform; required for
+                        deletion (install default=newest supported release for
+                        --reference-name, otherwise for each species)
   --species SPECIES [SPECIES ...]
                         Which species to download Ensembl data for
                         (default=inferred from --reference-name, otherwise
                         human)
+  --assembly ASSEMBLY   Optional build, full assembly name, or versioned
+                        GCA/GCF accession
+  --assembly-accession ASSEMBLY_ACCESSION
+                        Explicit accession (uses the compatible accession
+                        cache layout)
+  --provider PROVIDER   Annotation provider for a dated release
+  --server SERVER       Mirror root preserving Ensembl's directory structure
+                        (advanced)
+  --include-alt, --no-include-alt
+                        Select dated annotation coverage explicitly
+  --cache-reference-name CACHE_REFERENCE_NAME
+                        Preserve a custom reference label when reopening an
+                        accession dataset
+  --cache-directory CACHE_DIRECTORY
+                        Explicit existing cache directory for one selected
+                        dataset
   --custom-mirror CUSTOM_MIRROR
                         Flat mirror URL/directory; repeat it to reuse mirror
-                        data. In Python use EnsemblRelease(...).with_mirror(URL).
-                        New mirror caches are separate from default
-                        EnsemblRelease caches.
+                        data. In Python use
+                        EnsemblRelease(...).with_mirror(URL). New mirror
+                        caches are separate from default EnsemblRelease
+                        caches.
 
 Custom genome options:
   --annotation-name ANNOTATION_NAME
@@ -1296,6 +1315,7 @@ actions:
   install             download and index genome data (skips what is already done)
   list                show installed genomes, whether they are indexed, and their DNA
   inspect             inspect selected source files, indexes, and download provenance offline
+  verify              verify recorded dated-annotation checksums without repair
   available           show supported species, assemblies, and Ensembl releases
   delete-index-files  delete indexes, keeping downloaded files (needs --release)
   delete-all-files    delete all of a genome's local data (needs --release)

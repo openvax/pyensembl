@@ -950,6 +950,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.EnsemblRelease.annotation_label" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        annotation_label
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.EnsemblRelease.annotation_is_subset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        annotation_is_subset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.EnsemblRelease.genome_id" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -987,6 +1009,17 @@
     <span class="md-ellipsis">
       
         cached
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.EnsemblRelease.verify_sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        verify_sources
       
     </span>
   </a>
@@ -1061,6 +1094,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyensembl.available_releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        available_releases
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1682,6 +1726,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.EnsemblRelease.annotation_label" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        annotation_label
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.EnsemblRelease.annotation_is_subset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        annotation_is_subset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.EnsemblRelease.genome_id" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1719,6 +1785,17 @@
     <span class="md-ellipsis">
       
         cached
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.EnsemblRelease.verify_sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        verify_sources
       
     </span>
   </a>
@@ -1793,6 +1870,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pyensembl.available_releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        available_releases
+      
+    </span>
+  </a>
   
 </li>
       
@@ -2261,6 +2349,54 @@ cache layouts remain independent of the new assembly metadata.</p>
 
 
 
+<h3 id="pyensembl.EnsemblRelease.annotation_label" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">annotation_label</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#pyensembl.EnsemblRelease.annotation_label" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">annotation_label</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Provider's API annotation label, e.g. GENCODE 50; not release.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="pyensembl.EnsemblRelease.annotation_is_subset" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">annotation_is_subset</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#pyensembl.EnsemblRelease.annotation_is_subset" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">annotation_is_subset</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Whether upstream metadata or verified comparisons identify a subset.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
 <h3 id="pyensembl.EnsemblRelease.genome_id" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">genome_id</span>
 
@@ -2352,6 +2488,29 @@ genome.</p>
 
         <p>Construct EnsemblRelease if it's never been made before, otherwise
 return an old instance.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pyensembl.EnsemblRelease.verify_sources" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">verify_sources</span>
+
+
+<a href="#pyensembl.EnsemblRelease.verify_sources" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">verify_sources</span><span class="p">(</span><span class="n">check_remote</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Check recorded annotation MD5s; optionally read upstream manifests.</p>
+<p>Returns one report per GTF/sequence source. Existing files without a
+checksum are <code>unrecorded</code>, not corrupt. This never repairs data or
+writes receipts. MD5 checks accidental changes, not authenticity.</p>
 
 
     </div>
@@ -2560,6 +2719,32 @@ Ordinary construction and loading serialized objects remain offline.</p>
 
 
   </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="pyensembl.available_releases" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">available_releases</span>
+
+
+<a href="#pyensembl.available_releases" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">available_releases</span><span class="p">(</span><span class="n">species</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">assembly</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">assembly_accession</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">include_alt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">refresh</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents first">
+
+        <p>List metadata for the selected assembly's numbered and dated releases.</p>
+<p>Uses bundled metadata and existing directory listings without network or
+cache writes unless <code>refresh=True</code>. With no assembly selection, use the
+species' latest numbered assembly. Entries are grouped by kind for display;
+their list order does not imply a cross-platform chronology. <code>latest</code>
+marks the conservative, verified choice used by EnsemblRelease("latest").
+Explicit provider/coverage options select the dated platform only.</p>
+
 
     </div>
 

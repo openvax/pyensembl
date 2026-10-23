@@ -604,6 +604,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#unified-catalogue-and-opt-in-latest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unified catalogue and opt-in latest
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Unified catalogue and opt-in latest">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-the-comparisons-establish" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the comparisons establish
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dated-annotation-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dated annotation integrity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#explicit-assemblies-and-dog-breeds" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1279,6 +1318,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#unified-catalogue-and-opt-in-latest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unified catalogue and opt-in latest
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Unified catalogue and opt-in latest">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-the-comparisons-establish" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the comparisons establish
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dated-annotation-integrity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dated annotation integrity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#explicit-assemblies-and-dog-breeds" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1397,8 +1475,10 @@ must agree with the release:</p>
 <p>The existing <code>--reference-name GRCh37</code> shortcut selects human release 75 when
 no release is supplied. <code>genome_for_reference_name("GRCh37")</code> prefers an
 installed release, then a downloaded release, then the newest supported
-numbered release. These defaults have not changed. Deletion commands still
-require an explicit release.</p>
+numbered release. Installed dated releases participate, including explicit
+accession/provider layouts; an installed numbered release keeps precedence.
+Selection reads existing caches without changing them. Deletion commands
+require a concrete release and reject <code>latest</code>.</p>
 <h2 id="dated-releases">Dated releases<a class="headerlink" href="#dated-releases" title="Permanent link">&para;</a></h2>
 <p>A date such as <code>"2026_04"</code> identifies an annotation directory, not a website
 release. A website label such as <code>"2026-07"</code> is a different identifier and is
@@ -1425,10 +1505,140 @@ construction does not fetch these listings. A missing remote file produces an
 annotation date is absent.</p>
 <p>Dates are not a universal chronology: Arabidopsis uses <code>2010_09</code>, and fly's
 dated <code>2022_07</code> annotation predates its final numbered annotation. Matching
-assemblies do not make two annotations equivalent; there is no automatic
-conversion between numbered and dated releases or rolling <code>latest</code> default.
+assemblies do not make two annotations equivalent. There is no automatic
+conversion between numbered and dated releases or rolling default.
 For example, human <code>2024_11</code> is a GENCODE subset without non-canonical lncRNA
 transcripts; numbered release 114 contains the complete annotation.</p>
+<h2 id="unified-catalogue-and-opt-in-latest">Unified catalogue and opt-in latest<a class="headerlink" href="#unified-catalogue-and-opt-in-latest" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pyensembl</span><span class="w"> </span><span class="kn">import</span> <span class="n">available_releases</span>
+
+<span class="n">rows</span> <span class="o">=</span> <span class="n">available_releases</span><span class="p">(</span><span class="s2">"human"</span><span class="p">)</span>
+<span class="n">chosen</span> <span class="o">=</span> <span class="n">EnsemblRelease</span><span class="p">(</span><span class="s2">"latest"</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="s2">"human"</span><span class="p">)</span>  <span class="c1"># concrete release 116</span>
+<span class="n">older</span> <span class="o">=</span> <span class="n">EnsemblRelease</span><span class="p">(</span><span class="s2">"latest"</span><span class="p">,</span> <span class="n">assembly</span><span class="o">=</span><span class="s2">"GRCh37"</span><span class="p">)</span>  <span class="c1"># concrete release 75</span>
+</code></pre></div>
+<p><code>available_releases</code> combines numbered and dated entries for one assembly.
+Without an assembly selector, it uses the species' latest numbered assembly;
+tomato therefore stays on SL4.0. Build names, patched names, accessions, and
+species constraints follow the ordinary constructor. Each entry includes
+assembly identity, provider, coverage, subset status, comparison evidence, and
+whether it is the <code>latest</code> choice. Numbered entries followed by dated entries
+are a display grouping, <strong>not</strong> a cross-platform chronological ordering.</p>
+<p>The catalogue reads bundled metadata and any cached dated listings offline.
+<code>refresh=True</code> explicitly fetches listings. Dates discovered after the bundled
+comparison audit appear as uncompared; they cannot displace a frozen numbered
+release merely because their date looks recent.</p>
+<p><code>latest</code> is opt-in and conservative: use the newest frozen numbered release
+for the selected assembly unless a reviewed ordering explicitly supersedes it.
+Prefer numbered data on verified ties. Supplying <code>provider=</code> or <code>include_alt=</code>
+restricts selection to the dated platform; within one accession/provider it
+chooses the newest known date, excluding known subsets. Ambiguous dated scopes
+require an accession/provider. Existing no-argument and CLI defaults stay the
+same. Use <code>from_ensembl</code> below for current platform discovery through the API.</p>
+<p>The result stores a <strong>concrete</strong> <code>.release</code> and resolved metadata, including the
+selection policy. JSON and pickle restore that snapshot without resolving
+<code>latest</code> again. Keep that serialized object or record its concrete arguments
+for reproducible analyses.</p>
+<div class="highlight"><pre><span></span><code>pyensembl<span class="w"> </span>available<span class="w"> </span>--species<span class="w"> </span>human
+pyensembl<span class="w"> </span>available<span class="w"> </span>--assembly<span class="w"> </span>GRCh37<span class="w"> </span>--json
+pyensembl<span class="w"> </span>available<span class="w"> </span>--species<span class="w"> </span>dog<span class="w"> </span>--refresh
+pyensembl<span class="w"> </span>install<span class="w"> </span>--release<span class="w"> </span>latest<span class="w"> </span>--species<span class="w"> </span>dog
+</code></pre></div>
+<p>Unfiltered <code>pyensembl available</code> retains the all-species overview. Filtered
+catalogue output is offline unless <code>--refresh</code> is requested.</p>
+<h3 id="what-the-comparisons-establish">What the comparisons establish<a class="headerlink" href="#what-the-comparisons-establish" title="Permanent link">&para;</a></h3>
+<p>The October 2026 audit compares complete GTF files, not just their headers or
+row counts. Human GRCh38 uses the including-alt GTF; other rows use the ordinary
+GTF selected by <code>EnsemblRelease</code>. Equality excludes headers and row order but
+includes all data columns, attributes, and duplicate rows.</p>
+<table>
+<thead>
+<tr>
+<th>Species</th>
+<th>Numbered ↔ dated</th>
+<th>Verified relationship</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Human GRCh38</td>
+<td>110 ↔ <code>2023_03</code>, 115 ↔ <code>2025_12</code>, 116 ↔ <code>2026_04</code></td>
+<td>Same normalized GTF records</td>
+</tr>
+<tr>
+<td>Human GRCh38</td>
+<td>114 ↔ <code>2024_11</code></td>
+<td>Dated transcript IDs are a strict subset; 158,710 numbered transcripts absent</td>
+</tr>
+<tr>
+<td>Human GRCh37</td>
+<td>75 ↔ <code>2013_09</code></td>
+<td>Different; the numbered source also omits ID versions</td>
+</tr>
+<tr>
+<td>Mouse</td>
+<td>116 ↔ <code>2026_04</code></td>
+<td>Same normalized GTF records</td>
+</tr>
+<tr>
+<td>Dog</td>
+<td>116 ↔ <code>2020_10</code></td>
+<td>Same gene/transcript ID.version sets; different GTF records</td>
+</tr>
+<tr>
+<td>Yeast</td>
+<td>116 ↔ <code>2018_10</code></td>
+<td>Same normalized GTF records</td>
+</tr>
+<tr>
+<td>Fly</td>
+<td>116 ↔ <code>2022_07</code></td>
+<td>Different gene/transcript sets</td>
+</tr>
+<tr>
+<td>Arabidopsis</td>
+<td>63 ↔ <code>2010_09</code></td>
+<td>Same gene/transcript ID.version sets; different GTF records</td>
+</tr>
+</tbody>
+</table>
+<p>These comparisons make no claim about FASTA sequence equality. Primary-only
+human selections do not inherit including-alt evidence. Even identical GTF
+records do not alias or merge annotation caches. Source URLs, checksums, counts,
+set differences, and reproducible capture instructions are described in the
+<a href="../../dev/assembly-catalogue/#annotation-comparisons">assembly catalogue maintenance guide</a>.</p>
+<h2 id="dated-annotation-integrity">Dated annotation integrity<a class="headerlink" href="#dated-annotation-integrity" title="Permanent link">&para;</a></h2>
+<p>New downloads from the canonical dated platform verify each compressed GTF,
+cDNA, and peptide file against its provider's <code>geneset/md5sum.txt</code> <strong>before</strong>
+publishing the file. A receipt records the source MD5, manifest URL/digest,
+and retrieval time. JSON/pickle pin recorded checksums. Downloading a pinned
+source with a changed upstream MD5 fails; explicit <code>overwrite=True</code> accepts a
+new acquisition after validating it against the current manifest.</p>
+<p>Existing complete caches retain their original offline path. Normal reuse
+neither fetches manifests nor adds receipts, changes paths, or rebuilds indexes.
+Mirrors and numbered downloads keep their existing acquisition behavior.</p>
+<div class="highlight"><pre><span></span><code><span class="n">reports</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">verify_sources</span><span class="p">()</span>                   <span class="c1"># read local files only</span>
+<span class="n">reports</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">verify_sources</span><span class="p">(</span><span class="n">check_remote</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># also read upstream manifests</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>pyensembl<span class="w"> </span>verify<span class="w"> </span>--release<span class="w"> </span>2026_04<span class="w"> </span>--json
+pyensembl<span class="w"> </span>verify<span class="w"> </span>--release<span class="w"> </span>2026_04<span class="w"> </span>--check-remote
+</code></pre></div>
+<p>Verification never repairs or rewrites data. Each source reports <code>verified</code>,
+<code>changed</code>, <code>unrecorded</code>, <code>invalid-receipt</code>, or an availability failure such as
+<code>missing</code> or <code>inaccessible</code>.
+<code>unrecorded</code> means no checksum was captured when the source was acquired; it
+is not a corruption finding. A present but invalid receipt is reported
+separately; it is not treated as a legacy file without metadata. Optional
+upstream results separately distinguish
+an unchanged manifest entry from a revised one. The command exits with status
+1 for a failed source/receipt check or changed upstream checksum, and 0
+for verified or unrecorded sources. MD5 detects accidental changes; it is not
+cryptographic proof of authenticity. These checks cover annotation sources;
+reference DNA has its separate checksum/index verification.</p>
+<p>Known subsets such as human <code>2024_11</code>, and API annotation labels ending in
+<code>_subset</code>, produce a warning. <code>annotation_is_subset</code> exposes that status.
+<code>annotation_label</code> preserves the provider's API label when supplied; it is
+separate from <code>.release</code> and the existing <code>.annotation_version</code> compatibility
+field, which both identify the selected PyEnsembl release.</p>
 <h2 id="explicit-assemblies-and-dog-breeds">Explicit assemblies and dog breeds <a id="choose-the-dataset-explicitly"></a><a class="headerlink" href="#explicit-assemblies-and-dog-breeds" title="Permanent link">&para;</a></h2>
 <p>Use an assembly argument when the requested date is ambiguous, when selecting
 a nondefault assembly, or to assert the assembly your analysis requires.

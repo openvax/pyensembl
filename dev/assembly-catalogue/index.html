@@ -1131,6 +1131,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#annotation-comparisons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Annotation comparisons
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1234,6 +1245,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#annotation-comparisons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Annotation comparisons
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1257,7 +1279,7 @@
 <h1 id="maintain-the-assembly-catalogue">Maintain the assembly catalogue<a class="headerlink" href="#maintain-the-assembly-catalogue" title="Permanent link">&para;</a></h1>
 <p><code>pyensembl/assembly_catalog.json</code> is an offline snapshot of assembly identity,
 separate from cache naming. <code>assembly.py</code> is the shared resolver used by
-<code>EnsemblRelease</code>, its compatibility wrapper, and CLI selection. The catalogue
+<code>EnsemblRelease</code> and CLI selection. The catalogue
 ships in both the wheel and source distribution.</p>
 <h2 id="sources-and-update-procedure">Sources and update procedure<a class="headerlink" href="#sources-and-update-procedure" title="Permanent link">&para;</a></h2>
 <p>Numbered records come from the first 4 KiB of each supported species/release
@@ -1359,6 +1381,33 @@ All URL generation and DNA preparation belong to <code>EnsemblRelease</code>.</p
 downloads and parsing forbidden and compare their contents, paths, permissions,
 inodes, and modification/change timestamps. Run the full suite against an
 isolated copy of the integration data, never by migrating a user's cache.</p>
+<h2 id="annotation-comparisons">Annotation comparisons<a class="headerlink" href="#annotation-comparisons" title="Permanent link">&para;</a></h2>
+<p><code>pyensembl/release_comparisons.json</code> records ten scoped comparisons from twenty
+complete GTF sources captured on 2026-10-23. It ships with wheels and sdists.
+To reproduce the comparison in an isolated directory:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/capture_release_comparisons.py<span class="w"> </span>--output<span class="w"> </span>/tmp/ensembl-gtf-comparisons
+</code></pre></div>
+<p>This command downloads approximately 1.2 GiB, with a 1 GiB limit per source.
+It does not touch installed annotation caches. It verifies dated GTF MD5s,
+records SHA256 and manifest provenance, hashes gene/transcript ID.version
+sets, and hashes the sorted multiset of complete normalized GTF rows. Headers
+and input ordering are excluded; repeated attributes and duplicate rows are
+retained. A missing version is recorded as unknown, never guessed. Set
+comparisons include unversioned IDs so missing versions cannot be mistaken for
+entirely unrelated genes. No annotation or sequence cache is shared based on
+these comparisons.</p>
+<p>Review <code>release_comparisons.json</code> in the output directory before copying it
+into the package. <code>--summaries-only</code> recomputes relationships from existing
+complete summaries and saved identifier sets without network access. For a
+fresh upstream audit use a new directory. The tiny independent excerpts in
+<code>tests/data/release_comparisons/</code> test parser behavior, not the complete-source
+biological claims. A separate regression indexes the same real multi-isoform
+GTF grouped, coordinate-sorted, and with all child features first.</p>
+<p>The <code>preferred</code> list is reserved for reviewed future ordering that supersedes
+a frozen numbered selection. Every entry must name an exact release, accession,
+provider, coverage, and evidence-based reason. New directory listings alone
+must never add these preferences. Keep <code>latest</code> opt-in and serialize its
+resolved concrete selection.</p>
 
 
 
