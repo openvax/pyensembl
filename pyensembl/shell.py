@@ -638,6 +638,20 @@ def all_combinations_of_ensembl_genomes(args):
 
 
 def collect_selected_genomes(args):
+    # An explicitly empty source is an argument error, not an omitted option.
+    # In particular, do not let --gtf "" or --custom-mirror "" select the
+    # default human download through the truthiness checks below.
+    sources = [
+        ("--gtf", args.gtf),
+        ("--genome-fasta-path", args.genome_fasta_path),
+        ("--custom-mirror", args.custom_mirror),
+        ("--server", getattr(args, "server", None)),
+        *(("--transcript-fasta", path) for path in args.transcript_fasta),
+        *(("--protein-fasta", path) for path in args.protein_fasta),
+    ]
+    for option, value in sources:
+        if value == "":
+            raise ValueError("%s must not be empty" % option)
     # If specific genome source URLs are provided, use those
     if args.gtf or args.transcript_fasta or args.protein_fasta or (
         args.genome_fasta_path and args.annotation_name
