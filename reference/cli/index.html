@@ -929,6 +929,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#errors-and-exit-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors and exit status
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1190,6 +1201,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#errors-and-exit-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Errors and exit status
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1334,6 +1356,16 @@ examples:
   pyensembl delete-all-files --release 75
   pyensembl prune --dry-run
 </code></pre></div>
+<h2 id="errors-and-exit-status">Errors and exit status<a class="headerlink" href="#errors-and-exit-status" title="Permanent link">&para;</a></h2>
+<p>Argument mistakes, such as an unknown species/release, conflicting selectors,
+or an explicitly empty source path, print a concise argparse error and exit 2.
+An empty <code>--gtf</code>, FASTA path, <code>--custom-mirror</code>, or <code>--server</code> never falls back
+to downloading the default Ensembl dataset. Omit an unused option instead;
+spaces in legitimate file paths are preserved.</p>
+<p>Missing annotation files or reference DNA print <code>pyensembl: error: ...</code> and
+exit 1. Malformed GTF data, corrupt databases, checksum failures, and unexpected
+internal errors retain their tracebacks for diagnosis. A concrete deletion
+request with nothing installed remains a successful no-op.</p>
 
 
 
