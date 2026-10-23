@@ -120,7 +120,14 @@ def verify_sources(genome, check_remote=False):
                       expected_md5=identity["md5"] if identity else None)
         if inspection.status == "available":
             if identity is None:
-                result["status"] = "unrecorded"
+                try:
+                    receipt_path(path).lstat()
+                except FileNotFoundError:
+                    result["status"] = "unrecorded"
+                except OSError:
+                    result["status"] = "invalid-receipt"
+                else:
+                    result["status"] = "invalid-receipt"
             else:
                 result["actual_md5"] = file_md5(path)
                 result["status"] = "verified" if result["actual_md5"] == identity["md5"] else "changed"

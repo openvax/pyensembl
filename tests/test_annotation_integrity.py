@@ -1,6 +1,7 @@
 """Real HTTP transfers, checksum pinning, and read-only legacy cache reuse."""
 
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import replace
 from functools import partial
 import gzip
 import hashlib
@@ -16,6 +17,7 @@ import datacache
 import pytest
 
 from pyensembl import EnsemblRelease, annotation_integrity, shell
+from pyensembl.download_cache import DownloadCache
 from .test_legacy_cache_compatibility import snapshot
 from .test_release_cache_combinations import TinySources
 
@@ -208,3 +210,34 @@ def test_cli_verifies_read_only_and_returns_failure_for_changed_sources(origin, 
         shell.run()
     assert error.value.code == 1
     assert json.loads(capsys.readouterr().out)[0]["sources"][0]["status"] == "changed"
+
+
+def test_cli_verification_cannot_report_success_for_inaccessible_files(origin, monkeypatch, capsys):
+    genome, root, manifest, publish, calls, expected = origin
+    genome.download()
+    inspect = DownloadCache.inspect
+
+    def inaccessible(cache, source, *args, **kwargs):
+        return replace(inspect(cache, source, *args, **kwargs), status="inaccessible",
+                       error=PermissionError("shared volume is not readable"))
+
+    monkeypatch.setattr(DownloadCache, "inspect", inaccessible)
+    monkeypatch.setattr(shell, "configure_logging", lambda **kw: None)
+    monkeypatch.setattr(sys, "argv", ["pyensembl", "verify", "--release", "2026_04", "--json"])
+    with pytest.raises(SystemExit) as error:
+        shell.run()
+    assert error.value.code == 1
+    assert {s["status"] for s in json.loads(capsys.readouterr().out)[0]["sources"]} == {"inaccessible"}
+
+
+def test_broken_receipt_is_distinct_from_a_legacy_source_without_receipt(origin):
+    genome, root, manifest, publish, calls, expected = origin
+    genome.download()
+    annotation_integrity.receipt_path(genome.gtf_path).write_text("broken receipt")
+    reopened = EnsemblRelease("2026_04")
+    before = snapshot(Path(genome.download_cache.cache_directory_path))
+    assert reopened.verify_sources()[0]["status"] == "invalid-receipt"
+    # A previously serialized acquisition still has its independent pin.
+    assert genome.verify_sources()[0]["status"] == "verified"
+    reopened.download()
+    assert snapshot(Path(genome.download_cache.cache_directory_path)) == before

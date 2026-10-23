@@ -101,8 +101,8 @@ The remaining work concerns ordering/evidence, selection, and integrity.
   provider/coverage options restrict selection to the dated platform; within
   one accession/provider the newest known non-subset date is selected. A new
   uncompared listing cannot displace a frozen numbered release.
-- 1,032 full-suite tests pass. The source archive independently checks all 133
-  tracked test inputs and passes 267 offline tests, including real localhost
+- 1,034 full-suite tests pass. The source archive independently checks all 133
+  tracked test inputs and passes 269 offline tests, including real localhost
   transfers. Strict docs check 26 pages/2,184 links; 16 tutorial examples pass.
 - Integrity tests cover concurrent acquisition, corrupt transfers, changed
   upstream/local bytes, explicit refresh, serialized pins, and exact legacy

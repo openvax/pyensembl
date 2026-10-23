@@ -951,7 +951,7 @@ def run():
                     (r["release"], s["source"], s["status"], s.get("upstream_status", "not checked"))
                     for r in reports for s in r["sources"]
                 ]))
-            if any(s["status"] in ("changed", "corrupt", "missing", "unreadable")
+            if any(s["status"] not in ("verified", "unrecorded")
                    or s.get("upstream_status") == "changed" for r in reports for s in r["sources"]):
                 raise SystemExit(1)
             return

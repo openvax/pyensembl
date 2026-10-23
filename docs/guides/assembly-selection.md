@@ -182,11 +182,14 @@ pyensembl verify --release 2026_04 --check-remote
 ```
 
 Verification never repairs or rewrites data. Each source reports `verified`,
-`changed`, `unrecorded`, or an availability failure such as `missing`.
+`changed`, `unrecorded`, `invalid-receipt`, or an availability failure such as
+`missing` or `inaccessible`.
 `unrecorded` means no checksum was captured when the source was acquired; it
-is not a corruption finding. Optional upstream results separately distinguish
+is not a corruption finding. A present but invalid receipt is reported
+separately; it is not treated as a legacy file without metadata. Optional
+upstream results separately distinguish
 an unchanged manifest entry from a revised one. The command exits with status
-1 for a missing/unreadable/changed source or changed upstream checksum, and 0
+1 for a failed source/receipt check or changed upstream checksum, and 0
 for verified or unrecorded sources. MD5 detects accidental changes; it is not
 cryptographic proof of authenticity. These checks cover annotation sources;
 reference DNA has its separate checksum/index verification.
