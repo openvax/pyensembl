@@ -113,6 +113,7 @@ def resolve_genome(identifier):
         assembly_name=name, assembly_accession=accession, provider=provider,
         genome_id=genome_id, website_release=details.get("release", {}).get("name"),
         scientific_name=details.get("scientific_name"),
+        annotation_label=details.get("annotation_version"),
         source=METADATA_API + "/genome/%s/details" % genome_id, dates=[date],
     )
     for incoming, field in (("taxonomy_id", "taxon_id"), ("species_taxonomy_id", "species_taxon_id")):

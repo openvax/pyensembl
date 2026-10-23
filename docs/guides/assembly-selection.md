@@ -43,8 +43,10 @@ EnsemblRelease(75, assembly="GRCh38")     # raises ValueError
 The existing `--reference-name GRCh37` shortcut selects human release 75 when
 no release is supplied. `genome_for_reference_name("GRCh37")` prefers an
 installed release, then a downloaded release, then the newest supported
-numbered release. These defaults have not changed. Deletion commands still
-require an explicit release.
+numbered release. Installed dated releases participate, including explicit
+accession/provider layouts; an installed numbered release keeps precedence.
+Selection reads existing caches without changing them. Deletion commands
+require a concrete release and reject `latest`.
 
 ## Dated releases
 
@@ -81,10 +83,119 @@ annotation date is absent.
 
 Dates are not a universal chronology: Arabidopsis uses `2010_09`, and fly's
 dated `2022_07` annotation predates its final numbered annotation. Matching
-assemblies do not make two annotations equivalent; there is no automatic
-conversion between numbered and dated releases or rolling `latest` default.
+assemblies do not make two annotations equivalent. There is no automatic
+conversion between numbered and dated releases or rolling default.
 For example, human `2024_11` is a GENCODE subset without non-canonical lncRNA
 transcripts; numbered release 114 contains the complete annotation.
+
+## Unified catalogue and opt-in latest
+
+```python
+from pyensembl import available_releases
+
+rows = available_releases("human")
+chosen = EnsemblRelease("latest", species="human")  # concrete release 116
+older = EnsemblRelease("latest", assembly="GRCh37")  # concrete release 75
+```
+
+`available_releases` combines numbered and dated entries for one assembly.
+Without an assembly selector, it uses the species' latest numbered assembly;
+tomato therefore stays on SL4.0. Build names, patched names, accessions, and
+species constraints follow the ordinary constructor. Each entry includes
+assembly identity, provider, coverage, subset status, comparison evidence, and
+whether it is the `latest` choice. Numbered entries followed by dated entries
+are a display grouping, **not** a cross-platform chronological ordering.
+
+The catalogue reads bundled metadata and any cached dated listings offline.
+`refresh=True` explicitly fetches listings. Dates discovered after the bundled
+comparison audit appear as uncompared; they cannot displace a frozen numbered
+release merely because their date looks recent.
+
+`latest` is opt-in and conservative: use the newest frozen numbered release
+for the selected assembly unless a reviewed ordering explicitly supersedes it.
+Prefer numbered data on verified ties. Supplying `provider=` or `include_alt=`
+restricts selection to the dated platform; within one accession/provider it
+chooses the newest known date, excluding known subsets. Ambiguous dated scopes
+require an accession/provider. Existing no-argument and CLI defaults stay the
+same. Use `from_ensembl` below for current platform discovery through the API.
+
+The result stores a **concrete** `.release` and resolved metadata, including the
+selection policy. JSON and pickle restore that snapshot without resolving
+`latest` again. Keep that serialized object or record its concrete arguments
+for reproducible analyses.
+
+```sh
+pyensembl available --species human
+pyensembl available --assembly GRCh37 --json
+pyensembl available --species dog --refresh
+pyensembl install --release latest --species dog
+```
+
+Unfiltered `pyensembl available` retains the all-species overview. Filtered
+catalogue output is offline unless `--refresh` is requested.
+
+### What the comparisons establish
+
+The October 2026 audit compares complete GTF files, not just their headers or
+row counts. Human GRCh38 uses the including-alt GTF; other rows use the ordinary
+GTF selected by `EnsemblRelease`. Equality excludes headers and row order but
+includes all data columns, attributes, and duplicate rows.
+
+| Species | Numbered ↔ dated | Verified relationship |
+| --- | --- | --- |
+| Human GRCh38 | 110 ↔ `2023_03`, 115 ↔ `2025_12`, 116 ↔ `2026_04` | Same normalized GTF records |
+| Human GRCh38 | 114 ↔ `2024_11` | Dated transcript IDs are a strict subset; 158,710 numbered transcripts absent |
+| Human GRCh37 | 75 ↔ `2013_09` | Different; the numbered source also omits ID versions |
+| Mouse | 116 ↔ `2026_04` | Same normalized GTF records |
+| Dog | 116 ↔ `2020_10` | Same gene/transcript ID.version sets; different GTF records |
+| Yeast | 116 ↔ `2018_10` | Same normalized GTF records |
+| Fly | 116 ↔ `2022_07` | Different gene/transcript sets |
+| Arabidopsis | 63 ↔ `2010_09` | Same gene/transcript ID.version sets; different GTF records |
+
+These comparisons make no claim about FASTA sequence equality. Primary-only
+human selections do not inherit including-alt evidence. Even identical GTF
+records do not alias or merge annotation caches. Source URLs, checksums, counts,
+set differences, and reproducible capture instructions are described in the
+[assembly catalogue maintenance guide](../dev/assembly-catalogue.md#annotation-comparisons).
+
+## Dated annotation integrity
+
+New downloads from the canonical dated platform verify each compressed GTF,
+cDNA, and peptide file against its provider's `geneset/md5sum.txt` **before**
+publishing the file. A receipt records the source MD5, manifest URL/digest,
+and retrieval time. JSON/pickle pin recorded checksums. Downloading a pinned
+source with a changed upstream MD5 fails; explicit `overwrite=True` accepts a
+new acquisition after validating it against the current manifest.
+
+Existing complete caches retain their original offline path. Normal reuse
+neither fetches manifests nor adds receipts, changes paths, or rebuilds indexes.
+Mirrors and numbered downloads keep their existing acquisition behavior.
+
+```python
+reports = current.verify_sources()                   # read local files only
+reports = current.verify_sources(check_remote=True)  # also read upstream manifests
+```
+
+```sh
+pyensembl verify --release 2026_04 --json
+pyensembl verify --release 2026_04 --check-remote
+```
+
+Verification never repairs or rewrites data. Each source reports `verified`,
+`changed`, `unrecorded`, or an availability failure such as `missing`.
+`unrecorded` means no checksum was captured when the source was acquired; it
+is not a corruption finding. Optional upstream results separately distinguish
+an unchanged manifest entry from a revised one. The command exits with status
+1 for a missing/unreadable/changed source or changed upstream checksum, and 0
+for verified or unrecorded sources. MD5 detects accidental changes; it is not
+cryptographic proof of authenticity. These checks cover annotation sources;
+reference DNA has its separate checksum/index verification.
+
+Known subsets such as human `2024_11`, and API annotation labels ending in
+`_subset`, produce a warning. `annotation_is_subset` exposes that status.
+`annotation_label` preserves the provider's API label when supplied; it is
+separate from `.release` and the existing `.annotation_version` compatibility
+field, which both identify the selected PyEnsembl release.
 
 ## Explicit assemblies and dog breeds <a id="choose-the-dataset-explicitly"></a>
 

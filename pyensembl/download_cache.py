@@ -315,7 +315,7 @@ class DownloadCache(object):
         """Inspect a configured source without acquiring it."""
         return inspect_data_file(self.local_path(path_or_url), empty_files_ok)
 
-    def _fetch(self, url, destination, overwrite, show_progress=False):
+    def _fetch(self, url, destination, overwrite, show_progress=False, validator=None):
         logger.info("Fetching %s", destination)
         return datacache.fetch_file(
             url,
@@ -326,9 +326,10 @@ class DownloadCache(object):
             timeout=DOWNLOAD_TIMEOUT,
             show_progress=show_progress,
             record_provenance=True,
+            **({"validator": validator} if validator is not None else {}),
         )
 
-    def _download_if_necessary(self, url, download_if_missing, overwrite, show_progress=False):
+    def _download_if_necessary(self, url, download_if_missing, overwrite, show_progress=False, validator=None):
         """
         Return local cached path to a remote file, download it if necessary.
         """
@@ -338,7 +339,8 @@ class DownloadCache(object):
             # Even an explicit refresh leaves legacy sources and indexes intact.
             # Subsequent lookups prefer this URL-specific destination.
             cached_path = self._cache_path(url)
-            return self._fetch(url, cached_path, overwrite, show_progress)
+            return self._fetch(url, cached_path, overwrite, show_progress,
+                               **({"validator": validator} if validator is not None else {}))
         if inspection.status == "missing":
             raise MissingRemoteFile(url)
         return _require_available(inspection)
@@ -371,7 +373,8 @@ class DownloadCache(object):
         return self._fetch(Path(local_path).as_uri(), cached_path, overwrite, show_progress)
 
     def download_or_copy_if_necessary(
-        self, path_or_url, download_if_missing=False, overwrite=False, show_progress=False
+        self, path_or_url, download_if_missing=False, overwrite=False, show_progress=False,
+        validator=None,
     ):
         """
         Download a remote file or copy
@@ -398,7 +401,8 @@ class DownloadCache(object):
             raise ValueError("Expected non-empty string for path_or_url")
         if self.is_url_format(path_or_url):
             return self._download_if_necessary(
-                path_or_url, download_if_missing, overwrite, show_progress=show_progress
+                path_or_url, download_if_missing, overwrite, show_progress=show_progress,
+                **({"validator": validator} if validator is not None else {}),
             )
         else:
             return self._copy_if_necessary(path_or_url, overwrite, show_progress)
@@ -416,7 +420,7 @@ class DownloadCache(object):
 
     def local_path_or_install_error(
         self, field_name, path_or_url, download_if_missing=False, overwrite=False,
-        show_progress=False,
+        show_progress=False, validator=None,
     ):
         try:
             return self.download_or_copy_if_necessary(
@@ -424,6 +428,7 @@ class DownloadCache(object):
                 download_if_missing=download_if_missing,
                 overwrite=overwrite,
                 show_progress=show_progress,
+                **({"validator": validator} if validator is not None else {}),
             )
         except MissingRemoteFile:
             self._raise_missing_file_error({field_name: path_or_url})

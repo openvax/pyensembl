@@ -1,3 +1,16 @@
+# 2.32.0
+
+- Finish the unified numbered/dated release catalogue with scoped, reproducible
+  full-GTF comparison evidence, explicit `latest` selection, and filtered
+  `available` output. Serialization pins the concrete selection; existing
+  defaults and cache paths are unchanged.
+- Verify new canonical dated GTF/cDNA/peptide downloads against upstream MD5s.
+  Add explicit read-only `verify_sources()` / `pyensembl verify`, preserve
+  checksum pins through serialization, and warn for known subset annotations.
+  Existing caches need no new metadata, migration, reinstall, or reindex.
+- Let reference-name lookup and installed listings reuse known explicit-accession
+  dated cache layouts, while keeping installed numbered releases preferred.
+
 # 2.31.2
 
 Include required test helpers and fixtures in source distributions (#489).

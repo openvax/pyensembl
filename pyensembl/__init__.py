@@ -18,6 +18,7 @@ from .dated_releases import (
     available_annotation_dates,
     available_dated_releases,
 )
+from .release_catalogue import available_releases
 from .download_cache import DownloadCache
 from .ensembl_release import EnsemblRelease, cached_release
 from .ensembl_versions import MAX_ENSEMBL_RELEASE
@@ -54,6 +55,7 @@ logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = [
     "__version__",
+    "available_releases",
     "available_annotation_dates",
     "available_dated_releases",
     "UnpublishedDateError",

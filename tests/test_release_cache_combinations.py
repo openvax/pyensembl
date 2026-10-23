@@ -13,7 +13,7 @@ import pytest
 import requests
 
 from pyensembl import Database, EnsemblRelease, shell
-from pyensembl import ensembl_metadata, genome_fasta_cache
+from pyensembl import annotation_integrity, ensembl_metadata, genome_fasta_cache
 from .test_explicit_ensembl_release import bgzf
 from .test_legacy_cache_compatibility import snapshot
 
@@ -221,6 +221,7 @@ def sources(tmp_path, monkeypatch):
     monkeypatch.setattr(requests.sessions.Session, "request",
                         lambda session, method, url, **kw: sources.request(session, method, url, **kw))
     monkeypatch.setattr(genome_fasta_cache, "urlopen", sources.metadata)
+    monkeypatch.setattr(annotation_integrity, "urlopen", sources.metadata)
     return sources
 
 

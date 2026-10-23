@@ -2,7 +2,7 @@
 
 `pyensembl/assembly_catalog.json` is an offline snapshot of assembly identity,
 separate from cache naming. `assembly.py` is the shared resolver used by
-`EnsemblRelease`, its compatibility wrapper, and CLI selection. The catalogue
+`EnsemblRelease` and CLI selection. The catalogue
 ships in both the wheel and source distribution.
 
 ## Sources and update procedure
@@ -93,3 +93,37 @@ For release validation, reopen actual old-version installed caches with
 downloads and parsing forbidden and compare their contents, paths, permissions,
 inodes, and modification/change timestamps. Run the full suite against an
 isolated copy of the integration data, never by migrating a user's cache.
+
+## Annotation comparisons
+
+`pyensembl/release_comparisons.json` records ten scoped comparisons from twenty
+complete GTF sources captured on 2026-10-23. It ships with wheels and sdists.
+To reproduce the comparison in an isolated directory:
+
+```sh
+python scripts/capture_release_comparisons.py --output /tmp/ensembl-gtf-comparisons
+```
+
+This command downloads approximately 1.2 GiB, with a 1 GiB limit per source.
+It does not touch installed annotation caches. It verifies dated GTF MD5s,
+records SHA256 and manifest provenance, hashes gene/transcript ID.version
+sets, and hashes the sorted multiset of complete normalized GTF rows. Headers
+and input ordering are excluded; repeated attributes and duplicate rows are
+retained. A missing version is recorded as unknown, never guessed. Set
+comparisons include unversioned IDs so missing versions cannot be mistaken for
+entirely unrelated genes. No annotation or sequence cache is shared based on
+these comparisons.
+
+Review `release_comparisons.json` in the output directory before copying it
+into the package. `--summaries-only` recomputes relationships from existing
+complete summaries and saved identifier sets without network access. For a
+fresh upstream audit use a new directory. The tiny independent excerpts in
+`tests/data/release_comparisons/` test parser behavior, not the complete-source
+biological claims. A separate regression indexes the same real multi-isoform
+GTF grouped, coordinate-sorted, and with all child features first.
+
+The `preferred` list is reserved for reviewed future ordering that supersedes
+a frozen numbered selection. Every entry must name an exact release, accession,
+provider, coverage, and evidence-based reason. New directory listings alone
+must never add these preferences. Keep `latest` opt-in and serialize its
+resolved concrete selection.
