@@ -23,11 +23,11 @@ import sys
 
 from .database import is_complete_database
 from .dated_releases import AVAILABLE_EXPIRE_AFTER, UnpublishedDateError, fetch_all_dated_releases
-from .download_cache import cache_root
+from .download_cache import MissingGenomeDataFile, MissingLocalFile, cache_root
 from .ensembl_release import EnsemblRelease
 from .ensembl_versions import is_dated_release, normalize_release
 from .genome import Genome
-from .genome_fasta import GenomeFasta
+from .genome_fasta import GenomeFasta, MissingGenomeFastaError
 from .genome_fasta_cache import (
     canonical_source_options,
     dna_cache_lock,
@@ -638,6 +638,20 @@ def all_combinations_of_ensembl_genomes(args):
 
 
 def collect_selected_genomes(args):
+    # An explicitly empty source is an argument error, not an omitted option.
+    # In particular, do not let --gtf "" or --custom-mirror "" select the
+    # default human download through the truthiness checks below.
+    sources = [
+        ("--gtf", args.gtf),
+        ("--genome-fasta-path", args.genome_fasta_path),
+        ("--custom-mirror", args.custom_mirror),
+        ("--server", getattr(args, "server", None)),
+        *(("--transcript-fasta", path) for path in args.transcript_fasta),
+        *(("--protein-fasta", path) for path in args.protein_fasta),
+    ]
+    for option, value in sources:
+        if value == "":
+            raise ValueError("%s must not be empty" % option)
     # If specific genome source URLs are provided, use those
     if args.gtf or args.transcript_fasta or args.protein_fasta or (
         args.genome_fasta_path and args.annotation_name
@@ -971,5 +985,12 @@ def run():
                     )
                 except UnpublishedDateError as error:
                     parser.error(str(error))
+                except (MissingLocalFile, MissingGenomeDataFile, MissingGenomeFastaError) as error:
+                    # Missing remote cache entries are converted to the narrow
+                    # MissingGenomeDataFile type by DownloadCache. Parser,
+                    # integrity and database failures keep their tracebacks.
+                    message = ("file not found: %s" % error.path
+                               if isinstance(error, MissingLocalFile) else str(error))
+                    parser.exit(1, "%s: error: %s\n" % (parser.prog, message))
             else:
                 raise ValueError("Invalid action: %s" % args.action)

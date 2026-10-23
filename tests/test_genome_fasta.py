@@ -515,7 +515,8 @@ def test_cli_dna_paths_for_releases_and_mirrors(dna_path):
         args = shell.parser.parse_args(
             ["install", "--release", "81", "--genome-fasta-path", path]
         )
-        with pytest.raises(ValueError, match="--genome-fasta-path must be a local file"):
+        message = "--genome-fasta-path must be a local file" if path else "--genome-fasta-path must not be empty"
+        with pytest.raises(ValueError, match=message):
             shell.collect_selected_genomes(args)
     url = "https://example.test/dna.fa.gz"
     args = shell.parser.parse_args([

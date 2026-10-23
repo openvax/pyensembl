@@ -127,3 +127,16 @@ examples:
   pyensembl delete-all-files --release 75
   pyensembl prune --dry-run
 ```
+
+## Errors and exit status
+
+Argument mistakes, such as an unknown species/release, conflicting selectors,
+or an explicitly empty source path, print a concise argparse error and exit 2.
+An empty `--gtf`, FASTA path, `--custom-mirror`, or `--server` never falls back
+to downloading the default Ensembl dataset. Omit an unused option instead;
+spaces in legitimate file paths are preserved.
+
+Missing annotation files or reference DNA print `pyensembl: error: ...` and
+exit 1. Malformed GTF data, corrupt databases, checksum failures, and unexpected
+internal errors retain their tracebacks for diagnosis. A concrete deletion
+request with nothing installed remains a successful no-op.

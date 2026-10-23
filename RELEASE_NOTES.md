@@ -1,3 +1,12 @@
+# 2.32.1
+
+Finish #387's CLI error handling and fix #494. Missing annotation or reference
+DNA files now produce a concise runtime error (exit 1), while invalid arguments
+remain argparse errors (exit 2). Explicitly empty GTF/FASTA paths, mirrors and
+server URLs are rejected before dataset selection. Malformed data, checksum
+failures and unexpected internal errors retain their tracebacks. Existing
+cached data, source paths and indexing behavior are unchanged.
+
 # 2.32.0
 
 - Finish the unified numbered/dated release catalogue with scoped, reproducible
