@@ -26,7 +26,6 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
 dependencies = [
-    "typechecks>=0.0.2,<1.0.0",
     # [progress] brings tqdm: progress bars are part of pyensembl.
     "datacache[progress]>=1.29.3,<2.0.0",
     "memoized-property>=1.0.2",
@@ -57,13 +56,14 @@ dev = [
     "pytest-cov",
     "ruff",
     "build",
+    "mypy>=1.18,<3",
 ]
 
 [tool.setuptools]
 packages = ["pyensembl"]
 
 [tool.setuptools.package-data]
-pyensembl = ["assembly_catalog.json", "genetic_code_catalog.json", "release_comparisons.json"]
+pyensembl = ["assembly_catalog.json", "genetic_code_catalog.json", "release_comparisons.json", "py.typed"]
 
 [tool.setuptools.dynamic]
 version = {attr = "pyensembl.version.__version__"}
@@ -71,3 +71,17 @@ version = {attr = "pyensembl.version.__version__"}
 [tool.ruff.lint]
 # Ruff 0.16 widened its default rule set; keep the rules this repo has always used.
 select = ["E4", "E7", "E9", "F"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["pyensembl/normalization.py", "pyensembl/database.py"]
+# Expand the checked surface incrementally; retain inferred types from imports
+# while reporting errors only in the selected modules.
+follow_imports = "silent"
+check_untyped_defs = true
+disallow_incomplete_defs = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = ["datacache.*", "gtfparse.*", "tqdm.*"]
+ignore_missing_imports = true

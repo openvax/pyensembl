@@ -16,9 +16,9 @@ release, e.g. "Missing transcript sequence for BRCA1-002 in Ensembl release 74".
 
 - Start a new feature with an issue explaining its scope and rationale, and
   reference the issue in the PR, e.g. "Closes #123".
-- Follow [PEP 8](https://peps.python.org/pep-0008/); `./lint.sh` runs ruff.
+- Follow [PEP 8](https://peps.python.org/pep-0008/); `./lint.sh` runs ruff and mypy.
 - Accompany new code with unit tests.
-- Support Python 3.9 and later.
+- Support Python 3.11 and later.
 - Bump the version in `pyensembl/version.py` in every PR, including
   documentation-only changes.
 
@@ -32,10 +32,17 @@ pip install -e '.[dev]'
 ./test.sh
 ```
 
-The `dev` extra installs pytest, pytest-cov, ruff and build. Most tests need
+The `dev` extra installs pytest, pytest-cov, ruff, mypy and build. Most tests need
 Ensembl data installed first; `.github/workflows/tests.yml` lists the releases
 CI installs. Tests use exactly those releases, so other genomes in your cache
 do not change what they check.
+
+Type annotations are being added incrementally. The initial mypy scope covers
+chromosome/strand normalization and database locus-query methods; it does not
+promise a fully annotated package. Wheels and source archives include `py.typed`
+for downstream type checkers. Runtime checks remain in place for notebook users.
+Chromosome and coordinate validation retains Python's built-in `int` convention:
+booleans and integer subclasses are accepted, NumPy integer scalars are not.
 
 Species assembly ranges are checked against Ensembl's archive. After raising
 `MAX_ENSEMBL_RELEASE`, recheck every assembly boundary on the live FTP servers:
