@@ -17,9 +17,9 @@ import logging
 import os
 from os.path import basename, split, join, exists, splitext
 import sqlite3
+from typing import Any
 
 import datacache
-from typechecks import require_integer, require_string
 
 from .common import memoize
 from .normalization import normalize_chromosome, normalize_strand
@@ -533,15 +533,15 @@ class Database(object):
 
     def column_values_at_locus(
         self,
-        column_name,
-        feature,
-        contig,
-        position,
-        end=None,
-        strand=None,
-        distinct=False,
-        sorted=False,
-    ):
+        column_name: str,
+        feature: str,
+        contig: str | int,
+        position: int,
+        end: int | None = None,
+        strand: str | None = None,
+        distinct: bool = False,
+        sorted: bool = False,
+    ) -> list[Any]:
         """
         Get the non-null values of a column from the database
         at a particular range of loci
@@ -549,16 +549,21 @@ class Database(object):
 
         # TODO: combine with the query method, since they overlap
         # significantly
-        require_string(column_name, "column_name", nonempty=True)
+        if not isinstance(column_name, str):
+            raise TypeError("column_name must be a string, got %r" % type(column_name))
+        if not column_name:
+            raise ValueError("column_name: string must be nonempty.")
 
         contig = normalize_chromosome(contig)
 
-        require_integer(position, "position")
+        if not isinstance(position, int):
+            raise TypeError("position must be an integer, got %r" % type(position))
 
         if end is None:
             end = position
 
-        require_integer(end, "end")
+        if not isinstance(end, int):
+            raise TypeError("end must be an integer, got %r" % type(end))
 
         if not self.column_exists(feature, column_name):
             raise ValueError(
@@ -603,8 +608,9 @@ class Database(object):
         return results
 
     def distinct_column_values_at_locus(
-        self, column, feature, contig, position, end=None, strand=None
-    ):
+        self, column: str, feature: str, contig: str | int, position: int,
+        end: int | None = None, strand: str | None = None,
+    ) -> list[Any]:
         """
         Gather all the distinct values for a property/column at some specified
         locus.

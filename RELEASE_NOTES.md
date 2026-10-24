@@ -1,3 +1,12 @@
+# 2.32.3
+
+Remove the obsolete `typechecks` runtime dependency (#456). Keep built-in
+string/integer validation, including boolean/integer subclasses, TypeError for
+invalid types and ValueError for empty column names. Validate chromosome types
+before memoization so a cached integer cannot admit a float or NumPy integer
+(#497). Add initial type annotations, a `py.typed` marker and focused mypy checks
+to lint/CI. Existing on-disk caches and indexes remain usable without changes.
+
 # 2.32.2
 
 Require datacache 1.29.3 so explicit `install --overwrite` can recover a corrupt

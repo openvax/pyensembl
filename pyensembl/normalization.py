@@ -11,21 +11,23 @@
 # limitations under the License.
 
 from sys import intern
-from typechecks import is_string, is_integer
+from typing import Literal
 
 # Manually memoizing here, since our simple common.memoize function has
 # noticable overhead in this instance.
-NORMALIZE_CHROMOSOME_CACHE = {}
+NORMALIZE_CHROMOSOME_CACHE: dict[str | int, str] = {}
 
 
-def normalize_chromosome(c):
+def normalize_chromosome(c: str | int) -> str:
+    # Validate before memoization: floats/numpy integers can compare equal to
+    # an already cached int even though they are not accepted chromosome types.
+    if not isinstance(c, (str, int)):
+        raise TypeError("Chromosome cannot be '%s' : %s" % (c, type(c)))
+
     try:
         return NORMALIZE_CHROMOSOME_CACHE[c]
     except KeyError:
         pass
-
-    if not (is_string(c) or is_integer(c)):
-        raise TypeError("Chromosome cannot be '%s' : %s" % (c, type(c)))
 
     result = str(c)
 
@@ -52,7 +54,7 @@ def normalize_chromosome(c):
     return result
 
 
-def normalize_strand(strand):
+def normalize_strand(strand: object) -> Literal["+", "-"]:
     if strand == "+" or strand == 1 or strand == "+1" or strand == "1":
         return "+"
     elif strand == "-" or strand == -1 or strand == "-1":
