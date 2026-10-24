@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
     
     
       
@@ -31,10 +31,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -617,6 +617,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Install data">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recover-a-corrupt-annotation-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recover a corrupt annotation index
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1276,6 +1293,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Install data">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recover-a-corrupt-annotation-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recover a corrupt annotation index
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1407,6 +1441,19 @@ and database step. In Python, pass <code>show_progress=True</code> to <code>down
 <code>index()</code>. Use <code>--overwrite</code> or <code>overwrite=True</code> to replace existing files.</p>
 <p><a href="../assembly-selection/">Choose a reference</a> explains release, species and
 assembly options. Whole-genome DNA is a <a href="../reference-dna/">separate download</a>.</p>
+<h3 id="recover-a-corrupt-annotation-index">Recover a corrupt annotation index<a class="headerlink" href="#recover-a-corrupt-annotation-index" title="Permanent link">&para;</a></h3>
+<p>If SQLite reports a corrupt annotation database, explicitly rerun your original
+install command with <code>--overwrite</code>, or call <code>data.index(overwrite=True)</code> to
+rebuild from the installed GTF. The CLI also redownloads remote source files
+because <code>--overwrite</code> applies to the entire installation.</p>
+<p>PyEnsembl 2.32.2 requires datacache 1.29.3 for this recovery. It builds and
+validates a replacement before publishing it into the existing database,
+preserving its inode, hard links, ownership and permissions. A failed rebuild
+leaves the original database intact. Recovery needs permission to write the
+database, create a child process and use SQLite's reset API. If the runtime
+cannot support recovery, the operation fails while retaining the old database.</p>
+<p>Ordinary installs and queries do not repair or migrate caches. Existing healthy
+installations continue to work in place without reinstalling or reindexing.</p>
 <h2 id="check-what-is-installed">Check what is installed <a id="list-installed-genomes"></a><a class="headerlink" href="#check-what-is-installed" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code>pyensembl<span class="w"> </span>list
 </code></pre></div>
@@ -1670,10 +1717,10 @@ the same file; on Windows it starts over.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.c21346df.min.js"></script>
       
     
   </body>
