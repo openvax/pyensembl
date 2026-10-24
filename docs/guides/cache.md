@@ -30,6 +30,23 @@ and database step. In Python, pass `show_progress=True` to `download()` and
 [Choose a reference](assembly-selection.md) explains release, species and
 assembly options. Whole-genome DNA is a [separate download](reference-dna.md).
 
+### Recover a corrupt annotation index
+
+If SQLite reports a corrupt annotation database, explicitly rerun your original
+install command with `--overwrite`, or call `data.index(overwrite=True)` to
+rebuild from the installed GTF. The CLI also redownloads remote source files
+because `--overwrite` applies to the entire installation.
+
+PyEnsembl 2.32.2 requires datacache 1.29.3 for this recovery. It builds and
+validates a replacement before publishing it into the existing database,
+preserving its inode, hard links, ownership and permissions. A failed rebuild
+leaves the original database intact. Recovery needs permission to write the
+database, create a child process and use SQLite's reset API. If the runtime
+cannot support recovery, the operation fails while retaining the old database.
+
+Ordinary installs and queries do not repair or migrate caches. Existing healthy
+installations continue to work in place without reinstalling or reindexing.
+
 ## Check what is installed <a id="list-installed-genomes"></a>
 
 ```sh

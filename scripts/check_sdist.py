@@ -22,6 +22,7 @@ OFFLINE_TESTS = (
     "tests/test_release_comparisons.py",
     "tests/test_annotation_integrity.py",
     "tests/test_cli_errors.py",
+    "tests/test_cli_database_recovery.py",
 )
 
 

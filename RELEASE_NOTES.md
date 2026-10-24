@@ -1,3 +1,11 @@
+# 2.32.2
+
+Require datacache 1.29.3 so explicit `install --overwrite` can recover a corrupt
+SQLite annotation index (#495). Recovery preserves the database inode, hard
+links, ownership and permissions; a failed rebuild leaves the old database
+intact. Normal installation and queries retain existing cache behavior. No
+reinstall, migration or automatic repair is required.
+
 # 2.32.1
 
 Finish #387's CLI error handling and fix #494. Missing annotation or reference
