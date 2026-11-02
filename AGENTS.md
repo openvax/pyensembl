@@ -12,14 +12,14 @@
 
 Before considering any code change complete, you MUST:
 
-1. **Run `./lint.sh`** — runs `ruff check pyensembl/`.
+1. **Run `./lint.sh`** — runs `ruff check pyensembl/ tests/`, then mypy.
 2. **Run `./test.sh`** — runs the pytest suite.
 
 Do not tell the user you are "done" or that changes are "complete" until both pass. `./lint-and-test.sh` runs them together.
 
 ## Scripts
 
-- `./lint.sh` — runs `ruff check pyensembl/`. **Always use this for linting.**
+- `./lint.sh` — runs `ruff check pyensembl/ tests/`, then mypy. **Always use this for linting.**
 - `./test.sh` — runs pytest with coverage (must pass).
 - `./lint-and-test.sh` — convenience wrapper that runs lint then tests.
 - `./deploy.sh` — deploys to PyPI. Gates on `lint.sh` + `test.sh`, builds sdist+wheel, uploads via twine, tags the commit with `pyensembl/version.py`, pushes tags. **Bump `pyensembl/version.py` before running** — deploy.sh does not bump the version for you.

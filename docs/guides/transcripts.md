@@ -1,8 +1,10 @@
 # Get protein and transcript sequences
 
-These examples go further than the [home page](../index.md#read-protein-and-transcript-sequences)
-with the TP53 transcript TP53-201. They use the human GRCh38 / Ensembl release
-93 data [installed on the home page](../index.md#install) and run in one Python
+Read a transcript's protein, coding and UTR sequences, its exons and the
+genomic positions of its codons. These examples go further than the
+[home page](../index.md#read-protein-and-transcript-sequences) with the TP53
+transcript TP53-201. They use the human GRCh38 / Ensembl release 93 data
+[installed on the home page](../index.md#install) and run in one Python
 session.
 
 ## Protein sequence <a id="proteins"></a>

@@ -14,7 +14,7 @@ pyensembl install --release 93 --species human
 ```
 
 The second command downloads and indexes human annotation, transcript and
-protein data. It can take several minutes. These examples use GRCh38 and
+protein data, about 1.3 GB. It can take several minutes. These examples use GRCh38 and
 Ensembl release 93 so you can reproduce the output; for your own analysis,
 [choose the reference that matches your data](guides/assembly-selection.md).
 
