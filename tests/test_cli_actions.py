@@ -44,7 +44,7 @@ def test_run_prune_reports_nothing_and_propagates_errors(monkeypatch):
         shell.run_prune(False)
 
 
-def _available_args(**overrides):
+def make_available_args(**overrides):
     values = dict(species=[], assembly=None, assembly_accession=None, provider=None,
                   reference_name=None, include_alt=None, json=False, refresh=False)
     values.update(overrides)
@@ -52,10 +52,10 @@ def _available_args(**overrides):
 
 
 def test_selects_catalogue():
-    assert not shell.selects_catalogue(_available_args())
-    assert shell.selects_catalogue(_available_args(json=True))
-    assert shell.selects_catalogue(_available_args(include_alt=False))
-    assert shell.selects_catalogue(_available_args(species=["human"]))
+    assert not shell.selects_catalogue(make_available_args())
+    assert shell.selects_catalogue(make_available_args(json=True))
+    assert shell.selects_catalogue(make_available_args(include_alt=False))
+    assert shell.selects_catalogue(make_available_args(species=["human"]))
 
 
 def test_run_available_chooses_listing(monkeypatch):
@@ -63,30 +63,30 @@ def test_run_available_chooses_listing(monkeypatch):
     monkeypatch.setattr(shell, "fetch_all_dated_releases", lambda expire_after: expire_after)
     monkeypatch.setattr(shell, "format_available_species",
                         lambda dated_releases: "species %s" % dated_releases)
-    assert shell.run_available(_available_args(provider="ensembl")) == "catalogue"
-    assert shell.run_available(_available_args()) == "species %s" % shell.AVAILABLE_EXPIRE_AFTER
-    assert shell.run_available(_available_args(refresh=True)) == "species 0"
+    assert shell.run_available(make_available_args(provider="ensembl")) == "catalogue"
+    assert shell.run_available(make_available_args()) == "species %s" % shell.AVAILABLE_EXPIRE_AFTER
+    assert shell.run_available(make_available_args(refresh=True)) == "species 0"
 
 
 def test_run_available_conflicting_selectors():
-    args = _available_args(reference_name="GRCh37", assembly="GRCh38")
+    args = make_available_args(reference_name="GRCh37", assembly="GRCh38")
     with pytest.raises(ValueError, match="one assembly selector"):
         shell.run_available(args)
 
 
-class _FakeRelease(EnsemblRelease):
+class FakeRelease(EnsemblRelease):
     def __init__(self, statuses):
         self.release = "75"
-        self._statuses = statuses
+        self.statuses = statuses
 
     def verify_sources(self, check_remote):
-        return [dict(source="gtf", status=s) for s in self._statuses]
+        return [dict(source="gtf", status=s) for s in self.statuses]
 
 
 def test_run_verify_reports_status():
-    text, ok = shell.run_verify([_FakeRelease(["verified"])])
+    text, ok = shell.run_verify([FakeRelease(["verified"])])
     assert ok and "verified" in text
-    text, ok = shell.run_verify([_FakeRelease(["mismatch"])], json_output=True)
+    text, ok = shell.run_verify([FakeRelease(["mismatch"])], json_output=True)
     assert not ok and '"mismatch"' in text
 
 

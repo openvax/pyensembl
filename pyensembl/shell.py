@@ -1040,7 +1040,7 @@ class InstallError(Exception):
 
 
 def run_install(genome, only_genome_fasta=False, overwrite=False):
-    """Install one genome, turning expected failures into a one-line message.
+    """Download and index one genome, reporting missing source files as ``InstallError``.
 
     Parameters
     ----------
