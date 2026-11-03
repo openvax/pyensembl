@@ -146,67 +146,6 @@ def _release_argument(value):
         raise argparse.ArgumentTypeError(str(error))
 
 
-def installed_releases(root):
-    """List the releases that have a cache directory, by directory name only.
-
-    Genomes live in ``<root>/<reference>/ensembl<release>``, with dated
-    releases also in ``ensembl-<provider>-<accession>-<coverage>-<date>``.
-    Only directory names are read; no file is opened, indexed or downloaded,
-    so this is fast enough for tab completion even on a large cache.
-
-    Parameters
-    ----------
-    root : str
-        The pyensembl cache directory, e.g. ``cache_root()``.
-
-    Returns
-    -------
-    list of str
-        Distinct release labels such as ``"75"`` or ``"2026_04"``: numbered
-        releases in order, then annotation dates. Empty if ``root`` cannot
-        be read.
-    """
-    releases = set()
-    try:
-        references = [entry for entry in os.scandir(root) if entry.is_dir()]
-    except OSError:
-        return []
-    for reference in references:
-        try:
-            directories = [entry.name for entry in os.scandir(reference.path) if entry.is_dir()]
-        except OSError:
-            continue
-        for name in directories:
-            match = re.fullmatch(r"ensembl(?:-.+-)?(\d+|\d{4}_(?:0[1-9]|1[0-2]))", name)
-            if match:
-                releases.add(match.group(1))
-    return sorted(releases, key=_release_sort_key)
-
-
-def complete_release(prefix, **kwargs):
-    """Suggest ``--release`` values: the releases in the local cache.
-
-    An argcomplete completer. It only lists directory names (see
-    ``installed_releases``); it never touches the network.
-
-    Parameters
-    ----------
-    prefix : str
-        What has been typed so far; argcomplete filters the suggestions by it.
-    **kwargs
-        The other arguments argcomplete passes (``action``, ``parser``,
-        ``parsed_args``); unused.
-
-    Returns
-    -------
-    list of str
-        Release labels, e.g. ``["75", "93", "2026_04"]``.
-    """
-    from .download_cache import cache_root
-
-    return installed_releases(cache_root())
-
-
 def complete_species(prefix, **kwargs):
     """Suggest ``--species`` values: every registered species name.
 
@@ -248,7 +187,7 @@ release_group.add_argument(
         "(install default=newest supported release for --reference-name, "
         "otherwise for each species)"
     ),
-).completer = complete_release
+)
 
 release_group.add_argument(
     "--species",

@@ -46,29 +46,6 @@ def complete(line, cache, tmp_path):
     return [word.strip() for word in output.read_text().split("\n") if word.strip()]
 
 
-def make_cache(root):
-    """Create empty genome directories the way pyensembl lays them out.
-
-    Parameters
-    ----------
-    root : pathlib.Path
-        Value for ``PYENSEMBL_CACHE_DIR``; the cache is ``root / "pyensembl"``.
-
-    Returns
-    -------
-    pathlib.Path
-        ``root``.
-    """
-    for directory in (
-        "GRCh38/ensembl93", "GRCh38/ensembl110", "GRCh37/ensembl75",
-        "ROS_Cfam_1.0/ensembl2020_10", "GRCh38/ensembl-ensembl-GCA_000001405.29-primary-2026_04",
-        "GRCm38/custom81", "custom/unannotated", "dna_cache/homo_sapiens",
-    ):
-        (root / "pyensembl" / directory).mkdir(parents=True)
-    (root / "pyensembl" / "GRCh38" / "ensembl999.json").write_text("{}")
-    return root
-
-
 def test_options_and_actions_complete(tmp_path):
     options = complete("pyensembl --", tmp_path / "cache", tmp_path)
     for option in ("--release", "--species", "--reference-name", "--with-genome-fasta", "--json"):
@@ -80,27 +57,10 @@ def test_options_and_actions_complete(tmp_path):
     assert complete("pyensembl ins", tmp_path / "cache", tmp_path) == ["install", "inspect"]
 
 
-def test_release_completes_installed_releases(tmp_path):
-    cache = make_cache(tmp_path / "cache")
-    assert complete("pyensembl list --release ", cache, tmp_path) == [
-        "75", "93", "110", "2020_10", "2026_04",
-    ]
-    assert complete("pyensembl delete-all-files --release 9", cache, tmp_path) == ["93"]
-    assert complete("pyensembl list --release ", tmp_path / "empty", tmp_path) == []
-
-
 def test_species_completes_registered_names(tmp_path):
     assert complete("pyensembl install --species hu", tmp_path / "cache", tmp_path) == ["human"]
     names = complete("pyensembl install --species ", tmp_path / "cache", tmp_path)
     assert {"human", "homo_sapiens", "mouse", "mus_musculus"} <= set(names)
-
-
-def test_installed_releases_reads_directory_names_only(tmp_path):
-    root = make_cache(tmp_path)
-    assert shell.installed_releases(str(root / "pyensembl")) == [
-        "75", "93", "110", "2020_10", "2026_04",
-    ]
-    assert shell.installed_releases(str(tmp_path / "missing")) == []
 
 
 def test_complete_species_lists_common_and_latin_names():
