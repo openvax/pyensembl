@@ -26,6 +26,8 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
 dependencies = [
+    # Tab completion for the pyensembl command; it has no dependencies.
+    "argcomplete>=3,<4",
     # [progress] brings tqdm: progress bars are part of pyensembl.
     "datacache[progress]>=1.29.3,<2.0.0",
     "memoized-property>=1.0.2",

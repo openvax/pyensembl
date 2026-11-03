@@ -1,3 +1,16 @@
+# 2.33.0
+
+Tab completion for the `pyensembl` command (#514), and a fast import (#510).
+`import pyensembl` no longer reads the genome cache or imports datacache or
+SQLite: public names load from their submodules on first use, and
+`ensembl_grch36`/`37`/`38` are chosen from the cache the first time each is
+used rather than at import. `from pyensembl import ...`, `pyensembl.X` and
+`pyensembl.<submodule>` work as before. The command line imports genome code
+only when an action runs, so a Tab press takes about 40 ms instead of 125 ms.
+`--release` completes the releases in the cache and `--species` the registered
+species; enable completion with `activate-global-python-argcomplete`. Adds the
+`argcomplete` dependency. Caches, output and exit codes are unchanged.
+
 # 2.32.3
 
 Remove the obsolete `typechecks` runtime dependency (#456). Keep built-in

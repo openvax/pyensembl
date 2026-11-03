@@ -128,6 +128,16 @@ examples:
   pyensembl prune --dry-run
 ```
 
+## Tab completion
+
+`pyensembl` completes actions and options when you press Tab, plus the
+releases in your cache after `--release` and species names after
+`--species`. Turn it on once with `activate-global-python-argcomplete`, which
+covers every OpenVax tool, or for this command only with
+`eval "$(register-python-argcomplete pyensembl)"` in your shell's startup file.
+Completion reads only cache directory names and the built-in species list; it
+never downloads.
+
 ## Errors and exit status
 
 Argument mistakes, such as an unknown species/release, conflicting selectors,

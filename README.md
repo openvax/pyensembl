@@ -43,6 +43,14 @@ releases, and a gene name can match several loci. The
 [documentation](https://openvax.github.io/pyensembl/) continues with protein
 and transcript sequences.
 
+## Command line
+
+The `pyensembl` command installs and manages local data; see the
+[command-line reference](https://openvax.github.io/pyensembl/reference/cli/).
+For Tab completion, run `activate-global-python-argcomplete` once (covers every
+OpenVax tool) or add `eval "$(register-python-argcomplete pyensembl)"` to your
+shell's startup file.
+
 ## Documentation <a id="usage-tips"></a>
 
 The [documentation home page](https://openvax.github.io/pyensembl/) includes installation and

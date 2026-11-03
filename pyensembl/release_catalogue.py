@@ -130,7 +130,8 @@ def cached_dated_releases():
     """Discover existing standard and explicit-accession dated cache layouts.
 
     Only directory names are inspected. Construction, source inspection and
-    selection remain offline, including when this runs during package import.
+    selection remain offline, including when this runs to choose a convenience
+    genome such as ``ensembl_grch38``.
     Arbitrary user-selected cache roots still require explicit construction.
     """
     from .ensembl_release import EnsemblRelease

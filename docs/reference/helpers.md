@@ -32,8 +32,9 @@ version. See [assembly selection](../guides/assembly-selection.md).
 
 `MAX_ENSEMBL_RELEASE` is the newest numbered release supported by this package.
 `__version__` is its package version. `ensembl_grch36`, `ensembl_grch37` and
-`ensembl_grch38` are convenience `EnsemblRelease` objects selected when the
-package imports, using `genome_for_reference_name`. Their selections depend on
-installed/downloaded data and the supported release range. Use an explicit
+`ensembl_grch38` are convenience `EnsemblRelease` objects selected the first
+time each is used, using `genome_for_reference_name`; `import pyensembl` does
+not read the cache. Their selections depend on installed/downloaded data at
+that moment and the supported release range. Use an explicit
 `EnsemblRelease` for reproducibility. They do not represent the new platform's
 dated annotations.
