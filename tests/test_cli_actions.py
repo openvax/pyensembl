@@ -5,6 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from pyensembl import EnsemblRelease, shell
+from pyensembl.annotation_integrity import AnnotationIntegrityError
 from pyensembl.download_cache import MissingLocalFile
 
 
@@ -110,3 +111,40 @@ def test_run_install_wraps_missing_files(monkeypatch):
     monkeypatch.setattr(shell, "_install", missing)
     with pytest.raises(shell.InstallError, match="file not found: /nowhere/x.gtf"):
         shell.run_install("genome")
+
+
+def test_require_ensembl_releases():
+    shell.require_ensembl_releases([FakeRelease(["verified"])])
+    with pytest.raises(ValueError, match="requires an Ensembl release"):
+        shell.require_ensembl_releases([FakeRelease([]), object()])
+
+
+def test_run_reports_only_argument_mistakes_as_cli_errors(monkeypatch, capsys):
+    """``run`` turns selector conflicts and non-release ``verify`` targets into
+    argument errors (exit 2); listing and checksum failures keep tracebacks."""
+    monkeypatch.setattr(shell, "configure_logging", lambda **kw: None)
+
+    def malformed_listing(args):
+        raise ValueError("malformed listing")
+
+    monkeypatch.setattr(shell, "run_available", malformed_listing)
+    with pytest.raises(ValueError, match="malformed listing"):
+        shell.run(["available"])
+    with pytest.raises(SystemExit) as exit_info:
+        shell.run(["available", "--json"])
+    assert exit_info.value.code == 2
+    assert "malformed listing" in capsys.readouterr().err
+
+    class AmbiguousManifestRelease(FakeRelease):
+        def verify_sources(self, check_remote):
+            raise AnnotationIntegrityError("Expected one checksum")
+
+    monkeypatch.setattr(shell, "collect_selected_genomes",
+                        lambda args: [AmbiguousManifestRelease([])])
+    with pytest.raises(AnnotationIntegrityError, match="Expected one checksum"):
+        shell.run(["verify", "--release", "75", "--check-remote"])
+    monkeypatch.setattr(shell, "collect_selected_genomes", lambda args: [object()])
+    with pytest.raises(SystemExit) as exit_info:
+        shell.run(["verify", "--release", "75"])
+    assert exit_info.value.code == 2
+    assert "requires an Ensembl release" in capsys.readouterr().err
