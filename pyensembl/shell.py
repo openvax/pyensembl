@@ -899,33 +899,242 @@ def _delete_genome_files(genome, action):
         print("Nothing to delete for %s" % _genome_description(genome))
 
 
-def run():
-    args = parser.parse_args()
+DELETE_ACTIONS = ("delete-all-files", "delete-index-files")
+
+
+def validate_arguments(action, json_output, refresh, check_remote, releases):
+    """Check that action-specific flags are used with the right action.
+
+    Parameters
+    ----------
+    action : str
+        The CLI action, e.g. ``"install"``.
+    json_output : bool
+        Whether ``--json`` was given.
+    refresh : bool
+        Whether ``--refresh`` was given.
+    check_remote : bool
+        Whether ``--check-remote`` was given.
+    releases : list
+        Values of ``--release`` (``"latest"`` or normalized releases).
+
+    Raises
+    ------
+    ValueError
+        With the usage message when a flag does not fit the action.
+    """
+    if json_output and action not in ("inspect", "available", "verify"):
+        raise ValueError("--json requires inspect, available, or verify")
+    if refresh and action != "available":
+        raise ValueError("--refresh requires available")
+    if check_remote and action != "verify":
+        raise ValueError("--check-remote requires verify")
+    if action in DELETE_ACTIONS and "latest" in releases:
+        raise ValueError("Deletion requires a concrete --release, not latest")
+
+
+def run_prune(dry_run):
+    """Delete (or with ``dry_run`` only list) reference DNA no release uses.
+
+    Parameters
+    ----------
+    dry_run : bool
+        Report candidates without deleting files.
+
+    Returns
+    -------
+    str
+        One line per candidate, or a note that there are none.
+
+    Raises
+    ------
+    ValueError
+        If the shared DNA cache cannot be pruned safely.
+    """
+    candidates = prune_genome_fastas(dry_run=dry_run)
+    if not candidates:
+        return "No orphan genome FASTAs"
+    verb = "Would delete" if dry_run else "Deleted"
+    return "\n".join(
+        "%s %s (%s bytes)" % (verb, path, format(size, ",")) for path, size in candidates
+    )
+
+
+def selects_catalogue(args):
+    """Tell whether ``available`` should print the filtered release catalogue.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; the selector flags and ``json`` are used.
+
+    Returns
+    -------
+    bool
+        True when any of ``--species``, ``--assembly``,
+        ``--assembly-accession``, ``--provider``, ``--reference-name``,
+        ``--include-alt``/``--no-include-alt`` or ``--json`` was given;
+        False for the plain table of supported species.
+    """
+    return bool(
+        args.species or args.assembly or args.assembly_accession or args.provider
+        or args.reference_name or args.include_alt is not None or args.json
+    )
+
+
+def run_available(args):
+    """Describe what Ensembl data is available.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; the selector flags, ``json`` and ``refresh``
+        are used.
+
+    Returns
+    -------
+    str
+        A filtered release catalogue when any selector or ``--json`` is
+        given, otherwise the table of supported species.
+
+    Raises
+    ------
+    ValueError
+        If the selectors conflict. Only this case is a command-line mistake:
+        ``run`` reports it as an argument error when ``selects_catalogue``
+        is true and lets other errors keep their tracebacks.
+    """
+    if selects_catalogue(args):
+        return available_catalogue(args)
+    return format_available_species(dated_releases=fetch_all_dated_releases(
+        expire_after=0 if args.refresh else AVAILABLE_EXPIRE_AFTER,
+    ))
+
+
+def require_ensembl_releases(genomes):
+    """Check that every genome is an Ensembl release, as ``verify`` requires.
+
+    Only Ensembl releases have upstream checksum manifests to verify against.
+
+    Parameters
+    ----------
+    genomes : list of Genome
+        Genomes selected on the command line.
+
+    Raises
+    ------
+    ValueError
+        If any genome is not an ``EnsemblRelease``.
+    """
+    if any(not isinstance(g, EnsemblRelease) for g in genomes):
+        raise ValueError("verify requires an Ensembl release; use inspect for custom sources")
+
+
+def run_verify(genomes, check_remote=False, json_output=False):
+    """Verify recorded checksums of Ensembl releases without repairing them.
+
+    Parameters
+    ----------
+    genomes : list of EnsemblRelease
+        Releases to verify.
+    check_remote : bool
+        Also compare recorded MD5s with current upstream manifests.
+    json_output : bool
+        Return JSON instead of a table.
+
+    Returns
+    -------
+    (str, bool)
+        The report text and whether every source is fine (``False`` means
+        the command should exit non-zero).
+
+    Raises
+    ------
+    ValueError
+        If any genome is not an Ensembl release (see
+        ``require_ensembl_releases``). Checksum problems found while
+        verifying, such as ``AnnotationIntegrityError`` for an ambiguous
+        upstream manifest, also propagate.
+    """
+    require_ensembl_releases(genomes)
+    reports = [dict(release=g.release, sources=g.verify_sources(check_remote)) for g in genomes]
+    if json_output:
+        text = json.dumps(reports, indent=2)
+    else:
+        text = _format_table(("Release", "Source", "Local", "Upstream"), [
+            (r["release"], s["source"], s["status"], s.get("upstream_status", "not checked"))
+            for r in reports for s in r["sources"]
+        ])
+    ok = not any(
+        s["status"] not in ("verified", "unrecorded") or s.get("upstream_status") == "changed"
+        for r in reports for s in r["sources"]
+    )
+    return text, ok
+
+
+class InstallError(Exception):
+    """An install failed because a source file is missing."""
+
+
+def run_install(genome, only_genome_fasta=False, overwrite=False):
+    """Download and index one genome, reporting missing source files as ``InstallError``.
+
+    Parameters
+    ----------
+    genome : Genome
+        Genome to download and index.
+    only_genome_fasta : bool
+        Install only reference DNA.
+    overwrite : bool
+        Redo downloads and indexing even when files exist.
+
+    Raises
+    ------
+    UnpublishedDateError
+        If a dated release is not published.
+    InstallError
+        For missing local or remote source files; ``str`` is the message.
+    """
+    try:
+        _install(
+            genome, only_genome_fasta, overwrite,
+            show_progress=_progress_available(),
+        )
+    except (MissingLocalFile, MissingGenomeDataFile, MissingGenomeFastaError) as error:
+        # Missing remote cache entries are converted to the narrow
+        # MissingGenomeDataFile type by DownloadCache. Parser,
+        # integrity and database failures keep their tracebacks.
+        message = ("file not found: %s" % error.path
+                   if isinstance(error, MissingLocalFile) else str(error))
+        raise InstallError(message) from error
+
+
+def run(argv=None):
+    """Command-line entry point (console script ``pyensembl``).
+
+    Parameters
+    ----------
+    argv : list of str, optional
+        Arguments after the program name; defaults to ``sys.argv[1:]``.
+    """
+    args = parser.parse_args(argv)
     configure_logging(verbose=args.verbose)
-    if args.json and args.action not in ("inspect", "available", "verify"):
-        parser.error("--json requires inspect, available, or verify")
-    if args.refresh and args.action != "available":
-        parser.error("--refresh requires available")
-    if args.check_remote and args.action != "verify":
-        parser.error("--check-remote requires verify")
-    if args.action in ("delete-all-files", "delete-index-files") and "latest" in args.release:
-        parser.error("Deletion requires a concrete --release, not latest")
+    try:
+        validate_arguments(
+            args.action, args.json, args.refresh, args.check_remote, args.release
+        )
+    except ValueError as error:
+        parser.error(str(error))
     if args.action == "prune":
         try:
-            candidates = prune_genome_fastas(dry_run=args.dry_run)
+            print(run_prune(args.dry_run))
         except ValueError as error:
             parser.error(str(error))
-        for path, size in candidates:
-            print("%s %s (%s bytes)" % (
-                "Would delete" if args.dry_run else "Deleted", path, format(size, ",")
-            ))
-        if not candidates:
-            print("No orphan genome FASTAs")
         return
     if args.orphan_genome_fastas or args.dry_run:
         parser.error("--orphan-genome-fastas and --dry-run require prune")
     if (
-        args.action in ("delete-all-files", "delete-index-files")
+        args.action in DELETE_ACTIONS
         and not args.release
         and not (args.gtf or args.transcript_fasta or args.protein_fasta or
                  (args.genome_fasta_path and args.annotation_name))
@@ -933,64 +1142,48 @@ def run():
         parser.error("%s requires an explicit --release" % args.action)
     if args.action == "list":
         print(format_installed_genomes(check_genome_fasta=args.check_genome_fasta))
-    elif args.action == "available":
-        if (args.species or args.assembly or args.assembly_accession or args.provider
-                or args.reference_name or args.include_alt is not None or args.json):
-            try:
-                print(available_catalogue(args))
-            except ValueError as error:
-                parser.error(str(error))
-        else:
-            print(format_available_species(dated_releases=fetch_all_dated_releases(
-                expire_after=0 if args.refresh else AVAILABLE_EXPIRE_AFTER,
-            )))
-    else:
+        return
+    if args.action == "available":
         try:
-            genomes = collect_selected_genomes(args)
+            print(run_available(args))
+        except ValueError as error:
+            # Conflicting selectors are argument errors; failures while
+            # reading release listings keep their tracebacks.
+            if not selects_catalogue(args):
+                raise
+            parser.error(str(error))
+        return
+
+    try:
+        genomes = collect_selected_genomes(args)
+    except ValueError as error:
+        parser.error(str(error))
+    if len(genomes) == 0:
+        logger.error("ERROR: No genomes selected!")
+        parser.print_help()
+
+    if args.action == "verify":
+        try:
+            require_ensembl_releases(genomes)
         except ValueError as error:
             parser.error(str(error))
-
-        if len(genomes) == 0:
-            logger.error("ERROR: No genomes selected!")
-            parser.print_help()
-
-        if args.action == "verify":
-            if any(not isinstance(g, EnsemblRelease) for g in genomes):
-                parser.error("verify requires an Ensembl release; use inspect for custom sources")
-            reports = [dict(release=g.release, sources=g.verify_sources(args.check_remote)) for g in genomes]
-            if args.json:
-                print(json.dumps(reports, indent=2))
-            else:
-                print(_format_table(("Release", "Source", "Local", "Upstream"), [
-                    (r["release"], s["source"], s["status"], s.get("upstream_status", "not checked"))
-                    for r in reports for s in r["sources"]
-                ]))
-            if any(s["status"] not in ("verified", "unrecorded")
-                   or s.get("upstream_status") == "changed" for r in reports for s in r["sources"]):
-                raise SystemExit(1)
-            return
-
-        if args.action == "inspect":
-            print(inspect_genomes(genomes, args.check_genome_fasta, args.json))
-            return
-
+        # Checksum and manifest errors keep their tracebacks.
+        text, ok = run_verify(genomes, args.check_remote, args.json)
+        print(text)
+        if not ok:
+            raise SystemExit(1)
+    elif args.action == "inspect":
+        print(inspect_genomes(genomes, args.check_genome_fasta, args.json))
+    elif args.action in DELETE_ACTIONS:
         for genome in genomes:
-            if args.action in ("delete-all-files", "delete-index-files"):
-                _delete_genome_files(genome, args.action)
-            elif args.action == "install":
-                try:
-                    _install(
-                        genome, args.only_genome_fasta, args.overwrite,
-                        show_progress=_progress_available(),
-                    )
-                except UnpublishedDateError as error:
-                    parser.error(str(error))
-                except (MissingLocalFile, MissingGenomeDataFile, MissingGenomeFastaError) as error:
-                    # Missing remote cache entries are converted to the narrow
-                    # MissingGenomeDataFile type by DownloadCache. Parser,
-                    # integrity and database failures keep their tracebacks.
-                    message = ("file not found: %s" % error.path
-                               if isinstance(error, MissingLocalFile) else str(error))
-                    parser.exit(1, "%s: error: %s\n" % (parser.prog, message))
-            else:
-                raise ValueError("Invalid action: %s" % args.action)
+            _delete_genome_files(genome, args.action)
+    elif args.action == "install":
+        for genome in genomes:
+            try:
+                run_install(genome, args.only_genome_fasta, args.overwrite)
+            except UnpublishedDateError as error:
+                parser.error(str(error))
+            except InstallError as error:
+                parser.exit(1, "%s: error: %s\n" % (parser.prog, error))
+    else:
+        raise ValueError("Invalid action: %s" % args.action)

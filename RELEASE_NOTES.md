@@ -13,6 +13,16 @@ and includes these release notes. The cache guide puts installation, status
 and disk-space tasks before file-naming and storage details. Links to sections
 of earlier READMEs still resolve.
 
+## 2.32.4
+
+Split the `pyensembl` command's `run()` into public, documented per-action
+functions in `pyensembl.shell` (`validate_arguments`, `run_prune`,
+`run_available`, `require_ensembl_releases`, `run_verify`, `run_install`),
+and let `run(argv)` take an explicit argument list like the other OpenVax
+command-line tools. Flags, messages and exit codes are unchanged: only
+argument mistakes become one-line errors, while listing, checksum and data
+failures keep their tracebacks. Existing caches are unaffected.
+
 ## 2.32.3
 
 Remove the obsolete `typechecks` runtime dependency (#456). Keep built-in
