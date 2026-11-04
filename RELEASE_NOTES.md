@@ -3,6 +3,13 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.32.6
+
+Install only what the library imports: `numpy` and `tinytimer` move from the
+runtime dependencies to the `dev` extra, because only the tests use them
+(#511). Ruff's target version is set explicitly to Python 3.11, matching
+`requires-python`. Code, caches and output are unchanged.
+
 ## 2.32.5
 
 Documentation only. The README follows the shared OpenVax layout (Install,
