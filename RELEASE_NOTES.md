@@ -12,9 +12,11 @@ SQLite: public names load from their submodules on first use, and
 used rather than at import. `from pyensembl import ...`, `pyensembl.X` and
 `pyensembl.<submodule>` work as before. The command line imports genome code
 only when an action runs, so a Tab press takes about 40 ms instead of 125 ms.
-`--species` completes the registered species names; enable completion with
-`activate-global-python-argcomplete`. Adds the `argcomplete` dependency.
-Caches, output and exit codes are unchanged.
+`--release` completes the releases in the cache, from directory names only,
+and `--species` the registered species names; enable completion with
+`activate-global-python-argcomplete`. Adds the `argcomplete` dependency and
+requires datacache 1.30, whose lazy import keeps `--release` completion under
+100 ms. Caches, output and exit codes are unchanged.
 
 ## 2.32.6
 

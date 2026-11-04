@@ -46,6 +46,30 @@ def complete(line, cache, tmp_path):
     return [word.strip() for word in output.read_text().split("\n") if word.strip()]
 
 
+def make_cache(root):
+    """Create empty genome directories the way pyensembl lays them out.
+
+    Parameters
+    ----------
+    root : pathlib.Path
+        Value for ``PYENSEMBL_CACHE_DIR``; the cache is ``root / "pyensembl"``.
+
+    Returns
+    -------
+    pathlib.Path
+        ``root``.
+    """
+    for directory in (
+        "GRCh38/ensembl93", "GRCh38/ensembl110", "GRCh37/ensembl75",
+        "ROS_Cfam_1.0/ensembl2020_10", "GRCh38/ensembl-ensembl-GCA_000001405.29-primary-2026_04",
+        "GRCm38/custom81", "GRCm38/_test_mouse_ensembl81_subset", "custom/unannotated",
+        "dna_cache/homo_sapiens",
+    ):
+        (root / "pyensembl" / directory).mkdir(parents=True)
+    (root / "pyensembl" / "GRCh38" / "ensembl999.json").write_text("{}")
+    return root
+
+
 def test_options_and_actions_complete(tmp_path):
     options = complete("pyensembl --", tmp_path / "cache", tmp_path)
     for option in ("--release", "--species", "--reference-name", "--with-genome-fasta", "--json"):
@@ -55,6 +79,46 @@ def test_options_and_actions_complete(tmp_path):
                    "delete-index-files", "delete-all-files", "prune"):
         assert action in actions
     assert complete("pyensembl ins", tmp_path / "cache", tmp_path) == ["install", "inspect"]
+
+
+def test_release_completes_installed_releases(tmp_path):
+    cache = make_cache(tmp_path / "cache")
+    assert complete("pyensembl list --release ", cache, tmp_path) == [
+        "75", "93", "110", "2020_10", "2026_04",
+    ]
+    assert complete("pyensembl delete-all-files --release 9", cache, tmp_path) == ["93"]
+    assert complete("pyensembl list --release ", tmp_path / "empty", tmp_path) == []
+
+
+def test_installed_releases_reads_directory_names_only(tmp_path):
+    root = make_cache(tmp_path)
+    assert shell.installed_releases(str(root / "pyensembl")) == [
+        "75", "93", "110", "2020_10", "2026_04",
+    ]
+    assert shell.installed_releases(str(tmp_path / "missing")) == []
+
+
+def test_release_completion_skips_download_code(tmp_path):
+    """Completing ``--release`` finds the cache without importing the
+    download or database modules (it must stay fast on Tab)."""
+    probe = (
+        "import sys; from pyensembl import shell; shell.complete_release(''); "
+        "print(' '.join(sorted(m for m in ('pyensembl.download_cache', 'pyensembl.database', "
+        "'datacache', 'sqlite3', 'urllib.request', 'http.client') if m in sys.modules)))"
+    )
+    environment = dict(os.environ, PYENSEMBL_CACHE_DIR=str(make_cache(tmp_path)),
+                       PYTHONPATH=str(REPOSITORY))
+    result = subprocess.run([sys.executable, "-c", probe], env=environment,
+                            capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == ""
+
+
+def test_cache_root_is_shared_with_download_cache():
+    from pyensembl import cache_location, download_cache
+
+    assert download_cache.cache_root is cache_location.cache_root
+    assert download_cache.CACHE_DIR_ENV_KEY == cache_location.CACHE_DIR_ENV_KEY
 
 
 def test_species_completes_registered_names(tmp_path):

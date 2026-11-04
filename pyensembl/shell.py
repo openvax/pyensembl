@@ -146,6 +146,70 @@ def _release_argument(value):
         raise argparse.ArgumentTypeError(str(error))
 
 
+def installed_releases(root):
+    """List the releases that have a cache directory, by directory name only.
+
+    Genomes live in ``<root>/<reference>/ensembl<release>``; dated releases
+    of non-default datasets use
+    ``ensembl-<provider>-<accession>-<coverage>-<date>``. Only directory names
+    are read: no file is opened, indexed or downloaded, so this is fast enough
+    for tab completion on a large cache.
+
+    Parameters
+    ----------
+    root : str
+        The pyensembl cache directory, e.g. ``cache_root()``.
+
+    Returns
+    -------
+    list of str
+        Distinct release labels such as ``"75"`` or ``"2026_04"``: numbered
+        releases in order, then annotation dates in order. Empty if ``root``
+        does not exist or cannot be read.
+    """
+    releases = set()
+    try:
+        references = [entry for entry in os.scandir(root) if entry.is_dir()]
+    except OSError:
+        return []
+    for reference in references:
+        try:
+            names = [entry.name for entry in os.scandir(reference.path) if entry.is_dir()]
+        except OSError:
+            continue
+        for name in names:
+            match = re.fullmatch(r"ensembl(?:-.+-)?(\d+|\d{4}_(?:0[1-9]|1[0-2]))", name)
+            if match:
+                releases.add(match.group(1))
+    return sorted(releases, key=_release_sort_key)
+
+
+def complete_release(prefix, **kwargs):
+    """Suggest ``--release`` values: the releases installed in the local cache.
+
+    An argcomplete completer. It lists cache directory names (see
+    ``installed_releases``) and never touches the network. Resolving the
+    default cache location imports datacache, whose import is lazy (a few
+    milliseconds) from datacache 1.30.
+
+    Parameters
+    ----------
+    prefix : str
+        What has been typed so far; argcomplete filters the suggestions by it.
+    **kwargs
+        The other arguments argcomplete passes (``action``, ``parser``,
+        ``parsed_args``); unused.
+
+    Returns
+    -------
+    list of str
+        Release labels, e.g. ``["75", "93", "2026_04"]``.
+    """
+    from .cache_location import cache_root
+
+    return installed_releases(cache_root())
+
+
 def complete_species(prefix, **kwargs):
     """Suggest ``--species`` values: every registered species name.
 
@@ -187,7 +251,7 @@ release_group.add_argument(
         "(install default=newest supported release for --reference-name, "
         "otherwise for each species)"
     ),
-)
+).completer = complete_release
 
 release_group.add_argument(
     "--species",

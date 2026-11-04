@@ -23,11 +23,12 @@ import logging
 
 import datacache
 
+# Re-exported: callers import the cache root and its settings from here.
+from .cache_location import CACHE_BASE_SUBDIR, CACHE_DIR_ENV_KEY, cache_root  # noqa: F401
+
 
 logger = logging.getLogger(__name__)
 
-CACHE_BASE_SUBDIR = "pyensembl"
-CACHE_DIR_ENV_KEY = "PYENSEMBL_CACHE_DIR"
 # Seconds without any data before a download attempt fails and datacache
 # retries (resuming DNA downloads). Not a limit on total download time.
 DOWNLOAD_TIMEOUT = 300
@@ -83,20 +84,6 @@ def cache_subdirectory(
     reference_dir = join(CACHE_BASE_SUBDIR, reference_name)
     annotation_dir = "%s%s" % (annotation_name, annotation_version)
     return join(reference_dir, annotation_dir)
-
-
-def cache_root():
-    """The directory holding all of PyEnsembl's data; nothing is created.
-
-    $PYENSEMBL_CACHE_DIR/pyensembl when that variable is set, otherwise the
-    platform cache directory from datacache, e.g. ~/.cache/pyensembl,
-    ~/Library/Caches/pyensembl, or %LOCALAPPDATA%\\pyensembl\\pyensembl\\Cache.
-    Every genome's directory is <root>/<reference>/<annotation><version>.
-    """
-    environment_root = environ.get(CACHE_DIR_ENV_KEY)
-    if environment_root:
-        return join(environment_root, CACHE_BASE_SUBDIR)
-    return datacache.get_cache_root(CACHE_BASE_SUBDIR)
 
 
 def _default_cache_directory(reference_name, annotation_name, annotation_version):
