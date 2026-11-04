@@ -31,10 +31,8 @@ dependencies = [
     # [progress] brings tqdm: progress bars are part of pyensembl.
     "datacache[progress]>=1.29.3,<2.0.0",
     "memoized-property>=1.0.2",
-    "tinytimer>=0.0.0,<1.0.0",
     "gtfparse>=2.9.0,<4.0.0",
     "serializable>=0.2.1,<2.0.0",
-    "numpy>=2.0.0,<3.0.0",
     "pyfaidx>=0.8.1,<1.0.0",
     # 3.24+ lets umask and default ACLs set lock file modes (shared caches).
     "filelock>=3.24,<5.0.0",
@@ -59,6 +57,9 @@ dev = [
     "ruff",
     "build",
     "mypy>=1.18,<3",
+    # Only tests import these (test_runtime_types.py, test_timings.py).
+    "numpy>=2.0.0,<3.0.0",
+    "tinytimer>=0.0.0,<1.0.0",
 ]
 
 [tool.setuptools]
@@ -69,6 +70,9 @@ pyensembl = ["assembly_catalog.json", "genetic_code_catalog.json", "release_comp
 
 [tool.setuptools.dynamic]
 version = {attr = "pyensembl.version.__version__"}
+
+[tool.ruff]
+target-version = "py311"
 
 [tool.ruff.lint]
 # Ruff 0.16 widened its default rule set; keep the rules this repo has always used.

@@ -1,7 +1,9 @@
 # Find genes and transcripts <a id="work-with-genes-transcripts-and-proteins"></a>
 
-These examples use the human GRCh38 / Ensembl release 93 data installed on the
-[home page](../index.md#install). They run in one Python session.
+Find genes by name, ID or position, filter them by contig or biotype, and
+choose among a gene's transcripts. These examples use the human GRCh38 /
+Ensembl release 93 data installed on the [home page](../index.md#install).
+They run in one Python session.
 
 ## Find a gene by name or ID
 

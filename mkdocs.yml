@@ -29,6 +29,7 @@ nav:
       - Choose a reference: guides/assembly-selection.md
       - Install and manage data: guides/cache.md
       - Use your own annotations: guides/custom-genomes.md
+  - Command line: reference/cli.md
   - API reference:
       - reference/index.md
       - Select data: reference/datasets.md
@@ -37,11 +38,11 @@ nav:
       - Gene name aliases: reference/aliases.md
       - Data and indexing: reference/data.md
       - Species and reference helpers: reference/helpers.md
-      - Command line: reference/cli.md
   - Contributing:
       - dev/contributing.md
       - Documentation style: dev/documentation-style.md
       - Releasing: dev/releasing.md
+      - Release notes: dev/release-notes.md
       - Assembly catalogue: dev/assembly-catalogue.md
       - Genetic-code catalogue: dev/genetic-code-catalogue.md
 exclude_docs: |
