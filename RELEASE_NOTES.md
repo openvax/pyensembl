@@ -11,6 +11,16 @@ only when an action runs, so a Tab press takes about 40 ms instead of 125 ms.
 `activate-global-python-argcomplete`. Adds the `argcomplete` dependency.
 Caches, output and exit codes are unchanged.
 
+# 2.32.4
+
+Split the `pyensembl` command's `run()` into public, documented per-action
+functions in `pyensembl.shell` (`validate_arguments`, `run_prune`,
+`run_available`, `require_ensembl_releases`, `run_verify`, `run_install`),
+and let `run(argv)` take an explicit argument list like the other OpenVax
+command-line tools. Flags, messages and exit codes are unchanged: only
+argument mistakes become one-line errors, while listing, checksum and data
+failures keep their tracebacks. Existing caches are unaffected.
+
 # 2.32.3
 
 Remove the obsolete `typechecks` runtime dependency (#456). Keep built-in

@@ -1020,7 +1020,21 @@ def run_prune(dry_run):
 
 
 def selects_catalogue(args):
-    """Return True when ``available`` flags ask for a filtered release catalogue."""
+    """Tell whether ``available`` should print the filtered release catalogue.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments; the selector flags and ``json`` are used.
+
+    Returns
+    -------
+    bool
+        True when any of ``--species``, ``--assembly``,
+        ``--assembly-accession``, ``--provider``, ``--reference-name``,
+        ``--include-alt``/``--no-include-alt`` or ``--json`` was given;
+        False for the plain table of supported species.
+    """
     return bool(
         args.species or args.assembly or args.assembly_accession or args.provider
         or args.reference_name or args.include_alt is not None or args.json
@@ -1045,7 +1059,9 @@ def run_available(args):
     Raises
     ------
     ValueError
-        If the selectors conflict.
+        If the selectors conflict. Only this case is a command-line mistake:
+        ``run`` reports it as an argument error when ``selects_catalogue``
+        is true and lets other errors keep their tracebacks.
     """
     from .dated_releases import AVAILABLE_EXPIRE_AFTER, fetch_all_dated_releases
 
@@ -1054,6 +1070,27 @@ def run_available(args):
     return format_available_species(dated_releases=fetch_all_dated_releases(
         expire_after=0 if args.refresh else AVAILABLE_EXPIRE_AFTER,
     ))
+
+
+def require_ensembl_releases(genomes):
+    """Check that every genome is an Ensembl release, as ``verify`` requires.
+
+    Only Ensembl releases have upstream checksum manifests to verify against.
+
+    Parameters
+    ----------
+    genomes : list of Genome
+        Genomes selected on the command line.
+
+    Raises
+    ------
+    ValueError
+        If any genome is not an ``EnsemblRelease``.
+    """
+    from .ensembl_release import EnsemblRelease
+
+    if any(not isinstance(g, EnsemblRelease) for g in genomes):
+        raise ValueError("verify requires an Ensembl release; use inspect for custom sources")
 
 
 def run_verify(genomes, check_remote=False, json_output=False):
@@ -1077,12 +1114,12 @@ def run_verify(genomes, check_remote=False, json_output=False):
     Raises
     ------
     ValueError
-        If any genome is not an Ensembl release.
+        If any genome is not an Ensembl release (see
+        ``require_ensembl_releases``). Checksum problems found while
+        verifying, such as ``AnnotationIntegrityError`` for an ambiguous
+        upstream manifest, also propagate.
     """
-    from .ensembl_release import EnsemblRelease
-
-    if any(not isinstance(g, EnsemblRelease) for g in genomes):
-        raise ValueError("verify requires an Ensembl release; use inspect for custom sources")
+    require_ensembl_releases(genomes)
     reports = [dict(release=g.release, sources=g.verify_sources(check_remote)) for g in genomes]
     if json_output:
         text = json.dumps(reports, indent=2)
@@ -1178,6 +1215,10 @@ def run(argv=None):
         try:
             print(run_available(args))
         except ValueError as error:
+            # Conflicting selectors are argument errors; failures while
+            # reading release listings keep their tracebacks.
+            if not selects_catalogue(args):
+                raise
             parser.error(str(error))
         return
 
@@ -1191,9 +1232,11 @@ def run(argv=None):
 
     if args.action == "verify":
         try:
-            text, ok = run_verify(genomes, args.check_remote, args.json)
+            require_ensembl_releases(genomes)
         except ValueError as error:
             parser.error(str(error))
+        # Checksum and manifest errors keep their tracebacks.
+        text, ok = run_verify(genomes, args.check_remote, args.json)
         print(text)
         if not ok:
             raise SystemExit(1)
