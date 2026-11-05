@@ -684,6 +684,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#tab-completion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tab completion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#errors-and-exit-status" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1229,6 +1240,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#tab-completion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tab completion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#errors-and-exit-status" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1383,6 +1405,14 @@ examples:
   pyensembl delete-all-files --release 75
   pyensembl prune --dry-run
 </code></pre></div>
+<h2 id="tab-completion">Tab completion<a class="headerlink" href="#tab-completion" title="Permanent link">&para;</a></h2>
+<p><code>pyensembl</code> completes actions and options when you press Tab, the releases
+in your cache after <code>--release</code>, and species names after <code>--species</code>. Turn it
+on once with <code>activate-global-python-argcomplete</code>, which enables it for every
+installed command that supports argcomplete, or for this command only with
+<code>eval "$(register-python-argcomplete pyensembl)"</code> in your shell's startup
+file. Completion reads only the cache's directory names and the built-in
+species list; it never opens data files or uses the network.</p>
 <h2 id="errors-and-exit-status">Errors and exit status<a class="headerlink" href="#errors-and-exit-status" title="Permanent link">&para;</a></h2>
 <p>Argument mistakes, such as an unknown species/release, conflicting selectors,
 or an explicitly empty source path, print a concise argparse error and exit 2.

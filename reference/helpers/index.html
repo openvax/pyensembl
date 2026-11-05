@@ -3318,9 +3318,10 @@ for all possible combinations.</p>
 </div><h2 id="package-values-and-convenience-genomes">Package values and convenience genomes <a id="exported-constants"></a><a class="headerlink" href="#package-values-and-convenience-genomes" title="Permanent link">&para;</a></h2>
 <p><code>MAX_ENSEMBL_RELEASE</code> is the newest numbered release supported by this package.
 <code>__version__</code> is its package version. <code>ensembl_grch36</code>, <code>ensembl_grch37</code> and
-<code>ensembl_grch38</code> are convenience <code>EnsemblRelease</code> objects selected when the
-package imports, using <code>genome_for_reference_name</code>. Their selections depend on
-installed/downloaded data and the supported release range. Use an explicit
+<code>ensembl_grch38</code> are convenience <code>EnsemblRelease</code> objects selected the first
+time each is used, using <code>genome_for_reference_name</code>; <code>import pyensembl</code> does
+not read the cache. Their selections depend on installed/downloaded data at
+that moment and the supported release range. Use an explicit
 <code>EnsemblRelease</code> for reproducibility. They do not represent the new platform's
 dated annotations.</p>
 

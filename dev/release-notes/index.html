@@ -1098,6 +1098,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2330" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.33.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2326" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1383,6 +1394,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2330" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.33.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2326" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1592,6 +1614,19 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
+<h2 id="2330">2.33.0<a class="headerlink" href="#2330" title="Permanent link">&para;</a></h2>
+<p>Tab completion for the <code>pyensembl</code> command (#514), and a fast import (#510).
+<code>import pyensembl</code> no longer reads the genome cache or imports datacache or
+SQLite: public names load from their submodules on first use, and
+<code>ensembl_grch36</code>/<code>37</code>/<code>38</code> are chosen from the cache the first time each is
+used rather than at import. <code>from pyensembl import ...</code>, <code>pyensembl.X</code> and
+<code>pyensembl.&lt;submodule&gt;</code> work as before. The command line imports genome code
+only when an action runs, so a Tab press takes about 40 ms instead of 125 ms.
+<code>--release</code> completes the releases in the cache, from directory names only,
+and <code>--species</code> the registered species names; enable completion with
+<code>activate-global-python-argcomplete</code>. Adds the <code>argcomplete</code> dependency and
+requires datacache 1.30, whose lazy import keeps <code>--release</code> completion under
+100 ms. Caches, output and exit codes are unchanged.</p>
 <h2 id="2326">2.32.6<a class="headerlink" href="#2326" title="Permanent link">&para;</a></h2>
 <p>Install only what the library imports: <code>numpy</code> and <code>tinytimer</code> move from the
 runtime dependencies to the <code>dev</code> extra, because only the tests use them
