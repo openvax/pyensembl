@@ -9,6 +9,12 @@ The site uses [MkDocs](https://www.mkdocs.org/) with
 
 ## Structure
 
+`README.md` is also the PyPI page, so it uses absolute links into the site. It
+follows the layout shared by OpenVax libraries: title and badges, one paragraph
+on purpose and related libraries, then Install, Quick start (with real
+output), Command line, Documentation (the key guides in reading order),
+Development and License. Longer material belongs on the site.
+
 Put installation and the first useful examples directly on the homepage.
 Readers should reach a result without having to find a separate tutorial.
 Use one explicitly selected species, assembly and annotation version.
@@ -16,8 +22,10 @@ Explain IDs, coordinates, strand and sequence interpretation alongside the
 output. Task guides cover lookups, transcript structure, selection, custom
 files, aliases, caches and DNA. Reference pages give complete interfaces and
 metadata; the Genome page opens with a method overview grouped by what each
-method returns. Contributor and release workflows live in the root
-`CONTRIBUTING.md` and `RELEASING.md`, which the Contributing pages include.
+method returns. The command-line reference precedes the API reference.
+Contributor and release workflows and release notes live in the root
+`CONTRIBUTING.md`, `RELEASING.md` and `RELEASE_NOTES.md`, which the
+Contributing pages include.
 
 Use descriptive headings and label guides by the task a reader wants to do.
 Keep desktop sidebar groups expanded by default so readers can see the available
@@ -75,8 +83,8 @@ python scripts/check_docs_examples.py
 ```
 
 The example check runs every Python block that is followed by a text output
-block on the home page and the gene and transcript guides, and requires human
-release 93 installed. `./docs.sh` builds strictly and validates rendered
+block in the README, on the home page and in the gene and transcript guides,
+and requires human release 93 installed. `./docs.sh` builds strictly and validates rendered
 internal links, anchors, README links and API coverage. CI performs the docs build on PRs and publishes the site from main.
 Use `mkdocs serve` to preview the pages; review the first-use and complete
 reference pages at desktop and narrow widths, including long signatures and
