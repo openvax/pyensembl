@@ -1,3 +1,6 @@
+# PYTHON_ARGCOMPLETE_OK
+# (argcomplete's global activation completes only scripts with this marker.)
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -10,31 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Command-line tool for installing and managing PyEnsembl data."""
+"""Command-line tool for installing and managing PyEnsembl data.
+
+Tab completion re-runs this module up to ``argcomplete.autocomplete`` on every
+key press, so module-level imports stay cheap: argparse, argcomplete and
+small pyensembl modules. Genome, database and download code is imported by the
+functions that run an action.
+"""
 
 import argparse
-from dataclasses import fields
 import json
 import logging
 import os
-from pathlib import Path
 import re
 import sys
 
-from .database import is_complete_database
-from .dated_releases import AVAILABLE_EXPIRE_AFTER, UnpublishedDateError, fetch_all_dated_releases
-from .download_cache import MissingGenomeDataFile, MissingLocalFile, cache_root
-from .ensembl_release import EnsemblRelease
+import argcomplete
+
 from .ensembl_versions import is_dated_release, normalize_release
-from .genome import Genome
-from .genome_fasta import GenomeFasta, MissingGenomeFastaError
-from .genome_fasta_cache import (
-    canonical_source_options,
-    dna_cache_lock,
-    prune_genome_fastas,
-)
-from .reference_name import find_species_by_reference, normalize_reference_name
-from .species import Species, find_species_by_name
 from .version import __version__
 
 logger = logging.getLogger(__name__)
@@ -150,6 +146,99 @@ def _release_argument(value):
         raise argparse.ArgumentTypeError(str(error))
 
 
+def installed_releases(root):
+    """List the releases that have a cache directory, by directory name only.
+
+    Genomes live in ``<root>/<reference>/ensembl<release>``; dated releases
+    of non-default datasets use
+    ``ensembl-<provider>-<accession>-<coverage>-<date>``. Only directory names
+    are read: no file is opened, indexed or downloaded, so this is fast enough
+    for tab completion on a large cache.
+
+    Parameters
+    ----------
+    root : str
+        The pyensembl cache directory, e.g. ``cache_root()``.
+
+    Returns
+    -------
+    list of str
+        Distinct release labels such as ``"75"`` or ``"2026_04"``: numbered
+        releases in order, then annotation dates in order. Empty if ``root``
+        does not exist or cannot be read.
+    """
+    releases = set()
+    try:
+        references = [entry for entry in os.scandir(root) if entry.is_dir()]
+    except OSError:
+        return []
+    for reference in references:
+        try:
+            names = [entry.name for entry in os.scandir(reference.path) if entry.is_dir()]
+        except OSError:
+            continue
+        for name in names:
+            match = re.fullmatch(r"ensembl(?:-.+-)?(\d+|\d{4}_(?:0[1-9]|1[0-2]))", name)
+            if match:
+                releases.add(match.group(1))
+    return sorted(releases, key=_release_sort_key)
+
+
+def complete_release(prefix, **kwargs):
+    """Suggest ``--release`` values: the releases installed in the local cache.
+
+    An argcomplete completer. It lists cache directory names (see
+    ``installed_releases``) and never touches the network. Resolving the
+    default cache location imports datacache, whose import is lazy (a few
+    milliseconds) from datacache 1.30.
+
+    Parameters
+    ----------
+    prefix : str
+        What has been typed so far; argcomplete filters the suggestions by it.
+    **kwargs
+        The other arguments argcomplete passes (``action``, ``parser``,
+        ``parsed_args``); unused.
+
+    Returns
+    -------
+    list of str
+        Release labels, e.g. ``["75", "93", "2026_04"]``.
+    """
+    from .cache_location import cache_root
+
+    return installed_releases(cache_root())
+
+
+def complete_species(prefix, **kwargs):
+    """Suggest ``--species`` values: every registered species name.
+
+    An argcomplete completer. It reads pyensembl's built-in species registry;
+    it never touches the cache or the network.
+
+    Parameters
+    ----------
+    prefix : str
+        What has been typed so far; argcomplete filters the suggestions by it.
+    **kwargs
+        The other arguments argcomplete passes (``action``, ``parser``,
+        ``parsed_args``); unused.
+
+    Returns
+    -------
+    list of str
+        Common names (e.g. ``"human"``) and latin names
+        (e.g. ``"homo_sapiens"``), sorted.
+    """
+    from .species import Species, find_species_by_name
+
+    names = set()
+    for latin_name in Species.all_registered_latin_names():
+        names.add(latin_name)
+        names.update(find_species_by_name(latin_name).synonyms)
+    return sorted(names)
+
+
 release_group = parser.add_argument_group("Ensembl release options")
 release_group.add_argument(
     "--release",
@@ -162,7 +251,7 @@ release_group.add_argument(
         "(install default=newest supported release for --reference-name, "
         "otherwise for each species)"
     ),
-)
+).completer = complete_release
 
 release_group.add_argument(
     "--species",
@@ -172,7 +261,7 @@ release_group.add_argument(
         "Which species to download Ensembl data for "
         "(default=inferred from --reference-name, otherwise human)"
     ),
-)
+).completer = complete_species
 
 release_group.add_argument(
     "--assembly", help="Optional build, full assembly name, or versioned GCA/GCF accession",
@@ -325,6 +414,9 @@ def _dna_status(cache_directory, check=False):
     A broken reference is reported rather than raised, so one bad release
     cannot hide the others.
     """
+    from .genome_fasta import GenomeFasta
+    from .genome_fasta_cache import canonical_source_options
+
     try:
         dna = GenomeFasta.installed_source(cache_directory)
     except (OSError, ValueError) as error:
@@ -354,6 +446,8 @@ _DNA_ENTRIES = {"genome_fasta", "genome_fasta.json", "genome_fasta_refs"}
 
 def _directory_annotation_status(directory):
     """Best-effort status for a cache directory whose genome is unknown."""
+    from .database import is_complete_database
+
     try:
         names = [
             name for name in os.listdir(directory)
@@ -375,6 +469,8 @@ def _directory_annotation_status(directory):
 
 
 def _subdirectories(path):
+    from pathlib import Path
+
     try:
         return sorted(
             entry for entry in Path(path).iterdir()
@@ -389,6 +485,8 @@ def _subdirectories(path):
 
 def _other_genome_labels(reference, annotation):
     """(species, release) cells for a cache directory pyensembl did not match."""
+    from .reference_name import find_species_by_reference
+
     release = annotation[len("ensembl"):] if annotation.startswith("ensembl") else ""
     if not (re.fullmatch(r"[0-9]+", release) or is_dated_release(release)):
         return "custom", annotation
@@ -419,6 +517,8 @@ def _format_table(header, rows, use_color=None):
 
 def inspect_genomes(genomes, check_genome_fasta=False, json_output=False):
     """Render the same offline inventory exposed by ``Genome.inspect_data``."""
+    from dataclasses import fields
+
     reports = []
     tables = []
     for genome in genomes:
@@ -453,6 +553,9 @@ def inspect_genomes(genomes, check_genome_fasta=False, json_output=False):
 
 def _ensembl_releases():
     """Every numbered release, plus dated releases with a cache directory."""
+    from .ensembl_release import EnsemblRelease
+    from .species import Species
+
     numbered = [
         EnsemblRelease(release, species=species)
         for species, release in Species.all_species_release_pairs()
@@ -488,6 +591,10 @@ def collect_all_installed_ensembl_releases():
 
 def format_installed_genomes(check_genome_fasta=False, use_color=None):
     """A table of genomes in the local cache, or a note that there are none."""
+    from pathlib import Path
+
+    from .download_cache import cache_root
+
     rows = []
     ensembl_directories = set()
     ensembl_named = set()
@@ -541,6 +648,8 @@ def format_installed_genomes(check_genome_fasta=False, use_color=None):
 
 def _newest_release(species_name):
     """Newest release supported for a species; Ensembl Genomes numbers end at 63."""
+    from .species import find_species_by_name
+
     species = find_species_by_name(species_name)
     return max(end for _, end in species.reference_assemblies.values())
 
@@ -554,6 +663,10 @@ def all_combinations_of_ensembl_genomes(args):
     The results will typically be of type EnsemblRelease unless the
     --custom-mirror argument was given.
     """
+    from .ensembl_release import EnsemblRelease
+    from .reference_name import find_species_by_reference, normalize_reference_name
+    from .species import find_species_by_name
+
     assembly = getattr(args, "assembly", None)
     accession = getattr(args, "assembly_accession", None)
     if getattr(args, "server", None) and args.custom_mirror:
@@ -638,6 +751,8 @@ def all_combinations_of_ensembl_genomes(args):
 
 
 def collect_selected_genomes(args):
+    from .genome import Genome
+
     # An explicitly empty source is an argument error, not an omitted option.
     # In particular, do not let --gtf "" or --custom-mirror "" select the
     # default human download through the truthiness checks below.
@@ -730,6 +845,8 @@ def format_available_species(use_color=None, dated_releases=None):
     maps latin names to the annotation dates of their registered dated assembly
     (``None`` when unknown) and adds a column for them.
     """
+    from .species import Species
+
     if use_color is None:
         use_color = sys.stdout.isatty()
     BOLD = "\x1b[1m" if use_color else ""
@@ -831,6 +948,8 @@ def format_available_species(use_color=None, dated_releases=None):
 
 
 def _genome_description(genome):
+    from .ensembl_release import EnsemblRelease
+
     if isinstance(genome, EnsemblRelease):
         species = genome.species
         name = (
@@ -879,6 +998,8 @@ def _install(genome, only_genome_fasta=False, overwrite=False, show_progress=Fal
 
 
 def _delete_genome_files(genome, action):
+    from .genome_fasta_cache import dna_cache_lock
+
     if action == "delete-index-files":
         deleted = genome.delete_index_files()
     else:
@@ -951,6 +1072,8 @@ def run_prune(dry_run):
     ValueError
         If the shared DNA cache cannot be pruned safely.
     """
+    from .genome_fasta_cache import prune_genome_fastas
+
     candidates = prune_genome_fastas(dry_run=dry_run)
     if not candidates:
         return "No orphan genome FASTAs"
@@ -1004,6 +1127,8 @@ def run_available(args):
         ``run`` reports it as an argument error when ``selects_catalogue``
         is true and lets other errors keep their tracebacks.
     """
+    from .dated_releases import AVAILABLE_EXPIRE_AFTER, fetch_all_dated_releases
+
     if selects_catalogue(args):
         return available_catalogue(args)
     return format_available_species(dated_releases=fetch_all_dated_releases(
@@ -1026,6 +1151,8 @@ def require_ensembl_releases(genomes):
     ValueError
         If any genome is not an ``EnsemblRelease``.
     """
+    from .ensembl_release import EnsemblRelease
+
     if any(not isinstance(g, EnsemblRelease) for g in genomes):
         raise ValueError("verify requires an Ensembl release; use inspect for custom sources")
 
@@ -1095,6 +1222,9 @@ def run_install(genome, only_genome_fasta=False, overwrite=False):
     InstallError
         For missing local or remote source files; ``str`` is the message.
     """
+    from .download_cache import MissingGenomeDataFile, MissingLocalFile
+    from .genome_fasta import MissingGenomeFastaError
+
     try:
         _install(
             genome, only_genome_fasta, overwrite,
@@ -1117,6 +1247,8 @@ def run(argv=None):
     argv : list of str, optional
         Arguments after the program name; defaults to ``sys.argv[1:]``.
     """
+    # When the shell asks for completions, this prints them and exits.
+    argcomplete.autocomplete(parser)
     args = parser.parse_args(argv)
     configure_logging(verbose=args.verbose)
     try:
@@ -1178,6 +1310,8 @@ def run(argv=None):
         for genome in genomes:
             _delete_genome_files(genome, args.action)
     elif args.action == "install":
+        from .dated_releases import UnpublishedDateError
+
         for genome in genomes:
             try:
                 run_install(genome, args.only_genome_fasta, args.overwrite)

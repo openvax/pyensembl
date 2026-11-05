@@ -6,6 +6,7 @@ import pytest
 
 from pyensembl import EnsemblRelease, shell
 from pyensembl.annotation_integrity import AnnotationIntegrityError
+from pyensembl.dated_releases import AVAILABLE_EXPIRE_AFTER
 from pyensembl.download_cache import MissingLocalFile
 
 
@@ -28,19 +29,19 @@ def test_validate_arguments_rejects_misplaced_flags(
 
 
 def test_run_prune_reports_candidates(monkeypatch):
-    monkeypatch.setattr(shell, "prune_genome_fastas", lambda dry_run: [("/a", 1234)])
+    monkeypatch.setattr("pyensembl.genome_fasta_cache.prune_genome_fastas", lambda dry_run: [("/a", 1234)])
     assert shell.run_prune(True) == "Would delete /a (1,234 bytes)"
     assert shell.run_prune(False) == "Deleted /a (1,234 bytes)"
 
 
 def test_run_prune_reports_nothing_and_propagates_errors(monkeypatch):
-    monkeypatch.setattr(shell, "prune_genome_fastas", lambda dry_run: [])
+    monkeypatch.setattr("pyensembl.genome_fasta_cache.prune_genome_fastas", lambda dry_run: [])
     assert shell.run_prune(False) == "No orphan genome FASTAs"
 
     def fail(dry_run):
         raise ValueError("unsafe")
 
-    monkeypatch.setattr(shell, "prune_genome_fastas", fail)
+    monkeypatch.setattr("pyensembl.genome_fasta_cache.prune_genome_fastas", fail)
     with pytest.raises(ValueError, match="unsafe"):
         shell.run_prune(False)
 
@@ -61,11 +62,11 @@ def test_selects_catalogue():
 
 def test_run_available_chooses_listing(monkeypatch):
     monkeypatch.setattr(shell, "available_catalogue", lambda args: "catalogue")
-    monkeypatch.setattr(shell, "fetch_all_dated_releases", lambda expire_after: expire_after)
+    monkeypatch.setattr("pyensembl.dated_releases.fetch_all_dated_releases", lambda expire_after: expire_after)
     monkeypatch.setattr(shell, "format_available_species",
                         lambda dated_releases: "species %s" % dated_releases)
     assert shell.run_available(make_available_args(provider="ensembl")) == "catalogue"
-    assert shell.run_available(make_available_args()) == "species %s" % shell.AVAILABLE_EXPIRE_AFTER
+    assert shell.run_available(make_available_args()) == "species %s" % AVAILABLE_EXPIRE_AFTER
     assert shell.run_available(make_available_args(refresh=True)) == "species 0"
 
 

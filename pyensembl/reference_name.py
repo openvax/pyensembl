@@ -70,6 +70,52 @@ def genome_for_reference_name(reference_name, allow_older_downloaded_release=Tru
     return candidates[0]
 
 
-ensembl_grch36 = genome_for_reference_name("ncbi36")
-ensembl_grch37 = genome_for_reference_name("grch37")
-ensembl_grch38 = genome_for_reference_name("grch38")
+# Convenience genomes and the reference each one selects. ``__getattr__``
+# chooses each from the cache the first time it is used, not at import.
+CONVENIENCE_GENOME_REFERENCES = {
+    "ensembl_grch36": "ncbi36",
+    "ensembl_grch37": "grch37",
+    "ensembl_grch38": "grch38",
+}
+
+
+def __getattr__(name):
+    """Choose a convenience genome the first time it is used (PEP 562).
+
+    ``ensembl_grch36``, ``ensembl_grch37`` and ``ensembl_grch38`` are
+    ``genome_for_reference_name`` of NCBI36, GRCh37 and GRCh38, so choosing
+    one reads the genome cache. Choosing on first use keeps
+    ``import pyensembl`` from touching the cache. The result is stored in the
+    module, so later uses return the same object even if the cache changes.
+
+    Parameters
+    ----------
+    name : str
+        ``"ensembl_grch36"``, ``"ensembl_grch37"`` or ``"ensembl_grch38"``.
+
+    Returns
+    -------
+    EnsemblRelease
+        The selected release.
+
+    Raises
+    ------
+    AttributeError
+        For any other name.
+    """
+    if name not in CONVENIENCE_GENOME_REFERENCES:
+        raise AttributeError("module %r has no attribute %r" % (__name__, name))
+    genome = genome_for_reference_name(CONVENIENCE_GENOME_REFERENCES[name])
+    globals()[name] = genome
+    return genome
+
+
+def __dir__():
+    """List the module namespace, including convenience genomes not chosen yet.
+
+    Returns
+    -------
+    list of str
+        Sorted names.
+    """
+    return sorted(set(globals()) | set(CONVENIENCE_GENOME_REFERENCES))

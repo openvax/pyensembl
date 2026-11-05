@@ -68,7 +68,9 @@ pyensembl prune --dry-run                       # shared reference DNA that no r
 ```
 
 The [command-line reference](https://openvax.github.io/pyensembl/reference/cli/)
-lists every option.
+lists every option. For Tab completion, run `activate-global-python-argcomplete`
+once, or add `eval "$(register-python-argcomplete pyensembl)"` to your shell's
+startup file.
 
 ## Documentation
 

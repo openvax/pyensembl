@@ -31,7 +31,8 @@ def test_empty_source_is_rejected_before_genome_selection(tmp_path, monkeypatch,
 
     args = shell.parser.parse_args(["install", option, ""])
     monkeypatch.setattr(shell, "all_combinations_of_ensembl_genomes", forbidden)
-    monkeypatch.setattr(shell, "Genome", forbidden)
+    # collect_selected_genomes imports Genome when it runs.
+    monkeypatch.setattr("pyensembl.genome.Genome", forbidden)
     with pytest.raises(ValueError, match=option + " must not be empty"):
         shell.collect_selected_genomes(args)
     result = run_cli(["install", option, ""], tmp_path / "cache")

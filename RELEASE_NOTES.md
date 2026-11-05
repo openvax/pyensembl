@@ -3,6 +3,21 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.33.0
+
+Tab completion for the `pyensembl` command (#514), and a fast import (#510).
+`import pyensembl` no longer reads the genome cache or imports datacache or
+SQLite: public names load from their submodules on first use, and
+`ensembl_grch36`/`37`/`38` are chosen from the cache the first time each is
+used rather than at import. `from pyensembl import ...`, `pyensembl.X` and
+`pyensembl.<submodule>` work as before. The command line imports genome code
+only when an action runs, so a Tab press takes about 40 ms instead of 125 ms.
+`--release` completes the releases in the cache, from directory names only,
+and `--species` the registered species names; enable completion with
+`activate-global-python-argcomplete`. Adds the `argcomplete` dependency and
+requires datacache 1.30, whose lazy import keeps `--release` completion under
+100 ms. Caches, output and exit codes are unchanged.
+
 ## 2.32.6
 
 Install only what the library imports: `numpy` and `tinytimer` move from the

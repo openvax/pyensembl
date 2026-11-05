@@ -26,8 +26,11 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
 dependencies = [
-    # [progress] brings tqdm: progress bars are part of pyensembl.
-    "datacache[progress]>=1.29.3,<2.0.0",
+    # Tab completion for the pyensembl command; it has no dependencies.
+    "argcomplete>=3,<4",
+    # [progress] brings tqdm: progress bars are part of pyensembl. 1.30 makes
+    # `import datacache` lazy, which keeps `--release` tab completion fast.
+    "datacache[progress]>=1.30.0,<2.0.0",
     "memoized-property>=1.0.2",
     "gtfparse>=2.9.0,<4.0.0",
     "serializable>=0.2.1,<2.0.0",
