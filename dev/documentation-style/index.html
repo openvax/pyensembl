@@ -612,13 +612,38 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../../reference/cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Command line
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
       
         
           
-        
-      
         
       
         
@@ -643,7 +668,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -665,14 +690,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -852,34 +877,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/cli/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Command line
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -908,6 +905,8 @@
       
         
       
+        
+      
     
     
     
@@ -916,10 +915,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
             
   
   
@@ -937,8 +936,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_5">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1130,6 +1129,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../release-notes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../assembly-catalogue/" class="md-nav__link">
         
   
@@ -1284,6 +1311,11 @@ The site uses <a href="https://www.mkdocs.org/">MkDocs</a> with
 <a href="https://squidfunk.github.io/mkdocs-material/">Material</a>; API pages use
 <a href="https://mkdocstrings.github.io/">mkdocstrings</a>.</p>
 <h2 id="structure">Structure<a class="headerlink" href="#structure" title="Permanent link">&para;</a></h2>
+<p><code>README.md</code> is also the PyPI page, so it uses absolute links into the site. It
+follows the layout shared by OpenVax libraries: title and badges, one paragraph
+on purpose and related libraries, then Install, Quick start (with real
+output), Command line, Documentation (the key guides in reading order),
+Development and License. Longer material belongs on the site.</p>
 <p>Put installation and the first useful examples directly on the homepage.
 Readers should reach a result without having to find a separate tutorial.
 Use one explicitly selected species, assembly and annotation version.
@@ -1291,8 +1323,10 @@ Explain IDs, coordinates, strand and sequence interpretation alongside the
 output. Task guides cover lookups, transcript structure, selection, custom
 files, aliases, caches and DNA. Reference pages give complete interfaces and
 metadata; the Genome page opens with a method overview grouped by what each
-method returns. Contributor and release workflows live in the root
-<code>CONTRIBUTING.md</code> and <code>RELEASING.md</code>, which the Contributing pages include.</p>
+method returns. The command-line reference precedes the API reference.
+Contributor and release workflows and release notes live in the root
+<code>CONTRIBUTING.md</code>, <code>RELEASING.md</code> and <code>RELEASE_NOTES.md</code>, which the
+Contributing pages include.</p>
 <p>Use descriptive headings and label guides by the task a reader wants to do.
 Keep desktop sidebar groups expanded by default so readers can see the available
 tasks; readers can collapse individual groups. Split pages for
@@ -1357,8 +1391,8 @@ python<span class="w"> </span>scripts/check_docs_examples.py
 ./test.sh
 </code></pre></div>
 <p>The example check runs every Python block that is followed by a text output
-block on the home page and the gene and transcript guides, and requires human
-release 93 installed. <code>./docs.sh</code> builds strictly and validates rendered
+block in the README, on the home page and in the gene and transcript guides,
+and requires human release 93 installed. <code>./docs.sh</code> builds strictly and validates rendered
 internal links, anchors, README links and API coverage. CI performs the docs build on PRs and publishes the site from main.
 Use <code>mkdocs serve</code> to preview the pages; review the first-use and complete
 reference pages at desktop and narrow widths, including long signatures and
