@@ -1,5 +1,6 @@
 """Tests for the per-action functions behind ``pyensembl.shell.run``."""
 
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -70,6 +71,25 @@ def test_run_available_chooses_listing(monkeypatch):
     assert shell.run_available(make_available_args(refresh=True)) == "species 0"
 
 
+@pytest.mark.parametrize("selector", [
+    ["--species", "human"], ["--assembly", "GRCh37"], ["--species", "dog"],
+])
+def test_available_catalogue_text_lists_the_json_releases(
+        tmp_path, monkeypatch, capsys, selector):
+    """The text table shows every release --json does, including numbered
+    releases, which are ints (#507)."""
+    monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
+    monkeypatch.setattr(shell, "configure_logging", lambda **kw: None)
+    shell.run(["available", "--json"] + selector)
+    expected = [(str(row["release"]), row["latest"])
+                for row in json.loads(capsys.readouterr().out)]
+    assert any(release.isdigit() for release, _ in expected)
+    shell.run(["available"] + selector)
+    header, *rows = capsys.readouterr().out.splitlines()
+    assert header.split()[:2] == ["Release", "Assembly"]
+    assert [(row.split()[0], row.endswith(" yes")) for row in rows] == expected
+
+
 def test_run_available_conflicting_selectors():
     args = make_available_args(reference_name="GRCh37", assembly="GRCh38")
     with pytest.raises(ValueError, match="one assembly selector"):
@@ -78,7 +98,7 @@ def test_run_available_conflicting_selectors():
 
 class FakeRelease(EnsemblRelease):
     def __init__(self, statuses):
-        self.release = "75"
+        self.release = 75  # numbered releases are ints, as in EnsemblRelease
         self.statuses = statuses
 
     def verify_sources(self, check_remote):
@@ -87,7 +107,8 @@ class FakeRelease(EnsemblRelease):
 
 def test_run_verify_reports_status():
     text, ok = shell.run_verify([FakeRelease(["verified"])])
-    assert ok and "verified" in text
+    assert ok
+    assert text.splitlines()[1].split() == ["75", "gtf", "verified", "not", "checked"]
     text, ok = shell.run_verify([FakeRelease(["mismatch"])], json_output=True)
     assert not ok and '"mismatch"' in text
 

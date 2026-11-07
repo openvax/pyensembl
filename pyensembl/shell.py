@@ -504,8 +504,11 @@ def _display_path(path):
 
 
 def _format_table(header, rows, use_color=None):
+    """Align rows under a header; cells are printed with ``str``, so a
+    numbered release can be the ``int`` it is everywhere else."""
     if use_color is None:
         use_color = sys.stdout.isatty()
+    rows = [[str(cell) for cell in row] for row in rows]
     widths = [max(len(cell) for cell in column) for column in zip(header, *rows)]
 
     def line(cells):
