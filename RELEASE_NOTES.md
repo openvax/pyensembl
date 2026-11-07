@@ -3,6 +3,21 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.33.2
+
+Lookups by a feature type or attribute that an annotation lacks no longer
+raise SQLite errors. The index has a table only for the features a GTF
+contains and a column only for the attributes it uses, so a GTF without
+`start_codon`, `stop_codon` or `CDS` rows made `Transcript.complete` and
+`contains_start_codon` fail with `no such table` (#499), and one without
+`transcript_name` made `transcripts_by_name` fail with `no such column` (#502).
+Such a lookup now matches nothing: `complete`, `contains_start_codon` and
+`start_codon_complete` are `False`, and `transcripts_by_name` raises the same
+`ValueError` as for any name not in the annotation. Accessors that require a
+feature, such as `start_codon_positions` or `coding_sequence_position_ranges`,
+raise `ValueError` instead of `sqlite3.OperationalError`. Existing indexes are
+used as they are.
+
 ## 2.33.1
 
 `pyensembl available` with `--species`, `--assembly` or another selector
