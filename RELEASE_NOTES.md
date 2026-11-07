@@ -3,6 +3,15 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.33.1
+
+`pyensembl available` with `--species`, `--assembly` or another selector
+printed a `TypeError` traceback instead of its table whenever the selection
+included a numbered release, as in `pyensembl available --species human`
+(#507). `pyensembl verify --release 75` failed the same way. Command-line
+tables now print numbered releases like any other value. `--json` output
+and caches are unchanged.
+
 ## 2.33.0
 
 Tab completion for the `pyensembl` command (#514), and a fast import (#510).
