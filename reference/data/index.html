@@ -4044,6 +4044,11 @@ this list.</p>
 
         <p>Construct a SQL query and run against the sqlite3 database,
 filtered both by the feature type and a user-provided column/value.</p>
+<p>The database has a table only for the features its GTF contains and
+a column only for the attributes it uses. Without one (e.g. no
+<code>start_codon</code> rows, or no <code>transcript_name</code> attribute), no row
+matches the filter: the result is empty, or <code>ValueError</code> if
+<code>required</code>.</p>
 
 
     </div>

@@ -1098,6 +1098,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2332" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.33.2
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2331" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1405,6 +1416,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2332" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.33.2
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2331" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1636,6 +1658,19 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
+<h2 id="2332">2.33.2<a class="headerlink" href="#2332" title="Permanent link">&para;</a></h2>
+<p>Lookups by a feature type or attribute that an annotation lacks no longer
+raise SQLite errors. The index has a table only for the features a GTF
+contains and a column only for the attributes it uses, so a GTF without
+<code>start_codon</code>, <code>stop_codon</code> or <code>CDS</code> rows made <code>Transcript.complete</code> and
+<code>contains_start_codon</code> fail with <code>no such table</code> (#499), and one without
+<code>transcript_name</code> made <code>transcripts_by_name</code> fail with <code>no such column</code> (#502).
+Such a lookup now matches nothing: <code>complete</code>, <code>contains_start_codon</code> and
+<code>start_codon_complete</code> are <code>False</code>, and <code>transcripts_by_name</code> raises the same
+<code>ValueError</code> as for any name not in the annotation. Accessors that require a
+feature, such as <code>start_codon_positions</code> or <code>coding_sequence_position_ranges</code>,
+raise <code>ValueError</code> instead of <code>sqlite3.OperationalError</code>. Existing indexes are
+used as they are.</p>
 <h2 id="2331">2.33.1<a class="headerlink" href="#2331" title="Permanent link">&para;</a></h2>
 <p><code>pyensembl available</code> with <code>--species</code>, <code>--assembly</code> or another selector
 printed a <code>TypeError</code> traceback instead of its table whenever the selection
