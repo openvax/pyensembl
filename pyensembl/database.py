@@ -698,6 +698,12 @@ class Database(object):
         """
         Construct a SQL query and run against the sqlite3 database,
         filtered both by the feature type and a user-provided column/value.
+
+        The database has a table only for the features its GTF contains and
+        a column only for the attributes it uses. Without one (e.g. no
+        ``start_codon`` rows, or no ``transcript_name`` attribute), no row
+        matches the filter: the result is empty, or ``ValueError`` if
+        ``required``.
         """
         sql = """
             SELECT %s%s
@@ -709,13 +715,16 @@ class Database(object):
             feature,
             filter_column,
         )
-        results = self.run_sql_query(sql, query_params=[filter_value])
-        if not results and filter_column in self.ID_VERSION_COLUMNS:
-            # Retry with the form this annotation stores, e.g. a bare ID for a
-            # versioned one; resolving only on a miss keeps hits to one query
-            stored_id = self.stored_id(filter_column, filter_value)
-            if stored_id != filter_value:
-                results = self.run_sql_query(sql, query_params=[stored_id])
+        if not self.column_exists(feature, filter_column):
+            results = []
+        else:
+            results = self.run_sql_query(sql, query_params=[filter_value])
+            if not results and filter_column in self.ID_VERSION_COLUMNS:
+                # Retry with the form this annotation stores, e.g. a bare ID for a
+                # versioned one; resolving only on a miss keeps hits to one query
+                stored_id = self.stored_id(filter_column, filter_value)
+                if stored_id != filter_value:
+                    results = self.run_sql_query(sql, query_params=[stored_id])
         if required and not results:
             raise ValueError(
                 "No results found for query:\n%s\nwith parameters: %s"
