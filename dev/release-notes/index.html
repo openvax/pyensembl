@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
     
     
       
@@ -1098,6 +1098,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2331" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.33.1
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2330" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1394,6 +1405,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2331" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.33.1
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2330" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1614,6 +1636,13 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
+<h2 id="2331">2.33.1<a class="headerlink" href="#2331" title="Permanent link">&para;</a></h2>
+<p><code>pyensembl available</code> with <code>--species</code>, <code>--assembly</code> or another selector
+printed a <code>TypeError</code> traceback instead of its table whenever the selection
+included a numbered release, as in <code>pyensembl available --species human</code>
+(#507). <code>pyensembl verify --release 75</code> failed the same way. Command-line
+tables now print numbered releases like any other value. <code>--json</code> output
+and caches are unchanged.</p>
 <h2 id="2330">2.33.0<a class="headerlink" href="#2330" title="Permanent link">&para;</a></h2>
 <p>Tab completion for the <code>pyensembl</code> command (#514), and a fast import (#510).
 <code>import pyensembl</code> no longer reads the genome cache or imports datacache or
@@ -1808,7 +1837,7 @@ canonical protein identities in ordinary annotations.</p>
       <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "navigation.expand", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.c21346df.min.js"></script>
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
       
     
   </body>
