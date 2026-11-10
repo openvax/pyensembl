@@ -126,7 +126,7 @@ parser.add_argument(
 parser.add_argument(
     "--json",
     action="store_true",
-    help="With inspect, available, or verify, print JSON",
+    help="With list, inspect, available, or verify, print JSON",
 )
 
 parser.add_argument(
@@ -592,8 +592,15 @@ def collect_all_installed_ensembl_releases():
     )
 
 
-def format_installed_genomes(check_genome_fasta=False, use_color=None):
-    """A table of genomes in the local cache, or a note that there are none."""
+def _installed_genome_rows(check_genome_fasta=False):
+    """Return installed genomes as a list of dicts with absolute paths.
+
+    Each dict has the keys: ``species``, ``assembly``, ``release``,
+    ``annotation``, ``reference_dna``, and ``cache_directory``.  Values are
+    plain strings (or ``None`` when a field is absent) so the caller can
+    render them as a table or serialise them as JSON without further
+    conversion.
+    """
     from pathlib import Path
 
     from .download_cache import cache_root
@@ -609,15 +616,15 @@ def format_installed_genomes(check_genome_fasta=False, use_color=None):
         if not _has_data(annotation, dna):
             continue  # Possibly a custom genome with the same name; listed below.
         ensembl_directories.add(os.path.normpath(directory))
-        rows.append((
-            _species_display_name(genome.species),
-            genome.reference_name,
-            str(genome.release),
-            annotation if annotation not in (None, "missing") else "-",
-            dna or "-",
-            _display_path(directory),
-        ))
-    rows.sort(key=lambda row: (row[0], row[1], _release_sort_key(row[2])))
+        rows.append({
+            "species": _species_display_name(genome.species),
+            "assembly": genome.reference_name,
+            "release": str(genome.release),
+            "annotation": annotation if annotation not in (None, "missing") else None,
+            "reference_dna": dna or None,
+            "cache_directory": os.fspath(directory),
+        })
+    rows.sort(key=lambda r: (r["species"], r["assembly"], _release_sort_key(r["release"])))
     # Custom genomes (e.g. install --gtf ...) live beside Ensembl releases.
     root = Path(cache_root())
     for reference in _subdirectories(root):
@@ -635,18 +642,47 @@ def format_installed_genomes(check_genome_fasta=False, use_color=None):
                 species, release = "custom", directory.name
             else:
                 species, release = _other_genome_labels(reference.name, directory.name)
-            rows.append((
-                species,
-                reference.name,
-                release,
-                annotation or "-",
-                dna or "-",
-                _display_path(directory),
-            ))
+            rows.append({
+                "species": species,
+                "assembly": reference.name,
+                "release": release,
+                "annotation": annotation or None,
+                "reference_dna": dna or None,
+                "cache_directory": os.fspath(directory),
+            })
+    return rows, root
+
+
+def format_installed_genomes(check_genome_fasta=False, use_color=None):
+    """A table of genomes in the local cache, or a note that there are none."""
+    rows, root = _installed_genome_rows(check_genome_fasta=check_genome_fasta)
     if not rows:
         return "No genomes installed in %s" % _display_path(root)
     header = ("Species", "Assembly", "Release", "Annotation", "Reference DNA", "Location")
-    return _format_table(header, rows, use_color)
+    table_rows = [
+        (
+            r["species"],
+            r["assembly"],
+            r["release"],
+            r["annotation"] or "-",
+            r["reference_dna"] or "-",
+            _display_path(r["cache_directory"]),
+        )
+        for r in rows
+    ]
+    return _format_table(header, table_rows, use_color)
+
+
+def format_installed_genomes_json(check_genome_fasta=False):
+    """The same inventory as :func:`format_installed_genomes`, serialised as JSON.
+
+    Returns a JSON string (array of objects) with keys ``species``,
+    ``assembly``, ``release``, ``annotation``, ``reference_dna``, and
+    ``cache_directory``.  ``annotation`` and ``reference_dna`` are ``null``
+    when the respective file is absent.
+    """
+    rows, _ = _installed_genome_rows(check_genome_fasta=check_genome_fasta)
+    return json.dumps(rows, indent=2)
 
 
 def _newest_release(species_name):
@@ -1047,8 +1083,8 @@ def validate_arguments(action, json_output, refresh, check_remote, releases):
     ValueError
         With the usage message when a flag does not fit the action.
     """
-    if json_output and action not in ("inspect", "available", "verify"):
-        raise ValueError("--json requires inspect, available, or verify")
+    if json_output and action not in ("list", "inspect", "available", "verify"):
+        raise ValueError("--json requires list, inspect, available, or verify")
     if refresh and action != "available":
         raise ValueError("--refresh requires available")
     if check_remote and action != "verify":
@@ -1276,7 +1312,10 @@ def run(argv=None):
     ):
         parser.error("%s requires an explicit --release" % args.action)
     if args.action == "list":
-        print(format_installed_genomes(check_genome_fasta=args.check_genome_fasta))
+        if args.json:
+            print(format_installed_genomes_json(check_genome_fasta=args.check_genome_fasta))
+        else:
+            print(format_installed_genomes(check_genome_fasta=args.check_genome_fasta))
         return
     if args.action == "available":
         try:
