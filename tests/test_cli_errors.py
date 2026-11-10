@@ -162,6 +162,6 @@ def test_corrupt_database_without_overwrite_keeps_traceback(tmp_path, monkeypatc
 def test_run_accepts_explicit_argv(monkeypatch, capsys):
     monkeypatch.setattr(shell, "configure_logging", lambda **kw: None)
     with pytest.raises(SystemExit) as exit_info:
-        shell.run(["--json", "list"])
+        shell.run(["--json", "install"])
     assert exit_info.value.code == 2
-    assert "--json requires inspect, available, or verify" in capsys.readouterr().err
+    assert "--json requires list, inspect, available, or verify" in capsys.readouterr().err

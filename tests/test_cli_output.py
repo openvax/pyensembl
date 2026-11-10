@@ -1,6 +1,7 @@
 """What `pyensembl list` and `install` show a person at a terminal."""
 
 from contextlib import closing
+import json
 import logging
 from pathlib import Path
 import sqlite3
@@ -106,6 +107,39 @@ def test_list_skips_unreadable_directories(tmp_path, monkeypatch, capsys, caplog
         locked.chmod(0o755)
     assert rows["83"]["Annotation"] == "indexed"
     assert "Cannot read" in caplog.text
+
+
+def test_list_json_emits_valid_json_array(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
+    root = tmp_path / "pyensembl"
+    location = ensembl_files(83)
+    ensembl_files(81, indexes=False)   # Downloaded, never indexed.
+    run_cli(monkeypatch, "list", "--json")
+    output = capsys.readouterr().out
+    rows = json.loads(output)
+    assert isinstance(rows, list)
+    keys = {"species", "assembly", "release", "annotation", "reference_dna", "cache_directory"}
+    for row in rows:
+        assert keys == row.keys(), "unexpected or missing keys: %s" % row.keys()
+    by_release = {r["release"]: r for r in rows}
+    assert "83" in by_release
+    r83 = by_release["83"]
+    assert r83["species"] == "human"
+    assert r83["assembly"] == "GRCh38"
+    assert r83["annotation"] == "indexed"
+    assert r83["reference_dna"] is None
+    assert r83["cache_directory"] == str(location)
+    # release 81 was downloaded but never indexed → present in JSON output
+    assert "81" in by_release
+    assert by_release["81"]["annotation"] == "not indexed"
+
+
+def test_list_json_empty_cache_emits_empty_array(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
+    run_cli(monkeypatch, "list", "--json")
+    output = capsys.readouterr().out
+    rows = json.loads(output)
+    assert rows == []
 
 
 @pytest.fixture
