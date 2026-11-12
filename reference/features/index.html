@@ -1950,6 +1950,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.Transcript.stop_codon_completed_by_polyadenylation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stop_codon_completed_by_polyadenylation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.Transcript.complete" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4411,6 +4422,17 @@
     <span class="md-ellipsis">
       
         coding_sequence_position_ranges
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.Transcript.stop_codon_completed_by_polyadenylation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        stop_codon_completed_by_polyadenylation
       
     </span>
   </a>
@@ -7740,6 +7762,38 @@ encodes as a separate feature from the CDS).</p>
 <div class="doc doc-object doc-function">
 
 
+<h3 id="pyensembl.Transcript.stop_codon_completed_by_polyadenylation" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">stop_codon_completed_by_polyadenylation</span>
+
+
+<a href="#pyensembl.Transcript.stop_codon_completed_by_polyadenylation" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">stop_codon_completed_by_polyadenylation</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Does the poly(A) tail complete this transcript's stop codon?</p>
+<p>Several mitochondrial reading frames end in <code>T</code> or <code>TA</code> at the 3'
+end of the transcript, and polyadenylation adds the rest of a <code>TAA</code>
+stop codon. In human these are MT-ND1, MT-ND2, MT-CO3, MT-ND3, MT-ND4
+and MT-CYB (NCBI NC_012920.1). Ensembl gives them no <code>stop_codon</code>
+row, so <code>contains_stop_codon</code> and <code>complete</code> are False.</p>
+<p>True when the transcript is on a mitochondrial contig, its genetic
+code reads <code>TAA</code> as a stop, it has a three-base start codon and no
+<code>stop_codon</code> row, and its CDS reaches the transcript's 3' end one
+or two bases past the last full codon, in <code>T</code> or <code>TA</code>. False when
+the transcript sequence is unavailable.</p>
+<p>For such a transcript, <code>coding_sequence</code> ends in that <code>T</code> or
+<code>TA</code>, and <code>three_prime_utr_sequence</code> is empty.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h3 id="pyensembl.Transcript.complete" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">complete</span>
 
@@ -7751,7 +7805,10 @@ encodes as a separate feature from the CDS).</p>
     <div class="doc doc-contents ">
 
         <p>Consider a transcript complete if it has three-base start and stop
-codons and a coding sequence whose length is divisible by 3</p>
+codons and a coding sequence whose length is divisible by 3.</p>
+<p>A stop codon that polyadenylation completes doesn't count, since the
+annotation has no stop codon; see
+<code>stop_codon_completed_by_polyadenylation</code>.</p>
 
 
     </div>
@@ -7836,6 +7893,10 @@ codons and a coding sequence whose length is divisible by 3</p>
 
         <p>cDNA coding sequence (from start codon to stop codon, without
 any introns)</p>
+<p>When the poly(A) tail completes the stop codon
+(<code>stop_codon_completed_by_polyadenylation</code>), it ends in the <code>T</code>
+or <code>TA</code> at the transcript's 3' end, so its length isn't divisible
+by 3.</p>
 
 
     </div>
@@ -7878,6 +7939,7 @@ any introns)</p>
 
         <p>cDNA sequence of 3' UTR
 (untranslated region at the end of the transcript)</p>
+<p>Empty when the poly(A) tail completes the stop codon.</p>
 
 
     </div>

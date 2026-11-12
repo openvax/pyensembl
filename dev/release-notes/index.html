@@ -1098,6 +1098,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2340" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.34.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2332" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1416,6 +1427,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2340" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.34.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2332" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1658,6 +1680,18 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
+<h2 id="2340">2.34.0<a class="headerlink" href="#2340" title="Permanent link">&para;</a></h2>
+<p><code>Transcript.stop_codon_completed_by_polyadenylation</code> identifies mitochondrial
+reading frames that end in <code>T</code> or <code>TA</code> and get the rest of a <code>TAA</code> stop codon
+from the poly(A) tail (#527). In human these are MT-ND1, MT-ND2, MT-CO3,
+MT-ND3, MT-ND4 and MT-CYB. Ensembl annotates no stop codon for them, so
+<code>coding_sequence</code> and <code>three_prime_utr_sequence</code> were <code>None</code>. For these
+transcripts <code>coding_sequence</code> now runs from the start codon to the end of the
+transcript, ending in the <code>T</code> or <code>TA</code>, and <code>three_prime_utr_sequence</code> is
+empty. <code>complete</code> is still <code>False</code>, since there's no annotated stop codon.</p>
+<p>The property requires a mitochondrial contig and a genetic code in which <code>TAA</code>
+is a stop: not NCBI tables 14 or 33, where it encodes tyrosine. Other
+transcripts without a stop codon are unchanged.</p>
 <h2 id="2332">2.33.2<a class="headerlink" href="#2332" title="Permanent link">&para;</a></h2>
 <p>Lookups by a feature type or attribute that an annotation lacks no longer
 raise SQLite errors. The index has a table only for the features a GTF

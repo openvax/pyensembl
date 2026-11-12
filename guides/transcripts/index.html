@@ -447,6 +447,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Incomplete transcripts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stop-codons-completed-by-polyadenylation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stop codons completed by polyadenylation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1331,6 +1348,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Incomplete transcripts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stop-codons-completed-by-polyadenylation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stop codons completed by polyadenylation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1487,6 +1521,23 @@ XSPQPKKKPL
 <p>Without an annotated start codon, <code>coding_sequence</code> and
 <code>five_prime_utr_sequence</code> are <code>None</code>. The peptide file can still hold a partial
 translation, so check <code>complete</code> before analyzing codons or reading frames.</p>
+<h3 id="stop-codons-completed-by-polyadenylation">Stop codons completed by polyadenylation<a class="headerlink" href="#stop-codons-completed-by-polyadenylation" title="Permanent link">&para;</a></h3>
+<p>Six human mitochondrial reading frames (MT-ND1, MT-ND2, MT-CO3, MT-ND3, MT-ND4
+and MT-CYB) end in <code>T</code> or <code>TA</code> at the 3′ end of the transcript, and the poly(A)
+tail adds the rest of a <code>TAA</code> stop codon. Ensembl annotates no stop codon for
+them, so <code>complete</code> is <code>False</code>, but <code>coding_sequence</code> runs to the end of the
+transcript:</p>
+<div class="highlight"><pre><span></span><code><span class="n">nd1</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">transcript_by_id</span><span class="p">(</span><span class="s2">"ENST00000361390"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">nd1</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">nd1</span><span class="o">.</span><span class="n">complete</span><span class="p">,</span> <span class="n">nd1</span><span class="o">.</span><span class="n">stop_codon_completed_by_polyadenylation</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nd1</span><span class="o">.</span><span class="n">coding_sequence</span><span class="p">),</span> <span class="n">nd1</span><span class="o">.</span><span class="n">coding_sequence</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:],</span> <span class="nb">len</span><span class="p">(</span><span class="n">nd1</span><span class="o">.</span><span class="n">protein_sequence</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">nd1</span><span class="o">.</span><span class="n">three_prime_utr_sequence</span><span class="p">))</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code>MT-ND1-201 False True
+956 TA 318
+''
+</code></pre></div>
+<p>The 956 bases are 318 codons and the <code>TA</code> of the stop codon. To read the
+stop codon, add <code>A</code> until the length is divisible by three.</p>
 <h2 id="exons-and-genomic-coordinates">Exons and genomic coordinates <a id="transcript-span-and-exons"></a><a id="inspect-a-transcript"></a><a class="headerlink" href="#exons-and-genomic-coordinates" title="Permanent link">&para;</a></h2>
 <h3 id="exons">Exons<a class="headerlink" href="#exons" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="n">transcript</span><span class="o">.</span><span class="n">contig</span><span class="p">,</span> <span class="n">transcript</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">transcript</span><span class="o">.</span><span class="n">end</span><span class="p">,</span> <span class="n">transcript</span><span class="o">.</span><span class="n">strand</span><span class="p">)</span>
