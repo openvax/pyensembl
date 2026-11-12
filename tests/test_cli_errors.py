@@ -23,6 +23,15 @@ def run_cli(arguments, cache):
                           capture_output=True, text=True, timeout=30)
 
 
+def cli_snapshot(cache):
+    """``snapshot`` without ctime, to compare a cache across ``run_cli``.
+
+    macOS can tag the files a CLI process opens with ``com.apple.provenance``.
+    That changes their ctime, but not their content, mode, inode, size or mtime.
+    """
+    return {path: state[:4] + state[5:] for path, state in snapshot(cache).items()}
+
+
 @pytest.mark.parametrize("option", ["--gtf", "--transcript-fasta", "--protein-fasta",
                                    "--genome-fasta-path", "--custom-mirror", "--server"])
 def test_empty_source_is_rejected_before_genome_selection(tmp_path, monkeypatch, option):
@@ -104,10 +113,10 @@ def test_transcript_only_install_preserves_spaces_and_reopens_read_only(tmp_path
             "--transcript-fasta", str(source)]
     first = run_cli(args, cache)
     assert first.returncode == 0, first.stderr
-    before = snapshot(cache)
+    before = cli_snapshot(cache)
     second = run_cli(args, cache)
     assert second.returncode == 0, second.stderr
-    assert snapshot(cache) == before
+    assert cli_snapshot(cache) == before
 
 
 def test_malformed_gtf_keeps_traceback_and_source_context(tmp_path):
@@ -151,12 +160,12 @@ def test_corrupt_database_without_overwrite_keeps_traceback(tmp_path, monkeypatc
         genome.index()
         database = Path(genome.db.local_db_path)
     database.write_bytes(b"not a sqlite database")
-    before = snapshot(tmp_path / "cache")
+    before = cli_snapshot(tmp_path / "cache")
     result = run_cli(["install", "--reference-name", "test", "--annotation-name", "custom",
                       "--gtf", str(source)], tmp_path / "cache")
     assert result.returncode == 1
     assert "Traceback" in result.stderr and "DatabaseError" in result.stderr
-    assert snapshot(tmp_path / "cache") == before
+    assert cli_snapshot(tmp_path / "cache") == before
 
 
 def test_run_accepts_explicit_argv(monkeypatch, capsys):
