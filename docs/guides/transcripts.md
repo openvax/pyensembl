@@ -121,6 +121,30 @@ Without an annotated start codon, `coding_sequence` and
 `five_prime_utr_sequence` are `None`. The peptide file can still hold a partial
 translation, so check `complete` before analyzing codons or reading frames.
 
+### Stop codons completed by polyadenylation
+
+Six human mitochondrial reading frames (MT-ND1, MT-ND2, MT-CO3, MT-ND3, MT-ND4
+and MT-CYB) end in `T` or `TA` at the 3′ end of the transcript, and the poly(A)
+tail adds the rest of a `TAA` stop codon. Ensembl annotates no stop codon for
+them, so `complete` is `False`, but `coding_sequence` runs to the end of the
+transcript:
+
+```python
+nd1 = data.transcript_by_id("ENST00000361390")
+print(nd1.name, nd1.complete, nd1.stop_codon_completed_by_polyadenylation)
+print(len(nd1.coding_sequence), nd1.coding_sequence[-2:], len(nd1.protein_sequence))
+print(repr(nd1.three_prime_utr_sequence))
+```
+
+```text
+MT-ND1-201 False True
+956 TA 318
+''
+```
+
+The 956 bases are 318 codons and the `TA` of the stop codon. To read the
+stop codon, add `A` until the length is divisible by three.
+
 ## Exons and genomic coordinates <a id="transcript-span-and-exons"></a><a id="inspect-a-transcript"></a>
 
 ### Exons

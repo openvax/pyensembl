@@ -14,7 +14,7 @@ from memoized_property import memoized_property
 
 from .common import memoize, merge_intervals
 from .exon import Exon
-from .genetic_code import genetic_code
+from .genetic_code import compartment_for_contig, genetic_code
 from .locus_with_genome import LocusWithGenome
 from .sequence_data import lookup_sequence_with_version_fallback
 
@@ -456,11 +456,72 @@ class Transcript(LocusWithGenome):
             )
         return merge_intervals(ranges)
 
+    # NCBI translation tables in which TAA encodes tyrosine, so a poly(A) tail
+    # can't complete a TAA stop codon.
+    _TAA_NOT_STOP_TABLES = frozenset({14, 33})
+
+    @memoized_property
+    def _poly_a_stop_coding_end(self):
+        """
+        Spliced offset of the T or TA that the poly(A) tail completes as a TAA
+        stop codon, or None; see ``stop_codon_completed_by_polyadenylation``.
+        """
+        if self.contains_stop_codon or not self.start_codon_complete:
+            return None
+        cds = self._transcript_feature_position_ranges("CDS", required=False)
+        if not cds:
+            return None
+        if self.on_forward_strand:
+            coding_end, transcript_end = max(end for _, end in cds), self.end
+        else:
+            coding_end, transcript_end = min(start for start, _ in cds), self.start
+        if coding_end != transcript_end:
+            return None
+        compartment = compartment_for_contig(
+            self.contig, self.genome._reference_metadata["contig_compartments"]
+        )
+        if compartment != "mitochondrial":
+            return None
+        if self.translation_table in self._TAA_NOT_STOP_TABLES:
+            return None
+        if self.sequence is None:
+            return None
+        start = self.first_start_codon_spliced_offset
+        end = self.spliced_offset(coding_end)
+        partial_codon = self.sequence[end + 1 - (end + 1 - start) % 3 : end + 1]
+        return end if partial_codon.upper() in ("T", "TA") else None
+
+    @memoized_property
+    def stop_codon_completed_by_polyadenylation(self):
+        """
+        Does the poly(A) tail complete this transcript's stop codon?
+
+        Several mitochondrial reading frames end in ``T`` or ``TA`` at the 3'
+        end of the transcript, and polyadenylation adds the rest of a ``TAA``
+        stop codon. In human these are MT-ND1, MT-ND2, MT-CO3, MT-ND3, MT-ND4
+        and MT-CYB (NCBI NC_012920.1). Ensembl gives them no ``stop_codon``
+        row, so ``contains_stop_codon`` and ``complete`` are False.
+
+        True when the transcript is on a mitochondrial contig, its genetic
+        code reads ``TAA`` as a stop, it has a three-base start codon and no
+        ``stop_codon`` row, and its CDS reaches the transcript's 3' end one
+        or two bases past the last full codon, in ``T`` or ``TA``. False when
+        the transcript sequence is unavailable.
+
+        For such a transcript, ``coding_sequence`` ends in that ``T`` or
+        ``TA``, and ``three_prime_utr_sequence`` is empty.
+        """
+        return self._poly_a_stop_coding_end is not None
+
     @memoized_property
     def complete(self):
         """
         Consider a transcript complete if it has three-base start and stop
-        codons and a coding sequence whose length is divisible by 3
+        codons and a coding sequence whose length is divisible by 3.
+
+        A stop codon that polyadenylation completes doesn't count, since the
+        annotation has no stop codon; see
+        ``stop_codon_completed_by_polyadenylation``.
         """
         return (
             self.contains_start_codon
@@ -506,6 +567,11 @@ class Transcript(LocusWithGenome):
         """
         cDNA coding sequence (from start codon to stop codon, without
         any introns)
+
+        When the poly(A) tail completes the stop codon
+        (``stop_codon_completed_by_polyadenylation``), it ends in the ``T``
+        or ``TA`` at the transcript's 3' end, so its length isn't divisible
+        by 3.
         """
         if self.sequence is None:
             return None
@@ -514,11 +580,14 @@ class Transcript(LocusWithGenome):
         # protein-coding transcript without a start_codon or stop_codon
         # feature. Return None rather than crashing when either endpoint of
         # the CDS cannot be located.
-        if not self.contains_start_codon or not self.contains_stop_codon:
+        if self.contains_start_codon and self.contains_stop_codon:
+            end = self.last_stop_codon_spliced_offset
+        elif self.stop_codon_completed_by_polyadenylation:
+            end = self._poly_a_stop_coding_end
+        else:
             return None
 
         start = self.first_start_codon_spliced_offset
-        end = self.last_stop_codon_spliced_offset
 
         # If start codon is the at nucleotide offsets [3,4,5] and
         # stop codon is at nucleotide offsets  [20,21,22]
@@ -542,10 +611,14 @@ class Transcript(LocusWithGenome):
         """
         cDNA sequence of 3' UTR
         (untranslated region at the end of the transcript)
+
+        Empty when the poly(A) tail completes the stop codon.
         """
-        if self.sequence is None or not self.contains_stop_codon:
+        if self.sequence is None:
             return None
-        return self.sequence[self.last_stop_codon_spliced_offset + 1 :]
+        if self.contains_stop_codon:
+            return self.sequence[self.last_stop_codon_spliced_offset + 1 :]
+        return "" if self.stop_codon_completed_by_polyadenylation else None
 
     @memoized_property
     def transcript_version(self):
