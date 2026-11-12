@@ -3,7 +3,14 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
-## 2.34.0
+## 2.34.1
+
+2.34.0 was not published. Its release stopped on macOS, where three CLI tests
+failed. They compared a cache's files before and after running the CLI,
+including each file's ctime. macOS can tag a file that the CLI opens with
+`com.apple.provenance`, which changes its ctime and nothing else. Those
+comparisons now leave out ctime and still compare content, mode, inode, size
+and mtime. This release contains 2.34.0's changes:
 
 `Transcript.stop_codon_completed_by_polyadenylation` identifies mitochondrial
 reading frames that end in `T` or `TA` and get the rest of a `TAA` stop codon
