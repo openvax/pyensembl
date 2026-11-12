@@ -3,6 +3,21 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.34.0
+
+`Transcript.stop_codon_completed_by_polyadenylation` identifies mitochondrial
+reading frames that end in `T` or `TA` and get the rest of a `TAA` stop codon
+from the poly(A) tail (#527). In human these are MT-ND1, MT-ND2, MT-CO3,
+MT-ND3, MT-ND4 and MT-CYB. Ensembl annotates no stop codon for them, so
+`coding_sequence` and `three_prime_utr_sequence` were `None`. For these
+transcripts `coding_sequence` now runs from the start codon to the end of the
+transcript, ending in the `T` or `TA`, and `three_prime_utr_sequence` is
+empty. `complete` is still `False`, since there's no annotated stop codon.
+
+The property requires a mitochondrial contig and a genetic code in which `TAA`
+is a stop: not NCBI tables 14 or 33, where it encodes tyrosine. Other
+transcripts without a stop codon are unchanged.
+
 ## 2.33.2
 
 Lookups by a feature type or attribute that an annotation lacks no longer
