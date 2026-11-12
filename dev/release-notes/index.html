@@ -1098,10 +1098,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#2340" class="md-nav__link">
+  <a href="#2341" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2.34.0
+        2.34.1
       
     </span>
   </a>
@@ -1427,10 +1427,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#2340" class="md-nav__link">
+  <a href="#2341" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2.34.0
+        2.34.1
       
     </span>
   </a>
@@ -1680,7 +1680,13 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
-<h2 id="2340">2.34.0<a class="headerlink" href="#2340" title="Permanent link">&para;</a></h2>
+<h2 id="2341">2.34.1<a class="headerlink" href="#2341" title="Permanent link">&para;</a></h2>
+<p>2.34.0 was not published. Its release stopped on macOS, where three CLI tests
+failed. They compared a cache's files before and after running the CLI,
+including each file's ctime. macOS can tag a file that the CLI opens with
+<code>com.apple.provenance</code>, which changes its ctime and nothing else. Those
+comparisons now leave out ctime and still compare content, mode, inode, size
+and mtime. This release contains 2.34.0's changes:</p>
 <p><code>Transcript.stop_codon_completed_by_polyadenylation</code> identifies mitochondrial
 reading frames that end in <code>T</code> or <code>TA</code> and get the rest of a <code>TAA</code> stop codon
 from the poly(A) tail (#527). In human these are MT-ND1, MT-ND2, MT-CO3,
