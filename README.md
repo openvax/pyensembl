@@ -113,6 +113,10 @@ installs. Every PR bumps `pyensembl/version.py`, including documentation
 changes. See [contributing](https://openvax.github.io/pyensembl/dev/contributing/)
 and [releasing](https://openvax.github.io/pyensembl/dev/releasing/).
 
+The development installer uses `python` from the active environment. Set
+`PYTHON=/path/to/python ./develop.sh` to select an interpreter explicitly;
+additional arguments are passed to pip.
+
 ## License
 
 [Apache License 2.0](https://github.com/openvax/pyensembl/blob/main/LICENSE)

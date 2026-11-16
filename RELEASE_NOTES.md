@@ -3,6 +3,11 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.34.3
+
+Make `develop.sh` directly executable and install through the Python selected
+by `PYTHON` (default `python`), with additional pip arguments forwarded.
+
 ## 2.34.2
 
 Remove the obsolete Polars-to-pandas conversion in database creation: the GTF
