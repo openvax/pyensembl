@@ -3,6 +3,12 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.34.2
+
+Remove the obsolete Polars-to-pandas conversion in database creation: the GTF
+loader already requests pandas output. Remove the excluded getting-started
+source stub while retaining its generated redirect to the home page (#522).
+
 ## 2.34.1
 
 2.34.0 was not published. Its release stopped on macOS, where three CLI tests

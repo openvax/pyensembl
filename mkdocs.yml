@@ -45,8 +45,6 @@ nav:
       - Release notes: dev/release-notes.md
       - Assembly catalogue: dev/assembly-catalogue.md
       - Genetic-code catalogue: dev/genetic-code-catalogue.md
-exclude_docs: |
-  /getting-started.md
 plugins:
   - search
   - redirects:
