@@ -391,8 +391,6 @@ class Database(object):
             features=self.restrict_gtf_features,
             show_progress=show_progress,
         )
-        if hasattr(df, "to_pandas"):
-            df = df.to_pandas()
         # Optional additive columns mark that source declarations were read.
         # Old schema-3 databases remain valid; metadata lookup falls back to
         # their local GTF without altering or rebuilding those databases.
