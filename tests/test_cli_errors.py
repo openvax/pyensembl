@@ -174,3 +174,26 @@ def test_run_accepts_explicit_argv(monkeypatch, capsys):
         shell.run(["--json", "list"])
     assert exit_info.value.code == 2
     assert "--json requires inspect, available, or verify" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("action", [
+    "install", "inspect", "verify", "delete-index-files", "delete-all-files",
+])
+def test_empty_genome_selection_is_an_argument_error(action, tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setattr(shell, "configure_logging", lambda **kwargs: None)
+    monkeypatch.setattr(shell, "collect_selected_genomes", lambda args: [])
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Empty selection reached an action")
+
+    for name in ["run_install", "inspect_genomes", "run_verify", "_delete_genome_files"]:
+        monkeypatch.setattr(shell, name, forbidden)
+    with pytest.raises(SystemExit) as error:
+        shell.run([action, "--release", "75"])
+    assert error.value.code == 2
+    output = capsys.readouterr()
+    assert "error: No genomes selected" in output.err
+    assert not output.out
+    assert "Traceback" not in output.err
+    assert not (tmp_path / "cache").exists()

@@ -1294,8 +1294,7 @@ def run(argv=None):
     except ValueError as error:
         parser.error(str(error))
     if len(genomes) == 0:
-        logger.error("ERROR: No genomes selected!")
-        parser.print_help()
+        parser.error("No genomes selected")
 
     if args.action == "verify":
         try:
