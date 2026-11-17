@@ -3,6 +3,12 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.34.4
+
+Exit with argparse status 2 when a selection resolves to no genomes (#505),
+before installation, inspection, verification or deletion can run. Automation
+can now distinguish an empty selection from successful work.
+
 ## 2.34.3
 
 Make `develop.sh` directly executable and install through the Python selected
