@@ -3,6 +3,15 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.34.6
+
+`pyensembl list` no longer reports the HGNC alias snapshot cached by
+`GeneNameAliases.download_hgnc()` as a custom genome (#508). The scan for
+custom genomes now skips every directory PyEnsembl itself keeps under the
+cache root for other data: `dna_cache`, `aliases` and `dated_releases`.
+Those three names are therefore reserved: a custom genome installed with one
+of them as its `--reference-name` is not listed.
+
 ## 2.34.5
 
 Define `Locus.__bool__` returning `True` so truthiness checks (`bool(transcript)`

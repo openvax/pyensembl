@@ -24,6 +24,12 @@ from os.path import join
 CACHE_BASE_SUBDIR = "pyensembl"
 CACHE_DIR_ENV_KEY = "PYENSEMBL_CACHE_DIR"
 
+# Directories PyEnsembl itself creates under the cache root which hold no
+# genome: shared reference DNA (``genome_fasta_cache``), gene-name alias
+# snapshots (``gene_name_aliases``) and dated-release listings
+# (``dated_releases``). A scan for installed genomes must skip them.
+NON_GENOME_CACHE_DIRECTORIES = frozenset({"dna_cache", "aliases", "dated_releases"})
+
 
 def cache_root():
     """Return the directory holding all of PyEnsembl's data; nothing is created.

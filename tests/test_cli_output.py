@@ -94,6 +94,23 @@ def test_list_is_a_table_with_install_status(tmp_path, monkeypatch, capsys):
     assert releases == [81, 82, 83, 84]
 
 
+def test_list_skips_directories_that_hold_no_genome(tmp_path, monkeypatch, capsys):
+    """The alias, shared-DNA and dated-release caches are not custom genomes (#508)."""
+    monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
+    root = tmp_path / "pyensembl"
+    # Laid out as GeneNameAliases.download_hgnc() and the DNA cache write them.
+    write(root / "aliases" / "homo_sapiens" / "hgnc" / "0123456789abcdef" / "hgnc_complete_set.txt")
+    write(root / "dna_cache" / "homo_sapiens" / "GRCh38" / "dna.fa.gz")
+    write(root / "dated_releases" / "GCA_000001405.29_ensembl.html")
+    run_cli(monkeypatch, "list")
+    assert capsys.readouterr().out.strip() == (
+        "No genomes installed in %s" % shell._display_path(root)
+    )
+    ensembl_files(83)
+    complete_database(root / "GRCm38" / "cli_test81" / "annotation.db")
+    assert set(list_rows(monkeypatch, capsys)) == {"83", "cli_test81"}
+
+
 def test_list_skips_unreadable_directories(tmp_path, monkeypatch, capsys, caplog):
     monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
     ensembl_files(83)
