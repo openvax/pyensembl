@@ -1098,6 +1098,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2345" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.34.5
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2344" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1460,6 +1471,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2345" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.34.5
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2344" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1746,6 +1768,11 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
+<h2 id="2345">2.34.5<a class="headerlink" href="#2345" title="Permanent link">&para;</a></h2>
+<p>Define <code>Locus.__bool__</code> returning <code>True</code> so truthiness checks (<code>bool(transcript)</code>
+or <code>if transcript:</code>) evaluate in constant time instead of falling back to
+<code>Transcript.__len__()</code> and querying the <code>exon</code> SQLite table on cold or unindexed
+genomes (#534). <code>len(locus)</code> and <code>len(transcript)</code> are unchanged.</p>
 <h2 id="2344">2.34.4<a class="headerlink" href="#2344" title="Permanent link">&para;</a></h2>
 <p>Exit with argparse status 2 when a selection resolves to no genomes (#505),
 before installation, inspection, verification or deletion can run. Automation
