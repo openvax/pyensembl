@@ -95,24 +95,6 @@ class EnsemblRelease(Genome):
     cache layouts remain independent of the new assembly metadata.
     """
 
-    @classmethod
-    def normalize_init_values(cls, release, species, server):
-        """
-        Normalizes the arguments which uniquely specify an EnsemblRelease
-        genome.
-        """
-        release = normalize_release(release)
-        species = check_species_object(species)
-        if is_dated_release(release):
-            # Neither legacy server hosts dated releases.
-            if server in (None, ENSEMBL_FTP_SERVER, ENSEMBL_GENOMES_FTP_SERVER):
-                server = ENSEMBL_PLATFORM_FTP_SERVER
-        elif server is None or server == ENSEMBL_FTP_SERVER:
-            # Promote to the Ensembl Genomes server when the species lives
-            # there; otherwise keep the main Ensembl server.
-            server = _default_server_for_species(species)
-        return (release, species, server)
-
     # Using a WeakValueDictionary instead of an ordinary dict to prevent a
     # memory leak in cases where we test many different releases in sequence.
     # When all the references to a particular EnsemblRelease die then that

@@ -3,6 +3,16 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.34.7
+
+Maintenance only; no behaviour change for supported use. Removes the unused
+`EnsemblRelease.normalize_init_values` classmethod, which had no callers
+in PyEnsembl or the packages that depend on it (#522), and stops
+pinning pickle protocol 2 (a Python 2 leftover) when writing cache files;
+existing cache files still load. Also deletes the finished implementation
+plans under `tasks/` and the one-off `scripts/benchmark_gtf_indexing.py`
+(#513).
+
 ## 2.34.6
 
 `pyensembl list` no longer reports the HGNC alias snapshot cached by
