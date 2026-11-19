@@ -24,7 +24,12 @@ import logging
 import datacache
 
 # Re-exported: callers import the cache root and its settings from here.
-from .cache_location import CACHE_BASE_SUBDIR, CACHE_DIR_ENV_KEY, cache_root  # noqa: F401
+from .cache_location import (  # noqa: F401
+    CACHE_BASE_SUBDIR,
+    CACHE_DIR_ENV_KEY,
+    NON_GENOME_CACHE_DIRECTORIES,
+    cache_root,
+)
 
 
 logger = logging.getLogger(__name__)
