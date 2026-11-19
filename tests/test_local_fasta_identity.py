@@ -2,6 +2,7 @@
 
 import gzip
 import os
+import time
 from pathlib import Path
 
 import pytest
@@ -11,10 +12,19 @@ from pyensembl.common import dump_pickle
 from .test_legacy_cache_compatibility import snapshot
 
 
+def rewrite_bytes(path, data):
+    """Write data, making sure ctime moves on even with coarse timestamps."""
+    before = path.stat().st_ctime_ns if path.exists() else None
+    path.write_bytes(data)
+    while before is not None and path.stat().st_ctime_ns == before:
+        time.sleep(0.001)
+        path.write_bytes(data)
+
+
 def write_fasta(path, sequence, identifier="t"):
     path.parent.mkdir(parents=True, exist_ok=True)
     data = (">%s\n%s\n" % (identifier, sequence)).encode()
-    path.write_bytes(gzip.compress(data, mtime=0) if path.suffix == ".gz" else data)
+    rewrite_bytes(path, gzip.compress(data, mtime=0) if path.suffix == ".gz" else data)
 
 
 def genome_for(source, cache, copied=False, role="transcript"):

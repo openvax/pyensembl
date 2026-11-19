@@ -3,6 +3,13 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.34.8
+
+Test-only change. The tests that rewrite a source file with the same size
+now repeat the write until its ctime changes, so they also pass on
+filesystems with coarse timestamps (Linux before 6.13, without multigrain
+timestamps), where two writes in the same clock tick share a ctime.
+
 ## 2.34.7
 
 Maintenance only; no behaviour change for supported use. Removes the unused
