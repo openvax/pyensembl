@@ -596,7 +596,7 @@ def format_installed_genomes(check_genome_fasta=False, use_color=None):
     """A table of genomes in the local cache, or a note that there are none."""
     from pathlib import Path
 
-    from .download_cache import cache_root
+    from .download_cache import NON_GENOME_CACHE_DIRECTORIES, cache_root
 
     rows = []
     ensembl_directories = set()
@@ -621,7 +621,7 @@ def format_installed_genomes(check_genome_fasta=False, use_color=None):
     # Custom genomes (e.g. install --gtf ...) live beside Ensembl releases.
     root = Path(cache_root())
     for reference in _subdirectories(root):
-        if reference.name == "dna_cache":
+        if reference.name in NON_GENOME_CACHE_DIRECTORIES:
             continue
         for directory in _subdirectories(reference):
             if os.path.normpath(directory) in ensembl_directories:
