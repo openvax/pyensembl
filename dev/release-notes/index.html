@@ -1098,6 +1098,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2347" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.34.7
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2346" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1482,6 +1493,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2347" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.34.7
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2346" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1790,6 +1812,14 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
+<h2 id="2347">2.34.7<a class="headerlink" href="#2347" title="Permanent link">&para;</a></h2>
+<p>Maintenance only; no behaviour change for supported use. Removes the unused
+<code>EnsemblRelease.normalize_init_values</code> classmethod, which had no callers
+in PyEnsembl or the packages that depend on it (#522), and stops
+pinning pickle protocol 2 (a Python 2 leftover) when writing cache files;
+existing cache files still load. Also deletes the finished implementation
+plans under <code>tasks/</code> and the one-off <code>scripts/benchmark_gtf_indexing.py</code>
+(#513).</p>
 <h2 id="2346">2.34.6<a class="headerlink" href="#2346" title="Permanent link">&para;</a></h2>
 <p><code>pyensembl list</code> no longer reports the HGNC alias snapshot cached by
 <code>GeneNameAliases.download_hgnc()</code> as a custom genome (#508). The scan for
