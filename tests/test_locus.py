@@ -43,6 +43,8 @@ def test_normalize_chromosome():
 
 def test_locus_overlaps():
     locus = Locus("1", 10, 20, "+")
+    assert bool(locus) is True
+    assert bool(Exon("E1", "1", 10, 10, "+", "G", "GID")) is True
     assert locus.overlaps("1", 10, 20, "+")
     assert locus.overlaps("1", 10, 20)
     assert locus.overlaps("1", 5, 30)

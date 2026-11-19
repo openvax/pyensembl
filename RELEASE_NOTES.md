@@ -3,6 +3,13 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.34.5
+
+Define `Locus.__bool__` returning `True` so truthiness checks (`bool(transcript)`
+or `if transcript:`) evaluate in constant time instead of falling back to
+`Transcript.__len__()` and querying the `exon` SQLite table on cold or unindexed
+genomes (#534). `len(locus)` and `len(transcript)` are unchanged.
+
 ## 2.34.4
 
 Exit with argparse status 2 when a selection resolves to no genomes (#505),

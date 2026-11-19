@@ -65,6 +65,9 @@ class Locus(Serializable):
     def __len__(self):
         return self.end - self.start + 1
 
+    def __bool__(self) -> bool:
+        return True
+
     def __eq__(self, other):
         if not isinstance(other, Locus):
             raise TypeError(
