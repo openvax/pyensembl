@@ -101,7 +101,7 @@ def test_list_skips_directories_that_hold_no_genome(tmp_path, monkeypatch, capsy
     # Laid out as GeneNameAliases.download_hgnc() and the DNA cache write them.
     write(root / "aliases" / "homo_sapiens" / "hgnc" / "0123456789abcdef" / "hgnc_complete_set.txt")
     write(root / "dna_cache" / "homo_sapiens" / "GRCh38" / "dna.fa.gz")
-    write(root / "dated_releases" / "GCA_000001405.29_ensembl.json")
+    write(root / "dated_releases" / "GCA_000001405.29_ensembl.html")
     run_cli(monkeypatch, "list")
     assert capsys.readouterr().out.strip() == (
         "No genomes installed in %s" % shell._display_path(root)

@@ -9,6 +9,8 @@ earlier versions are available as [Git tags](https://github.com/openvax/pyensemb
 `GeneNameAliases.download_hgnc()` as a custom genome (#508). The scan for
 custom genomes now skips every directory PyEnsembl itself keeps under the
 cache root for other data: `dna_cache`, `aliases` and `dated_releases`.
+Those three names are therefore reserved: a custom genome installed with one
+of them as its `--reference-name` is not listed.
 
 ## 2.34.5
 
