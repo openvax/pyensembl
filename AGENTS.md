@@ -40,6 +40,7 @@ Do not tell the user you are "done" or that changes are "complete" until both pa
 - If something goes sideways, STOP and re-plan immediately — don't keep pushing
 - Use planning/verification steps, not just building
 - Write detailed specs upfront to reduce ambiguity
+- Per-issue plans kept under `tasks/` are removed in the PR that closes the issue; only `tasks/lessons.md` stays
 
 ### 2. Self-Improvement Loop
 - After ANY correction from the user: capture the pattern (in Claude Code memory or `tasks/lessons.md`)

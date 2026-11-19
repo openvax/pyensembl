@@ -85,8 +85,7 @@ def _read_progress(raw, description, enabled):
 def dump_pickle(obj, filepath):
     # Atomic, so an interrupted write never leaves a truncated index behind.
     with _atomic_output(filepath) as f:
-        # use lower protocol for compatibility between Python 2 and Python 3
-        pickle.dump(obj, file=f, protocol=2)
+        pickle.dump(obj, file=f)
 
 
 def load_pickle(filepath):
