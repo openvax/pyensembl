@@ -19,6 +19,8 @@ def test_unavailable_reference_allows_identity_roundtrip_but_not_annotation(tmp_
     locus = cls(contig="1", start=10, end=20, strand="+", biotype="protein_coding",
                 genome=genome, **identity)
     restored = from_json(to_json(locus))
+    assert bool(locus) is True
+    assert bool(restored) is True
     assert restored == locus
     assert (restored.contig, restored.start, restored.end, restored.strand) == ("1", 10, 20, "+")
     assert restored.gene_id == "gene"
@@ -28,6 +30,23 @@ def test_unavailable_reference_allows_identity_roundtrip_but_not_annotation(tmp_
         restored.db
     with pytest.raises(MissingLocalFile, match="reference.gtf"):
         restored.exons if isinstance(restored, Transcript) else restored.transcripts
+
+
+def test_transcript_bool_does_not_query_exons(tmp_path, monkeypatch):
+    genome = Genome(reference_name="GRCm38", annotation_name="test", annotation_version=81,
+        gtf_path_or_url=data_path("mouse.ensembl.81.partial.ENSMUSG00000017167.gtf"),
+        cache_directory_path=str(tmp_path))
+    genome.index()
+    transcript = genome.transcripts()[0]
+    expected_len = len(transcript)
+    with monkeypatch.context() as no_exons:
+        no_exons.setattr(
+            Transcript,
+            "exons",
+            property(lambda _self: (_ for _ in ()).throw(AssertionError("exons queried"))),
+        )
+        assert bool(transcript) is True
+    assert len(transcript) == expected_len
 
 
 def test_available_reference_resolves_real_database_after_metadata_roundtrip(tmp_path):
