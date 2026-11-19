@@ -131,7 +131,6 @@ __all__ = [
     "MissingGenomeFastaError",
     "prune_genome_fastas",
     "Locus",
-    "Exon",
     "ensembl_grch36",
     "ensembl_grch37",
     "ensembl_grch38",

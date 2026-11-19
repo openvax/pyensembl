@@ -10,7 +10,15 @@ from urllib.parse import urlsplit
 
 from datacache import FileValidationError, fetch_file
 
-from .common import _atomic_output, _publish, _read_progress, _remove, _staging_path
+from .common import (
+    _atomic_output,
+    _publish,
+    _read_progress,
+    _remove,
+    _staging_path,
+    file_digest,
+    file_fingerprint,
+)
 from .download_cache import DOWNLOAD_TIMEOUT
 from .normalization import normalize_chromosome
 
@@ -33,13 +41,6 @@ def _read_json(path):
 def _write_json(path, value):
     with _atomic_output(path, "w") as handle:
         json.dump(value, handle)
-
-
-def _fingerprint(path, ctime=True):
-    stat = os.stat(path)
-    if not ctime:
-        return [stat.st_size, stat.st_mtime_ns, stat.st_ino]
-    return [stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns, stat.st_ino]
 
 
 class GenomeFasta:
@@ -83,7 +84,7 @@ class GenomeFasta:
         # Cache-owned files change only by atomic replacement (a new inode).
         # Ignore their ctime, which chmod/chown of a shared cache also update;
         # keep it for user files, which may be rewritten in place.
-        return _fingerprint(path, ctime=path == self.source)
+        return file_fingerprint(path, ctime=path == self.source)
 
     def _file_fingerprints(self, paths):
         try:
@@ -107,7 +108,7 @@ class GenomeFasta:
         if not os.path.isfile(path) or os.path.getsize(path) == 0:
             return None
         if not self.remote and path != self.source:
-            if _read_json(self.source_state_path) != _fingerprint(self.source):
+            if _read_json(self.source_state_path) != file_fingerprint(self.source):
                 return None
         return path
 
@@ -175,11 +176,7 @@ class GenomeFasta:
                 )
                 fetch_file(self.source, **options)
             if expected_md5 is not None:
-                with open(raw, "rb") as handle:
-                    digest = hashlib.file_digest(
-                        handle, lambda: hashlib.md5(usedforsecurity=False)
-                    ).hexdigest()
-                if digest != expected_md5:
+                if file_digest(raw, "md5") != expected_md5:
                     raise FileValidationError(str(raw), "MD5 does not match upstream manifest")
             self._write_uncompressed(raw, self.materialized_path, show_progress)
         finally:
@@ -201,9 +198,9 @@ class GenomeFasta:
                 overwrite or self.installed_path is None
             ):
                 logger.info("Decompressing genome FASTA %s", self.source)
-                fingerprint = _fingerprint(self.source)
+                fingerprint = file_fingerprint(self.source)
                 self._write_uncompressed(self.source, self.materialized_path, show_progress)
-                if fingerprint != _fingerprint(self.source):
+                if fingerprint != file_fingerprint(self.source):
                     raise ValueError(
                         "Genome FASTA changed during decompression: %s" % self.source
                     )
