@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import sqlite3
 import tarfile
+import time
 
 import datacache
 import pytest
@@ -15,6 +16,15 @@ from pyensembl.database import Database
 from .test_legacy_cache_compatibility import snapshot
 
 
+def rewrite_bytes(path, data):
+    """Write data, making sure ctime moves on even with coarse timestamps."""
+    before = path.stat().st_ctime_ns if path.exists() else None
+    path.write_bytes(data)
+    while before is not None and path.stat().st_ctime_ns == before:
+        time.sleep(0.001)
+        path.write_bytes(data)
+
+
 def write_gtf(path, transcript='', cds='', contig='MT', identifier='ENST1', extra=''):
     attributes = 'gene_id "g"; transcript_id "%s"; transcript_version "2";' % identifier
     text = (
@@ -23,7 +33,7 @@ def write_gtf(path, transcript='', cds='', contig='MT', identifier='ENST1', extr
         f'{contig}\ttest\texon\t1\t9\t.\t+\t.\t{attributes} exon_id "e"; exon_number "1";\n'
         f'{contig}\ttest\tCDS\t1\t9\t.\t+\t0\t{attributes} {cds}\n' + extra
     )
-    path.write_bytes(gzip.compress(text.encode(), mtime=0) if path.suffix == '.gz' else text.encode())
+    rewrite_bytes(path, gzip.compress(text.encode(), mtime=0) if path.suffix == '.gz' else text.encode())
 
 
 def open_genome(tmp_path, **kwargs):
