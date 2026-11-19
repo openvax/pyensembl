@@ -1098,6 +1098,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2346" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.34.6
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2345" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1471,6 +1482,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2346" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.34.6
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2345" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1768,6 +1790,13 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
+<h2 id="2346">2.34.6<a class="headerlink" href="#2346" title="Permanent link">&para;</a></h2>
+<p><code>pyensembl list</code> no longer reports the HGNC alias snapshot cached by
+<code>GeneNameAliases.download_hgnc()</code> as a custom genome (#508). The scan for
+custom genomes now skips every directory PyEnsembl itself keeps under the
+cache root for other data: <code>dna_cache</code>, <code>aliases</code> and <code>dated_releases</code>.
+Those three names are therefore reserved: a custom genome installed with one
+of them as its <code>--reference-name</code> is not listed.</p>
 <h2 id="2345">2.34.5<a class="headerlink" href="#2345" title="Permanent link">&para;</a></h2>
 <p>Define <code>Locus.__bool__</code> returning <code>True</code> so truthiness checks (<code>bool(transcript)</code>
 or <code>if transcript:</code>) evaluate in constant time instead of falling back to
