@@ -24,7 +24,7 @@ from urllib.request import Request, urlopen
 from filelock import FileLock, Timeout
 
 from .download_cache import cache_root
-from .common import _remove
+from .common import _remove, parse_md5sum_manifest
 from .genome_fasta import GenomeFasta, _read_json, _write_json
 
 logger = logging.getLogger(__name__)
@@ -205,18 +205,14 @@ def _dated_remote_identity(source, match):
     directory, filename = source.rsplit("/", 1)
     with urlopen(directory + "/md5sum.txt", timeout=60) as response:
         manifest = response.read(4 * 1024 * 1024).decode("utf-8")
-    entries = [line.split() for line in manifest.splitlines()]
-    matches = [fields[0].lower() for fields in entries
-               if len(fields) == 2 and fields[1].removeprefix("*").removeprefix("./") == filename]
-    if len(matches) != 1 or not re.fullmatch(r"[0-9a-f]{32}", matches[0]):
-        raise ValueError("No unique MD5 for this FASTA")
+    md5 = parse_md5sum_manifest(manifest, filename)
     with urlopen(Request(source, method="HEAD"), timeout=60) as response:
         length = int(response.headers["Content-Length"])
     if length <= 0:
         raise ValueError("No compressed size for this FASTA")
     return dict(platform="ensemblorganisms", provider="ftp.ebi.ac.uk",
                 assembly=accession, annotation_provider=provider, masking=masking,
-                md5=matches[0], compressed_size=length)
+                md5=md5, compressed_size=length)
 
 
 def _check_object_identity(root, directory, identity):

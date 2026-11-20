@@ -12,7 +12,7 @@
 
 from functools import lru_cache
 import hashlib
-from os import remove, stat
+from os import remove
 from os.path import dirname, exists, lexists, abspath, split, join
 from pathlib import Path
 
@@ -21,7 +21,7 @@ import logging
 import zlib
 from collections import Counter
 import pickle
-from .common import load_pickle, dump_pickle
+from .common import dump_pickle, file_digest, file_fingerprint, load_pickle
 from .fasta import first_fasta_id, parse_fasta_dictionary
 from .versioned_ids import _split_ens_version, match_version
 
@@ -30,15 +30,13 @@ logger = logging.getLogger(__name__)
 
 
 def _file_state(path):
-    info = stat(path)
-    return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns
+    return tuple(file_fingerprint(path, include_dev=True))
 
 
 @lru_cache(maxsize=128)
 def _file_digest(path, state):
     """Reuse a digest only while the source's complete stat identity agrees."""
-    with open(path, "rb") as handle:
-        digest = hashlib.file_digest(handle, "sha256").hexdigest()
+    digest = file_digest(path)
     if _file_state(path) != state:
         raise ValueError("FASTA changed while hashing: %s" % path)
     return digest

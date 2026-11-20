@@ -30,6 +30,7 @@ from .cache_location import (  # noqa: F401
     NON_GENOME_CACHE_DIRECTORIES,
     cache_root,
 )
+from .common import file_digest
 
 
 logger = logging.getLogger(__name__)
@@ -61,15 +62,8 @@ def _require_available(inspection):
 
 def _same_file_bytes(first, second, decompress=False):
     """Compare copied local input with its cached counterpart."""
-    def digest(path, opener=open):
-        value = hashlib.sha256()
-        with opener(path, "rb") as handle:
-            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-                value.update(chunk)
-        return value.digest()
-
     opener = gzip.open if decompress and first.lower().endswith(".gz") else open
-    return digest(first, opener) == digest(second)
+    return file_digest(first, opener=opener) == file_digest(second)
 
 
 def cache_subdirectory(

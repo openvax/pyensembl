@@ -21,7 +21,7 @@ from typing import Any
 
 import datacache
 
-from .common import memoize
+from .common import file_digest, file_fingerprint, memoize
 from .normalization import normalize_chromosome, normalize_strand
 from .locus import Locus
 from .versioned_ids import _split_ens_version, match_version
@@ -62,31 +62,17 @@ def _gtf_progress(gtf_path, enabled):
         yield report
 
 
-def _file_state(path):
-    """File identity that changes for ordinary in-place edits and replacements."""
-    stat = os.stat(path)
-    return [stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns, stat.st_ino]
-
-
 def _source_state(gtf_path, source):
-    state = {"source": source, "gtf": _file_state(gtf_path)}
+    state = {"source": source, "gtf": file_fingerprint(gtf_path)}
     if "://" not in source:
         try:
-            state["original"] = _file_state(source)
+            state["original"] = file_fingerprint(source)
         except FileNotFoundError:
             if os.path.abspath(gtf_path) == source:
                 raise
             # A copied local source remains usable after its original is removed.
             state["original"] = None
     return state
-
-
-def _source_digest(path):
-    digest = hashlib.sha256()
-    with open(path, "rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _stored_source(connection):
@@ -122,7 +108,7 @@ def _source_matches(connection, gtf_path, source, verify_hash=False):
     if not verify_hash:
         return True
     try:
-        return _source_digest(gtf_path) == sha256
+        return file_digest(gtf_path) == sha256
     except OSError:
         return False
 
@@ -384,7 +370,7 @@ class Database(object):
         datacache.ensure_dir(self.cache_directory_path)
         local_source = "://" not in self.source
         source_before = _source_state(self.gtf_path, self.source) if local_source else None
-        genetic_code_state = _file_state(self.gtf_path)
+        genetic_code_state = file_fingerprint(self.gtf_path)
 
         df = self._load_gtf_as_dataframe(
             usecols=self.restrict_gtf_columns,
@@ -437,7 +423,7 @@ class Database(object):
         if ({"transl_table", "translation_table"}.issubset(df.columns)
                 and (self.restrict_gtf_features is None
                      or {"transcript", "CDS"}.issubset(self.restrict_gtf_features))):
-            if _file_state(self.gtf_path) != genetic_code_state:
+            if file_fingerprint(self.gtf_path) != genetic_code_state:
                 self.close()
                 raise OSError("GTF source changed while its index was being built")
             self._connection.execute('CREATE TABLE "' + GENETIC_CODE_SOURCE_TABLE + '" (state TEXT)')
@@ -450,7 +436,7 @@ class Database(object):
             if _source_state(self.gtf_path, self.source) != source_before:
                 self.close()
                 raise OSError("GTF source changed while its index was being built")
-            digest = _source_digest(self.gtf_path)
+            digest = file_digest(self.gtf_path)
             if _source_state(self.gtf_path, self.source) != source_before:
                 self.close()
                 raise OSError("GTF source changed while its index was being built")
