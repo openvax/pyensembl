@@ -965,10 +965,32 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.Genome.species" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        species
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.Genome.download_cache" class="md-nav__link">
     <span class="md-ellipsis">
       
         download_cache
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.Genome.assembly_accession" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        assembly_accession
       
     </span>
   </a>
@@ -2458,10 +2480,32 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.Genome.species" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        species
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.Genome.download_cache" class="md-nav__link">
     <span class="md-ellipsis">
       
         download_cache
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.Genome.assembly_accession" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        assembly_accession
       
     </span>
   </a>
@@ -3631,7 +3675,7 @@ equivalents.</p>
 
 
 <a href="#pyensembl.Genome" class="headerlink" title="Permanent link">&para;</a></h2>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Genome</span><span class="p">(</span><span class="n">reference_name</span><span class="p">,</span> <span class="n">annotation_name</span><span class="p">,</span> <span class="n">annotation_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">gtf_path_or_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transcript_fasta_paths_or_urls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">protein_fasta_paths_or_urls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">decompress_on_download</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">copy_local_files_to_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cache_directory_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">genome_fasta_path_or_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reference_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">Genome</span><span class="p">(</span><span class="n">reference_name</span><span class="p">,</span> <span class="n">annotation_name</span><span class="p">,</span> <span class="n">annotation_version</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">gtf_path_or_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transcript_fasta_paths_or_urls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">protein_fasta_paths_or_urls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">decompress_on_download</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">copy_local_files_to_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cache_directory_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">genome_fasta_path_or_url</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reference_metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">assembly_accession</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </code></pre></div>
 
     <div class="doc doc-contents first">
@@ -3837,6 +3881,41 @@ serialization; independent of source URLs and cache paths.</p>
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>species</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="Species (pyensembl.species.Species)" href="../helpers/#pyensembl.species.Species">Species</a> or <span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Species for this genome (e.g. <code>"human"</code> or <code>pyensembl.human</code>).
+Inferred from <code>reference_name</code> when known and omitted; preserved
+on serialization and passed to reference genetic-code resolution.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>assembly_accession</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Versioned assembly accession (e.g. <code>"GCA_009914755.4"</code>), or None.
+Preserved on serialization.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -3994,6 +4073,28 @@ serialization; independent of source URLs and cache paths.</p>
 
 
 
+<h3 id="pyensembl.Genome.species" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">species</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+<a href="#pyensembl.Genome.species" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">species</span> <span class="o">=</span> <span class="n">check_species_object</span><span class="p">(</span><span class="n">species</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
 <h3 id="pyensembl.Genome.download_cache" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">download_cache</span>
 
@@ -4007,6 +4108,31 @@ serialization; independent of source URLs and cache paths.</p>
 </code></pre></div>
 
     <div class="doc doc-contents ">
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="pyensembl.Genome.assembly_accession" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">assembly_accession</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+      <small class="doc doc-label doc-label-writable"><code>writable</code></small>
+  </span>
+
+<a href="#pyensembl.Genome.assembly_accession" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">assembly_accession</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Versioned assembly accession (e.g. <code>GCA_009914755.4</code>), or None.</p>
 
     </div>
 
