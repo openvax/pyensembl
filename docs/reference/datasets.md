@@ -10,4 +10,14 @@ provide the shared [Genome methods](genome.md).
     options:
       inherited_members: false
 
+::: pyensembl.PinnedGenome
+    options:
+      inherited_members: false
+
+::: pyensembl.PinnedAssembly
+
+::: pyensembl.ReferenceAlias
+
+::: pyensembl.ContigAlias
+
 ::: pyensembl.available_releases
