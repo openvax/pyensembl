@@ -63,10 +63,17 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["pyensembl"]
+packages = ["pyensembl", "pyensembl.data"]
 
 [tool.setuptools.package-data]
-pyensembl = ["assembly_catalog.json", "genetic_code_catalog.json", "release_comparisons.json", "py.typed"]
+pyensembl = [
+    "assembly_catalog.json",
+    "genetic_code_catalog.json",
+    "pinned_assemblies.json",
+    "release_comparisons.json",
+    "py.typed",
+]
+"pyensembl.data" = ["*.gz"]
 
 [tool.setuptools.dynamic]
 version = {attr = "pyensembl.version.__version__"}

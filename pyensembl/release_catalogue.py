@@ -51,6 +51,39 @@ def available_releases(species=None, *, assembly=None, assembly_accession=None,
     if selector is None and species is not None:
         selector = species.which_reference(_newest_number(species))
     rows = []
+    # Pinned rapid-release / non-numbered assemblies (e.g. T2T-CHM13v2.0 / hs1).
+    if selector is not None and include_alt is None:
+        from .pinned_genomes import lookup_pinned_alias, resolve_pinned_assembly
+
+        alias = lookup_pinned_alias(selector)
+        if alias is not None:
+            pinned = resolve_pinned_assembly(selector)
+            if species is not None and species.latin_name != pinned.species:
+                raise ValueError(
+                    "Assembly %r belongs to %s, not %s"
+                    % (selector, pinned.species, species.latin_name)
+                )
+            if provider is None or provider == pinned.annotation_name:
+                if assembly_accession is not None and pinned.assembly_accession != assembly_accession:
+                    raise ValueError(
+                        "Assembly accession %s conflicts with selected %s"
+                        % (assembly_accession, pinned.assembly_accession)
+                    )
+                rows.append(dict(
+                    species=pinned.species,
+                    assembly=pinned.reference_name,
+                    assembly_name=pinned.reference_name,
+                    assembly_accession=pinned.assembly_accession,
+                    reference_name=pinned.reference_name,
+                    pinned_name=pinned.name,
+                    release=pinned.annotation_version,
+                    kind="pinned",
+                    provider=pinned.annotation_name,
+                    coverage="primary",
+                    subset=False,
+                    comparisons=[],
+                    latest=False,
+                ))
     if species is not None and provider is None and include_alt is None:
         for first, last in species.reference_assemblies.values():
             for release in range(first, last + 1):
@@ -63,7 +96,7 @@ def available_releases(species=None, *, assembly=None, assembly_accession=None,
     datasets = [r for r in catalogue()["dated"] if _matches(r, selector)
                 and (species is None or species_matches(species, r))
                 and (provider is None or provider == r["provider"])]
-    if not datasets and assembly_accession:
+    if not datasets and not rows and assembly_accession:
         # Arbitrary assemblies still use the existing listing/discovery route.
         from .assembly import dated_assembly
         record, _ = dated_assembly("9999_12", species, assembly, assembly_accession, provider)
@@ -102,7 +135,11 @@ def available_releases(species=None, *, assembly=None, assembly_accession=None,
         scopes = {(r["assembly_accession"], r["provider"]) for r in eligible}
         if len(scopes) == 1 and eligible:
             selected = max(eligible, key=lambda r: r["release"])
-            reason = "Newest known annotation date within one assembly and provider"
+            reason = (
+                "Pinned rapid-release annotation"
+                if selected["kind"] == "pinned"
+                else "Newest known annotation date within one assembly and provider"
+            )
         else:
             selected, reason = None, "Choose an assembly accession/provider with a non-subset dataset"
     # A reviewed future ordering can advance the opt-in selector without ever

@@ -1,0 +1,156 @@
+{
+  "t2t-chm13": {
+    "species": "homo_sapiens",
+    "reference_name": "T2T-CHM13v2.0",
+    "annotation_name": "ensembl-rapid",
+    "annotation_version": "2022_07",
+    "title": "Ensembl rapid-release gene annotation (2022_07) of the T2T-CHM13v2.0 assembly",
+    "assets": {
+      "gtf": {
+        "url": "https://ftp.ensembl.org/pub/rapid-release/species/Homo_sapiens/GCA_009914755.4/ensembl/geneset/2022_07/Homo_sapiens-GCA_009914755.4-2022_07-genes.gtf.gz",
+        "sha256": "da588cd0ba45791a2feccdef7e5c0ec960f4bd1f7794f079b02b98360ba2c98a",
+        "size": 45592443
+      },
+      "transcripts": {
+        "url": "https://ftp.ensembl.org/pub/rapid-release/species/Homo_sapiens/GCA_009914755.4/ensembl/geneset/2022_07/Homo_sapiens-GCA_009914755.4-2022_07-cdna.fa.gz",
+        "sha256": "9982835c9144be757e3de6ffe58789e4871e9c4b88f4d741ecbc3db916c78f6d",
+        "size": 84975414
+      },
+      "proteins": {
+        "url": "https://ftp.ensembl.org/pub/rapid-release/species/Homo_sapiens/GCA_009914755.4/ensembl/geneset/2022_07/Homo_sapiens-GCA_009914755.4-2022_07-pep.fa.gz",
+        "sha256": "fb40a733429d433a41a2b6b4eaadad279b0fe9b65c54f3181fc58c4260e2b7a6",
+        "size": 12019190
+      }
+    },
+    "provider": "Ensembl",
+    "terms": "Ensembl imposes no restrictions on access to, or use of, the data provided.",
+    "terms_url": "https://www.ensembl.org/info/about/legal/disclaimer.html",
+    "assembly_accession": "GCA_009914755.4",
+    "names": {
+      "T2T-CHM13v2.0": {
+        "mitochondrion": "CP068254.1",
+        "note": "NCBI's assembly name"
+      },
+      "GCA_009914755.4": {
+        "mitochondrion": "CP068254.1",
+        "note": "NCBI GenBank accession; Ensembl's rapid-release DNA is this assembly"
+      },
+      "GCF_009914755.1": {
+        "mitochondrion": null,
+        "without": ["MT"],
+        "note": "NCBI RefSeq accession; RefSeq has no mitochondrion for it"
+      },
+      "hs1": {
+        "mitochondrion": "CP068254.1",
+        "note": "UCSC's name"
+      },
+      "chm13v2.0": {
+        "mitochondrion": "CP068254.1",
+        "note": "T2T Consortium analysis set"
+      },
+      "chm13v2.0_maskedY": {
+        "mitochondrion": "CP068254.1",
+        "note": "T2T analysis set with chrY's PARs masked to N"
+      },
+      "chm13v2.0_noY": {
+        "mitochondrion": "CP068254.1",
+        "without": ["Y"],
+        "note": "T2T analysis set without chrY, identical to T2T-CHM13v1.1"
+      },
+      "chm13v2.0_maskedY_rCRS": {
+        "mitochondrion": "NC_012920.1",
+        "without": ["MT"],
+        "note": "T2T analysis set with chrY's PARs masked and chrM replaced by the rCRS"
+      },
+      "chm13v2.0_maskedY.rCRS": {
+        "mitochondrion": "NC_012920.1",
+        "without": ["MT"],
+        "note": "How the T2T READMEs spell chm13v2.0_maskedY_rCRS"
+      },
+      "T2T-CHM13v1.1": {
+        "mitochondrion": "CP068254.1",
+        "without": ["Y"],
+        "note": "T2T-CHM13v1.1: T2T-CHM13v2.0 without chrY"
+      },
+      "GCA_009914755.3": {
+        "mitochondrion": "CP068254.1",
+        "without": ["Y"],
+        "note": "T2T-CHM13v1.1: T2T-CHM13v2.0 without chrY"
+      },
+      "chm13.draft_v1.1": {
+        "mitochondrion": "CP068254.1",
+        "without": ["Y"],
+        "note": "T2T-CHM13v1.1: T2T-CHM13v2.0 without chrY"
+      }
+    },
+    "other_versions": {
+      "T2T-CHM13v1.0": "T2T-CHM13v1.0's coordinates differ from T2T-CHM13v2.0's: v1.1 filled its rDNA gaps and re-polished its telomeres, changing the length of 23 of its 24 sequences (chr1 is 248,387,497 bp in v1.0 and 248,387,328 in v2.0).",
+      "GCA_009914755.2": "T2T-CHM13v1.0's coordinates differ from T2T-CHM13v2.0's: v1.1 filled its rDNA gaps and re-polished its telomeres, changing the length of 23 of its 24 sequences (chr1 is 248,387,497 bp in v1.0 and 248,387,328 in v2.0).",
+      "chm13.draft_v1.0": "T2T-CHM13v1.0's coordinates differ from T2T-CHM13v2.0's: v1.1 filled its rDNA gaps and re-polished its telomeres, changing the length of 23 of its 24 sequences (chr1 is 248,387,497 bp in v1.0 and 248,387,328 in v2.0).",
+      "chm13.draft_v0.9": "T2T-CHM13v0.9 is a draft whose sequences and coordinates differ from T2T-CHM13v2.0's.",
+      "T2T-CHM13v0.7": "T2T-CHM13v0.7 is a draft whose sequences and coordinates differ from T2T-CHM13v2.0's.",
+      "GCA_009914755.1": "T2T-CHM13v0.7 is a draft whose sequences and coordinates differ from T2T-CHM13v2.0's.",
+      "chm13.draft_v0.7": "T2T-CHM13v0.7 is a draft whose sequences and coordinates differ from T2T-CHM13v2.0's."
+    },
+    "mitochondria": {
+      "NC_012920.1": {
+        "title": "Ensembl GRCh38 release 115's annotation of MT, the rCRS, which the chm13v2.0_maskedY_rCRS analysis set carries as chrM",
+        "contig": {
+          "name": "NC_012920.1",
+          "ucsc": "chrM",
+          "genbank": "J01415.2",
+          "refseq": "NC_012920.1",
+          "length": 16569
+        },
+        "assets": {
+          "gtf": {
+            "resource": "data/rcrs-ensembl115.gtf.gz",
+            "sha256": "dbb6412eaab495abd71a9473b247ee76ca3437e87929017f6d367136c5d81804",
+            "size": 2662
+          },
+          "transcripts": {
+            "resource": "data/rcrs-ensembl115.cdna.fa.gz",
+            "sha256": "77c5616d394494ba5227fb19fd3138870f49b015d25cd8cddba44ac47f9b7c8e",
+            "size": 6850
+          },
+          "proteins": {
+            "resource": "data/rcrs-ensembl115.pep.fa.gz",
+            "sha256": "2f1ec7fbafe3e9d8224550a51e537eed9df92ace643afcb9572f131c0db0a27f",
+            "size": 3152
+          }
+        }
+      }
+    },
+    "contigs": [
+      {"name": "1", "ucsc": "chr1", "genbank": "CP068277.2", "refseq": "NC_060925.1", "length": 248387328},
+      {"name": "2", "ucsc": "chr2", "genbank": "CP068276.2", "refseq": "NC_060926.1", "length": 242696752},
+      {"name": "3", "ucsc": "chr3", "genbank": "CP068275.2", "refseq": "NC_060927.1", "length": 201105948},
+      {"name": "4", "ucsc": "chr4", "genbank": "CP068274.2", "refseq": "NC_060928.1", "length": 193574945},
+      {"name": "5", "ucsc": "chr5", "genbank": "CP068273.2", "refseq": "NC_060929.1", "length": 182045439},
+      {"name": "6", "ucsc": "chr6", "genbank": "CP068272.2", "refseq": "NC_060930.1", "length": 172126628},
+      {"name": "7", "ucsc": "chr7", "genbank": "CP068271.2", "refseq": "NC_060931.1", "length": 160567428},
+      {"name": "8", "ucsc": "chr8", "genbank": "CP068270.2", "refseq": "NC_060932.1", "length": 146259331},
+      {"name": "9", "ucsc": "chr9", "genbank": "CP068269.2", "refseq": "NC_060933.1", "length": 150617247},
+      {"name": "10", "ucsc": "chr10", "genbank": "CP068268.2", "refseq": "NC_060934.1", "length": 134758134},
+      {"name": "11", "ucsc": "chr11", "genbank": "CP068267.2", "refseq": "NC_060935.1", "length": 135127769},
+      {"name": "12", "ucsc": "chr12", "genbank": "CP068266.2", "refseq": "NC_060936.1", "length": 133324548},
+      {"name": "13", "ucsc": "chr13", "genbank": "CP068265.2", "refseq": "NC_060937.1", "length": 113566686},
+      {"name": "14", "ucsc": "chr14", "genbank": "CP068264.2", "refseq": "NC_060938.1", "length": 101161492},
+      {"name": "15", "ucsc": "chr15", "genbank": "CP068263.2", "refseq": "NC_060939.1", "length": 99753195},
+      {"name": "16", "ucsc": "chr16", "genbank": "CP068262.2", "refseq": "NC_060940.1", "length": 96330374},
+      {"name": "17", "ucsc": "chr17", "genbank": "CP068261.2", "refseq": "NC_060941.1", "length": 84276897},
+      {"name": "18", "ucsc": "chr18", "genbank": "CP068260.2", "refseq": "NC_060942.1", "length": 80542538},
+      {"name": "19", "ucsc": "chr19", "genbank": "CP068259.2", "refseq": "NC_060943.1", "length": 61707364},
+      {"name": "20", "ucsc": "chr20", "genbank": "CP068258.2", "refseq": "NC_060944.1", "length": 66210255},
+      {"name": "21", "ucsc": "chr21", "genbank": "CP068257.2", "refseq": "NC_060945.1", "length": 45090682},
+      {"name": "22", "ucsc": "chr22", "genbank": "CP068256.2", "refseq": "NC_060946.1", "length": 51324926},
+      {"name": "X", "ucsc": "chrX", "genbank": "CP068255.2", "refseq": "NC_060947.1", "length": 154259566},
+      {"name": "Y", "ucsc": "chrY", "genbank": "CP086569.2", "refseq": "NC_060948.1", "length": 62460029},
+      {"name": "MT", "ucsc": "chrM", "genbank": "CP068254.1", "refseq": null, "length": 16569}
+    ],
+    "contigs_source": {
+      "url": "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/009/914/755/GCA_009914755.4_T2T-CHM13v2.0/GCA_009914755.4_T2T-CHM13v2.0_assembly_report.txt",
+      "sha256": "f4ce48c1e49139f21b7194501ecc19969d51d37291b7d4a8379da57afe2d9863"
+    }
+  }
+}

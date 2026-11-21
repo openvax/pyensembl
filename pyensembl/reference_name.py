@@ -16,8 +16,9 @@ from .species import Species, find_species_by_name
 
 def normalize_reference_name(name):
     """
-    Search the dictionary of species-specific references to find a reference
-    name that matches aside from capitalization.
+    Search the dictionary of species-specific references (and catalogued
+    pinned assemblies) to find a reference name that matches aside from
+    capitalization or alias spelling.
 
     If no matching reference is found, raise an exception.
     """
@@ -25,11 +26,22 @@ def normalize_reference_name(name):
     for reference in Species._reference_names_to_species.keys():
         if reference.lower() == lower_name:
             return reference
+    from .pinned_genomes import lookup_pinned_alias, resolve_pinned_assembly
+
+    alias = lookup_pinned_alias(name)
+    if alias is not None:
+        # Raises a detailed ValueError for unsupported versions like T2T-CHM13v1.0.
+        return resolve_pinned_assembly(name).reference_name
     raise ValueError("Reference genome '%s' not found" % name)
 
 
 def find_species_by_reference(reference_name):
-    return Species._reference_names_to_species[normalize_reference_name(reference_name)]
+    normalized = normalize_reference_name(reference_name)
+    if normalized in Species._reference_names_to_species:
+        return Species._reference_names_to_species[normalized]
+    from .pinned_genomes import resolve_pinned_assembly
+
+    return find_species_by_name(resolve_pinned_assembly(normalized).species)
 
 
 def which_reference(species_name, ensembl_release):
@@ -38,8 +50,9 @@ def which_reference(species_name, ensembl_release):
 
 def genome_for_reference_name(reference_name, allow_older_downloaded_release=True):
     """
-    Given a genome reference name, such as "GRCh38", returns the
-    corresponding Ensembl Release object.
+    Given a genome reference name, such as "GRCh38" or "T2T-CHM13v2.0"
+    (including aliases such as "hs1"), returns the corresponding Ensembl
+    release or pinned genome object.
 
     If `allow_older_downloaded_release` is True, return the newest release
     that is installed (see `Genome.installed`), else the newest whose files
@@ -49,6 +62,10 @@ def genome_for_reference_name(reference_name, allow_older_downloaded_release=Tru
     release of Ensembl for the reference.
     """
     reference_name = normalize_reference_name(reference_name)
+    if reference_name not in Species._reference_names_to_species:
+        from .pinned_genomes import PinnedGenome
+
+        return PinnedGenome.cached(reference_name)
     species = find_species_by_reference(reference_name)
     (min_ensembl_release, max_ensembl_release) = species.reference_assemblies[
         reference_name
