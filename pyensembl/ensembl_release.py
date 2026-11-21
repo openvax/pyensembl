@@ -409,6 +409,8 @@ class EnsemblRelease(Genome):
             protein_fasta_paths_or_urls=[mirrored(u) for u in self.protein_fasta_urls],
             genome_fasta_path_or_url=dna,
             reference_metadata=self.reference_metadata,
+            species=self.species,
+            assembly_accession=self.assembly_accession,
         )
 
     def _dated_release_urls(self):

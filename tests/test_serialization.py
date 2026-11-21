@@ -10,10 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import pickle
 
-from pyensembl import Genome, Transcript, Gene, Exon
-from pyensembl.species import Species, human
+import pytest
+
+from pyensembl import EnsemblRelease, Genome, Transcript, Gene, Exon
+from pyensembl.species import Species, human, mouse
 
 from .common import run_multiple_genomes, eq_
 from .data import (
@@ -128,3 +131,134 @@ def test_unique_memory_address_of_unpickled_genomes(genome):
     assert (
         genome is unpickled
     ), "Expected same object for %s but got two different instances" % (unpickled,)
+
+
+def test_genome_species_and_assembly_accession_roundtrip():
+    genome = Genome(
+        reference_name="T2T-CHM13v2.0",
+        annotation_name="Ensembl",
+        annotation_version="2022_07",
+        species="human",
+        assembly_accession="GCA_009914755.4",
+    )
+    assert genome.species == human
+    assert genome.assembly_accession == "GCA_009914755.4"
+    assert genome.taxon_id == 9606
+    assert genome.species_taxon_id == 9606
+    assert genome.nuclear_translation_table == 1
+    assert genome.mitochondrial_translation_table == 2
+    assert genome.genetic_code("MT").table_id == 2
+
+    state = genome.to_dict()
+    assert state["species"] == "homo_sapiens"
+    assert state["assembly_accession"] == "GCA_009914755.4"
+
+    for restored in (
+        Genome.from_dict(state),
+        Genome.from_json(genome.to_json()),
+        pickle.loads(pickle.dumps(genome)),
+    ):
+        assert restored == genome
+        assert hash(restored) == hash(genome)
+        assert restored.species == human
+        assert restored.assembly_accession == "GCA_009914755.4"
+        assert restored.taxon_id == 9606
+        assert restored.mitochondrial_translation_table == 2
+
+    # Species object input matches string input and differs from another species/accession.
+    same = Genome(
+        reference_name="T2T-CHM13v2.0",
+        annotation_name="Ensembl",
+        annotation_version="2022_07",
+        species=human,
+        assembly_accession="GCA_009914755.4",
+    )
+    assert same == genome
+    different_accession = Genome(
+        reference_name="T2T-CHM13v2.0",
+        annotation_name="Ensembl",
+        annotation_version="2022_07",
+        species=human,
+        assembly_accession="GCF_009914755.1",
+    )
+    assert different_accession != genome
+    different_species = Genome(
+        reference_name="T2T-CHM13v2.0",
+        annotation_name="Ensembl",
+        annotation_version="2022_07",
+        species=mouse,
+        assembly_accession="GCA_009914755.4",
+    )
+    assert different_species != genome
+    assert different_species.taxon_id == 10090
+
+
+def test_genome_species_inference_and_legacy_deserialization():
+    inferred = Genome(reference_name="GRCh38", annotation_name="custom")
+    assert inferred.species == human
+    assert inferred.assembly_accession is None
+    assert inferred.taxon_id == 9606
+
+    # Legacy serialized payloads without species or assembly_accession still load cleanly.
+    legacy_state = inferred.to_dict()
+    legacy_state.pop("species")
+    legacy_state.pop("assembly_accession")
+    restored = Genome.from_dict(legacy_state)
+    assert restored == inferred
+    assert restored.species == human
+    assert restored.assembly_accession is None
+
+    # Unknown reference_name stays None when species is omitted.
+    unregistered = Genome(reference_name="CustomAsm1", annotation_name="custom")
+    assert unregistered.species is None
+    assert unregistered.assembly_accession is None
+    assert unregistered.taxon_id is None
+    legacy_payload = json.loads(unregistered.to_json())
+    legacy_payload.pop("species")
+    legacy_payload.pop("assembly_accession")
+    restored_unregistered = Genome.from_json(json.dumps(legacy_payload))
+    assert restored_unregistered == unregistered
+    assert restored_unregistered.species is None
+    assert restored_unregistered.assembly_accession is None
+
+
+def test_genome_species_and_accession_validation_and_subclasses():
+    with pytest.raises(ValueError, match="Species not found"):
+        Genome(reference_name="CustomAsm1", annotation_name="custom", species="not_a_species")
+    with pytest.raises(ValueError, match="disagree"):
+        Genome(
+            reference_name="T2T-CHM13v2.0",
+            annotation_name="custom",
+            species="human",
+            reference_metadata={"taxon_id": 10090},
+        )
+    with pytest.raises(TypeError, match="assembly_accession"):
+        Genome(reference_name="CustomAsm1", annotation_name="custom", assembly_accession=123)
+    with pytest.raises(ValueError, match="assembly_accession"):
+        Genome(reference_name="CustomAsm1", annotation_name="custom", assembly_accession="   ")
+
+    # Legacy subclasses (e.g. orfdata.PinnedEnsemblGenome) may set species before
+    # super().__init__ and assembly_accession after super().__init__.
+    class LegacySubclass(Genome):
+        def __init__(self, *args, species=None, assembly_accession=None, **kwargs):
+            self.species = human if species == "human" else species
+            super().__init__(*args, **kwargs)
+            self.assembly_accession = assembly_accession
+
+    sub = LegacySubclass(
+        reference_name="T2T-CHM13v2.0",
+        annotation_name="Ensembl",
+        species="human",
+        assembly_accession="GCA_009914755.4",
+    )
+    assert sub.species == human
+    assert sub.assembly_accession == "GCA_009914755.4"
+    assert sub.taxon_id == 9606
+
+    # EnsemblRelease.with_mirror preserves species and assembly_accession on base Genome.
+    release = EnsemblRelease(75, species="human")
+    mirrored = release.with_mirror("https://mirror.example/release/")
+    assert type(mirrored) is Genome
+    assert mirrored.species == human
+    assert mirrored.assembly_accession == release.assembly_accession
+    assert Genome.from_json(mirrored.to_json()) == mirrored

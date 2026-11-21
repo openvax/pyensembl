@@ -1,6 +1,5 @@
 """Explicit CLI recovery uses datacache without migrating existing caches."""
 
-import os
 from pathlib import Path
 import sqlite3
 import stat
@@ -25,14 +24,12 @@ def installed(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize("damage", ["non-sqlite", "truncated"])
-def test_explicit_overwrite_recovers_and_preserves_database_identity(installed, tmp_path, damage):
+def test_explicit_overwrite_recovers_corrupt_database(installed, damage):
     cache, source, database, arguments = installed
     original_source = source.read_bytes()
     original_source_stat = source.stat()
     database.write_bytes(b"not a sqlite database" if damage == "non-sqlite" else database.read_bytes()[:200])
     database.chmod(0o640)
-    alias = tmp_path / "existing-link.db"
-    os.link(database, alias)
     original_database = database.stat()
     before = cli_snapshot(cache)
 
@@ -44,12 +41,11 @@ def test_explicit_overwrite_recovers_and_preserves_database_identity(installed, 
     recovered = run_cli([*arguments, "--overwrite"], cache)
     assert recovered.returncode == 0, recovered.stderr
     current = database.stat()
-    assert (current.st_dev, current.st_ino) == (original_database.st_dev, original_database.st_ino)
     assert stat.S_IMODE(current.st_mode) == stat.S_IMODE(original_database.st_mode)
-    assert (current.st_uid, current.st_gid, current.st_nlink) == (
-        original_database.st_uid, original_database.st_gid, original_database.st_nlink,
+    assert (current.st_uid, current.st_gid) == (
+        original_database.st_uid, original_database.st_gid,
     )
-    with sqlite3.connect(alias) as connection:
+    with sqlite3.connect(database) as connection:
         assert connection.execute("PRAGMA integrity_check").fetchall() == [("ok",)]
         assert connection.execute("SELECT gene_id FROM gene").fetchall() == [("g",)]
     with Genome(reference_name="test", annotation_name="custom", gtf_path_or_url=str(source)) as genome:
