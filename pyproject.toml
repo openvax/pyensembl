@@ -31,7 +31,6 @@ dependencies = [
     # [progress] brings tqdm: progress bars are part of pyensembl. 1.30 makes
     # `import datacache` lazy, which keeps `--release` tab completion fast.
     "datacache[progress]>=1.30.0,<2.0.0",
-    "memoized-property>=1.0.2",
     "gtfparse>=2.9.0,<4.0.0",
     "serializable>=0.2.1,<2.0.0",
     "pyfaidx>=0.8.1,<1.0.0",

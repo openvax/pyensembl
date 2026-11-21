@@ -9,8 +9,9 @@ import re
 
 import datacache
 
+from .common import file_fingerprint
 from .database import (
-    DATABASE_SCHEMA_VERSION, GENETIC_CODE_SOURCE_TABLE, _file_state, annotation_db_filename,
+    DATABASE_SCHEMA_VERSION, GENETIC_CODE_SOURCE_TABLE, annotation_db_filename,
 )
 from .genetic_code import translation_table
 
@@ -51,12 +52,12 @@ class AnnotationGeneticCodes:
 
     def _file_state(self):
         try:
-            source = _file_state(self.path)
+            source = file_fingerprint(self.path)
         except FileNotFoundError as error:
             raise FileNotFoundError(
                 "Cannot check source translation-table declarations: installed GTF is missing: " + self.path
             ) from error
-        return source, _file_state(self.index) if isfile(self.index) else None
+        return source, file_fingerprint(self.index) if isfile(self.index) else None
 
     def _read_index(self):
         if not isfile(self.index):
@@ -74,7 +75,7 @@ class AnnotationGeneticCodes:
             if marker is None:
                 return None
             row = connection.execute('SELECT state FROM "' + GENETIC_CODE_SOURCE_TABLE + '"').fetchone()
-            if row is None or json.loads(row[0]) != _file_state(self.path):
+            if row is None or json.loads(row[0]) != file_fingerprint(self.path):
                 return None
             tables = []
             for feature in ("transcript", "CDS"):

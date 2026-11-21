@@ -11,7 +11,7 @@
 # limitations under the License.
 
 
-from memoized_property import memoized_property
+from functools import cached_property
 
 from .locus_with_genome import LocusWithGenome
 
@@ -79,7 +79,7 @@ class Gene(LocusWithGenome):
         state_dict["gene_name"] = self.gene_name
         return state_dict
 
-    @memoized_property
+    @cached_property
     def gene_version(self):
         """
         Ensembl annotation version for this gene (int) or None if the GTF
@@ -115,7 +115,7 @@ class Gene(LocusWithGenome):
         """Alias for :attr:`versioned_gene_id`."""
         return self.versioned_gene_id
 
-    @memoized_property
+    @cached_property
     def transcripts(self):
         """
         Property which dynamically construct transcript objects for all
@@ -137,7 +137,7 @@ class Gene(LocusWithGenome):
             self.genome.transcript_by_id(result[0]) for result in transcript_id_results
         ]
 
-    @memoized_property
+    @cached_property
     def exons(self):
         exon_set = set([])
         for transcript in self.transcripts:
