@@ -5,7 +5,6 @@ import json
 from pathlib import Path
 import sqlite3
 import tarfile
-import time
 
 import datacache
 import pytest
@@ -13,16 +12,8 @@ import pytest
 from pyensembl import Genome, EnsemblRelease, Transcript
 from pyensembl.annotation_genetic_code import AnnotationGeneticCodes
 from pyensembl.database import Database
+from .common import rewrite_bytes
 from .test_legacy_cache_compatibility import snapshot
-
-
-def rewrite_bytes(path, data):
-    """Write data, making sure ctime moves on even with coarse timestamps."""
-    before = path.stat().st_ctime_ns if path.exists() else None
-    path.write_bytes(data)
-    while before is not None and path.stat().st_ctime_ns == before:
-        time.sleep(0.001)
-        path.write_bytes(data)
 
 
 def write_gtf(path, transcript='', cds='', contig='MT', identifier='ENST1', extra=''):

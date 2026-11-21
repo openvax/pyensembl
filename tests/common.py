@@ -1,4 +1,6 @@
 
+import time
+
 from pyensembl import cached_release
 
 import pytest
@@ -67,3 +69,15 @@ def lte_(x, y, msg=None):
         assert x <= y
     else:
         assert x <= y, msg
+
+
+def rewrite_bytes(path, data, timeout=5.0):
+    """Write data, making sure ctime moves on even with coarse timestamps."""
+    before = path.stat().st_ctime_ns if path.exists() else None
+    path.write_bytes(data)
+    deadline = time.monotonic() + timeout
+    while before is not None and path.stat().st_ctime_ns == before:
+        if time.monotonic() > deadline:
+            raise AssertionError("ctime of %s did not change after rewrite" % path)
+        time.sleep(0.001)
+        path.write_bytes(data)
