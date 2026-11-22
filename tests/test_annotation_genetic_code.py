@@ -12,6 +12,7 @@ import pytest
 from pyensembl import Genome, EnsemblRelease, Transcript
 from pyensembl.annotation_genetic_code import AnnotationGeneticCodes
 from pyensembl.database import Database
+from .common import rewrite_bytes
 from .test_legacy_cache_compatibility import snapshot
 
 
@@ -23,7 +24,7 @@ def write_gtf(path, transcript='', cds='', contig='MT', identifier='ENST1', extr
         f'{contig}\ttest\texon\t1\t9\t.\t+\t.\t{attributes} exon_id "e"; exon_number "1";\n'
         f'{contig}\ttest\tCDS\t1\t9\t.\t+\t0\t{attributes} {cds}\n' + extra
     )
-    path.write_bytes(gzip.compress(text.encode(), mtime=0) if path.suffix == '.gz' else text.encode())
+    rewrite_bytes(path, gzip.compress(text.encode(), mtime=0) if path.suffix == '.gz' else text.encode())
 
 
 def open_genome(tmp_path, **kwargs):

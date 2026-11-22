@@ -12,6 +12,13 @@ Add `--json` output support to `pyensembl list` (#512, #526):
   with keys `species`, `assembly`, `release`, `annotation`, `reference_dna`,
   and `cache_directory`.
 
+## 2.36.1
+
+Test-only change. The tests that rewrite a source file with the same size
+now repeat the write until its ctime changes, so they also pass on
+filesystems with coarse timestamps (Linux before 6.13, without multigrain
+timestamps), where two writes in the same clock tick share a ctime.
+
 ## 2.36.0
 
 Support `T2T-CHM13v2.0` (`GCA_009914755.4` / `hs1`, Ensembl rapid-release `2022_07`)

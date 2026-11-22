@@ -8,13 +8,14 @@ import pytest
 
 from pyensembl import Genome, SequenceData
 from pyensembl.common import dump_pickle
+from .common import rewrite_bytes
 from .test_legacy_cache_compatibility import snapshot
 
 
 def write_fasta(path, sequence, identifier="t"):
     path.parent.mkdir(parents=True, exist_ok=True)
     data = (">%s\n%s\n" % (identifier, sequence)).encode()
-    path.write_bytes(gzip.compress(data, mtime=0) if path.suffix == ".gz" else data)
+    rewrite_bytes(path, gzip.compress(data, mtime=0) if path.suffix == ".gz" else data)
 
 
 def genome_for(source, cache, copied=False, role="transcript"):
