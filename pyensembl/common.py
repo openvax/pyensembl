@@ -12,10 +12,56 @@
 
 from contextlib import contextmanager
 from functools import wraps
+import hashlib
 import os
 from pathlib import Path
 import pickle
+import re
 from uuid import uuid4
+
+
+_MD5SUM_LINE = re.compile(r"([a-fA-F0-9]{32})\s+\*?(?:\./)?([^/]+)")
+
+
+def _md5_hasher():
+    return hashlib.md5(usedforsecurity=False)
+
+
+def file_digest(path, algorithm="sha256", *, opener=open):
+    """Return the hex digest of a file's bytes."""
+    digest = _md5_hasher if algorithm == "md5" else algorithm
+    with opener(path, "rb") as handle:
+        return hashlib.file_digest(handle, digest).hexdigest()
+
+
+def parse_md5sum_manifest(text, filename):
+    """Return the unique lowercase MD5 hex digest for ``filename`` in ``text``."""
+    matches = []
+    for line in text.splitlines():
+        match = _MD5SUM_LINE.fullmatch(line.strip())
+        if match and match[2] == filename:
+            matches.append(match[1].lower())
+    if len(matches) != 1:
+        raise ValueError("Expected one checksum for %s" % filename)
+    return matches[0]
+
+
+def file_fingerprint(path, *, ctime=True, include_dev=False):
+    """Return JSON-compatible stat identity for a file.
+
+    Returns ``[size, mtime_ns, ctime_ns, ino]`` by default, omitting
+    ``ctime_ns`` when ``ctime=False`` (for cache-owned files whose metadata
+    may change on chmod/chown) and appending ``st_dev`` when
+    ``include_dev=True``.
+    """
+    info = os.stat(path)
+    fields = [info.st_size, info.st_mtime_ns]
+    if ctime:
+        fields.append(info.st_ctime_ns)
+    fields.append(info.st_ino)
+    if include_dev:
+        fields.append(info.st_dev)
+    return fields
 
 
 def _staging_path(directory, name):
@@ -85,8 +131,7 @@ def _read_progress(raw, description, enabled):
 def dump_pickle(obj, filepath):
     # Atomic, so an interrupted write never leaves a truncated index behind.
     with _atomic_output(filepath) as f:
-        # use lower protocol for compatibility between Python 2 and Python 3
-        pickle.dump(obj, file=f, protocol=2)
+        pickle.dump(obj, file=f)
 
 
 def load_pickle(filepath):

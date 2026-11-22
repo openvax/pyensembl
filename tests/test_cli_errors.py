@@ -23,6 +23,15 @@ def run_cli(arguments, cache):
                           capture_output=True, text=True, timeout=30)
 
 
+def cli_snapshot(cache):
+    """``snapshot`` without ctime, to compare a cache across ``run_cli``.
+
+    macOS can tag the files a CLI process opens with ``com.apple.provenance``.
+    That changes their ctime, but not their content, mode, inode, size or mtime.
+    """
+    return {path: state[:4] + state[5:] for path, state in snapshot(cache).items()}
+
+
 @pytest.mark.parametrize("option", ["--gtf", "--transcript-fasta", "--protein-fasta",
                                    "--genome-fasta-path", "--custom-mirror", "--server"])
 def test_empty_source_is_rejected_before_genome_selection(tmp_path, monkeypatch, option):
@@ -104,10 +113,10 @@ def test_transcript_only_install_preserves_spaces_and_reopens_read_only(tmp_path
             "--transcript-fasta", str(source)]
     first = run_cli(args, cache)
     assert first.returncode == 0, first.stderr
-    before = snapshot(cache)
+    before = cli_snapshot(cache)
     second = run_cli(args, cache)
     assert second.returncode == 0, second.stderr
-    assert snapshot(cache) == before
+    assert cli_snapshot(cache) == before
 
 
 def test_malformed_gtf_keeps_traceback_and_source_context(tmp_path):
@@ -151,12 +160,12 @@ def test_corrupt_database_without_overwrite_keeps_traceback(tmp_path, monkeypatc
         genome.index()
         database = Path(genome.db.local_db_path)
     database.write_bytes(b"not a sqlite database")
-    before = snapshot(tmp_path / "cache")
+    before = cli_snapshot(tmp_path / "cache")
     result = run_cli(["install", "--reference-name", "test", "--annotation-name", "custom",
                       "--gtf", str(source)], tmp_path / "cache")
     assert result.returncode == 1
     assert "Traceback" in result.stderr and "DatabaseError" in result.stderr
-    assert snapshot(tmp_path / "cache") == before
+    assert cli_snapshot(tmp_path / "cache") == before
 
 
 def test_run_accepts_explicit_argv(monkeypatch, capsys):
@@ -165,3 +174,26 @@ def test_run_accepts_explicit_argv(monkeypatch, capsys):
         shell.run(["--json", "install"])
     assert exit_info.value.code == 2
     assert "--json requires list, inspect, available, or verify" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("action", [
+    "install", "inspect", "verify", "delete-index-files", "delete-all-files",
+])
+def test_empty_genome_selection_is_an_argument_error(action, tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setattr(shell, "configure_logging", lambda **kwargs: None)
+    monkeypatch.setattr(shell, "collect_selected_genomes", lambda args: [])
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Empty selection reached an action")
+
+    for name in ["run_install", "inspect_genomes", "run_verify", "_delete_genome_files"]:
+        monkeypatch.setattr(shell, name, forbidden)
+    with pytest.raises(SystemExit) as error:
+        shell.run([action, "--release", "75"])
+    assert error.value.code == 2
+    output = capsys.readouterr()
+    assert "error: No genomes selected" in output.err
+    assert not output.out
+    assert "Traceback" not in output.err
+    assert not (tmp_path / "cache").exists()

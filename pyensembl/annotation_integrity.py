@@ -13,7 +13,7 @@ from urllib.request import urlopen
 
 from filelock import FileLock
 
-from .common import _atomic_output
+from .common import _atomic_output, file_digest, parse_md5sum_manifest
 
 
 class AnnotationIntegrityError(ValueError):
@@ -21,11 +21,7 @@ class AnnotationIntegrityError(ValueError):
 
 
 def file_md5(path):
-    digest = hashlib.md5(usedforsecurity=False)
-    with open(path, "rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+    return file_digest(path, "md5")
 
 
 def source_checksum(url):
@@ -36,15 +32,14 @@ def source_checksum(url):
         data = response.read(2 * 1024 * 1024 + 1)
     if len(data) > 2 * 1024 * 1024:
         raise AnnotationIntegrityError("Checksum manifest is unexpectedly large: " + manifest_url)
-    matches = []
-    for line in data.decode("utf-8").splitlines():
-        match = re.fullmatch(r"([a-fA-F0-9]{32})\s+\*?(?:\./)?([^/]+)", line.strip())
-        if match and match[2] == name:
-            matches.append(match[1].lower())
-    if len(matches) != 1:
-        raise AnnotationIntegrityError("Expected one checksum for %s in %s" % (name, manifest_url))
+    try:
+        md5 = parse_md5sum_manifest(data.decode("utf-8"), name)
+    except ValueError as error:
+        raise AnnotationIntegrityError(
+            "Expected one checksum for %s in %s" % (name, manifest_url)
+        ) from error
     return dict(
-        source=url, md5=matches[0], manifest_url=manifest_url,
+        source=url, md5=md5, manifest_url=manifest_url,
         manifest_sha256=hashlib.sha256(data).hexdigest(),
         retrieved_at=datetime.now(timezone.utc).isoformat(),
     )

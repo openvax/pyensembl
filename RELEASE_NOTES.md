@@ -3,6 +3,110 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.37.0
+
+Add `--json` output support to `pyensembl list` (#512, #526):
+
+- `pyensembl list --json` prints installed Ensembl, pinned, and custom genomes
+  as a deterministically sorted JSON array (`[]` when no genomes are installed),
+  with keys `species`, `assembly`, `release`, `annotation`, `reference_dna`,
+  and `cache_directory`.
+
+## 2.36.0
+
+Support `T2T-CHM13v2.0` (`GCA_009914755.4` / `hs1`, Ensembl rapid-release `2022_07`)
+and checksum-pinned rapid-release assemblies natively in PyEnsembl (#541):
+
+- Add `PinnedGenome`, `PinnedAssembly`, `ReferenceAlias`, `ContigAlias`,
+  `RCRS_ACCESSION`, `pinned_assemblies()`, `pinned_reference_aliases()`,
+  `resolve_pinned_assembly()`, `find_pinned_reference_name()`,
+  `is_rcrs_reference()`, `contig_aliases()`, `normalize_pinned_contig()`,
+  `pinned_contig_spellings()`, `pinned_contig_lengths()`, and
+  `mitochondrion_note()` as lazy top-level exports.
+- Pin Ensembl rapid-release `2022_07` GTF/cDNA/protein assets by SHA-256 and
+  byte size, bundle the Ensembl GRCh38 rCRS (`NC_012920.1`) mitochondrion
+  annotation alongside CHM13's unannotated native `MT` (`CP068254.1`), and
+  explicitly reject coordinate-incompatible draft/older versions such as
+  `T2T-CHM13v1.0`.
+- Integrate pinned assemblies into `normalize_reference_name()`,
+  `find_species_by_reference()`, `genome_for_reference_name()`,
+  `available_releases()`, and the `pyensembl` CLI (`install`, `list`,
+  `inspect`, `verify`, `available`, `delete-index-files`, `delete-all-files`).
+
+## 2.35.0
+
+Accept optional `species` and `assembly_accession` keyword arguments directly on
+`pyensembl.Genome` (#540), preserving both across `to_dict()` / `from_dict()`
+and passing `species` into reference genetic-code resolution so custom and
+pinned genomes no longer require downstream subclasses. Also update
+`tests/test_cli_database_recovery.py` for `datacache>=1.32.0` atomic SQLite
+replacement (#542).
+
+## 2.34.7
+
+Maintenance only; no behaviour change for supported use. Removes the unused
+`EnsemblRelease.normalize_init_values` classmethod, which had no callers
+in PyEnsembl or the packages that depend on it (#522), and stops
+pinning pickle protocol 2 (a Python 2 leftover) when writing cache files;
+existing cache files still load. Also deletes the finished implementation
+plans under `tasks/` and the one-off `scripts/benchmark_gtf_indexing.py`
+(#513).
+
+## 2.34.6
+
+`pyensembl list` no longer reports the HGNC alias snapshot cached by
+`GeneNameAliases.download_hgnc()` as a custom genome (#508). The scan for
+custom genomes now skips every directory PyEnsembl itself keeps under the
+cache root for other data: `dna_cache`, `aliases` and `dated_releases`.
+Those three names are therefore reserved: a custom genome installed with one
+of them as its `--reference-name` is not listed.
+
+## 2.34.5
+
+Define `Locus.__bool__` returning `True` so truthiness checks (`bool(transcript)`
+or `if transcript:`) evaluate in constant time instead of falling back to
+`Transcript.__len__()` and querying the `exon` SQLite table on cold or unindexed
+genomes (#534). `len(locus)` and `len(transcript)` are unchanged.
+
+## 2.34.4
+
+Exit with argparse status 2 when a selection resolves to no genomes (#505),
+before installation, inspection, verification or deletion can run. Automation
+can now distinguish an empty selection from successful work.
+
+## 2.34.3
+
+Make `develop.sh` directly executable and install through the Python selected
+by `PYTHON` (default `python`), with additional pip arguments forwarded.
+
+## 2.34.2
+
+Remove the obsolete Polars-to-pandas conversion in database creation: the GTF
+loader already requests pandas output. Remove the excluded getting-started
+source stub while retaining its generated redirect to the home page (#522).
+
+## 2.34.1
+
+2.34.0 was not published. Its release stopped on macOS, where three CLI tests
+failed. They compared a cache's files before and after running the CLI,
+including each file's ctime. macOS can tag a file that the CLI opens with
+`com.apple.provenance`, which changes its ctime and nothing else. Those
+comparisons now leave out ctime and still compare content, mode, inode, size
+and mtime. This release contains 2.34.0's changes:
+
+`Transcript.stop_codon_completed_by_polyadenylation` identifies mitochondrial
+reading frames that end in `T` or `TA` and get the rest of a `TAA` stop codon
+from the poly(A) tail (#527). In human these are MT-ND1, MT-ND2, MT-CO3,
+MT-ND3, MT-ND4 and MT-CYB. Ensembl annotates no stop codon for them, so
+`coding_sequence` and `three_prime_utr_sequence` were `None`. For these
+transcripts `coding_sequence` now runs from the start codon to the end of the
+transcript, ending in the `T` or `TA`, and `three_prime_utr_sequence` is
+empty. `complete` is still `False`, since there's no annotated stop codon.
+
+The property requires a mitochondrial contig and a genetic code in which `TAA`
+is a stop: not NCBI tables 14 or 33, where it encodes tyrosine. Other
+transcripts without a stop codon are unchanged.
+
 ## 2.33.2
 
 Lookups by a feature type or attribute that an annotation lacks no longer

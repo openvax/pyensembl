@@ -41,8 +41,20 @@ from .genome_fasta import GenomeFasta, MissingGenomeFastaError
 from .normalization import normalize_chromosome, normalize_strand
 from .search import find_nearest_locus
 from .sequence_data import SequenceData, fasta_index_path, fasta_index_files
+from .species import Species, check_species_object
 from .versioned_ids import _split_ens_version, match_version
 from .transcript import Transcript
+
+
+def _check_assembly_accession(value):
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise TypeError("assembly_accession must be a string or None")
+    value = value.strip()
+    if not value:
+        raise ValueError("assembly_accession must not be empty")
+    return value
 
 
 def _inspect_annotation_index(path, gtf_path=None, source=None):
@@ -100,6 +112,8 @@ class Genome(Serializable):
         cache_directory_path=None,
         genome_fasta_path_or_url=None,
         reference_metadata=None,
+        species=None,
+        assembly_accession=None,
     ):
         """
         Parameters
@@ -142,6 +156,15 @@ class Genome(Serializable):
             Taxon identity, compartment translation tables and contig
             compartments. Inferred offline when possible and preserved on
             serialization; independent of source URLs and cache paths.
+
+        species : Species or str, optional
+            Species for this genome (e.g. ``"human"`` or ``pyensembl.human``).
+            Inferred from ``reference_name`` when known and omitted; preserved
+            on serialization and passed to reference genetic-code resolution.
+
+        assembly_accession : str, optional
+            Versioned assembly accession (e.g. ``"GCA_009914755.4"``), or None.
+            Preserved on serialization.
         """
         if transcript_fasta_paths_or_urls is None:
             transcript_fasta_paths_or_urls = []
@@ -162,6 +185,11 @@ class Genome(Serializable):
         self._gtf_path_or_url = gtf_path_or_url
         self._transcript_fasta_paths_or_urls = transcript_fasta_paths_or_urls
         self._protein_fasta_paths_or_urls = protein_fasta_paths_or_urls
+        if species is not None:
+            self.species = check_species_object(species)
+        elif "species" not in self.__dict__:
+            self.species = Species._reference_names_to_species.get(reference_name)
+        self._assembly_accession = _check_assembly_accession(assembly_accession)
         self._reference_metadata = self._resolve_reference_metadata(reference_metadata)
         # Public access returns copies, so this pinned identity is immutable.
         # Compute it once: genes/transcripts hash their genome frequently.
@@ -186,7 +214,18 @@ class Genome(Serializable):
         self._init_lazy_fields()
 
     def _resolve_reference_metadata(self, value):
-        return resolve_reference_metadata(value, reference_name=self.reference_name)
+        return resolve_reference_metadata(
+            value, species=self.species, reference_name=self.reference_name,
+        )
+
+    @property
+    def assembly_accession(self):
+        """Versioned assembly accession (e.g. ``GCA_009914755.4``), or None."""
+        return self._assembly_accession
+
+    @assembly_accession.setter
+    def assembly_accession(self, value):
+        self._assembly_accession = _check_assembly_accession(value)
 
     @property
     def reference_metadata(self):
@@ -375,6 +414,8 @@ class Genome(Serializable):
             cache_directory_path=self.cache_directory_path,
             genome_fasta_path_or_url=self._genome_fasta_path_or_url,
             reference_metadata=self.reference_metadata,
+            species=self.species.latin_name if self.species is not None else None,
+            assembly_accession=self.assembly_accession,
         )
 
     def _init_lazy_fields(self):
@@ -858,6 +899,8 @@ class Genome(Serializable):
             tuple(self._protein_fasta_paths_or_urls),
             tuple(self._transcript_fasta_paths_or_urls),
             self._reference_metadata_key,
+            self.species,
+            self.assembly_accession,
         )
 
     def __eq__(self, other):

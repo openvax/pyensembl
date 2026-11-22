@@ -28,9 +28,34 @@ version. See [assembly selection](../guides/assembly-selection.md).
 
 ::: pyensembl.species.Species
 
+## Pinned rapid-release helpers
+
+::: pyensembl.pinned_assemblies
+
+::: pyensembl.pinned_reference_aliases
+
+::: pyensembl.resolve_pinned_assembly
+
+::: pyensembl.find_pinned_reference_name
+
+::: pyensembl.is_rcrs_reference
+
+::: pyensembl.contig_aliases
+
+::: pyensembl.normalize_pinned_contig
+
+::: pyensembl.pinned_contig_spellings
+
+::: pyensembl.pinned_contig_lengths
+
+::: pyensembl.mitochondrion_note
+
 ## Package values and convenience genomes <a id="exported-constants"></a>
 
 `MAX_ENSEMBL_RELEASE` is the newest numbered release supported by this package.
+`RCRS_ACCESSION` (`"NC_012920.1"`) is the RefSeq accession of the revised
+Cambridge Reference Sequence used for mitochondrial annotation in pinned
+human T2T-CHM13v2.0 releases.
 `__version__` is its package version. `ensembl_grch36`, `ensembl_grch37` and
 `ensembl_grch38` are convenience `EnsemblRelease` objects selected the first
 time each is used, using `genome_for_reference_name`; `import pyensembl` does
