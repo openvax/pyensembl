@@ -223,8 +223,8 @@ def test_cli_custom_inspection_and_human_output(tmp_path, monkeypatch, capsys):
 
 def test_json_option_only_applies_to_inspection(monkeypatch, capsys):
     with pytest.raises(SystemExit):
-        run_cli(monkeypatch, "list", "--json")
-    assert "--json requires inspect" in capsys.readouterr().err
+        run_cli(monkeypatch, "install", "--json")
+    assert "--json requires list, inspect, available, or verify" in capsys.readouterr().err
 
 
 def test_missing_inspection_does_not_create_cache(tmp_path, monkeypatch):

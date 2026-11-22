@@ -25,7 +25,7 @@ options:
   --version             show program's version number and exit
   -v, --verbose         Show detailed progress, including download and
                         database steps
-  --json                With inspect, available, or verify, print JSON
+  --json                With list, inspect, available, or verify, print JSON
   --overwrite           Force download and indexing even if files already
                         exist locally
   --reference-name REFERENCE_NAME
@@ -123,6 +123,7 @@ examples:
   pyensembl install --reference-name GRCh38 --annotation-name my_genes \
       --gtf URL_OR_PATH --transcript-fasta URL_OR_PATH  a custom genome
   pyensembl list
+  pyensembl list --json
   pyensembl inspect --release 93 --json
   pyensembl delete-all-files --release 75
   pyensembl prune --dry-run

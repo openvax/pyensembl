@@ -15,10 +15,10 @@ def test_validate_arguments_accepts_matching_flags():
     shell.validate_arguments("inspect", True, False, False, [75])
     shell.validate_arguments("available", False, True, False, [])
     shell.validate_arguments("verify", False, False, True, [])
+    shell.validate_arguments("list", True, False, False, [])
 
 
 @pytest.mark.parametrize("action, json_output, refresh, check_remote, releases, message", [
-    ("list", True, False, False, [], "--json requires"),
     ("install", False, True, False, [], "--refresh requires available"),
     ("list", False, False, True, [], "--check-remote requires verify"),
     ("delete-all-files", False, False, False, ["latest"], "concrete --release"),

@@ -3,6 +3,15 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.37.0
+
+Add `--json` output support to `pyensembl list` (#512, #526):
+
+- `pyensembl list --json` prints installed Ensembl, pinned, and custom genomes
+  as a deterministically sorted JSON array (`[]` when no genomes are installed),
+  with keys `species`, `assembly`, `release`, `annotation`, `reference_dna`,
+  and `cache_directory`.
+
 ## 2.36.1
 
 Test-only change. The tests that rewrite a source file with the same size
