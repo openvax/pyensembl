@@ -1098,6 +1098,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2370" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.37.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2361" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1526,6 +1537,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2370" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.37.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2361" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1878,6 +1900,14 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
+<h2 id="2370">2.37.0<a class="headerlink" href="#2370" title="Permanent link">&para;</a></h2>
+<p>Add <code>--json</code> output support to <code>pyensembl list</code> (#512, #526):</p>
+<ul>
+<li><code>pyensembl list --json</code> prints installed Ensembl, pinned, and custom genomes
+  as a deterministically sorted JSON array (<code>[]</code> when no genomes are installed),
+  with keys <code>species</code>, <code>assembly</code>, <code>release</code>, <code>annotation</code>, <code>reference_dna</code>,
+  and <code>cache_directory</code>.</li>
+</ul>
 <h2 id="2361">2.36.1<a class="headerlink" href="#2361" title="Permanent link">&para;</a></h2>
 <p>Test-only change. The tests that rewrite a source file with the same size
 now repeat the write until its ctime changes, so they also pass on
