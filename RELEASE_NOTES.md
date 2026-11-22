@@ -3,12 +3,42 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
-## 2.34.8
+## 2.36.1
 
 Test-only change. The tests that rewrite a source file with the same size
 now repeat the write until its ctime changes, so they also pass on
 filesystems with coarse timestamps (Linux before 6.13, without multigrain
 timestamps), where two writes in the same clock tick share a ctime.
+
+## 2.36.0
+
+Support `T2T-CHM13v2.0` (`GCA_009914755.4` / `hs1`, Ensembl rapid-release `2022_07`)
+and checksum-pinned rapid-release assemblies natively in PyEnsembl (#541):
+
+- Add `PinnedGenome`, `PinnedAssembly`, `ReferenceAlias`, `ContigAlias`,
+  `RCRS_ACCESSION`, `pinned_assemblies()`, `pinned_reference_aliases()`,
+  `resolve_pinned_assembly()`, `find_pinned_reference_name()`,
+  `is_rcrs_reference()`, `contig_aliases()`, `normalize_pinned_contig()`,
+  `pinned_contig_spellings()`, `pinned_contig_lengths()`, and
+  `mitochondrion_note()` as lazy top-level exports.
+- Pin Ensembl rapid-release `2022_07` GTF/cDNA/protein assets by SHA-256 and
+  byte size, bundle the Ensembl GRCh38 rCRS (`NC_012920.1`) mitochondrion
+  annotation alongside CHM13's unannotated native `MT` (`CP068254.1`), and
+  explicitly reject coordinate-incompatible draft/older versions such as
+  `T2T-CHM13v1.0`.
+- Integrate pinned assemblies into `normalize_reference_name()`,
+  `find_species_by_reference()`, `genome_for_reference_name()`,
+  `available_releases()`, and the `pyensembl` CLI (`install`, `list`,
+  `inspect`, `verify`, `available`, `delete-index-files`, `delete-all-files`).
+
+## 2.35.0
+
+Accept optional `species` and `assembly_accession` keyword arguments directly on
+`pyensembl.Genome` (#540), preserving both across `to_dict()` / `from_dict()`
+and passing `species` into reference genetic-code resolution so custom and
+pinned genomes no longer require downstream subclasses. Also update
+`tests/test_cli_database_recovery.py` for `datacache>=1.32.0` atomic SQLite
+replacement (#542).
 
 ## 2.34.7
 
