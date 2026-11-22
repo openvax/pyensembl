@@ -3,6 +3,8 @@ include LICENSE
 include CONTRIBUTING.md RELEASING.md RELEASE_NOTES.md
 include mkdocs.yml
 include docs.sh
+include pyensembl/pinned_assemblies.json
+include pyensembl/data/*.gz
 recursive-include docs *.md *.css
 recursive-include scripts *.py
 
