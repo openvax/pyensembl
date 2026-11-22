@@ -1098,6 +1098,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2360" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.36.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2350" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.35.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2347" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1493,6 +1515,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2360" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.36.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2350" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.35.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2347" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1812,6 +1856,33 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
+<h2 id="2360">2.36.0<a class="headerlink" href="#2360" title="Permanent link">&para;</a></h2>
+<p>Support <code>T2T-CHM13v2.0</code> (<code>GCA_009914755.4</code> / <code>hs1</code>, Ensembl rapid-release <code>2022_07</code>)
+and checksum-pinned rapid-release assemblies natively in PyEnsembl (#541):</p>
+<ul>
+<li>Add <code>PinnedGenome</code>, <code>PinnedAssembly</code>, <code>ReferenceAlias</code>, <code>ContigAlias</code>,
+  <code>RCRS_ACCESSION</code>, <code>pinned_assemblies()</code>, <code>pinned_reference_aliases()</code>,
+  <code>resolve_pinned_assembly()</code>, <code>find_pinned_reference_name()</code>,
+  <code>is_rcrs_reference()</code>, <code>contig_aliases()</code>, <code>normalize_pinned_contig()</code>,
+  <code>pinned_contig_spellings()</code>, <code>pinned_contig_lengths()</code>, and
+  <code>mitochondrion_note()</code> as lazy top-level exports.</li>
+<li>Pin Ensembl rapid-release <code>2022_07</code> GTF/cDNA/protein assets by SHA-256 and
+  byte size, bundle the Ensembl GRCh38 rCRS (<code>NC_012920.1</code>) mitochondrion
+  annotation alongside CHM13's unannotated native <code>MT</code> (<code>CP068254.1</code>), and
+  explicitly reject coordinate-incompatible draft/older versions such as
+  <code>T2T-CHM13v1.0</code>.</li>
+<li>Integrate pinned assemblies into <code>normalize_reference_name()</code>,
+  <code>find_species_by_reference()</code>, <code>genome_for_reference_name()</code>,
+  <code>available_releases()</code>, and the <code>pyensembl</code> CLI (<code>install</code>, <code>list</code>,
+  <code>inspect</code>, <code>verify</code>, <code>available</code>, <code>delete-index-files</code>, <code>delete-all-files</code>).</li>
+</ul>
+<h2 id="2350">2.35.0<a class="headerlink" href="#2350" title="Permanent link">&para;</a></h2>
+<p>Accept optional <code>species</code> and <code>assembly_accession</code> keyword arguments directly on
+<code>pyensembl.Genome</code> (#540), preserving both across <code>to_dict()</code> / <code>from_dict()</code>
+and passing <code>species</code> into reference genetic-code resolution so custom and
+pinned genomes no longer require downstream subclasses. Also update
+<code>tests/test_cli_database_recovery.py</code> for <code>datacache&gt;=1.32.0</code> atomic SQLite
+replacement (#542).</p>
 <h2 id="2347">2.34.7<a class="headerlink" href="#2347" title="Permanent link">&para;</a></h2>
 <p>Maintenance only; no behaviour change for supported use. Removes the unused
 <code>EnsemblRelease.normalize_init_values</code> classmethod, which had no callers
