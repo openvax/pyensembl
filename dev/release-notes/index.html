@@ -1098,6 +1098,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2361" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.36.1
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2360" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1515,6 +1526,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2361" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.36.1
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2360" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1856,6 +1878,11 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
+<h2 id="2361">2.36.1<a class="headerlink" href="#2361" title="Permanent link">&para;</a></h2>
+<p>Test-only change. The tests that rewrite a source file with the same size
+now repeat the write until its ctime changes, so they also pass on
+filesystems with coarse timestamps (Linux before 6.13, without multigrain
+timestamps), where two writes in the same clock tick share a ctime.</p>
 <h2 id="2360">2.36.0<a class="headerlink" href="#2360" title="Permanent link">&para;</a></h2>
 <p>Support <code>T2T-CHM13v2.0</code> (<code>GCA_009914755.4</code> / <code>hs1</code>, Ensembl rapid-release <code>2022_07</code>)
 and checksum-pinned rapid-release assemblies natively in PyEnsembl (#541):</p>
