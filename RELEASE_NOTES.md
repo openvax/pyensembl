@@ -3,6 +3,20 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.38.0
+
+Harmonize cache resolution, offline mode, and cache inspection with `datacache>=1.34.0` (#545):
+
+- Honor `OPENVAX_DATA_CACHE` as a shared fallback behind `PYENSEMBL_CACHE_DIR`
+  (resolving to `$OPENVAX_DATA_CACHE/pyensembl`) while keeping existing
+  platform cache directories unchanged.
+- Add `pyensembl dirs [--json]` to report the resolved cache root, why it was
+  chosen (`origin`/`detail`), offline status, and per-subdirectory disk usage
+  without creating directories or touching the network.
+- Add `--offline` CLI flag (and respect `OPENVAX_OFFLINE` / `DATACACHE_OFFLINE`)
+  to fail fast on remote download attempts while serving cached data, and honor
+  `OPENVAX_NO_PROGRESS` / `DATACACHE_NO_PROGRESS` via `datacache.should_show_progress`.
+
 ## 2.37.0
 
 Add `--json` output support to `pyensembl list` (#512, #526):
