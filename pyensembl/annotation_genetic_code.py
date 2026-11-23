@@ -1,7 +1,6 @@
 """Read sparse transcript/CDS genetic-code declarations without cache writes."""
 
 from contextlib import closing
-import gzip
 import json
 from os import fspath
 from os.path import join, isfile, abspath
@@ -17,10 +16,6 @@ from .genetic_code import translation_table
 
 
 _COLUMNS = ("transl_table", "translation_table")
-_DECLARATION = re.compile(r"(?:^|;)\s*(?:transl_table|translation_table)\b")
-_ATTRIBUTE = re.compile(
-    r'''(?:^|;)\s*([^\s;]+)[ \t]+(?:"([^"\n]*)"|'([^'\n]*)'|([^;\n]*))\s*(?=;|$)'''
-)
 
 
 def _add(result, identifier, values):
@@ -97,29 +92,24 @@ class AnnotationGeneticCodes:
             return result
 
     def _read_gtf(self):
-        with open(self.path, "rb") as handle:
-            compressed = handle.read(2) == b"\x1f\x8b"
-        opener = gzip.open if compressed else open
+        # Imported lazily so plain `import pyensembl` does not load pandas/PyArrow.
+        from gtfparse import read_gtf
+
+        frame = read_gtf(
+            self.path,
+            result_type="pandas",
+            features={"transcript", "CDS"},
+            usecols=["transcript_id", *_COLUMNS],
+            cast_version_columns=False,
+        )
         result = {}
-        with opener(self.path, "rt", encoding="utf-8") as handle:
-            for number, line in enumerate(handle, 1):
-                if line.startswith("#"):
-                    continue
-                fields = line.rstrip("\r\n").split("\t", 8)
-                if len(fields) != 9 or fields[2] not in ("transcript", "CDS"):
-                    continue
-                attributes = fields[8]
-                if not any(column in attributes for column in _COLUMNS):
-                    continue
-                parsed = list(_ATTRIBUTE.finditer(attributes))
-                def value(match):
-                    return next(group for group in match.groups()[1:] if group is not None)
-                identifiers = {value(match) for match in parsed if match[1] == "transcript_id"}
-                values = [value(match) for match in parsed if match[1] in _COLUMNS]
-                if _DECLARATION.search(_ATTRIBUTE.sub("", attributes)) or (values and len(identifiers) != 1):
-                    raise ValueError("Malformed translation-table declaration at %s:%d" % (self.path, number))
-                if values:
-                    _add(result, identifiers.pop(), values)
+        for row in frame.to_dict("records"):
+            identifier = row.get("transcript_id")
+            values = [row.get(column) for column in _COLUMNS]
+            if any(v is not None and str(v).strip() for v in values):
+                if not identifier or "," in str(identifier):
+                    raise ValueError("Malformed translation-table declaration in %s" % self.path)
+            _add(result, identifier, values)
         return result
 
     def get(self, transcript_id):

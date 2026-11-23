@@ -347,12 +347,6 @@ path_group.add_argument(
     help="URL or local path to a FASTA file containing protein data.",
 )
 
-path_group.add_argument(
-    "--shared-prefix",
-    default="",
-    help="Add this prefix to URLs or paths specified by --gtf, --transcript-fasta, --protein-fasta",
-)
-
 dna_group = parser.add_argument_group("Optional reference DNA")
 dna_group.add_argument("--with-genome-fasta", action="store_true",
                        help="Also download and index reference DNA (several GB for human)")
@@ -366,8 +360,6 @@ dna_group.add_argument("--masked", choices=("none", "soft", "hard"), default="no
                        help="Masking of downloaded reference DNA (default: none)")
 dna_group.add_argument("--check-genome-fasta", action="store_true",
                        help="With list or inspect, check DNA indexes without downloading or rebuilding")
-# Accepted for 2.11.0 scripts; unused DNA is what prune removes.
-dna_group.add_argument("--orphan-genome-fastas", action="store_true", help=argparse.SUPPRESS)
 dna_group.add_argument("--dry-run", action="store_true",
                        help="With prune, report candidates without deleting files")
 
@@ -911,19 +903,10 @@ def collect_selected_genomes(args):
                 reference_name=args.reference_name,
                 annotation_name=args.annotation_name,
                 annotation_version=args.annotation_version,
-                gtf_path_or_url=os.path.join(args.shared_prefix, args.gtf) if args.gtf else None,
-                transcript_fasta_paths_or_urls=[
-                    os.path.join(args.shared_prefix, transcript_fasta)
-                    for transcript_fasta in args.transcript_fasta
-                ],
-                protein_fasta_paths_or_urls=[
-                    os.path.join(args.shared_prefix, protein_fasta)
-                    for protein_fasta in args.protein_fasta
-                ],
-                genome_fasta_path_or_url=(
-                    os.path.join(args.shared_prefix, args.genome_fasta_path)
-                    if args.genome_fasta_path else None
-                ),
+                gtf_path_or_url=args.gtf or None,
+                transcript_fasta_paths_or_urls=list(args.transcript_fasta),
+                protein_fasta_paths_or_urls=list(args.protein_fasta),
+                genome_fasta_path_or_url=args.genome_fasta_path or None,
             )
         ]
     else:
@@ -1504,8 +1487,8 @@ def _run_action(args):
         except ValueError as error:
             parser.error(str(error))
         return
-    if args.orphan_genome_fastas or args.dry_run:
-        parser.error("--orphan-genome-fastas and --dry-run require prune")
+    if args.dry_run:
+        parser.error("--dry-run requires prune")
     if (
         args.action in DELETE_ACTIONS
         and not args.release

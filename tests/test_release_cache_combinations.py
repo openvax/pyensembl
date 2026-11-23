@@ -13,7 +13,7 @@ import pytest
 import requests
 
 from pyensembl import Database, EnsemblRelease, shell
-from pyensembl import annotation_integrity, ensembl_metadata, genome_fasta_cache
+from pyensembl import ensembl_metadata, genome_fasta_cache
 from .test_explicit_ensembl_release import bgzf
 from .test_legacy_cache_compatibility import snapshot
 
@@ -221,7 +221,10 @@ def sources(tmp_path, monkeypatch):
     monkeypatch.setattr(requests.sessions.Session, "request",
                         lambda session, method, url, **kw: sources.request(session, method, url, **kw))
     monkeypatch.setattr(genome_fasta_cache, "urlopen", sources.metadata)
-    monkeypatch.setattr(annotation_integrity, "urlopen", sources.metadata)
+    monkeypatch.setattr(
+        genome_fasta_cache.datacache, "fetch_bytes",
+        lambda url, **kw: sources.metadata(url).read(),
+    )
     return sources
 
 
@@ -432,9 +435,11 @@ def test_metadata_api_installs_the_same_explicit_dataset(sources, monkeypatch, s
         for kind, payload in documents.items()
     }
     monkeypatch.setattr(
-        ensembl_metadata, "urlopen",
-        lambda request, **kwargs: BytesIO(
-            endpoints[request.full_url.removeprefix(ensembl_metadata.METADATA_API)]
+        ensembl_metadata.datacache, "fetch_bytes",
+        lambda url, **kwargs: (
+            endpoints[url.removeprefix(ensembl_metadata.METADATA_API)]
+            if url.startswith(ensembl_metadata.METADATA_API)
+            else sources.metadata(url).read()
         ),
     )
     selection = next(case for case in SELECTIONS if case.name == selection_name)
@@ -449,7 +454,8 @@ def test_metadata_api_installs_the_same_explicit_dataset(sources, monkeypatch, s
             encoded.append((genome.to_json(), pickle.dumps(genome)))
     sources.offline = True
     monkeypatch.setattr(
-        ensembl_metadata, "urlopen", lambda *a, **kw: pytest.fail("Unexpected metadata lookup")
+        ensembl_metadata.datacache, "fetch_bytes",
+        lambda *a, **kw: pytest.fail("Unexpected metadata lookup"),
     )
     forbid_parsing(monkeypatch)
     before = snapshot(sources.root)

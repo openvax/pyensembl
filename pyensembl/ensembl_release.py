@@ -50,22 +50,8 @@ def _default_server_for_species(species):
     return ENSEMBL_GENOMES_FTP_SERVER if species.ensembl_genomes else ENSEMBL_FTP_SERVER
 
 
-def _genome_fasta_option(genome_fasta, download_genome_fasta=None, genome_fasta_path=None):
-    """Normalize reference DNA to None, True (Ensembl DNA), or an absolute path.
-
-    Also accepts the 2.11.0 keywords download_genome_fasta/genome_fasta_path.
-    """
-    if download_genome_fasta is not None or genome_fasta_path is not None:
-        warnings.warn(
-            "download_genome_fasta= and genome_fasta_path= are deprecated; use "
-            "genome_fasta=True for Ensembl DNA or genome_fasta=<path> for a local FASTA",
-            DeprecationWarning,
-            stacklevel=3,
-        )
-        if genome_fasta is not None:
-            raise ValueError("Pass reference DNA only as genome_fasta")
-        # 2.11.0 let a local path win and accepted any truthy download flag.
-        genome_fasta = genome_fasta_path or bool(download_genome_fasta)
+def _genome_fasta_option(genome_fasta):
+    """Normalize reference DNA to None, True (Ensembl DNA), or an absolute path."""
     if genome_fasta is None or genome_fasta is False:
         return None
     if genome_fasta is True:
@@ -105,7 +91,7 @@ class EnsemblRelease(Genome):
     def cached(
         cls, release=MAX_ENSEMBL_RELEASE, species=None, server=ENSEMBL_FTP_SERVER,
         *, genome_fasta=None, genome_fasta_type="toplevel", genome_fasta_mask="none",
-        download_genome_fasta=None, genome_fasta_path=None, **selection,
+        **selection,
     ):
         """
         Construct EnsemblRelease if it's never been made before, otherwise
@@ -114,9 +100,7 @@ class EnsemblRelease(Genome):
         genome = cls(
             release, species, server, genome_fasta=genome_fasta,
             genome_fasta_type=genome_fasta_type,
-            genome_fasta_mask=genome_fasta_mask,
-            download_genome_fasta=download_genome_fasta,
-            genome_fasta_path=genome_fasta_path, **selection,
+            genome_fasta_mask=genome_fasta_mask, **selection,
         )
         # Construction is offline. Key the fully resolved sources and cache,
         # including DNA attachment, rather than only release/species.
@@ -134,7 +118,6 @@ class EnsemblRelease(Genome):
     def __init__(
         self, release=MAX_ENSEMBL_RELEASE, species=None, server=ENSEMBL_FTP_SERVER,
         *, genome_fasta=None, genome_fasta_type="toplevel", genome_fasta_mask="none",
-        download_genome_fasta=None, genome_fasta_path=None,
         assembly=None, assembly_accession=None, provider=None, include_alt=None,
         reference_name=None, cache_directory_path=None, reference_metadata=None,
         _resolved=None, _preserve_legacy=False,
@@ -227,9 +210,7 @@ class EnsemblRelease(Genome):
         self.include_alt = self._resolved["include_alt"]
         self.annotation_date = release if dated else None
         self.reference_name = self._resolved["reference_name"]
-        genome_fasta = _genome_fasta_option(
-            genome_fasta, download_genome_fasta, genome_fasta_path
-        )
+        genome_fasta = _genome_fasta_option(genome_fasta)
         self._genome_fasta_option = genome_fasta
         self.genome_fasta_type = genome_fasta_type
         self.genome_fasta_mask = genome_fasta_mask
@@ -585,7 +566,7 @@ class EnsemblRelease(Genome):
         Deserialize EnsemblRelease without creating duplicate instances.
         """
         state_dict = dict(state_dict)
-        # Pickles and JSON from 2.11.0 used two keys for reference DNA.
+        # Kept only so JSON/pickles saved during the 2.11.0 window still load.
         genome_fasta_path = state_dict.pop("genome_fasta_path", None)
         download_genome_fasta = state_dict.pop("download_genome_fasta", False)
         if "genome_fasta" not in state_dict:

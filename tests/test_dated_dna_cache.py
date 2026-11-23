@@ -31,21 +31,23 @@ def platform(tmp_path, monkeypatch):
     state = {"payload": gzip.compress(DNA, mtime=0), "manifest": None, "size": None}
     calls = serve_downloads(monkeypatch, tmp_path, lambda url: state["payload"])
 
-    def metadata(request, **kwargs):
-        url = request if isinstance(request, str) else request.full_url
-        if url.endswith("/md5sum.txt"):
-            checksum = hashlib.md5(state["payload"], usedforsecurity=False).hexdigest()
-            manifest = state["manifest"]
-            if manifest is None:
-                manifest = "\n".join(checksum + "  " + mask + ".fa.bgz"
-                                     for mask in ("unmasked", "softmasked", "hardmasked"))
-            return io.BytesIO(manifest.encode())
+    def fetch_metadata(url, **kwargs):
+        assert url.endswith("/md5sum.txt"), url
+        checksum = hashlib.md5(state["payload"], usedforsecurity=False).hexdigest()
+        manifest = state["manifest"]
+        if manifest is None:
+            manifest = "\n".join(checksum + "  " + mask + ".fa.bgz"
+                                 for mask in ("unmasked", "softmasked", "hardmasked"))
+        return manifest.encode()
+
+    def head_metadata(request, **kwargs):
         assert request.get_method() == "HEAD"
         response = io.BytesIO()
         response.headers = {"Content-Length": str(state["size"] or len(state["payload"]))}
         return response
 
-    monkeypatch.setattr(cache, "urlopen", metadata)
+    monkeypatch.setattr(cache.datacache, "fetch_bytes", fetch_metadata)
+    monkeypatch.setattr(cache, "urlopen", head_metadata)
     return state, calls
 
 
@@ -72,6 +74,7 @@ def test_dates_share_download_and_index_and_reopen_read_only(platform, monkeypat
     def offline(*args, **kwargs):
         pytest.fail("installed dated DNA must reuse files and indexes without writes or network")
 
+    monkeypatch.setattr(cache.datacache, "fetch_bytes", offline)
     monkeypatch.setattr(cache, "urlopen", offline)
     monkeypatch.setattr("pyensembl.genome_fasta._write_json", offline)
     monkeypatch.setattr(cache, "_write_json", offline)
@@ -141,6 +144,7 @@ def test_unreachable_metadata_isolates_by_url(platform, monkeypatch):
     def unavailable(*args, **kwargs):
         raise OSError("offline metadata")
 
+    monkeypatch.setattr(cache.datacache, "fetch_bytes", unavailable)
     monkeypatch.setattr(cache, "urlopen", unavailable)
     with dated() as genome:
         genome.download_genome_fasta()
@@ -196,6 +200,7 @@ def test_existing_private_install_stays_unchanged(platform, monkeypatch, explici
     def forbidden(*args, **kwargs):
         pytest.fail("legacy private DNA must not migrate, reindex, acquire or rewrite metadata")
 
+    monkeypatch.setattr(cache.datacache, "fetch_bytes", forbidden)
     monkeypatch.setattr(cache, "urlopen", forbidden)
     monkeypatch.setattr(cache, "_write_json", forbidden)
     monkeypatch.setattr("pyensembl.genome_fasta._write_json", forbidden)

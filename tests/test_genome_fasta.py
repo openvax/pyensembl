@@ -394,7 +394,7 @@ def test_serialization_and_cached_releases_preserve_dna_configuration(
         genome.close()
 
 
-def test_genome_fasta_option_and_deprecated_211_keywords(dna_path, monkeypatch):
+def test_genome_fasta_option_and_211_deserialization(dna_path, monkeypatch):
     monkeypatch.chdir(dna_path.parent)
     assert EnsemblRelease(81, genome_fasta="dna.fa").to_dict()["genome_fasta"] == str(dna_path)
     assert EnsemblRelease(81, genome_fasta=False).to_dict()["genome_fasta"] is None
@@ -404,26 +404,10 @@ def test_genome_fasta_option_and_deprecated_211_keywords(dna_path, monkeypatch):
         EnsemblRelease(81, genome_fasta=3)
     with pytest.raises(ValueError, match="must not be empty"):
         EnsemblRelease(81, genome_fasta="")
-    for old, new in (
-        (dict(download_genome_fasta=True), True),
-        # 2.11.0 accepted any truthy flag, e.g. a config string.
-        (dict(download_genome_fasta="yes"), True),
-        (dict(download_genome_fasta=1), True),
-        (dict(genome_fasta_path=dna_path), str(dna_path)),
-        # 2.11.0 let a local path win over the download flag.
-        (dict(download_genome_fasta=True, genome_fasta_path=dna_path), str(dna_path)),
-    ):
-        with pytest.warns(DeprecationWarning, match="genome_fasta="):
-            release = EnsemblRelease(81, **old)
-        assert release.to_dict()["genome_fasta"] == new
-        with pytest.warns(DeprecationWarning):
-            assert EnsemblRelease.cached(81, **old) is EnsemblRelease.cached(
-                81, genome_fasta=new
-            )
-    with pytest.raises(ValueError, match="only as genome_fasta"), pytest.warns(
-        DeprecationWarning
-    ):
-        EnsemblRelease(81, genome_fasta=True, download_genome_fasta=True)
+    with pytest.raises(TypeError):
+        EnsemblRelease(81, download_genome_fasta=True)
+    with pytest.raises(TypeError):
+        EnsemblRelease(81, genome_fasta_path=dna_path)
     # State saved by 2.11.0 (pickle or JSON) still loads, without warnings.
     old_state = dict(release=81, species="human", server=None,
                      download_genome_fasta=False, genome_fasta_path=str(dna_path),

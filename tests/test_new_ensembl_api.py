@@ -116,22 +116,16 @@ def test_api_outage_is_not_an_assembly_guess(monkeypatch):
 
 
 def test_actual_http_client_uses_new_api(monkeypatch):
+    import datacache
+
     calls = []
 
-    class Response:
-        def __enter__(self):
-            return self
+    def fake_fetch_bytes(url, *, timeout=None, max_bytes=None, **kwargs):
+        calls.append((url, timeout, max_bytes))
+        return b'{"ok":true}'
 
-        def __exit__(self, *args):
-            pass
-
-        def read(self, size):
-            return b'{"ok":true}'
-
-    def open_request(request, timeout):
-        calls.append((request.full_url, timeout))
-        return Response()
-
-    monkeypatch.setattr(api, "urlopen", open_request)
+    monkeypatch.setattr(datacache, "fetch_bytes", fake_fetch_bytes)
     assert api._get_json("/genome/test/details") == {"ok": True}
-    assert calls == [("https://www.ensembl.org/api/metadata/genome/test/details", 30)]
+    assert calls == [
+        ("https://www.ensembl.org/api/metadata/genome/test/details", 30, 2 * 1024 * 1024)
+    ]
