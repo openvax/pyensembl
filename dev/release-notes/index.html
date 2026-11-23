@@ -1098,6 +1098,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2380" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.38.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2370" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1537,6 +1548,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2380" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.38.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2370" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1900,6 +1922,19 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
+<h2 id="2380">2.38.0<a class="headerlink" href="#2380" title="Permanent link">&para;</a></h2>
+<p>Harmonize cache resolution, offline mode, and cache inspection with <code>datacache&gt;=1.34.0</code> (#545):</p>
+<ul>
+<li>Honor <code>OPENVAX_DATA_CACHE</code> as a shared fallback behind <code>PYENSEMBL_CACHE_DIR</code>
+  (resolving to <code>$OPENVAX_DATA_CACHE/pyensembl</code>) while keeping existing
+  platform cache directories unchanged.</li>
+<li>Add <code>pyensembl dirs [--json]</code> to report the resolved cache root, why it was
+  chosen (<code>origin</code>/<code>detail</code>), offline status, and per-subdirectory disk usage
+  without creating directories or touching the network.</li>
+<li>Add <code>--offline</code> CLI flag (and respect <code>OPENVAX_OFFLINE</code> / <code>DATACACHE_OFFLINE</code>)
+  to fail fast on remote download attempts while serving cached data, and honor
+  <code>OPENVAX_NO_PROGRESS</code> / <code>DATACACHE_NO_PROGRESS</code> via <code>datacache.should_show_progress</code>.</li>
+</ul>
 <h2 id="2370">2.37.0<a class="headerlink" href="#2370" title="Permanent link">&para;</a></h2>
 <p>Add <code>--json</code> output support to <code>pyensembl list</code> (#512, #526):</p>
 <ul>
