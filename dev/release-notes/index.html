@@ -1098,6 +1098,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2390" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.39.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2380" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1548,6 +1559,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2390" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.39.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2380" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1922,6 +1944,19 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
+<h2 id="2390">2.39.0<a class="headerlink" href="#2390" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Route remote metadata and checksum manifest GET requests (<code>annotation_integrity</code>,
+  <code>genome_fasta_cache</code>, <code>ensembl_metadata</code>) through <code>datacache.fetch_bytes()</code> so
+  they inherit datacache's retry/backoff, <code>User-Agent</code>, and <code>max_bytes</code> handling,
+  and add bounded retries to <code>genome_fasta_cache</code> HEAD size checks (#517, #521).</li>
+<li>Replace the duplicate GTF attribute parser in <code>AnnotationGeneticCodes._read_gtf()</code>
+  with a lazy <code>gtfparse.read_gtf()</code> call (#520).</li>
+<li>Remove the deprecated 2.11.0 shims: hidden <code>--orphan-genome-fastas</code> CLI flag and
+  <code>download_genome_fasta=</code> / <code>genome_fasta_path=</code> keywords on <code>EnsemblRelease</code>
+  (<code>EnsemblRelease.from_dict()</code> continues to deserialize saved 2.11.0 state) (#518).</li>
+<li>Remove the untested <code>--shared-prefix</code> CLI flag (#523).</li>
+</ul>
 <h2 id="2380">2.38.0<a class="headerlink" href="#2380" title="Permanent link">&para;</a></h2>
 <p>Harmonize cache resolution, offline mode, and cache inspection with <code>datacache&gt;=1.34.0</code> (#545):</p>
 <ul>

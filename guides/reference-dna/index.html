@@ -544,17 +544,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#upgrading-from-2110" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Upgrading from 2.11.0
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1316,17 +1305,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#upgrading-from-2110" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Upgrading from 2.11.0
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1460,27 +1438,6 @@ but matching contig names don't prove that the assembly matches.</p>
 unused copies or share a cache with other users, see
 <a href="../cache/#free-disk-space">free disk space</a> and
 <a href="../cache/#how-reference-dna-is-stored">how reference DNA is stored</a>.</p>
-<h2 id="upgrading-from-2110">Upgrading from 2.11.0<a class="headerlink" href="#upgrading-from-2110" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>2.11.0</th>
-<th>2.12.0 and later</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>EnsemblRelease(81, download_genome_fasta=True)</code></td>
-<td><code>EnsemblRelease(81, genome_fasta=True)</code></td>
-</tr>
-<tr>
-<td><code>EnsemblRelease(81, genome_fasta_path="/data/ref.fa")</code></td>
-<td><code>EnsemblRelease(81, genome_fasta="/data/ref.fa")</code></td>
-</tr>
-</tbody>
-</table>
-<p>The old keywords still work but emit a <code>DeprecationWarning</code>. Objects pickled or
-serialized by 2.11.0 still load. CLI flags are unchanged.</p>
 
 
 
