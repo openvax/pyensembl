@@ -17,10 +17,12 @@ import os
 from pathlib import Path
 import re
 import shutil
-from urllib.error import URLError
+import time
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
+import datacache
 from filelock import FileLock, Timeout
 
 from .download_cache import cache_root
@@ -200,14 +202,35 @@ def _dated_object_directory(root, identity):
             / provider / "toplevel" / masking / "fasta" / _identity_key(identity)[:16])
 
 
+def _head_content_length(url, *, timeout=60, max_retries=3, retry_backoff=0.5):
+    """Fetch Content-Length via HEAD with bounded retries on transient errors."""
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            with urlopen(Request(url, method="HEAD"), timeout=timeout) as response:
+                return int(response.headers["Content-Length"])
+        except HTTPError as error:
+            if 400 <= error.code < 500 and error.code not in (408, 429):
+                raise
+            last_error = error
+        except (OSError, URLError) as error:
+            last_error = error
+        if attempt + 1 < max_retries:
+            time.sleep(retry_backoff * (2 ** attempt))
+    raise last_error
+
+
 def _dated_remote_identity(source, match):
     accession, provider, masking = _dated_dimensions(match)
     directory, filename = source.rsplit("/", 1)
-    with urlopen(directory + "/md5sum.txt", timeout=60) as response:
-        manifest = response.read(4 * 1024 * 1024).decode("utf-8")
+    manifest = datacache.fetch_bytes(
+        directory + "/md5sum.txt",
+        timeout=60,
+        max_bytes=4 * 1024 * 1024,
+        allow_empty=True,
+    ).decode("utf-8")
     md5 = parse_md5sum_manifest(manifest, filename)
-    with urlopen(Request(source, method="HEAD"), timeout=60) as response:
-        length = int(response.headers["Content-Length"])
+    length = _head_content_length(source, timeout=60)
     if length <= 0:
         raise ValueError("No compressed size for this FASTA")
     return dict(platform="ensemblorganisms", provider="ftp.ebi.ac.uk",
@@ -249,13 +272,21 @@ def _remote_identity(source):
             return _dated_remote_identity(source, dated)
         release, species, filename = _SOURCE_PATH.fullmatch(url.path).groups()
         directory = source.rsplit("/", 1)[0]
-        with urlopen(directory + "/README", timeout=60) as response:
-            readme = response.read(1024 * 1024).decode("utf-8")
+        readme = datacache.fetch_bytes(
+            directory + "/README",
+            timeout=60,
+            max_bytes=1024 * 1024,
+            allow_empty=True,
+        ).decode("utf-8")
         assembly = _README_ACCESSION.search(readme)
         if assembly is None:
             raise ValueError("No versioned assembly accession")
-        with urlopen(directory + "/CHECKSUMS", timeout=60) as response:
-            checksums = response.read(4 * 1024 * 1024).decode("utf-8")
+        checksums = datacache.fetch_bytes(
+            directory + "/CHECKSUMS",
+            timeout=60,
+            max_bytes=4 * 1024 * 1024,
+            allow_empty=True,
+        ).decode("utf-8")
         entries = [line.split() for line in checksums.splitlines()]
         checksum = next(
             (
@@ -269,8 +300,7 @@ def _remote_identity(source):
         )
         if checksum is None:
             raise ValueError("No checksum for this FASTA")
-        with urlopen(Request(source, method="HEAD"), timeout=60) as response:
-            length = int(response.headers["Content-Length"])
+        length = _head_content_length(source, timeout=60)
         if length > 0:
             return {
                 "provider": url.netloc,

@@ -103,13 +103,3 @@ Compatible releases share one copy of Ensembl DNA. To delete DNA, prune
 unused copies or share a cache with other users, see
 [free disk space](cache.md#free-disk-space) and
 [how reference DNA is stored](cache.md#how-reference-dna-is-stored).
-
-## Upgrading from 2.11.0
-
-| 2.11.0 | 2.12.0 and later |
-|---|---|
-| `EnsemblRelease(81, download_genome_fasta=True)` | `EnsemblRelease(81, genome_fasta=True)` |
-| `EnsemblRelease(81, genome_fasta_path="/data/ref.fa")` | `EnsemblRelease(81, genome_fasta="/data/ref.fa")` |
-
-The old keywords still work but emit a `DeprecationWarning`. Objects pickled or
-serialized by 2.11.0 still load. CLI flags are unchanged.

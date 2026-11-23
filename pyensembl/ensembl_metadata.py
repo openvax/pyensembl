@@ -6,8 +6,9 @@ This module is never called by ordinary construction or deserialization.
 import json
 import re
 from urllib.parse import urlsplit
-from urllib.request import Request, urlopen
 from uuid import UUID
+
+import datacache
 
 from .assembly import check_accession, records_for_selector
 from .ensembl_versions import normalize_release
@@ -23,13 +24,14 @@ _DATASET_PATH = re.compile(
 
 
 def _get_json(path):
-    request = Request(METADATA_API + path, headers={"Accept": "application/json"})
-    with urlopen(request, timeout=30) as response:
-        # Metadata should be small. A proxy HTML page or unbounded response is
-        # not a dataset; do not download annotation files through this client.
-        payload = response.read(2 * 1024 * 1024 + 1)
-    if len(payload) > 2 * 1024 * 1024:
-        raise ValueError("Ensembl metadata response exceeds 2 MiB")
+    # Metadata should be small. A proxy HTML page or unbounded response is
+    # not a dataset; do not download annotation files through this client.
+    try:
+        payload = datacache.fetch_bytes(
+            METADATA_API + path, timeout=30, max_bytes=2 * 1024 * 1024,
+        )
+    except ValueError as error:
+        raise ValueError("Ensembl metadata response exceeds 2 MiB") from error
     try:
         return json.loads(payload)
     except (ValueError, UnicodeError) as error:

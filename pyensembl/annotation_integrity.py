@@ -9,8 +9,8 @@ import hashlib
 import json
 from pathlib import Path
 import re
-from urllib.request import urlopen
 
+import datacache
 from filelock import FileLock
 
 from .common import _atomic_output, file_digest, parse_md5sum_manifest
@@ -28,10 +28,14 @@ def source_checksum(url):
     """Read one unambiguous checksum from the source directory's manifest."""
     directory, name = url.rsplit("/", 1)
     manifest_url = directory + "/md5sum.txt"
-    with urlopen(manifest_url, timeout=60) as response:
-        data = response.read(2 * 1024 * 1024 + 1)
-    if len(data) > 2 * 1024 * 1024:
-        raise AnnotationIntegrityError("Checksum manifest is unexpectedly large: " + manifest_url)
+    try:
+        data = datacache.fetch_bytes(
+            manifest_url, timeout=60, max_bytes=2 * 1024 * 1024, allow_empty=True,
+        )
+    except ValueError as error:
+        raise AnnotationIntegrityError(
+            "Checksum manifest is unexpectedly large: " + manifest_url
+        ) from error
     try:
         md5 = parse_md5sum_manifest(data.decode("utf-8"), name)
     except ValueError as error:

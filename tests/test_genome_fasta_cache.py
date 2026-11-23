@@ -34,14 +34,13 @@ def shared_cache(tmp_path, monkeypatch):
     monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
     calls = serve_downloads(monkeypatch, tmp_path, lambda url: gzip.compress(DNA))
 
-    def metadata(request, **kwargs):
-        url = request if isinstance(request, str) else request.full_url
+    def fetch_metadata(url, **kwargs):
         release = int(url.split("release-")[1].split("/")[0])
         if url.endswith("README"):
             if "ensemblgenomes" in url:
-                return io.BytesIO((ENSEMBL_GENOMES_README % "GCA_000001735.1").encode())
+                return (ENSEMBL_GENOMES_README % "GCA_000001735.1").encode()
             assembly = "GCA_000001405.18" if release <= 82 else "GCA_000001405.20"
-            return io.BytesIO((ENSEMBL_README % assembly).encode())
+            return (ENSEMBL_README % assembly).encode()
         if url.endswith("CHECKSUMS"):
             lines = [
                 "17918 1010762 %s.%s.%s.fa.gz" % (prefix, mask, flavor)
@@ -49,13 +48,17 @@ def shared_cache(tmp_path, monkeypatch):
                 for mask in ("dna", "dna_sm", "dna_rm")
                 for flavor in ("toplevel", "primary_assembly")
             ]
-            return io.BytesIO("\n".join(lines).encode())
+            return "\n".join(lines).encode()
+        raise AssertionError("Unexpected metadata GET: " + url)
+
+    def head_metadata(request, **kwargs):
         assert request.get_method() == "HEAD"
         response = io.BytesIO()
         response.headers = {"Content-Length": str(len(gzip.compress(DNA)))}
         return response
 
-    monkeypatch.setattr(cache, "urlopen", metadata)
+    monkeypatch.setattr(cache.datacache, "fetch_bytes", fetch_metadata)
+    monkeypatch.setattr(cache, "urlopen", head_metadata)
     return calls
 
 
@@ -93,6 +96,7 @@ def test_same_patch_reuses_file_and_index_then_works_offline(shared_cache, monke
     def offline(*args, **kwargs):
         pytest.fail("Installed shared DNA should work offline")
 
+    monkeypatch.setattr(cache.datacache, "fetch_bytes", offline)
     monkeypatch.setattr(cache, "urlopen", offline)
     forbid_downloads(monkeypatch, "Installed shared DNA should work offline")
     restored = release(82)
@@ -125,15 +129,15 @@ def test_patch_mask_and_flavor_separate_objects(shared_cache):
 def test_changed_upstream_file_metadata_separates_same_patch(shared_cache, monkeypatch):
     first = release(81)
     first.download_genome_fasta()
-    original = cache.urlopen
+    original = cache.datacache.fetch_bytes
 
-    def changed(request, **kwargs):
-        response = original(request, **kwargs)
-        if isinstance(request, str) and request.endswith("CHECKSUMS"):
-            response = io.BytesIO(response.read().replace(b"17918", b"17919"))
-        return response
+    def changed(url, **kwargs):
+        data = original(url, **kwargs)
+        if url.endswith("CHECKSUMS"):
+            data = data.replace(b"17918", b"17919")
+        return data
 
-    monkeypatch.setattr(cache, "urlopen", changed)
+    monkeypatch.setattr(cache.datacache, "fetch_bytes", changed)
     second = release(82)
     second.download_genome_fasta()
     assert first.genome_fasta_path != second.genome_fasta_path
@@ -146,7 +150,7 @@ def test_changed_upstream_file_metadata_separates_same_patch(shared_cache, monke
 
 def test_incomplete_metadata_uses_release_specific_cache(shared_cache, monkeypatch):
     monkeypatch.setattr(
-        cache, "urlopen", lambda *a, **k: io.BytesIO(b"no assembly metadata")
+        cache.datacache, "fetch_bytes", lambda *a, **k: b"no assembly metadata"
     )
     first, second = release(81), release(82)
     first.download_genome_fasta()
@@ -194,7 +198,7 @@ def test_prune_preserves_live_references_and_supports_preview(
     run_cli(monkeypatch, "prune", "--dry-run")
     assert "Would delete" in capsys.readouterr().out
     assert object_path.exists()
-    run_cli(monkeypatch, "prune", "--orphan-genome-fastas")  # 2.11.0 spelling
+    run_cli(monkeypatch, "prune")
     assert "Deleted" in capsys.readouterr().out
     assert not object_path.exists()
     assert prune_genome_fastas() == []
@@ -273,15 +277,15 @@ def test_short_key_collision_does_not_reuse_or_overwrite_data(
     )
     first = release(81)
     first.download_genome_fasta()
-    original_metadata = cache.urlopen
+    original_metadata = cache.datacache.fetch_bytes
 
-    def changed(request, **kwargs):
-        response = original_metadata(request, **kwargs)
-        if isinstance(request, str) and request.endswith("CHECKSUMS"):
-            response = io.BytesIO(response.read().replace(b"17918", b"17919"))
-        return response
+    def changed(url, **kwargs):
+        data = original_metadata(url, **kwargs)
+        if url.endswith("CHECKSUMS"):
+            data = data.replace(b"17918", b"17919")
+        return data
 
-    monkeypatch.setattr(cache, "urlopen", changed)
+    monkeypatch.setattr(cache.datacache, "fetch_bytes", changed)
     second = release(82)
     with pytest.raises(ValueError, match="Conflicting shared genome FASTA identity"):
         second.download_genome_fasta()

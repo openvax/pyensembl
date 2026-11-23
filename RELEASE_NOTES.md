@@ -3,6 +3,19 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.39.0
+
+- Route remote metadata and checksum manifest GET requests (`annotation_integrity`,
+  `genome_fasta_cache`, `ensembl_metadata`) through `datacache.fetch_bytes()` so
+  they inherit datacache's retry/backoff, `User-Agent`, and `max_bytes` handling,
+  and add bounded retries to `genome_fasta_cache` HEAD size checks (#517, #521).
+- Replace the duplicate GTF attribute parser in `AnnotationGeneticCodes._read_gtf()`
+  with a lazy `gtfparse.read_gtf()` call (#520).
+- Remove the deprecated 2.11.0 shims: hidden `--orphan-genome-fastas` CLI flag and
+  `download_genome_fasta=` / `genome_fasta_path=` keywords on `EnsemblRelease`
+  (`EnsemblRelease.from_dict()` continues to deserialize saved 2.11.0 state) (#518).
+- Remove the untested `--shared-prefix` CLI flag (#523).
+
 ## 2.38.0
 
 Harmonize cache resolution, offline mode, and cache inspection with `datacache>=1.34.0` (#545):

@@ -81,7 +81,7 @@ def test_download_verifies_and_reopens_without_network_or_writes(origin, monkeyp
     def forbidden(*args, **kwargs):
         pytest.fail("Installed data must reopen offline")
 
-    monkeypatch.setattr(annotation_integrity, "urlopen", forbidden)
+    monkeypatch.setattr(datacache, "fetch_bytes", forbidden)
     for restored in (EnsemblRelease("2026_04"), EnsemblRelease.from_json(saved),
                      pickle.loads(pickle.dumps(genome))):
         restored.download()
@@ -104,7 +104,7 @@ def test_existing_unrecorded_cache_stays_unmodified(origin, legacy, monkeypatch)
         destination.write_bytes((root / urlsplit(url).path.lstrip("/")).read_bytes())
     genome.index()
     before = snapshot(Path(cache.cache_directory_path))
-    monkeypatch.setattr(annotation_integrity, "urlopen", lambda *a, **kw: pytest.fail("network"))
+    monkeypatch.setattr(datacache, "fetch_bytes", lambda *a, **kw: pytest.fail("network"))
     genome.download()
     assert genome.installed()
     assert {r["status"] for r in genome.verify_sources()} == {"unrecorded"}
