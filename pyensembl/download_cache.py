@@ -28,7 +28,9 @@ from .cache_location import (  # noqa: F401
     CACHE_BASE_SUBDIR,
     CACHE_DIR_ENV_KEY,
     NON_GENOME_CACHE_DIRECTORIES,
+    SHARED_CACHE_DIR_ENV_KEY,
     cache_root,
+    resolve_cache_location,
 )
 from .common import file_digest
 
@@ -88,7 +90,7 @@ def cache_subdirectory(
 def _default_cache_directory(reference_name, annotation_name, annotation_version):
     subdirectory = cache_subdirectory(reference_name, annotation_name, annotation_version)
     directory = join(cache_root(), subdirectory[len(CACHE_BASE_SUBDIR) + 1:])
-    if not environ.get(CACHE_DIR_ENV_KEY):
+    if not environ.get(CACHE_DIR_ENV_KEY) and not environ.get(SHARED_CACHE_DIR_ENV_KEY):
         # Before 2.17, each genome asked appdirs for its own directory. That
         # matches the layout above on Linux and macOS, but on Windows gave
         # unrelated paths; keep using a genome already installed there.

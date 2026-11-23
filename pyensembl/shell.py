@@ -21,6 +21,7 @@ small pyensembl modules. Genome, database and download code is imported by the
 functions that run an action.
 """
 
+from contextlib import contextmanager
 import argparse
 import json
 import logging
@@ -81,6 +82,7 @@ _ACTIONS_AND_EXAMPLES = """\
 actions:
   install             download and index genome data (skips what is already done)
   list                show installed genomes, whether they are indexed, and their DNA
+  dirs                show where PyEnsembl's cache lives, why it resolved there, and disk usage
   inspect             inspect selected source files, indexes, and download provenance offline
   verify              verify recorded dated-annotation checksums without repair
   available           show supported species, assemblies, and Ensembl releases
@@ -97,6 +99,7 @@ examples:
   pyensembl install --reference-name GRCh38 --annotation-name my_genes \\
       --gtf URL_OR_PATH --transcript-fasta URL_OR_PATH  a custom genome
   pyensembl list
+  pyensembl dirs --json
   pyensembl inspect --release 93 --json
   pyensembl delete-all-files --release 75
   pyensembl prune --dry-run
@@ -126,7 +129,13 @@ parser.add_argument(
 parser.add_argument(
     "--json",
     action="store_true",
-    help="With list, inspect, available, or verify, print JSON",
+    help="With list, dirs, inspect, available, or verify, print JSON",
+)
+
+parser.add_argument(
+    "--offline",
+    action="store_true",
+    help="Forbid remote downloads (equivalent to OPENVAX_OFFLINE=1)",
 )
 
 parser.add_argument(
@@ -368,6 +377,7 @@ parser.add_argument(
     choices=(
         "install",
         "list",
+        "dirs",
         "inspect",
         "verify",
         "available",
@@ -1108,8 +1118,84 @@ def _directory_size(path):
 
 
 def _progress_available():
-    """Show progress bars when someone is watching stderr."""
-    return sys.stderr.isatty()
+    """Show progress bars when stderr is interactive and progress is not disabled by env."""
+    import datacache
+
+    return datacache.should_show_progress("auto")
+
+
+def _directory_stats(path):
+    """Return (exists, total_bytes, file_count) without following symlinks or creating anything."""
+    if not os.path.exists(path):
+        return False, 0, 0
+    total_bytes = 0
+    file_count = 0
+    for root, _dirs, files in os.walk(path, followlinks=False):
+        for name in files:
+            try:
+                st = os.lstat(os.path.join(root, name))
+            except OSError:
+                continue
+            total_bytes += st.st_size
+            file_count += 1
+    return True, total_bytes, file_count
+
+
+def format_cache_dirs(json_output=False):
+    """Describe where PyEnsembl's cache lives, why it resolved there, and disk usage (read-only)."""
+    import datacache
+    from .cache_location import resolve_cache_location
+
+    loc = resolve_cache_location()
+    exists, total_bytes, file_count = _directory_stats(loc.path)
+    offline = datacache.offline_source()
+    entries = []
+    if os.path.isdir(loc.path):
+        try:
+            children = sorted(os.scandir(loc.path), key=lambda e: e.name)
+        except OSError:
+            children = []
+        for entry in children:
+            if not entry.is_dir(follow_symlinks=False):
+                continue
+            _, sub_bytes, sub_files = _directory_stats(entry.path)
+            entries.append(dict(
+                name=entry.name,
+                path=entry.path,
+                size_bytes=sub_bytes,
+                file_count=sub_files,
+            ))
+    payload = dict(
+        cache_root=loc.path,
+        origin=loc.origin,
+        detail=loc.detail,
+        exists=exists,
+        size_bytes=total_bytes,
+        file_count=file_count,
+        offline=offline is not None,
+        offline_source=offline,
+        subdirectories=entries,
+    )
+    if json_output:
+        return json.dumps(payload, indent=2)
+    lines = [
+        "Cache root: %s" % loc.path,
+        "Origin:     %s (%s)" % (loc.detail, loc.origin),
+        "Size:       %s (%d file(s))" % (datacache.format_bytes(total_bytes), file_count)
+        if exists else "Size:       not created yet",
+    ]
+    if offline:
+        lines.append("Offline:    enabled (%s)" % offline)
+    if entries:
+        lines.append("")
+        lines.append(_format_table(
+            ("Directory", "Size", "Files", "Path"),
+            [
+                (e["name"], datacache.format_bytes(e["size_bytes"]), str(e["file_count"]), e["path"])
+                for e in entries
+            ],
+        ))
+    return "\n".join(lines)
 
 
 def _install(genome, only_genome_fasta=False, overwrite=False, show_progress=False):
@@ -1178,8 +1264,8 @@ def validate_arguments(action, json_output, refresh, check_remote, releases):
     ValueError
         With the usage message when a flag does not fit the action.
     """
-    if json_output and action not in ("list", "inspect", "available", "verify"):
-        raise ValueError("--json requires list, inspect, available, or verify")
+    if json_output and action not in ("list", "dirs", "inspect", "available", "verify"):
+        raise ValueError("--json requires list, dirs, inspect, available, or verify")
     if refresh and action != "available":
         raise ValueError("--refresh requires available")
     if check_remote and action != "verify":
@@ -1372,6 +1458,23 @@ def run_install(genome, only_genome_fasta=False, overwrite=False):
         raise InstallError(message) from error
 
 
+@contextmanager
+def _offline_override(offline):
+    """Temporarily set DATACACHE_OFFLINE=1 for the duration of a CLI call."""
+    if not offline:
+        yield
+        return
+    previous = os.environ.get("DATACACHE_OFFLINE")
+    os.environ["DATACACHE_OFFLINE"] = "1"
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("DATACACHE_OFFLINE", None)
+        else:
+            os.environ["DATACACHE_OFFLINE"] = previous
+
+
 def run(argv=None):
     """Command-line entry point (console script ``pyensembl``).
 
@@ -1390,6 +1493,11 @@ def run(argv=None):
         )
     except ValueError as error:
         parser.error(str(error))
+    with _offline_override(args.offline):
+        _run_action(args)
+
+
+def _run_action(args):
     if args.action == "prune":
         try:
             print(run_prune(args.dry_run))
@@ -1405,6 +1513,9 @@ def run(argv=None):
                  (args.genome_fasta_path and args.annotation_name))
     ):
         parser.error("%s requires an explicit --release" % args.action)
+    if args.action == "dirs":
+        print(format_cache_dirs(json_output=args.json))
+        return
     if args.action == "list":
         if args.json:
             print(format_installed_genomes_json(check_genome_fasta=args.check_genome_fasta))
@@ -1412,8 +1523,12 @@ def run(argv=None):
             print(format_installed_genomes(check_genome_fasta=args.check_genome_fasta))
         return
     if args.action == "available":
+        from datacache import OfflineError
+
         try:
             print(run_available(args))
+        except OfflineError as error:
+            parser.exit(1, "%s: error: %s\n" % (parser.prog, error))
         except ValueError as error:
             # Conflicting selectors are argument errors; failures while
             # reading release listings keep their tracebacks.
@@ -1430,12 +1545,17 @@ def run(argv=None):
         parser.error("No genomes selected")
 
     if args.action == "verify":
+        from datacache import OfflineError
+
         try:
             require_ensembl_releases(genomes)
         except ValueError as error:
             parser.error(str(error))
         # Checksum and manifest errors keep their tracebacks.
-        text, ok = run_verify(genomes, args.check_remote, args.json)
+        try:
+            text, ok = run_verify(genomes, args.check_remote, args.json)
+        except OfflineError as error:
+            parser.exit(1, "%s: error: %s\n" % (parser.prog, error))
         print(text)
         if not ok:
             raise SystemExit(1)
@@ -1445,6 +1565,7 @@ def run(argv=None):
         for genome in genomes:
             _delete_genome_files(genome, args.action)
     elif args.action == "install":
+        from datacache import OfflineError
         from .dated_releases import UnpublishedDateError
 
         for genome in genomes:
@@ -1452,7 +1573,7 @@ def run(argv=None):
                 run_install(genome, args.only_genome_fasta, args.overwrite)
             except UnpublishedDateError as error:
                 parser.error(str(error))
-            except InstallError as error:
+            except (InstallError, OfflineError) as error:
                 parser.exit(1, "%s: error: %s\n" % (parser.prog, error))
     else:
         raise ValueError("Invalid action: %s" % args.action)

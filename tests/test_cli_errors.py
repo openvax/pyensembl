@@ -173,7 +173,7 @@ def test_run_accepts_explicit_argv(monkeypatch, capsys):
     with pytest.raises(SystemExit) as exit_info:
         shell.run(["--json", "install"])
     assert exit_info.value.code == 2
-    assert "--json requires list, inspect, available, or verify" in capsys.readouterr().err
+    assert "--json requires list, dirs, inspect, available, or verify" in capsys.readouterr().err
 
 
 @pytest.mark.parametrize("action", [
