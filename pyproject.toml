@@ -63,7 +63,7 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["pyensembl", "pyensembl.data"]
+packages = ["pyensembl", "pyensembl.cli", "pyensembl.data"]
 
 [tool.setuptools.package-data]
 pyensembl = [

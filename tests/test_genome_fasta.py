@@ -17,8 +17,13 @@ import pytest
 
 from pyensembl import EnsemblRelease, Genome, MissingGenomeFastaError
 from pyensembl.ensembl_url_templates import make_genome_fasta_url
-from pyensembl.genome_fasta import GenomeFasta
+from pyensembl.genome_fasta import (
+    GenomeFasta,
+    contig_alias_key,
+    format_contig_coverage_warning,
+)
 from pyensembl import shell
+from pyensembl.cli import logging_config
 
 
 DNA = b">1 chromosome\nACgtNN\nTTaacc\nGGTA\n>MT mitochondrion\nGCTA\n>CHR_PATCH\nNNacGT\n"
@@ -513,7 +518,7 @@ def test_cli_dna_paths_for_releases_and_mirrors(dna_path):
 
 def run_cli(monkeypatch, *args):
     monkeypatch.setattr(sys, "argv", ["pyensembl", *args])
-    monkeypatch.setattr(shell, "configure_logging", lambda **kwargs: None)
+    monkeypatch.setattr(logging_config, "configure_logging", lambda **kwargs: None)
     shell.run()
 
 
@@ -637,3 +642,96 @@ def test_status_detects_missing_stale_and_invalid_indexes(tmp_path, dna_path):
     assert (
         GenomeFasta.installed_source(genome.download_cache.cache_directory_path) is None
     )
+
+
+def test_contig_alias_key_handles_ucsc_ensembl_mito_and_versions():
+    assert contig_alias_key("1") == contig_alias_key("chr1") == contig_alias_key("CHR1") == "1"
+    assert contig_alias_key("X") == contig_alias_key("chrX") == "x"
+    assert (
+        contig_alias_key("MT")
+        == contig_alias_key("M")
+        == contig_alias_key("chrM")
+        == contig_alias_key("chrMT")
+        == contig_alias_key("MITO")
+        == contig_alias_key("chrMito")
+        == "mt"
+    )
+    assert contig_alias_key("KI270728.1") == contig_alias_key("chrUn_KI270728v1")
+    assert contig_alias_key("GL000194.1") == contig_alias_key("chr4_GL000194v1_random")
+    assert contig_alias_key("KI270758.1") == contig_alias_key("chr1_KI270758v1_alt")
+    assert contig_alias_key("KN196472.1") == contig_alias_key("chr1_KN196472v1_fix")
+    # Different accession versions must never alias to each other.
+    assert contig_alias_key("KI270728.2") != contig_alias_key("chrUn_KI270728v1")
+    # Names like CHR_PATCH keep their leading prefix.
+    assert contig_alias_key("CHR_PATCH") == "chr_patch"
+
+
+def test_index_does_not_warn_for_unambiguous_fasta_naming_aliases(tmp_path, dna_path, caplog):
+    """Ensembl GTF contigs vs UCSC/GRCh38 full-analysis FASTA names (#501)."""
+    gtf = tmp_path / "ensembl_style.gtf"
+    gtf.write_text(
+        '1\ttest\tgene\t1\t4\t.\t+\t.\tgene_id "g1"; gene_name "G1";\n'
+        '10\ttest\tgene\t1\t4\t.\t+\t.\tgene_id "g10"; gene_name "G10";\n'
+        'X\ttest\tgene\t1\t4\t.\t+\t.\tgene_id "gx"; gene_name "GX";\n'
+        'MT\ttest\tgene\t1\t4\t.\t+\t.\tgene_id "gmt"; gene_name "GMT";\n'
+        'KI270728.1\ttest\tgene\t1\t4\t.\t+\t.\tgene_id "gk"; gene_name "GK";\n'
+        'GL000194.1\ttest\tgene\t1\t4\t.\t+\t.\tgene_id "gg"; gene_name "GG";\n'
+    )
+    dna_path.write_bytes(
+        b">chr1\nACGT\n>chr10\nACGT\n>chrX\nACGT\n>chrM\nACGT\n"
+        b">chrUn_KI270728v1\nACGT\n>chr4_GL000194v1_random\nACGT\n"
+    )
+    with custom_genome(tmp_path, dna_path, gtf_path_or_url=str(gtf)) as genome:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            genome.index()
+        user_warnings = [w for w in caught if issubclass(w.category, UserWarning)]
+        assert user_warnings == []
+        coverage = genome._genome_fasta.classify_contigs(genome.contigs())
+        assert coverage["missing"] == []
+        assert coverage["ambiguous"] == {}
+        assert coverage["aliased"] == {
+            "1": "chr1",
+            "10": "chr10",
+            "X": "chrX",
+            "MT": "chrM",
+            "KI270728.1": "chrUn_KI270728v1",
+            "GL000194.1": "chr4_GL000194v1_random",
+        }
+        assert format_contig_coverage_warning(coverage) is None
+
+
+def test_index_warning_distinguishes_missing_from_aliased_contigs(tmp_path, dna_path):
+    """Genuinely missing contigs still warn while aliased ones are not counted as missing (#501)."""
+    gtf = tmp_path / "mixed.gtf"
+    gtf.write_text(
+        '1\ttest\tgene\t1\t4\t.\t+\t.\tgene_id "g1"; gene_name "G1";\n'
+        'MT\ttest\tgene\t1\t4\t.\t+\t.\tgene_id "gmt"; gene_name "GMT";\n'
+        'UNAVAILABLE_CONTIG\ttest\tgene\t1\t4\t.\t+\t.\tgene_id "gm"; gene_name "GM";\n'
+    )
+    dna_path.write_bytes(b">chr1\nACGT\n>chrM\nACGT\n")
+    with custom_genome(tmp_path, dna_path, gtf_path_or_url=str(gtf)) as genome:
+        with pytest.warns(UserWarning) as caught:
+            genome.index()
+        message = str(caught[0].message)
+        assert "lacks 1 annotation contigs (e.g. UNAVAILABLE_CONTIG)" in message
+        assert "2 other annotation contigs match only via naming aliases" in message
+        assert "do not verify assembly identity" in message
+
+
+def test_index_warns_on_ambiguous_fasta_alias_matches(tmp_path, dna_path):
+    """Multiple alias candidates for an annotation contig trigger an ambiguity warning (#501)."""
+    gtf = tmp_path / "ambiguous.gtf"
+    gtf.write_text(
+        '1\ttest\tgene\t1\t4\t.\t+\t.\tgene_id "g1"; gene_name "G1";\n'
+        'MT\ttest\tgene\t1\t4\t.\t+\t.\tgene_id "gmt"; gene_name "GMT";\n'
+    )
+    # Neither exact 'MT' exists, and both 'chrM' and 'M' alias to MT.
+    dna_path.write_bytes(b">chr1\nACGT\n>chrM\nACGT\n>M\nTTTT\n")
+    with custom_genome(tmp_path, dna_path, gtf_path_or_url=str(gtf)) as genome:
+        with pytest.warns(UserWarning) as caught:
+            genome.index()
+        message = str(caught[0].message)
+        assert "1 ambiguously aliased annotation contigs" in message
+        assert "MT (chrM/M)" in message
+        assert "do not verify assembly identity" in message

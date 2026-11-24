@@ -296,7 +296,18 @@ def test_cli_pinned_selection_available_list_inspect_verify(tmp_path, monkeypatc
     assert "2022_07 (pinned)" in table
 
     avail_args = shell.parser.parse_args(["available", "--assembly", "hs1", "--json"])
-    payload = json.loads(shell.run_available(avail_args))
+    payload = json.loads(
+        shell.run_available(
+            species=avail_args.species,
+            assembly=avail_args.assembly,
+            assembly_accession=avail_args.assembly_accession,
+            provider=avail_args.provider,
+            reference_name=avail_args.reference_name,
+            include_alt=avail_args.include_alt,
+            refresh=avail_args.refresh,
+            json_output=avail_args.json,
+        )
+    )
     assert len(payload) == 1
     assert payload[0]["assembly"] == "T2T-CHM13v2.0"
     assert payload[0]["kind"] == "pinned"

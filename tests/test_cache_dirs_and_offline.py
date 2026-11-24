@@ -2,11 +2,13 @@
 
 import json
 import os
+import sys
 
 import pytest
 
 from pyensembl.cache_location import cache_root, resolve_cache_location
 from pyensembl import shell
+from pyensembl.cli import install, logging_config
 
 
 @pytest.fixture(autouse=True)
@@ -20,7 +22,7 @@ def _clean_env(monkeypatch):
         "OPENVAX_NO_PROGRESS",
     ):
         monkeypatch.delenv(key, raising=False)
-    monkeypatch.setattr(shell, "configure_logging", lambda **kw: None)
+    monkeypatch.setattr(logging_config, "configure_logging", lambda **kw: None)
 
 
 def test_openvax_data_cache_fallback_behind_pyensembl_cache_dir(tmp_path, monkeypatch):
@@ -88,7 +90,7 @@ def test_offline_flag_blocks_remote_download_and_restores_env(tmp_path, monkeypa
 
 
 def test_progress_respects_openvax_no_progress(monkeypatch):
-    monkeypatch.setattr(shell.sys.stderr, "isatty", lambda: True)
-    assert shell._progress_available() is True
+    monkeypatch.setattr(sys.stderr, "isatty", lambda: True)
+    assert install.progress_available() is True
     monkeypatch.setenv("OPENVAX_NO_PROGRESS", "1")
-    assert shell._progress_available() is False
+    assert install.progress_available() is False

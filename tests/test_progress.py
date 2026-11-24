@@ -7,7 +7,8 @@ import sys
 import datacache
 
 from pyensembl import EnsemblRelease, Genome
-from pyensembl import genome_fasta, shell
+from pyensembl import genome_fasta
+from pyensembl.cli import install
 from pyensembl.fasta import parse_fasta_dictionary
 from .test_cli_output import install_arguments
 from .test_genome_fasta import DNA, run_cli, serve_downloads
@@ -87,9 +88,9 @@ def test_reference_dna_downloads_forward_show_progress(tmp_path, monkeypatch):
 
 def test_cli_shows_progress_only_when_someone_can_see_it(tmp_path, monkeypatch, capsys):
     # capsys replaces stderr with a pipe: no terminal, no progress bars.
-    assert shell._progress_available() is False
+    assert install.progress_available() is False
     monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
-    monkeypatch.setattr(shell, "_progress_available", lambda: True)
+    monkeypatch.setattr(install, "progress_available", lambda: True)
     seen = record_progress(monkeypatch)
     run_cli(monkeypatch, *install_arguments())
     assert seen == [("db_from_dataframes_with_absolute_path", True)]

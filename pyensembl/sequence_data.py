@@ -10,79 +10,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from functools import lru_cache
-import hashlib
-from os import remove
-from os.path import dirname, exists, lexists, abspath, split, join
+from collections import Counter
+import logging
+from os.path import abspath, exists, split
 from pathlib import Path
 
-import datacache
-import logging
-import zlib
-from collections import Counter
-import pickle
-from .common import dump_pickle, file_digest, file_fingerprint, load_pickle
-from .fasta import first_fasta_id, parse_fasta_dictionary
+from datacache import FileValidationError
+
+from .fasta import parse_fasta_dictionary
+from .fasta_cache import (  # noqa: F401
+    FastaDictionaryCache,
+    cached_dictionary_lost_versions,
+    fasta_index_files,
+    fasta_index_path,
+)
 from .versioned_ids import match_version, split_versioned_id
 
 
 logger = logging.getLogger(__name__)
-
-
-def _file_state(path):
-    return tuple(file_fingerprint(path, include_dev=True))
-
-
-@lru_cache(maxsize=128)
-def _file_digest(path, state):
-    """Reuse a digest only while the source's complete stat identity agrees."""
-    digest = file_digest(path)
-    if _file_state(path) != state:
-        raise ValueError("FASTA changed while hashing: %s" % path)
-    return digest
-
-
-def _local_index_prefix(source):
-    return "local-" + hashlib.sha256(abspath(source).encode()).hexdigest() + "-"
-
-
-def fasta_index_files(fasta_path, cache_directory=None, source=None):
-    """Existing indexes owned by this source, including older byte revisions."""
-    directory = Path(cache_directory or dirname(fasta_path))
-    source = source or fasta_path
-    if "://" not in source:
-        paths = sorted(directory.glob(_local_index_prefix(source) + "*.pickle"))
-        if paths:
-            return [str(path) for path in paths]
-    legacy = directory / (Path(fasta_path).name + ".pickle")
-    return [str(legacy)] if lexists(legacy) else []
-
-
-def fasta_index_path(fasta_path, cache_directory=None, source=None, *, content_path=None):
-    """Select an index without creating or migrating files.
-
-    New local indexes identify the original path and indexed bytes. Remote
-    downloads already carry URL identity in their filename. Unidentified
-    legacy dictionaries keep their historical lookup contract in place.
-    """
-    source = source or fasta_path
-    directory = cache_directory or dirname(fasta_path)
-    legacy = join(directory, Path(fasta_path).name + ".pickle")
-    if "://" in source:
-        return legacy
-    prefix = _local_index_prefix(source)
-    if lexists(legacy) and not any(Path(directory).glob(prefix + "*.pickle")):
-        return legacy
-    content_path = abspath(content_path or fasta_path)
-    try:
-        digest = _file_digest(content_path, _file_state(content_path))
-    except OSError:
-        # Inspection of a missing/unreadable source must remain read-only.
-        # Explicit index deletion finds its generations via fasta_index_files.
-        digest = "missing"
-    # Leave room for atomic staging names on filesystems with 255-byte limits.
-    name = Path(source).name.encode()[-72:].decode(errors="ignore")
-    return join(directory, prefix + digest + "-" + name + ".pickle")
 
 
 def lookup_sequence_with_version_fallback(sequence_data, identifier, version=None):
@@ -141,28 +86,9 @@ def lookup_sequence_with_version_fallback(sequence_data, identifier, version=Non
     return None
 
 
-def _pickle_lost_versions(fasta_path, fasta_dictionary):
-    """
-    Whether a cached dictionary was built by the parser in pyensembl before
-    2.10, which stripped versions from Ensembl FASTA headers, so it holds the
-    bare ID where the header carries a versioned one.
-    """
-    try:
-        first_id = first_fasta_id(fasta_path)
-    except (OSError, EOFError, ValueError, zlib.error):
-        # An unreadable header can't show the pickle is stale; keep using it
-        return False
-    bare, version = split_versioned_id(first_id)
-    return (
-        version is not None
-        and first_id not in fasta_dictionary
-        and bare in fasta_dictionary
-    )
-
-
 class SequenceData(object):
     """
-    Container for reference nucleotide and amino acid sequenes.
+    Container for reference nucleotide and amino acid sequences.
     """
 
     def __init__(self, fasta_paths, cache_directory_path=None, *, sources=None):
@@ -182,20 +108,26 @@ class SequenceData(object):
         for path in self.fasta_paths:
             if not exists(path):
                 raise ValueError("Couldn't find FASTA file %s" % (path,))
-        self.fasta_dictionary_pickle_paths = []
+        self.fasta_dictionary_index_paths = []
         self._refresh_index_paths()
         self._init_lazy_fields()
+
+    @property
+    def fasta_dictionary_pickle_paths(self):
+        """Backwards-compatible alias for :attr:`fasta_dictionary_index_paths`."""
+        return self.fasta_dictionary_index_paths
 
     def _refresh_index_paths(self):
         paths = [
             fasta_index_path(path, directory, source)
             for path, directory, source in zip(
-                self.fasta_paths, self.cache_directory_paths,
+                self.fasta_paths,
+                self.cache_directory_paths,
                 getattr(self, "sources", self.fasta_paths),
             )
         ]
-        if paths != self.fasta_dictionary_pickle_paths:
-            self.fasta_dictionary_pickle_paths = paths
+        if paths != self.fasta_dictionary_index_paths:
+            self.fasta_dictionary_index_paths = paths
             self.fasta_dictionary_filenames = [Path(path).name for path in paths]
             self._init_lazy_fields()
 
@@ -222,11 +154,12 @@ class SequenceData(object):
         """Delete cached FASTA dictionaries while preserving source files."""
         self.clear_cache()
         for fasta_path, directory, source in zip(
-            self.fasta_paths, self.cache_directory_paths,
+            self.fasta_paths,
+            self.cache_directory_paths,
             getattr(self, "sources", self.fasta_paths),
         ):
-            for path in fasta_index_files(fasta_path, directory, source):
-                remove(path)
+            FastaDictionaryCache(directory).delete(fasta_path, source)
+        self._refresh_index_paths()
 
     def __str__(self):
         return "SequenceData(fasta_paths=%s)" % (self.fasta_paths,)
@@ -278,65 +211,81 @@ class SequenceData(object):
                     self._stripped_index[bare] = identifier
                 self._versions[identifier] = version
 
-    def _load_or_create_fasta_dictionary_pickle(self, show_progress=False):
+    def load_or_create_fasta_dictionary(self, show_progress=False):
+        """Load cached FASTA sequence dictionaries or parse and cache them.
+
+        Reads existing ``.json.gz`` or legacy ``.pickle`` caches through
+        :class:`~pyensembl.fasta_cache.FastaDictionaryCache`. Newly built or
+        rebuilt caches are always published in the safe ``.json.gz`` format.
+
+        Parameters
+        ----------
+        show_progress : bool, optional
+            Display a progress bar while parsing FASTA files from disk.
+        """
         self._refresh_index_paths()
         self._fasta_dictionary = dict()
         self._stripped_index = dict()
         self._versions = dict()
         self._version_conflicts = dict()
-        for fasta_path, pickle_path, directory, source in zip(
-            self.fasta_paths, self.fasta_dictionary_pickle_paths,
-            self.cache_directory_paths, getattr(self, "sources", self.fasta_paths),
+        for idx, (fasta_path, index_path, directory, source) in enumerate(
+            zip(
+                self.fasta_paths,
+                self.fasta_dictionary_index_paths,
+                self.cache_directory_paths,
+                getattr(self, "sources", self.fasta_paths),
+            )
         ):
-            if exists(pickle_path):
-                # try loading the cached file
-                # but we'll fall back on recreating it if loading fails
+            cache = FastaDictionaryCache(directory)
+            if exists(index_path):
                 try:
-                    fasta_dictionary_tmp = load_pickle(pickle_path)
-                    if _pickle_lost_versions(fasta_path, fasta_dictionary_tmp):
+                    fasta_dictionary_tmp = cache.load(index_path)
+                    if cached_dictionary_lost_versions(fasta_path, fasta_dictionary_tmp):
                         logger.info(
                             "Rebuilding %s to keep FASTA header versions",
-                            pickle_path,
+                            index_path,
                         )
                     else:
                         self._add_to_fasta_dictionary(fasta_dictionary_tmp)
                         logger.debug(
-                            "Loaded sequence dictionary from %s", pickle_path
+                            "Loaded sequence dictionary from %s", index_path
                         )
                         continue
-                except (pickle.UnpicklingError, AttributeError):
-                    # catch either an UnpicklingError or an AttributeError
-                    # resulting from pickled objects refering to classes
-                    # that no longer exists
+                except FileValidationError:
                     logger.warning(
                         "Failed to load %s, attempting to read FASTA directly",
-                        pickle_path,
+                        index_path,
                     )
             logger.info("Parsing sequences from FASTA file at %s", fasta_path)
 
+            expected_target = cache.target_path(fasta_path, source)
             fasta_dictionary_tmp = parse_fasta_dictionary(fasta_path, show_progress)
-            if fasta_index_path(fasta_path, directory, source) != pickle_path:
+            if cache.target_path(fasta_path, source) != expected_target:
                 self._init_lazy_fields()
                 raise ValueError("FASTA changed while indexing: %s" % fasta_path)
             self._add_to_fasta_dictionary(fasta_dictionary_tmp)
-            logger.debug("Saving sequence dictionary to %s", pickle_path)
+            logger.debug("Saving sequence dictionary to %s", expected_target)
             try:
-                datacache.ensure_dir(dirname(pickle_path))
-                dump_pickle(fasta_dictionary_tmp, pickle_path)
+                saved_path = cache.save(fasta_dictionary_tmp, fasta_path, source)
+                self.fasta_dictionary_index_paths[idx] = saved_path
+                self.fasta_dictionary_filenames[idx] = Path(saved_path).name
             except OSError as e:
                 # A read-only shared cache still serves the parsed sequences
-                logger.warning("Couldn't save %s: %s", pickle_path, e)
+                logger.warning("Couldn't save %s: %s", expected_target, e)
+
+    def _load_or_create_fasta_dictionary_pickle(self, show_progress=False):
+        self.load_or_create_fasta_dictionary(show_progress=show_progress)
 
     def index(self, overwrite=False, show_progress=False):
         if overwrite:
             self.delete_index_files()
-        self._load_or_create_fasta_dictionary_pickle(show_progress=show_progress)
+        self.load_or_create_fasta_dictionary(show_progress=show_progress)
 
     @property
     def fasta_dictionary(self):
         self._refresh_index_paths()
         if self._fasta_dictionary is None:
-            self._load_or_create_fasta_dictionary_pickle()
+            self.load_or_create_fasta_dictionary()
         return self._fasta_dictionary
 
     def get(self, sequence_id):
