@@ -21,6 +21,13 @@ from .formatting import (
     format_table,
     species_display_name,
 )
+from .help import (
+    ANSI_BOLD_CYAN,
+    ANSI_DIM,
+    ANSI_RESET,
+    color_enabled,
+    style_status,
+)
 
 
 def selects_catalogue(
@@ -158,15 +165,17 @@ def available_catalogue(
 def format_available_species(use_color=None, dated_releases=None):
     """Render the overview table of supported species and Ensembl release ranges.
 
-    When ``use_color`` is ``None`` (the default), ANSI styling is applied if
-    stdout is a TTY and suppressed otherwise. ``dated_releases`` optionally
-    maps latin names to the annotation dates of their registered dated assembly
-    (``None`` when unknown) and adds a column for them.
+    When ``use_color`` is ``None`` (the default), ANSI styling is applied
+    according to :func:`pyensembl.cli.help.color_enabled` on ``sys.stdout``.
+    ``dated_releases`` optionally maps latin names to the annotation dates of
+    their registered dated assembly (``None`` when unknown) and adds a column
+    for them.
 
     Parameters
     ----------
     use_color : bool, optional
-        Override ANSI styling (defaults to ``sys.stdout.isatty()``).
+        Override ANSI styling (defaults to
+        :func:`pyensembl.cli.help.color_enabled` on ``sys.stdout``).
     dated_releases : dict of str to (list of str or None), optional
         Optional dated-release dates keyed by species latin name.
 
@@ -179,10 +188,10 @@ def format_available_species(use_color=None, dated_releases=None):
     from ..species import Species
 
     if use_color is None:
-        use_color = sys.stdout.isatty()
-    bold = "\x1b[1m" if use_color else ""
-    dim = "\x1b[2m" if use_color else ""
-    reset = "\x1b[0m" if use_color else ""
+        use_color = color_enabled(sys.stdout)
+    heading = ANSI_BOLD_CYAN if use_color else ""
+    dim = ANSI_DIM if use_color else ""
+    reset = ANSI_RESET if use_color else ""
 
     species_by_division = {key: [] for key, _ in DIVISION_LABELS}
     for species in sorted(Species.all(), key=lambda s: s.latin_name):
@@ -243,7 +252,7 @@ def format_available_species(use_color=None, dated_releases=None):
         col_dates, "Dated releases" if col_dates else "",
         "Latin name",
     )
-    lines.append("%s%s%s" % (bold, header_row, reset))
+    lines.append("%s%s%s" % (heading, header_row, reset))
     lines.append("─" * total_w)
 
     for division_key, division_label in DIVISION_LABELS:
@@ -254,7 +263,7 @@ def format_available_species(use_color=None, dated_releases=None):
         lines.append("")
         section = "── %s " % division_label
         section += "─" * max(2, total_w - len(section))
-        lines.append("%s%s%s" % (bold, section, reset))
+        lines.append("%s%s%s" % (heading, section, reset))
         for species in members:
             for i, (asm, (start, end)) in enumerate(
                 species.reference_assemblies.items()
@@ -265,13 +274,20 @@ def format_available_species(use_color=None, dated_releases=None):
                 else:
                     name_cell = ""
                     latin_cell = ""
+                dates_raw = dates_cell(species, asm)
+                dates_rendered = (
+                    style_status(dates_raw, use_color=use_color)
+                    + (" " * (col_dates - len(dates_raw)))
+                    if col_dates
+                    else ""
+                )
                 lines.append(
-                    "%-*s%-*s%-*s%-*s%s"
+                    "%-*s%-*s%-*s%s%s"
                     % (
                         col_name, name_cell,
                         col_asm, asm,
                         col_rng, format_release_range(start, end),
-                        col_dates, dates_cell(species, asm),
+                        dates_rendered,
                         latin_cell,
                     )
                 )

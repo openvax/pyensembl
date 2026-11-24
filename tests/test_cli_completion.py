@@ -72,11 +72,27 @@ def make_cache(root):
 
 def test_options_and_actions_complete(tmp_path):
     options = complete("pyensembl --", tmp_path / "cache", tmp_path)
-    for option in ("--release", "--species", "--reference-name", "--with-genome-fasta", "--json"):
+    for option in (
+        "--release",
+        "--species",
+        "--reference-name",
+        "--with-genome-fasta",
+        "--json",
+        "--offline",
+    ):
         assert option in options
     actions = complete("pyensembl ", tmp_path / "cache", tmp_path)
-    for action in ("install", "list", "inspect", "verify", "available",
-                   "delete-index-files", "delete-all-files", "prune"):
+    for action in (
+        "install",
+        "list",
+        "dirs",
+        "inspect",
+        "verify",
+        "available",
+        "delete-index-files",
+        "delete-all-files",
+        "prune",
+    ):
         assert action in actions
     assert complete("pyensembl ins", tmp_path / "cache", tmp_path) == ["install", "inspect"]
 
@@ -133,6 +149,34 @@ def test_complete_species_lists_common_and_latin_names():
     assert {"human", "homo_sapiens", "dog", "canis_familiaris"} <= set(names)
 
 
-def test_cli_module_carries_the_argcomplete_marker():
+def test_cli_entry_modules_carry_the_argcomplete_marker():
     # Global activation completes only scripts whose first 1024 bytes carry it.
-    assert b"PYTHON_ARGCOMPLETE_OK" in Path(shell.__file__).read_bytes()[:1024]
+    from pyensembl.cli import main as cli_main
+
+    for module in (shell, cli_main):
+        assert b"PYTHON_ARGCOMPLETE_OK" in Path(module.__file__).read_bytes()[:1024], (
+            f"Missing PYTHON_ARGCOMPLETE_OK marker in {module.__file__}"
+        )
+
+
+def test_parser_and_help_modules_load_no_heavy_imports(tmp_path):
+    probe = (
+        "import json, sys; "
+        "import pyensembl.cli.help, pyensembl.cli.parser, pyensembl.cli.main; "
+        "heavy = ('pandas', 'numpy', 'pyarrow', 'gtfparse', 'pyfaidx', 'sqlite3', 'datacache'); "
+        "print(json.dumps([m for m in heavy if m in sys.modules]))"
+    )
+    environment = dict(
+        os.environ,
+        PYENSEMBL_CACHE_DIR=str(tmp_path),
+        PYTHONPATH=str(REPOSITORY),
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", probe],
+        env=environment,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "[]"

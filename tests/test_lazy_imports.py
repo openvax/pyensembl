@@ -48,7 +48,8 @@ def run_python(code, cache):
 
 def test_importing_package_and_cli_loads_no_heavy_modules(tmp_path):
     loaded = run_python(
-        "import json, sys, pyensembl, pyensembl.shell, pyensembl.cli; "
+        "import json, sys, pyensembl, pyensembl.shell, pyensembl.cli, "
+        "pyensembl.cli.help, pyensembl.cli.parser; "
         "print(json.dumps(sorted(m for m in %r if m in sys.modules)))" % (HEAVY_MODULES,),
         tmp_path,
     )

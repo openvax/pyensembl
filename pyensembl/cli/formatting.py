@@ -17,6 +17,8 @@ import os
 from pathlib import Path
 import sys
 
+from .help import color_enabled, style_status, style_table_header
+
 logger = logging.getLogger(__name__)
 
 DIVISION_LABELS = (
@@ -65,10 +67,15 @@ def display_path(path):
     return "~" + path[len(home):] if path == home or path.startswith(home + os.sep) else path
 
 
-def format_table(header, rows, use_color=None):
-    """Render an aligned plain-text table with an optional bold header.
+def format_table(header, rows, use_color=None, status_columns=(), stream=None):
+    """Render an aligned plain-text table with optional ANSI styling.
 
     Cells are converted via ``str``, so integer releases render cleanly.
+    When color is enabled, the header row is styled in bold cyan via
+    :func:`pyensembl.cli.help.style_table_header` and cells in
+    ``status_columns`` are styled via :func:`pyensembl.cli.help.style_status`
+    (dim for absent/not-applicable, yellow for warnings, plain for normal
+    values).
 
     Parameters
     ----------
@@ -77,8 +84,15 @@ def format_table(header, rows, use_color=None):
     rows : sequence of sequence of object
         Data rows matching the column count of ``header``.
     use_color : bool, optional
-        Whether to style the header with ANSI bold codes. When ``None``
-        (default), enabled only when ``sys.stdout`` is a TTY.
+        Whether to apply ANSI styling. When ``None`` (default), determined via
+        :func:`pyensembl.cli.help.color_enabled` on ``stream`` (defaulting to
+        ``sys.stdout``).
+    status_columns : sequence of (int or str), optional
+        Column indices or header names whose cells represent status values
+        styled with :func:`pyensembl.cli.help.style_status`.
+    stream : file-like, optional
+        Output stream checked when ``use_color`` is ``None``. Defaults to
+        ``sys.stdout``.
 
     Returns
     -------
@@ -86,15 +100,31 @@ def format_table(header, rows, use_color=None):
         Formatted multi-line table string.
     """
     if use_color is None:
-        use_color = sys.stdout.isatty()
+        use_color = color_enabled(sys.stdout if stream is None else stream)
+    header = [str(cell) for cell in header]
     rows = [[str(cell) for cell in row] for row in rows]
     widths = [max(len(cell) for cell in column) for column in zip(header, *rows)]
 
-    def format_line(cells):
-        return "  ".join(cell.ljust(width) for cell, width in zip(cells, widths)).rstrip()
+    status_indices = set()
+    for selector in status_columns:
+        if isinstance(selector, int):
+            status_indices.add(selector)
+        elif selector in header:
+            status_indices.add(header.index(selector))
 
-    bold, reset = ("\x1b[1m", "\x1b[0m") if use_color else ("", "")
-    return "\n".join([bold + format_line(header) + reset] + [format_line(row) for row in rows])
+    def format_line(cells, style_statuses=False):
+        parts = []
+        for idx, (cell, width) in enumerate(zip(cells, widths)):
+            rendered = (
+                style_status(cell, use_color=use_color)
+                if style_statuses and idx in status_indices
+                else cell
+            )
+            parts.append(rendered + (" " * (width - len(cell))))
+        return "  ".join(parts).rstrip()
+
+    header_line = style_table_header(format_line(header), use_color=use_color)
+    return "\n".join([header_line] + [format_line(row, style_statuses=True) for row in rows])
 
 
 def format_release_range(start, end):

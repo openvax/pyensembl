@@ -300,7 +300,8 @@ def format_installed_genomes(check_genome_fasta=False, use_color=None):
     check_genome_fasta : bool, optional
         When ``True``, verify DNA indexes on disk.
     use_color : bool, optional
-        Override ANSI header styling (defaults to ``sys.stdout.isatty()``).
+        Override ANSI header and status styling (defaults to
+        :func:`pyensembl.cli.help.color_enabled` on ``sys.stdout``).
 
     Returns
     -------
@@ -322,7 +323,12 @@ def format_installed_genomes(check_genome_fasta=False, use_color=None):
         )
         for r in rows
     ]
-    return format_table(header, table_rows, use_color)
+    return format_table(
+        header,
+        table_rows,
+        use_color,
+        status_columns=("Annotation", "Reference DNA"),
+    )
 
 
 def format_installed_genomes_json(check_genome_fasta=False):

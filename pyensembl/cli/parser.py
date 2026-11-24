@@ -19,6 +19,7 @@ import re
 from ..ensembl_versions import normalize_release
 from ..version import __version__
 from .formatting import release_sort_key
+from .help import HelpArgumentParser
 
 DELETE_ACTIONS = ("delete-all-files", "delete-index-files")
 
@@ -173,12 +174,11 @@ def build_parser():
     argparse.ArgumentParser
         Configured parser with all actions, groups, and argcomplete completers.
     """
-    argument_parser = argparse.ArgumentParser(
+    argument_parser = HelpArgumentParser(
         prog="pyensembl",
         usage="%(prog)s ACTION [options]",
         description="Install and manage the genome data PyEnsembl uses.",
         epilog=ACTIONS_AND_EXAMPLES,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     argument_parser.add_argument(
