@@ -202,7 +202,7 @@ def _dated_object_directory(root, identity):
             / provider / "toplevel" / masking / "fasta" / _identity_key(identity)[:16])
 
 
-def _head_content_length(url, *, timeout=60, max_retries=3, retry_backoff=0.5):
+def head_content_length(url, *, timeout=60, max_retries=3, retry_backoff=0.5):
     """Fetch Content-Length via HEAD with bounded retries on transient errors."""
     last_error = None
     for attempt in range(max_retries):
@@ -230,7 +230,7 @@ def _dated_remote_identity(source, match):
         allow_empty=True,
     ).decode("utf-8")
     md5 = parse_md5sum_manifest(manifest, filename)
-    length = _head_content_length(source, timeout=60)
+    length = head_content_length(source, timeout=60)
     if length <= 0:
         raise ValueError("No compressed size for this FASTA")
     return dict(platform="ensemblorganisms", provider="ftp.ebi.ac.uk",
@@ -300,7 +300,7 @@ def _remote_identity(source):
         )
         if checksum is None:
             raise ValueError("No checksum for this FASTA")
-        length = _head_content_length(source, timeout=60)
+        length = head_content_length(source, timeout=60)
         if length > 0:
             return {
                 "provider": url.netloc,

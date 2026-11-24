@@ -171,13 +171,13 @@ def test_api_subset_label_is_preserved_without_replacing_release(monkeypatch):
     details = json.loads((fixture / "human-details.json").read_text())
     links = json.loads((fixture / "human-ftplinks.json").read_text())
     details["annotation_version"] = "51_subset"
-    monkeypatch.setattr(ensembl_metadata, "_get_json",
+    monkeypatch.setattr(ensembl_metadata, "fetch_metadata_json",
                         lambda path: details if path.endswith("details") else links)
     with pytest.warns(UserWarning, match="transcript subset"):
         genome = EnsemblRelease.from_ensembl(details["genome_id"])
     assert genome.release == genome.annotation_version == "2026_04"
     assert genome.annotation_label == "51_subset" and genome.annotation_is_subset
-    monkeypatch.setattr(ensembl_metadata, "_get_json", lambda *a: pytest.fail("network"))
+    monkeypatch.setattr(ensembl_metadata, "fetch_metadata_json", lambda *a: pytest.fail("network"))
     with pytest.warns(UserWarning, match="transcript subset"):
         restored = EnsemblRelease.from_json(genome.to_json())
     assert restored.annotation_label == "51_subset" and restored.annotation_is_subset

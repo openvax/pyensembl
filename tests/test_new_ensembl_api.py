@@ -27,7 +27,7 @@ def responses(monkeypatch, tmp_path):
             documents["/genome/%s/%s" % (identifier, kind)] = json.loads(
                 (DATA / ("%s-%s.json" % (species, kind))).read_text()
             )
-    monkeypatch.setattr(api, "_get_json", lambda path: deepcopy(documents[path]))
+    monkeypatch.setattr(api, "fetch_metadata_json", lambda path: deepcopy(documents[path]))
     return documents
 
 
@@ -47,7 +47,7 @@ def test_api_discovery_pins_dataset_and_serializes_offline(
     assert genome.genome_id
     assert not (tmp_path / "cache").exists()
     encoded, pickled = genome.to_json(), pickle.dumps(genome)
-    monkeypatch.setattr(api, "_get_json", lambda path: pytest.fail("unexpected network"))
+    monkeypatch.setattr(api, "fetch_metadata_json", lambda path: pytest.fail("unexpected network"))
     for restored in [EnsemblRelease.from_json(encoded), pickle.loads(pickled)]:
         assert restored.assembly_name == name
         assert restored.release == date
@@ -109,7 +109,7 @@ def test_inconsistent_api_metadata_is_rejected(responses, change):
 def test_api_outage_is_not_an_assembly_guess(monkeypatch):
     def unavailable(path):
         raise OSError("metadata unavailable")
-    monkeypatch.setattr(api, "_get_json", unavailable)
+    monkeypatch.setattr(api, "fetch_metadata_json", unavailable)
     with pytest.raises(OSError, match="metadata unavailable"):
         EnsemblRelease.from_ensembl("GCA_014441545.1")
     assert EnsemblRelease("2020_10", species="dog").assembly_name == "ROS_Cfam_1.0"
@@ -125,7 +125,7 @@ def test_actual_http_client_uses_new_api(monkeypatch):
         return b'{"ok":true}'
 
     monkeypatch.setattr(datacache, "fetch_bytes", fake_fetch_bytes)
-    assert api._get_json("/genome/test/details") == {"ok": True}
+    assert api.fetch_metadata_json("/genome/test/details") == {"ok": True}
     assert calls == [
         ("https://www.ensembl.org/api/metadata/genome/test/details", 30, 2 * 1024 * 1024)
     ]

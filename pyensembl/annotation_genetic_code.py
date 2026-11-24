@@ -18,7 +18,8 @@ from .genetic_code import translation_table
 _COLUMNS = ("transl_table", "translation_table")
 
 
-def _add(result, identifier, values):
+def add_translation_table_declarations(result, identifier, values):
+    """Record raw GTF translation-table attribute values for a transcript."""
     # gtfparse joins repeated attributes with commas. Retain every declaration
     # so agreement/conflicts have identical semantics in new and old indexes.
     values = [item.strip() for value in values if value is not None
@@ -45,7 +46,8 @@ class AnnotationGeneticCodes:
         self._state = None
         self._values = {}
 
-    def _file_state(self):
+    def file_state(self):
+        """Return ``(gtf_fingerprint, index_fingerprint)`` for cache invalidation."""
         try:
             source = file_fingerprint(self.path)
         except FileNotFoundError as error:
@@ -54,7 +56,8 @@ class AnnotationGeneticCodes:
             ) from error
         return source, file_fingerprint(self.index) if isfile(self.index) else None
 
-    def _read_index(self):
+    def read_index(self):
+        """Read sparse transcript/CDS translation-table declarations from SQLite, or None if unavailable."""
         if not isfile(self.index):
             return None
         connection = datacache.connect_if_correct_version(
@@ -88,10 +91,11 @@ class AnnotationGeneticCodes:
                     'SELECT transcript_id, transl_table, translation_table FROM "%s" '
                     "WHERE COALESCE(transl_table, '') != '' OR COALESCE(translation_table, '') != ''" % feature
                 ):
-                    _add(result, row[0], row[1:])
+                    add_translation_table_declarations(result, row[0], row[1:])
             return result
 
-    def _read_gtf(self):
+    def read_gtf(self):
+        """Read transcript/CDS translation-table declarations directly from the GTF via gtfparse."""
         # Imported lazily so plain `import pyensembl` does not load pandas/PyArrow.
         from gtfparse import read_gtf
 
@@ -109,16 +113,16 @@ class AnnotationGeneticCodes:
             if any(v is not None and str(v).strip() for v in values):
                 if not identifier or "," in str(identifier):
                     raise ValueError("Malformed translation-table declaration in %s" % self.path)
-            _add(result, identifier, values)
+            add_translation_table_declarations(result, identifier, values)
         return result
 
     def get(self, transcript_id):
-        state = self._file_state()
+        state = self.file_state()
         if state != self._state:
-            values = self._read_index()
+            values = self.read_index()
             if values is None:
-                values = self._read_gtf()
-            if self._file_state() != state:
+                values = self.read_gtf()
+            if self.file_state() != state:
                 raise OSError("Annotation changed while reading translation-table declarations")
             self._values, self._state = values, state
         codes = set()
