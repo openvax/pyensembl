@@ -37,7 +37,7 @@ def require_ensembl_releases(genomes):
         raise ValueError("verify requires an Ensembl release; use inspect for custom sources")
 
 
-def run_verify(genomes, check_remote=False, json_output=False):
+def run_verify(genomes, check_remote=False, json_output=False, use_color=None):
     """Verify recorded checksums of Ensembl releases without repairing them.
 
     Parameters
@@ -48,6 +48,9 @@ def run_verify(genomes, check_remote=False, json_output=False):
         Also compare recorded MD5s with current upstream manifests.
     json_output : bool, optional
         Return JSON instead of a table.
+    use_color : bool, optional
+        Override ANSI table header and status styling (defaults to
+        :func:`pyensembl.cli.help.color_enabled` on ``sys.stdout``).
 
     Returns
     -------
@@ -73,6 +76,8 @@ def run_verify(genomes, check_remote=False, json_output=False):
                 for r in reports
                 for s in r["sources"]
             ],
+            use_color=use_color,
+            status_columns=("Local", "Upstream"),
         )
     ok = not any(
         s["status"] not in ("verified", "unrecorded") or s.get("upstream_status") == "changed"

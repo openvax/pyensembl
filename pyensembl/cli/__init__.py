@@ -16,7 +16,24 @@ Imports stay cheap at package load time so tab completion via ``argcomplete``
 does not import genome, database, or download modules.
 """
 
+from .help import (
+    HelpArgumentParser,
+    HelpFormatter,
+    color_enabled,
+    style_help,
+    style_status,
+    style_table_header,
+)
 from .main import run
 from .parser import build_parser
 
-__all__ = ["build_parser", "run"]
+__all__ = [
+    "HelpArgumentParser",
+    "HelpFormatter",
+    "build_parser",
+    "color_enabled",
+    "run",
+    "style_help",
+    "style_status",
+    "style_table_header",
+]

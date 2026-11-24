@@ -3,6 +3,21 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.42.0
+
+- Add shared subtle cyan CLI help and table styling in `pyensembl.cli.help`
+  (`color_enabled`, `style_help`, `style_table_header`, `classify_status`,
+  `style_status`, `HelpFormatter`, `HelpArgumentParser` with `color=False` on
+  Python 3.14+ and plain `format_help()`), matching the OpenVax toolkit palette:
+  one cyan hue (`\033[36m`), bold cyan headings/table headers, bold `usage:`,
+  and dim/yellow status cells only, gated on TTY plus `NO_COLOR` and `TERM=dumb`
+  (#514).
+- Apply `HelpArgumentParser` to `pyensembl.cli.parser`, bold cyan headers and
+  dim/yellow status styling to `pyensembl.cli.formatting.format_table()`,
+  `list`, `dirs`, `inspect`, `verify`, and `available`, and ensure every CLI
+  entry module (`pyensembl/shell.py`, `pyensembl/cli/main.py`) carries the
+  `# PYTHON_ARGCOMPLETE_OK` marker within its first 1024 bytes (#514).
+
 ## 2.41.0
 
 - Distinguish unambiguous FASTA contig naming aliases (such as `1` vs `chr1`,

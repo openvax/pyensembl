@@ -18,7 +18,7 @@ import json
 from .formatting import display_path, format_table, genome_description
 
 
-def inspect_genomes(genomes, check_genome_fasta=False, json_output=False):
+def inspect_genomes(genomes, check_genome_fasta=False, json_output=False, use_color=None):
     """Render the offline file inventory exposed by ``Genome.inspect_data``.
 
     Parameters
@@ -29,6 +29,9 @@ def inspect_genomes(genomes, check_genome_fasta=False, json_output=False):
         When ``True``, verify reference DNA index integrity on disk.
     json_output : bool, optional
         When ``True``, return formatted JSON instead of human-readable tables.
+    use_color : bool, optional
+        Override ANSI table header and status styling (defaults to
+        :func:`pyensembl.cli.help.color_enabled` on ``sys.stdout``).
 
     Returns
     -------
@@ -74,7 +77,12 @@ def inspect_genomes(genomes, check_genome_fasta=False, json_output=False):
                     report["annotation"] or "not configured",
                     report["reference_dna"] or "not configured",
                 ),
-                format_table(("File", "Status", "Bytes", "Path", "Fetched from"), rows),
+                format_table(
+                    ("File", "Status", "Bytes", "Path", "Fetched from"),
+                    rows,
+                    use_color=use_color,
+                    status_columns=("Status", "Bytes", "Fetched from"),
+                ),
             ]
             lines.extend(
                 "%s: %s" % (role, file.error)
