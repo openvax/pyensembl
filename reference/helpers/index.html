@@ -1236,6 +1236,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.species.Species.newest_release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        newest_release
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.species.Species.current_reference_name" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1251,6 +1262,50 @@
     <span class="md-ellipsis">
       
         register
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.species.Species.all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        all
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.species.Species.get_by_latin_name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_by_latin_name
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.species.Species.all_reference_names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        all_reference_names
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.species.Species.get_by_reference_name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_by_reference_name
       
     </span>
   </a>
@@ -2072,6 +2127,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.species.Species.newest_release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        newest_release
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.species.Species.current_reference_name" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2087,6 +2153,50 @@
     <span class="md-ellipsis">
       
         register
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.species.Species.all" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        all
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.species.Species.get_by_latin_name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_by_latin_name
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.species.Species.all_reference_names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        all_reference_names
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.species.Species.get_by_reference_name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_by_reference_name
       
     </span>
   </a>
@@ -3358,6 +3468,53 @@ remain installation errors.</p>
 
 
 
+<h3 id="pyensembl.species.Species.newest_release" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">newest_release</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#pyensembl.species.Species.newest_release" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">newest_release</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Newest numbered Ensembl release supported for this species.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Maximum release number across :attr:<code>reference_assemblies</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
 <h3 id="pyensembl.species.Species.current_reference_name" class="doc doc-heading">
             <span class="doc doc-object-name doc-attribute-name">current_reference_name</span>
 
@@ -3400,6 +3557,256 @@ remain installation errors.</p>
 
         <p>Create a Species object from the given arguments and enter into
 all the dicts used to look the species up by its fields.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pyensembl.species.Species.all" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">all</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#pyensembl.species.Species.all" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">all</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return every registered :class:<code>Species</code> in registration order.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>list of Species</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Registered species objects.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pyensembl.species.Species.get_by_latin_name" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_by_latin_name</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#pyensembl.species.Species.get_by_latin_name" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_by_latin_name</span><span class="p">(</span><span class="n">latin_name</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Look up a registered species by its canonical latin name.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>latin_name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Normalized latin name (e.g. <code>"homo_sapiens"</code>).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="Species (pyensembl.species.Species)" href="#pyensembl.species.Species">Species</a> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Matching registered species, or <code>None</code> if not registered.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pyensembl.species.Species.all_reference_names" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">all_reference_names</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#pyensembl.species.Species.all_reference_names" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">all_reference_names</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return every registered reference assembly name.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code>list of str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Reference assembly names registered across all species.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pyensembl.species.Species.get_by_reference_name" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_by_reference_name</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+<a href="#pyensembl.species.Species.get_by_reference_name" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_by_reference_name</span><span class="p">(</span><span class="n">reference_name</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Look up the registered species that owns <code>reference_name</code>.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>reference_name</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Exact reference assembly name (e.g. <code>"GRCh38"</code>).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="Species (pyensembl.species.Species)" href="#pyensembl.species.Species">Species</a> or None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Matching registered species, or <code>None</code> if not registered.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>

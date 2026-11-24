@@ -1098,6 +1098,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2400" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.40.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2391" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1570,6 +1581,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2400" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.40.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2391" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1966,6 +1988,26 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
+<h2 id="2400">2.40.0<a class="headerlink" href="#2400" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Promote all cross-module underscore helpers to documented public APIs with NumPy
+  docstrings: <code>versioned_ids.split_versioned_id()</code>, <code>common.atomic_output()</code>,
+  <code>common.publish_file()</code>, <code>common.staging_path()</code>, <code>common.remove_if_exists()</code>,
+  <code>common.read_progress()</code>, <code>common.read_json()</code>, <code>common.write_json()</code>,
+  <code>download_cache.default_cache_directory()</code>, <code>download_cache.same_file_bytes()</code>,
+  <code>DownloadCache.cache_path()</code>, <code>assembly.assembly_matches()</code>, and
+  <code>dated_releases.cached_annotation_dates()</code> (#519).</li>
+<li>Add public <code>Species</code> registry accessors (<code>Species.all()</code>, <code>Species.get_by_latin_name()</code>,
+  <code>Species.all_reference_names()</code>, <code>Species.get_by_reference_name()</code>,
+  <code>Species.newest_release</code>) and public <code>Genome</code>/<code>EnsemblRelease</code> APIs
+  (<code>annotation_sources()</code>, <code>annotation_status()</code>, <code>genome_fasta_status()</code>,
+  <code>source_translation_table()</code>, <code>gtf_path_or_url</code>, <code>uses_annotation_checksums()</code>,
+  <code>pinned_source_checksums()</code>, <code>pin_source_checksum()</code>), removing all cross-module
+  reads/mutations of private attributes and deduplicating newest-release lookups (#519).</li>
+<li>Add AST boundary tests preventing cross-module private imports/attribute access (#519)
+  and strengthen lazy-import subprocess tests confirming zero <code>EnsemblRelease</code>
+  construction or cache inspection on <code>import pyensembl</code> (#510).</li>
+</ul>
 <h2 id="2391">2.39.1<a class="headerlink" href="#2391" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Promote <code>AnnotationGeneticCodes.read_gtf()</code>, <code>AnnotationGeneticCodes.read_index()</code>,
