@@ -9,7 +9,7 @@ import sqlite3
 import pytest
 
 from pyensembl import EnsemblRelease
-from pyensembl import shell
+from pyensembl.cli import formatting, listing, logging_config
 from pyensembl.database import DATABASE_SCHEMA_VERSION
 from .test_genome_fasta import list_rows, run_cli
 
@@ -53,7 +53,7 @@ def test_list_says_when_nothing_is_installed(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
     run_cli(monkeypatch, "list")
     assert capsys.readouterr().out.strip() == (
-        "No genomes installed in %s" % shell._display_path(tmp_path / "pyensembl")
+        "No genomes installed in %s" % formatting.display_path(tmp_path / "pyensembl")
     )
 
 
@@ -75,7 +75,7 @@ def test_list_is_a_table_with_install_status(tmp_path, monkeypatch, capsys):
         "Release": "83",
         "Annotation": "indexed",
         "Reference DNA": "-",
-        "Location": shell._display_path(location),
+        "Location": formatting.display_path(location),
     }
     assert rows["81"]["Annotation"] == "not indexed"
     assert rows["82"]["Annotation"] == "incomplete"
@@ -91,7 +91,7 @@ def test_list_is_a_table_with_install_status(tmp_path, monkeypatch, capsys):
     column = lines[0].index("Annotation")
     assert all(line[column - 2:column] == "  " for line in lines)
     assert "\x1b[" not in "".join(lines)  # No styling when piped.
-    releases = [g.release for g in shell.collect_all_installed_ensembl_releases()]
+    releases = [g.release for g in listing.collect_all_installed_ensembl_releases()]
     assert releases == [81, 82, 83, 84]
 
 
@@ -105,7 +105,7 @@ def test_list_skips_directories_that_hold_no_genome(tmp_path, monkeypatch, capsy
     write(root / "dated_releases" / "GCA_000001405.29_ensembl.html")
     run_cli(monkeypatch, "list")
     assert capsys.readouterr().out.strip() == (
-        "No genomes installed in %s" % shell._display_path(root)
+        "No genomes installed in %s" % formatting.display_path(root)
     )
     ensembl_files(83)
     complete_database(root / "GRCm38" / "cli_test81" / "annotation.db")
@@ -167,11 +167,11 @@ def cli_logging():
         each.setLevel(level)
         each.handlers[:] = handlers
         each.propagate = propagate
-    shell._cli_handler = None
+    logging_config.reset_cli_logging()
 
 
 def test_default_logging_is_concise_and_on_stderr(cli_logging, capsys):
-    shell.configure_logging()
+    logging_config.configure_logging()
     progress = logging.getLogger("pyensembl.progress_test")
     progress.info("Installing human GRCh38 release 81")
     progress.debug("hidden detail")
@@ -183,7 +183,7 @@ def test_default_logging_is_concise_and_on_stderr(cli_logging, capsys):
         "Installing human GRCh38 release 81",
         "warning: slow server",
     ]
-    shell.configure_logging(verbose=True)  # Replaces, not duplicates, output.
+    logging_config.configure_logging(verbose=True)  # Replaces, not duplicates, output.
     logging.getLogger("datacache.database").info("Running sqlite query")
     lines = capsys.readouterr().err.splitlines()
     assert len(lines) == 1
@@ -195,7 +195,7 @@ def test_messages_print_once_when_the_host_configured_logging(cli_logging, capsy
     host = logging.StreamHandler()  # e.g. logging.basicConfig() before shell.run()
     root.addHandler(host)
     try:
-        shell.configure_logging()
+        logging_config.configure_logging()
         logging.getLogger("pyensembl.progress_test").warning("once")
     finally:
         root.removeHandler(host)
@@ -218,8 +218,8 @@ def test_install_reports_each_genome_once(tmp_path, monkeypatch, caplog):
     arguments = install_arguments()
     caplog.set_level(logging.INFO, logger="pyensembl")
     run_cli(monkeypatch, *arguments)
-    shell_messages = [r.getMessage() for r in caplog.records if r.name == "pyensembl.shell"]
-    assert shell_messages == ["Installing GRCm38 cli_test 81"]
+    install_messages = [r.getMessage() for r in caplog.records if r.name == "pyensembl.cli.install"]
+    assert install_messages == ["Installing GRCm38 cli_test 81"]
     caplog.clear()
     run_cli(monkeypatch, *arguments)
     assert [r.getMessage() for r in caplog.records if r.levelno >= logging.INFO] == [
@@ -230,5 +230,5 @@ def test_install_reports_each_genome_once(tmp_path, monkeypatch, caplog):
     database.write_bytes(b"")
     caplog.clear()
     run_cli(monkeypatch, *arguments)
-    shell_messages = [r.getMessage() for r in caplog.records if r.name == "pyensembl.shell"]
-    assert shell_messages == ["Installing GRCm38 cli_test 81"]
+    install_messages = [r.getMessage() for r in caplog.records if r.name == "pyensembl.cli.install"]
+    assert install_messages == ["Installing GRCm38 cli_test 81"]

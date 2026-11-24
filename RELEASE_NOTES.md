@@ -3,6 +3,28 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.41.0
+
+- Distinguish unambiguous FASTA contig naming aliases (such as `1` vs `chr1`,
+  `MT` vs `chrM`, and version-preserving UCSC unplaced/unlocalized/alt/fix
+  scaffold names) from genuinely unavailable or ambiguously aliased contigs
+  in `Genome.index()` warnings, adding public `contig_alias_key()`,
+  `GenomeFasta.classify_contigs()`, and `format_contig_coverage_warning()`
+  helpers while retaining explicit assembly-identity disclaimers (#501).
+- Route derived FASTA sequence-dictionary caches through a new public
+  `datacache`-backed `pyensembl.fasta_cache` module (`FastaDictionaryCache`,
+  `load_fasta_dictionary()`, `save_fasta_dictionary()`,
+  `cached_dictionary_lost_versions()`) using a safe, versioned gzipped-JSON
+  format (`.json.gz`) for newly written caches while preserving offline and
+  read-only compatibility with existing legacy `.pickle` caches (#506).
+- Split `pyensembl/shell.py` into a `pyensembl/cli/` package (`main`,
+  `parser`, `formatting`, `logging_config`, `selection`, `install`, `listing`,
+  `available`, `inspect`, `verify`, `delete`) with documented public
+  functions, explicit parameters on `run_available()`, `selects_catalogue()`,
+  and `available_catalogue()`, promoted `install_genome()` and
+  `progress_available()` APIs, and `pyensembl.shell:run` / console script
+  preserved unchanged (#504).
+
 ## 2.40.0
 
 - Promote all cross-module underscore helpers to documented public APIs with NumPy

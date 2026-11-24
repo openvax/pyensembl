@@ -3,12 +3,11 @@ import subprocess
 import sys
 
 from pyensembl import shell
-from pyensembl.shell import (
-    all_combinations_of_ensembl_genomes,
-    configure_logging,
-    format_available_species,
-    parser,
-)
+from pyensembl.cli import logging_config, main as cli_main
+from pyensembl.cli.available import format_available_species
+from pyensembl.cli.logging_config import configure_logging
+from pyensembl.cli.parser import parser
+from pyensembl.cli.selection import all_combinations_of_ensembl_genomes
 from .common import eq_
 
 
@@ -147,4 +146,8 @@ def test_configure_logging_preserves_existing_loggers():
             each.setLevel(level)
             each.handlers[:] = handlers
             each.propagate = propagate
-        shell._cli_handler = None
+        logging_config.reset_cli_logging()
+
+
+def test_shell_run_reexports_cli_main():
+    assert shell.run is cli_main.main

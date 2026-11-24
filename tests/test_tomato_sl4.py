@@ -12,6 +12,7 @@ import pytest
 import requests
 
 from pyensembl import EnsemblRelease, shell
+from pyensembl.cli import listing
 from pyensembl.species import Species, tomato
 from .test_legacy_cache_compatibility import snapshot
 from .test_release_cache_combinations import forbid_parsing
@@ -146,7 +147,7 @@ def test_published_old_tomato_caches_reopen_read_only(tmp_path, monkeypatch):
                     genome.index()
                     assert genome.transcript_by_id(saved["expected"]["transcript"]).sequence == saved["expected"]["cdna"]
                     assert genome.reference_name == "SL3.0"
-        assert any(g.species == tomato and g.release == "2018_10" for g in shell._cached_dated_releases())
+        assert any(g.species == tomato and g.release == "2018_10" for g in listing.cached_dated_releases())
         assert snapshot(root) == before
     finally:
         for path, mode in modes.items():

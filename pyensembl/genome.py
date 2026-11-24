@@ -20,6 +20,7 @@ from contextlib import nullcontext
 from copy import deepcopy
 from dataclasses import replace
 import json
+import logging
 from numbers import Integral
 from os import lstat, remove
 from os.path import isfile, join, lexists
@@ -37,13 +38,20 @@ from .gene import Gene
 from .genetic_code import genetic_code, resolve_reference_metadata
 from .annotation_genetic_code import AnnotationGeneticCodes
 from .gene_name_aliases import GeneNameAliases, normalize_aliases, stable_ensembl_gene_id
-from .genome_fasta import GenomeFasta, MissingGenomeFastaError
+from .genome_fasta import (
+    GenomeFasta,
+    MissingGenomeFastaError,
+    format_contig_coverage_warning,
+)
 from .normalization import normalize_chromosome, normalize_strand
 from .search import find_nearest_locus
 from .sequence_data import SequenceData, fasta_index_path, fasta_index_files
 from .species import Species, check_species_object
 from .versioned_ids import match_version, split_versioned_id
 from .transcript import Transcript
+
+
+logger = logging.getLogger(__name__)
 
 
 def _check_assembly_accession(value):
@@ -787,21 +795,21 @@ class Genome(Serializable):
         if self.requires_genome_fasta:
             self.index_genome_fasta(overwrite=overwrite, show_progress=show_progress)
             if self.requires_gtf and not self._genome_fasta.remote:
-                missing = set()
-                for contig in self.contigs():
-                    try:
-                        if self._genome_fasta.record(contig) is None:
-                            missing.add(contig)
-                    except ValueError:
-                        pass  # Several FASTA records match; not missing.
-                if missing:
-                    warnings.warn(
-                        "Local genome FASTA lacks %d annotation contigs (e.g. %s). "
-                        "Check assembly and contig naming; matching names alone "
-                        "do not verify assembly identity."
-                        % (len(missing), ", ".join(sorted(missing)[:5])),
-                        UserWarning,
-                        stacklevel=2,
+                coverage = self._genome_fasta.classify_contigs(self.contigs())
+                warning_message = format_contig_coverage_warning(coverage)
+                if warning_message is not None:
+                    warnings.warn(warning_message, UserWarning, stacklevel=2)
+                elif coverage["aliased"]:
+                    examples = ", ".join(
+                        "%s->%s" % (name, coverage["aliased"][name])
+                        for name in sorted(coverage["aliased"])[:5]
+                    )
+                    logger.info(
+                        "Local genome FASTA matches %d annotation contigs via naming "
+                        "aliases (e.g. %s); matching names or aliases alone do not "
+                        "verify assembly identity.",
+                        len(coverage["aliased"]),
+                        examples,
                     )
 
     @property

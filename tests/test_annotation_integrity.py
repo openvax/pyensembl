@@ -17,6 +17,7 @@ import datacache
 import pytest
 
 from pyensembl import EnsemblRelease, annotation_integrity, shell
+from pyensembl.cli import logging_config
 from pyensembl.download_cache import DownloadCache
 from .test_legacy_cache_compatibility import snapshot
 from .test_release_cache_combinations import TinySources
@@ -199,7 +200,7 @@ def test_concurrent_downloads_publish_one_consistent_receipt(origin):
 def test_cli_verifies_read_only_and_returns_failure_for_changed_sources(origin, monkeypatch, capsys):
     genome, root, manifest, publish, calls, expected = origin
     genome.download()
-    monkeypatch.setattr(shell, "configure_logging", lambda **kw: None)
+    monkeypatch.setattr(logging_config, "configure_logging", lambda **kw: None)
     monkeypatch.setattr(sys, "argv", ["pyensembl", "verify", "--release", "2026_04", "--json"])
     before = snapshot(Path(genome.download_cache.cache_directory_path))
     shell.run()
@@ -222,7 +223,7 @@ def test_cli_verification_cannot_report_success_for_inaccessible_files(origin, m
                        error=PermissionError("shared volume is not readable"))
 
     monkeypatch.setattr(DownloadCache, "inspect", inaccessible)
-    monkeypatch.setattr(shell, "configure_logging", lambda **kw: None)
+    monkeypatch.setattr(logging_config, "configure_logging", lambda **kw: None)
     monkeypatch.setattr(sys, "argv", ["pyensembl", "verify", "--release", "2026_04", "--json"])
     with pytest.raises(SystemExit) as error:
         shell.run()

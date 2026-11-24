@@ -134,7 +134,9 @@ def test_numbered_installation_keeps_precedence(sources):
 
 
 def test_cli_available_json_and_latest_reference_selection(monkeypatch, capsys):
-    monkeypatch.setattr(shell, "configure_logging", lambda **kw: None)
+    from pyensembl.cli import logging_config
+
+    monkeypatch.setattr(logging_config, "configure_logging", lambda **kw: None)
     monkeypatch.setattr(sys, "argv", ["pyensembl", "available", "--species", "dog", "--json"])
     shell.run()
     rows = json.loads(capsys.readouterr().out)

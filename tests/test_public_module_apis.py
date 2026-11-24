@@ -25,7 +25,8 @@ PACKAGE_DIR = Path(pyensembl.__file__).resolve().parent
 def test_no_cross_module_private_imports():
     """Modules in pyensembl/ must not import single-underscore names from siblings."""
     violations = []
-    for path in sorted(PACKAGE_DIR.glob("*.py")):
+    for path in sorted(PACKAGE_DIR.rglob("*.py")):
+        rel = path.relative_to(PACKAGE_DIR)
         tree = ast.parse(path.read_text(), filename=str(path))
         for node in ast.walk(tree):
             if not isinstance(node, ast.ImportFrom):
@@ -34,7 +35,22 @@ def test_no_cross_module_private_imports():
                 name = alias.name
                 if name.startswith("_") and not (name.startswith("__") and name.endswith("__")):
                     module = "." * node.level + (node.module or "")
-                    violations.append(f"{path.name}:{node.lineno}: from {module} import {name}")
+                    violations.append(f"{rel}:{node.lineno}: from {module} import {name}")
+    assert violations == []
+
+
+def test_cli_package_defines_no_private_helpers():
+    """Every function and class in pyensembl/cli/ must be public with a docstring (#504)."""
+    cli_dir = PACKAGE_DIR / "cli"
+    violations = []
+    for path in sorted(cli_dir.glob("*.py")):
+        tree = ast.parse(path.read_text(), filename=str(path))
+        for node in tree.body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                if node.name.startswith("_"):
+                    violations.append(f"{path.name}:{node.lineno}: private {node.name}")
+                if not ast.get_docstring(node):
+                    violations.append(f"{path.name}:{node.lineno}: missing docstring on {node.name}")
     assert violations == []
 
 
@@ -55,7 +71,8 @@ def test_no_cross_module_species_registry_or_genome_private_access():
         "_gtf_path_or_url",
     }
     violations = []
-    for path in sorted(PACKAGE_DIR.glob("*.py")):
+    for path in sorted(PACKAGE_DIR.rglob("*.py")):
+        rel = path.relative_to(PACKAGE_DIR)
         tree = ast.parse(path.read_text(), filename=str(path))
         for node in ast.walk(tree):
             if not isinstance(node, ast.Attribute):
@@ -63,12 +80,12 @@ def test_no_cross_module_species_registry_or_genome_private_access():
             if isinstance(node.value, ast.Name) and node.value.id in ("self", "cls"):
                 continue
             if path.name != "species.py" and node.attr in forbidden_species_attrs:
-                violations.append(f"{path.name}:{node.lineno}: {ast.unparse(node)}")
+                violations.append(f"{rel}:{node.lineno}: {ast.unparse(node)}")
             if path.name not in ("genome.py", "ensembl_release.py", "download_cache.py"):
                 if node.attr in forbidden_cross_module_attrs:
-                    violations.append(f"{path.name}:{node.lineno}: {ast.unparse(node)}")
+                    violations.append(f"{rel}:{node.lineno}: {ast.unparse(node)}")
                 if node.attr == "_resolved":
-                    violations.append(f"{path.name}:{node.lineno}: {ast.unparse(node)}")
+                    violations.append(f"{rel}:{node.lineno}: {ast.unparse(node)}")
     assert violations == []
 
 

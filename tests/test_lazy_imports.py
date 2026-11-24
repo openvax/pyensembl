@@ -18,7 +18,8 @@ HEAVY_MODULES = (
     "datacache", "serializable", "urllib.request", "http.client",
     "pyensembl.database", "pyensembl.genome", "pyensembl.ensembl_release",
     "pyensembl.download_cache", "pyensembl.reference_name", "pyensembl.species",
-    "pyensembl.sequence_data", "pyensembl.genome_fasta", "pyensembl.genome_fasta_cache",
+    "pyensembl.sequence_data", "pyensembl.fasta_cache",
+    "pyensembl.genome_fasta", "pyensembl.genome_fasta_cache",
     "pyensembl.dated_releases", "pyensembl.release_catalogue",
 )
 
@@ -47,7 +48,7 @@ def run_python(code, cache):
 
 def test_importing_package_and_cli_loads_no_heavy_modules(tmp_path):
     loaded = run_python(
-        "import json, sys, pyensembl, pyensembl.shell; "
+        "import json, sys, pyensembl, pyensembl.shell, pyensembl.cli; "
         "print(json.dumps(sorted(m for m in %r if m in sys.modules)))" % (HEAVY_MODULES,),
         tmp_path,
     )

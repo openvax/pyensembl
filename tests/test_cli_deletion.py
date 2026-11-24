@@ -8,8 +8,10 @@ import pytest
 
 from pyensembl import EnsemblRelease, Genome
 from pyensembl import shell
+from pyensembl.cli import logging_config
+from pyensembl.cli.parser import parser
+from pyensembl.cli.selection import collect_selected_genomes
 from pyensembl.ensembl_versions import MAX_ENSEMBL_RELEASE
-from pyensembl.shell import collect_selected_genomes, parser
 
 
 @pytest.fixture
@@ -17,7 +19,7 @@ def run_cli(monkeypatch, capsys):
     # Exercise the real parser and entrypoint without repeatedly importing the
     # full scientific stack in child interpreters. Logging setup has its own
     # tests; avoid changing process-global handlers during these calls.
-    monkeypatch.setattr(shell, "configure_logging", lambda **kwargs: None)
+    monkeypatch.setattr(logging_config, "configure_logging", lambda **kwargs: None)
 
     def invoke(cache_root, *arguments):
         monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(cache_root))

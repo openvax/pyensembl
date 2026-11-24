@@ -196,6 +196,7 @@ def test_source_changed_during_parse_is_not_published(tmp_path, monkeypatch):
     monkeypatch.setattr("pyensembl.sequence_data.parse_fasta_dictionary", changing_parser)
     with pytest.raises(ValueError, match="FASTA changed while indexing"):
         SequenceData(str(source), str(cache)).index()
+    assert not list(cache.glob("*.json.gz"))
     assert not list(cache.glob("*.pickle"))
 
 

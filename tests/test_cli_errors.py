@@ -9,6 +9,15 @@ import pytest
 
 from pyensembl import Genome, shell
 from pyensembl.annotation_integrity import AnnotationIntegrityError
+from pyensembl.cli import (
+    delete,
+    inspect as inspect_action,
+    install,
+    logging_config,
+    parser,
+    selection,
+    verify,
+)
 from pyensembl.download_cache import DownloadCache, MissingGenomeDataFile
 from .test_legacy_cache_compatibility import snapshot
 
@@ -38,12 +47,12 @@ def test_empty_source_is_rejected_before_genome_selection(tmp_path, monkeypatch,
     def forbidden(*args, **kwargs):
         pytest.fail("Empty source reached genome selection")
 
-    args = shell.parser.parse_args(["install", option, ""])
-    monkeypatch.setattr(shell, "all_combinations_of_ensembl_genomes", forbidden)
+    args = parser.parser.parse_args(["install", option, ""])
+    monkeypatch.setattr(selection, "all_combinations_of_ensembl_genomes", forbidden)
     # collect_selected_genomes imports Genome when it runs.
     monkeypatch.setattr("pyensembl.genome.Genome", forbidden)
     with pytest.raises(ValueError, match=option + " must not be empty"):
-        shell.collect_selected_genomes(args)
+        selection.collect_selected_genomes(args)
     result = run_cli(["install", option, ""], tmp_path / "cache")
     assert result.returncode == 2, result.stderr
     assert option + " must not be empty" in result.stderr
@@ -92,13 +101,13 @@ def test_missing_remote_cache_exception_preserves_library_compatibility(tmp_path
         cache.local_path_or_install_error("gtf", "https://example.invalid/genes.gtf")
     assert isinstance(error.value, ValueError)
     assert not (tmp_path / "absent").exists()
-    monkeypatch.setattr(shell, "configure_logging", lambda **kw: None)
+    monkeypatch.setattr(logging_config, "configure_logging", lambda **kw: None)
     monkeypatch.setattr(sys, "argv", ["pyensembl", "install", "--release", "75"])
 
     def missing(*args, **kwargs):
         raise error.value
 
-    monkeypatch.setattr(shell, "_install", missing)
+    monkeypatch.setattr(install, "install_genome", missing)
     with pytest.raises(SystemExit) as exit_status:
         shell.run()
     assert exit_status.value.code == 1
@@ -133,13 +142,13 @@ def test_malformed_gtf_keeps_traceback_and_source_context(tmp_path):
 @pytest.mark.parametrize("failure", [ValueError("internal indexing failure"),
                                      AnnotationIntegrityError("MD5 mismatch")])
 def test_unexpected_value_errors_are_not_converted_to_cli_errors(monkeypatch, failure):
-    monkeypatch.setattr(shell, "configure_logging", lambda **kw: None)
+    monkeypatch.setattr(logging_config, "configure_logging", lambda **kw: None)
     monkeypatch.setattr(sys, "argv", ["pyensembl", "install", "--release", "75"])
 
     def fail(*args, **kwargs):
         raise failure
 
-    monkeypatch.setattr(shell, "_install", fail)
+    monkeypatch.setattr(install, "install_genome", fail)
     with pytest.raises(type(failure), match=str(failure)):
         shell.run()
 
@@ -169,7 +178,7 @@ def test_corrupt_database_without_overwrite_keeps_traceback(tmp_path, monkeypatc
 
 
 def test_run_accepts_explicit_argv(monkeypatch, capsys):
-    monkeypatch.setattr(shell, "configure_logging", lambda **kw: None)
+    monkeypatch.setattr(logging_config, "configure_logging", lambda **kw: None)
     with pytest.raises(SystemExit) as exit_info:
         shell.run(["--json", "install"])
     assert exit_info.value.code == 2
@@ -181,14 +190,16 @@ def test_run_accepts_explicit_argv(monkeypatch, capsys):
 ])
 def test_empty_genome_selection_is_an_argument_error(action, tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path / "cache"))
-    monkeypatch.setattr(shell, "configure_logging", lambda **kwargs: None)
-    monkeypatch.setattr(shell, "collect_selected_genomes", lambda args: [])
+    monkeypatch.setattr(logging_config, "configure_logging", lambda **kwargs: None)
+    monkeypatch.setattr(selection, "collect_selected_genomes", lambda args: [])
 
     def forbidden(*args, **kwargs):
         pytest.fail("Empty selection reached an action")
 
-    for name in ["run_install", "inspect_genomes", "run_verify", "_delete_genome_files"]:
-        monkeypatch.setattr(shell, name, forbidden)
+    monkeypatch.setattr(install, "run_install", forbidden)
+    monkeypatch.setattr(inspect_action, "inspect_genomes", forbidden)
+    monkeypatch.setattr(verify, "run_verify", forbidden)
+    monkeypatch.setattr(delete, "delete_genome_files", forbidden)
     with pytest.raises(SystemExit) as error:
         shell.run([action, "--release", "75"])
     assert error.value.code == 2
