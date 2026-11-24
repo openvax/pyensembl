@@ -1473,6 +1473,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.SequenceData.fasta_dictionary_index_paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fasta_dictionary_index_paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.SequenceData.fasta_dictionary_pickle_paths" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1510,6 +1521,17 @@
     <span class="md-ellipsis">
       
         delete_index_files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.SequenceData.load_or_create_fasta_dictionary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_or_create_fasta_dictionary
       
     </span>
   </a>
@@ -2492,6 +2514,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pyensembl.SequenceData.fasta_dictionary_index_paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        fasta_dictionary_index_paths
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pyensembl.SequenceData.fasta_dictionary_pickle_paths" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2529,6 +2562,17 @@
     <span class="md-ellipsis">
       
         delete_index_files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pyensembl.SequenceData.load_or_create_fasta_dictionary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_or_create_fasta_dictionary
       
     </span>
   </a>
@@ -4490,7 +4534,7 @@ one locus in the database.</p>
 
 
 
-        <p>Container for reference nucleotide and amino acid sequenes.</p>
+        <p>Container for reference nucleotide and amino acid sequences.</p>
 
 
 
@@ -4624,19 +4668,43 @@ one locus in the database.</p>
 
 
 
-<h3 id="pyensembl.SequenceData.fasta_dictionary_pickle_paths" class="doc doc-heading">
-            <span class="doc doc-object-name doc-attribute-name">fasta_dictionary_pickle_paths</span>
+<h3 id="pyensembl.SequenceData.fasta_dictionary_index_paths" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">fasta_dictionary_index_paths</span>
 
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
   </span>
 
-<a href="#pyensembl.SequenceData.fasta_dictionary_pickle_paths" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="n">fasta_dictionary_pickle_paths</span> <span class="o">=</span> <span class="p">[]</span>
+<a href="#pyensembl.SequenceData.fasta_dictionary_index_paths" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">fasta_dictionary_index_paths</span> <span class="o">=</span> <span class="p">[]</span>
 </code></pre></div>
 
     <div class="doc doc-contents ">
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="pyensembl.SequenceData.fasta_dictionary_pickle_paths" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">fasta_dictionary_pickle_paths</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#pyensembl.SequenceData.fasta_dictionary_pickle_paths" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">fasta_dictionary_pickle_paths</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Backwards-compatible alias for :attr:<code>fasta_dictionary_index_paths</code>.</p>
 
     </div>
 
@@ -4701,6 +4769,60 @@ one locus in the database.</p>
     <div class="doc doc-contents ">
 
         <p>Delete cached FASTA dictionaries while preserving source files.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pyensembl.SequenceData.load_or_create_fasta_dictionary" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">load_or_create_fasta_dictionary</span>
+
+
+<a href="#pyensembl.SequenceData.load_or_create_fasta_dictionary" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">load_or_create_fasta_dictionary</span><span class="p">(</span><span class="n">show_progress</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Load cached FASTA sequence dictionaries or parse and cache them.</p>
+<p>Reads existing <code>.json.gz</code> or legacy <code>.pickle</code> caches through
+:class:<code>~pyensembl.fasta_cache.FastaDictionaryCache</code>. Newly built or
+rebuilt caches are always published in the safe <code>.json.gz</code> format.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>show_progress</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Display a progress bar while parsing FASTA files from disk.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
 
 
     </div>

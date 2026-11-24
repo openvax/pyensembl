@@ -1098,6 +1098,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2410" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.41.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2400" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1581,6 +1592,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2410" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.41.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2400" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1988,6 +2010,28 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
+<h2 id="2410">2.41.0<a class="headerlink" href="#2410" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Distinguish unambiguous FASTA contig naming aliases (such as <code>1</code> vs <code>chr1</code>,
+  <code>MT</code> vs <code>chrM</code>, and version-preserving UCSC unplaced/unlocalized/alt/fix
+  scaffold names) from genuinely unavailable or ambiguously aliased contigs
+  in <code>Genome.index()</code> warnings, adding public <code>contig_alias_key()</code>,
+  <code>GenomeFasta.classify_contigs()</code>, and <code>format_contig_coverage_warning()</code>
+  helpers while retaining explicit assembly-identity disclaimers (#501).</li>
+<li>Route derived FASTA sequence-dictionary caches through a new public
+  <code>datacache</code>-backed <code>pyensembl.fasta_cache</code> module (<code>FastaDictionaryCache</code>,
+  <code>load_fasta_dictionary()</code>, <code>save_fasta_dictionary()</code>,
+  <code>cached_dictionary_lost_versions()</code>) using a safe, versioned gzipped-JSON
+  format (<code>.json.gz</code>) for newly written caches while preserving offline and
+  read-only compatibility with existing legacy <code>.pickle</code> caches (#506).</li>
+<li>Split <code>pyensembl/shell.py</code> into a <code>pyensembl/cli/</code> package (<code>main</code>,
+  <code>parser</code>, <code>formatting</code>, <code>logging_config</code>, <code>selection</code>, <code>install</code>, <code>listing</code>,
+  <code>available</code>, <code>inspect</code>, <code>verify</code>, <code>delete</code>) with documented public
+  functions, explicit parameters on <code>run_available()</code>, <code>selects_catalogue()</code>,
+  and <code>available_catalogue()</code>, promoted <code>install_genome()</code> and
+  <code>progress_available()</code> APIs, and <code>pyensembl.shell:run</code> / console script
+  preserved unchanged (#504).</li>
+</ul>
 <h2 id="2400">2.40.0<a class="headerlink" href="#2400" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Promote all cross-module underscore helpers to documented public APIs with NumPy
