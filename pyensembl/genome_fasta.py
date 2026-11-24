@@ -2,7 +2,6 @@
 
 import gzip
 import hashlib
-import json
 import logging
 import os
 from pathlib import Path
@@ -11,13 +10,15 @@ from urllib.parse import urlsplit
 from datacache import FileValidationError, fetch_file
 
 from .common import (
-    _atomic_output,
-    _publish,
-    _read_progress,
-    _remove,
-    _staging_path,
+    atomic_output,
     file_digest,
     file_fingerprint,
+    publish_file,
+    read_json,
+    read_progress,
+    remove_if_exists,
+    staging_path,
+    write_json,
 )
 from .download_cache import DOWNLOAD_TIMEOUT
 from .normalization import normalize_chromosome
@@ -28,19 +29,6 @@ _CHUNK_SIZE = 1024 * 1024
 
 class MissingGenomeFastaError(ValueError):
     """Reference DNA was not configured or has not been downloaded."""
-
-
-def _read_json(path):
-    try:
-        with open(path) as handle:
-            return json.load(handle)
-    except (OSError, ValueError):
-        return None
-
-
-def _write_json(path, value):
-    with _atomic_output(path, "w") as handle:
-        json.dump(value, handle)
 
 
 class GenomeFasta:
@@ -66,9 +54,9 @@ class GenomeFasta:
         self._attachment_known = self.materialized_path.is_file() or self.index_path.is_file()
         if not self._attachment_known:
             state = {"source": self.source}
-            manifest = _read_json(self.manifest_path)
+            manifest = read_json(self.manifest_path)
             self._attachment_known = (
-                _read_json(self.directory / "attachment.json") == state
+                read_json(self.directory / "attachment.json") == state
                 or isinstance(manifest, dict) and manifest.get("source") == self.source
             )
         self._forget_reader()
@@ -108,7 +96,7 @@ class GenomeFasta:
         if not os.path.isfile(path) or os.path.getsize(path) == 0:
             return None
         if not self.remote and path != self.source:
-            if _read_json(self.source_state_path) != file_fingerprint(self.source):
+            if read_json(self.source_state_path) != file_fingerprint(self.source):
                 return None
         return path
 
@@ -123,7 +111,7 @@ class GenomeFasta:
     def _write_uncompressed(self, source_path, destination, show_progress=False):
         """Publish plain FASTA from a plain or gzip file, or nothing on failure."""
         description = "Decompressing " + os.path.basename(urlsplit(self.source).path)
-        with open(source_path, "rb") as raw, _read_progress(
+        with open(source_path, "rb") as raw, read_progress(
             raw, description, show_progress
         ) as report_progress:
             compressed = raw.peek(2)[:2] == b"\x1f\x8b"
@@ -134,7 +122,7 @@ class GenomeFasta:
                     raise ValueError(
                         "Genome FASTA must start with a FASTA header: %s" % self.source
                     )
-                with _atomic_output(destination) as output:
+                with atomic_output(destination) as output:
                     chunk = first
                     while chunk:
                         output.write(chunk)
@@ -180,7 +168,7 @@ class GenomeFasta:
                     raise FileValidationError(str(raw), "MD5 does not match upstream manifest")
             self._write_uncompressed(raw, self.materialized_path, show_progress)
         finally:
-            _remove(raw)
+            remove_if_exists(raw)
 
     def prepare(self, download=False, overwrite=False, show_progress=False):
         """Resolve local data; only an explicit download may access the network."""
@@ -204,7 +192,7 @@ class GenomeFasta:
                     raise ValueError(
                         "Genome FASTA changed during decompression: %s" % self.source
                     )
-                _write_json(self.source_state_path, fingerprint)
+                write_json(self.source_state_path, fingerprint)
         path = self.installed_path
         if path is None:
             raise self._not_installed() if self.remote else MissingGenomeFastaError(
@@ -217,16 +205,16 @@ class GenomeFasta:
         if self._attachment_known:
             return
         state = {"source": self.source}
-        if _read_json(self.manifest_path) != state:
-            _write_json(self.manifest_path, state)
+        if read_json(self.manifest_path) != state:
+            write_json(self.manifest_path, state)
         if not self.materialized_path.is_file() and not self.index_path.is_file():
             # Download-only local input has no owned FASTA/index yet. Record it
             # per source so later attachments cannot make it appear new again.
-            _write_json(self.directory / "attachment.json", state)
+            write_json(self.directory / "attachment.json", state)
         self._attachment_known = True
 
     def _index_is_current(self, fingerprint):
-        return self.index_path.exists() and _read_json(self.index_state_path) == fingerprint
+        return self.index_path.exists() and read_json(self.index_state_path) == fingerprint
 
     def _ensure_index(self, path, fingerprint, overwrite=False):
         """Publish a complete index, keeping the old one if parsing fails."""
@@ -236,7 +224,7 @@ class GenomeFasta:
             return
         logger.info("Indexing genome FASTA %s", path)
         self.directory.mkdir(parents=True, exist_ok=True)
-        staged = _staging_path(self.directory, self.index_path.name)
+        staged = staging_path(self.directory, self.index_path.name)
         try:
             with Fasta(path, indexname=str(staged), strict_bounds=True) as fasta:
                 if not len(fasta.keys()):
@@ -245,10 +233,10 @@ class GenomeFasta:
                     )
             if fingerprint != self._file_fingerprint(path):
                 raise ValueError("Genome FASTA changed during indexing: %s" % self.source)
-            _publish(staged, self.index_path)
-            _write_json(self.index_state_path, fingerprint)
+            publish_file(staged, self.index_path)
+            write_json(self.index_state_path, fingerprint)
         finally:
-            _remove(staged)
+            remove_if_exists(staged)
 
     def open(self, overwrite=False, show_progress=False):
         """Return a pyfaidx reader, building or refreshing the cached index.
@@ -347,7 +335,7 @@ class GenomeFasta:
 
         Raises ValueError for an invalid shared reference.
         """
-        state = _read_json(Path(cache_directory) / "genome_fasta.json")
+        state = read_json(Path(cache_directory) / "genome_fasta.json")
         if isinstance(state, dict) and isinstance(state.get("source"), str):
             if "shared_key" in state:
                 from .genome_fasta_cache import SharedGenomeFasta

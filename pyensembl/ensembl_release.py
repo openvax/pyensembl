@@ -25,7 +25,7 @@ from .dated_releases import explain_unpublished_date
 from .assembly import (
     dated_assembly, normalize_species, numbered_assembly, validate_assembly,
 )
-from .download_cache import _default_cache_directory
+from .download_cache import default_cache_directory
 from .genome import Genome
 from .genetic_code import resolve_reference_metadata
 from .genome_fasta_cache import canonical_source_options, release_genome_fasta
@@ -170,7 +170,7 @@ class EnsemblRelease(Genome):
                 infer_historical = not _preserve_legacy
                 if self.species is not None and not (assembly or assembly_accession):
                     # Existing installations and mirrors keep the old selection.
-                    existing = _default_cache_directory(
+                    existing = default_cache_directory(
                         self.species.dated_reference_name, "ensembl", release
                     )
                     infer_historical = infer_historical and not (
@@ -271,13 +271,49 @@ class EnsemblRelease(Genome):
             reference_metadata=reference_metadata,
         )
 
-    def _uses_annotation_checksums(self):
+    def uses_annotation_checksums(self):
+        """Return whether this release verifies upstream provider MD5 manifests.
+
+        Returns
+        -------
+        bool
+            ``True`` for dated releases served from the official Ensembl
+            platform FTP server.
+        """
         return (is_dated_release(self.release)
                 and self.server.rstrip("/") == ENSEMBL_PLATFORM_FTP_SERVER.rstrip("/"))
 
+    def pinned_source_checksums(self):
+        """Return a copy of upstream source checksums pinned on this release.
+
+        Returns
+        -------
+        dict of str to dict
+            Mapping from source URL to pinned checksum receipt dictionary.
+        """
+        return dict(self._resolved.get("source_checksums", {}))
+
+    def pin_source_checksum(self, source, identity):
+        """Record an acquired upstream checksum receipt on this release.
+
+        Parameters
+        ----------
+        source : str
+            Source URL whose checksum was verified.
+        identity : dict
+            Receipt dictionary containing at least ``"source"`` and ``"md5"``.
+        """
+        self._resolved = {
+            **self._resolved,
+            "source_checksums": {
+                **self._resolved.get("source_checksums", {}),
+                source: dict(identity),
+            },
+        }
+
     def _get_cached_path(self, field_name, path_or_url, download_if_missing=False,
                          overwrite=False, show_progress=False):
-        if (self._uses_annotation_checksums() and download_if_missing
+        if (self.uses_annotation_checksums() and download_if_missing
                 and (overwrite or self.download_cache.inspect(path_or_url).status == "missing")):
             return annotation_integrity.acquire(
                 self, field_name, path_or_url, overwrite, show_progress,

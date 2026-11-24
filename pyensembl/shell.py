@@ -589,7 +589,7 @@ def collect_all_installed_ensembl_releases():
     return sorted(
         (
             genome for genome in _ensembl_releases()
-            if _has_data(genome._annotation_status(), genome_fasta_status(genome))
+            if _has_data(genome.annotation_status(), genome_fasta_status(genome))
         ),
         key=lambda genome: (genome.species.latin_name, _release_sort_key(genome.release)),
     )
@@ -614,7 +614,7 @@ def _installed_genome_rows(check_genome_fasta=False):
     for genome in _ensembl_releases():
         directory = genome.download_cache.cache_directory_path
         ensembl_named.add(os.path.normpath(directory))
-        annotation = genome._annotation_status()
+        annotation = genome.annotation_status()
         dna = _dna_status(directory, check=check_genome_fasta)
         if not _has_data(annotation, dna):
             continue  # Possibly a custom genome with the same name; listed below.
@@ -686,14 +686,6 @@ def format_installed_genomes_json(check_genome_fasta=False):
     """
     rows, _ = _installed_genome_rows(check_genome_fasta=check_genome_fasta)
     return json.dumps(rows, indent=2)
-
-
-def _newest_release(species_name):
-    """Newest release supported for a species; Ensembl Genomes numbers end at 63."""
-    from .species import find_species_by_name
-
-    species = find_species_by_name(species_name)
-    return max(end for _, end in species.reference_assemblies.values())
 
 
 def _select_pinned_genome(args):
@@ -823,7 +815,7 @@ def all_combinations_of_ensembl_genomes(args):
         # Otherwise, use Ensembl release information
         if not release_list and (assembly or accession):
             raise ValueError("--assembly requires an explicit --release")
-        for version in release_list or [_newest_release(species)]:
+        for version in release_list or [find_species_by_name(species).newest_release]:
             selected_assembly = assembly
             if args.reference_name is not None:
                 if assembly is not None:
@@ -955,8 +947,7 @@ def format_available_species(use_color=None, dated_releases=None):
     RESET = "\x1b[0m" if use_color else ""
 
     species_by_division = {key: [] for key, _ in _DIVISION_LABELS}
-    for latin_name in sorted(Species._latin_names_to_species):
-        species = Species._latin_names_to_species[latin_name]
+    for species in sorted(Species.all(), key=lambda s: s.latin_name):
         species_by_division.setdefault(species.division, []).append(species)
 
     all_species = [s for group in species_by_division.values() for s in group]
@@ -1184,7 +1175,7 @@ def format_cache_dirs(json_output=False):
 def _install(genome, only_genome_fasta=False, overwrite=False, show_progress=False):
     description = _genome_description(genome)
     if only_genome_fasta:
-        installed = genome._genome_fasta.status() == "indexed"
+        installed = genome.genome_fasta_status() == "indexed"
     else:
         installed = genome.installed()
     if installed and not overwrite:

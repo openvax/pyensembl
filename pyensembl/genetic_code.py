@@ -91,7 +91,7 @@ def resolve_reference_metadata(value=None, *, species=None, reference_name=None,
     if unknown:
         raise ValueError("Unknown reference metadata fields: %s" % ", ".join(sorted(unknown)))
     if species is None and reference_name is not None:
-        species = Species._reference_names_to_species.get(reference_name)
+        species = Species.get_by_reference_name(reference_name)
     if isinstance(species, str):
         try:
             species = find_species_by_name(species)

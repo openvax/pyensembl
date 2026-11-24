@@ -13,7 +13,7 @@ import re
 import datacache
 from filelock import FileLock
 
-from .common import _atomic_output, file_digest, parse_md5sum_manifest
+from .common import atomic_output, file_digest, parse_md5sum_manifest
 
 
 class AnnotationIntegrityError(ValueError):
@@ -66,7 +66,7 @@ def read_receipt(path, source):
 
 def acquire(genome, field_name, source, overwrite, show_progress):
     cache = genome.download_cache
-    destination = Path(cache._cache_path(source))
+    destination = Path(cache.cache_path(source))
     destination.parent.mkdir(parents=True, exist_ok=True)
     # The source and its receipt are published under the same lock. Neither
     # this lock nor the directory is touched by the existing-cache fast path.
@@ -74,7 +74,7 @@ def acquire(genome, field_name, source, overwrite, show_progress):
         if not overwrite and cache.inspect(source).status != "missing":
             return cache.local_path_or_install_error(field_name, source)
         identity = source_checksum(source)
-        pinned = genome._resolved.get("source_checksums", {}).get(source)
+        pinned = genome.pinned_source_checksums().get(source)
         if pinned and not overwrite and pinned["md5"] != identity["md5"]:
             raise AnnotationIntegrityError("Upstream checksum changed for pinned source: " + source)
 
@@ -86,19 +86,17 @@ def acquire(genome, field_name, source, overwrite, show_progress):
             field_name, source, download_if_missing=True, overwrite=overwrite,
             show_progress=show_progress, validator=validate,
         )
-        with _atomic_output(receipt_path(path), "w") as handle:
+        with atomic_output(receipt_path(path), "w") as handle:
             json.dump(identity, handle, sort_keys=True)
             handle.write("\n")
         # Keep the acquisition pin in this object as well as its on-disk receipt.
-        genome._resolved = {**genome._resolved, "source_checksums": {
-            **genome._resolved.get("source_checksums", {}), source: identity,
-        }}
+        genome.pin_source_checksum(source, identity)
         return path
 
 
 def source_checksums(genome):
-    pins = dict(genome._resolved.get("source_checksums", {}))
-    for source in genome._annotation_sources().values():
+    pins = genome.pinned_source_checksums()
+    for source in genome.annotation_sources().values():
         identity = read_receipt(genome.download_cache.local_path(source), source)
         # A serialized pin is authoritative even if the shared file was later
         # explicitly overwritten by a different object.
@@ -111,7 +109,7 @@ def verify_sources(genome, check_remote=False):
     """Report local and optional upstream integrity without changing any file."""
     pins = source_checksums(genome)
     reports = []
-    for role, source in genome._annotation_sources().items():
+    for role, source in genome.annotation_sources().items():
         path = genome.download_cache.local_path(source)
         inspection = genome.download_cache.inspect(source)
         identity = pins.get(source)
@@ -131,7 +129,7 @@ def verify_sources(genome, check_remote=False):
                 result["actual_md5"] = file_md5(path)
                 result["status"] = "verified" if result["actual_md5"] == identity["md5"] else "changed"
         if check_remote:
-            if genome._uses_annotation_checksums():
+            if genome.uses_annotation_checksums():
                 current = source_checksum(source)
                 result["upstream_md5"] = current["md5"]
                 result["upstream_status"] = (

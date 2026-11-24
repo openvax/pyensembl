@@ -60,9 +60,8 @@ def test_snapshot_rebuilds_from_captured_primary_evidence():
     # does not merely compare a declarative list with another hardcoded list.
     builder = runpy.run_path(str(Path(__file__).parents[1] / "scripts/build_genetic_code_catalog.py"))
     assert builder["build"](DATA / "genetic_codes") == codes.catalogue()
-    for species in Species._latin_names_to_species.values():
-        release = max(end for _, end in species.reference_assemblies.values())
-        genome = EnsemblRelease(release, species=species)
+    for species in Species.all():
+        genome = EnsemblRelease(species.newest_release, species=species)
         assert genome.taxon_id and genome.species_taxon_id
         assert genome.nuclear_translation_table is not None
         assert genome.genetic_code("scaffold_42").table_id == genome.nuclear_translation_table

@@ -26,14 +26,23 @@ import re
 _VERSIONED_ID = re.compile(r"(ENS.*)\.(0|[1-9][0-9]*)")
 
 
-def _split_ens_version(identifier):
-    """
-    Split an ENS-prefix identifier into ``(bare_id, version_int)``.
+def split_versioned_id(identifier):
+    """Split an Ensembl stable identifier into ``(bare_id, version)``.
 
-    Returns ``(identifier, None)`` for IDs that don't carry a parseable
-    ENS version. Non-ENS IDs (e.g. TAIR ``AT1G01010.1``) are always
-    returned as-is with version ``None`` — the ``.N`` in those is an
-    isoform suffix, not a version.
+    Parameters
+    ----------
+    identifier : str
+        Candidate identifier, e.g. ``"ENST00000269305.8"`` or
+        ``"ENST00000269305"``.
+
+    Returns
+    -------
+    tuple of (object, int or None)
+        ``(bare_id, version_int)`` when ``identifier`` is an ``ENS*`` string
+        carrying a plain decimal version suffix without leading zeros, or
+        ``(identifier, None)`` otherwise. Non-ENS IDs (e.g. TAIR
+        ``AT1G01010.1``) are always returned as-is with version ``None`` —
+        the ``.N`` in those is an isoform suffix, not a version.
     """
     match = _VERSIONED_ID.fullmatch(identifier) if isinstance(identifier, str) else None
     if match is None:
@@ -55,7 +64,7 @@ def match_version(identifier, installed):
         return identifier
     if not installed:
         return None
-    bare, version = _split_ens_version(identifier)
+    bare, version = split_versioned_id(identifier)
     if version is None:
         if len(installed) == 1:
             return next(iter(installed))

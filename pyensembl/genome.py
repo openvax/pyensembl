@@ -29,7 +29,7 @@ import warnings
 from serializable import Serializable
 from datacache import FileValidationError
 
-from .download_cache import DownloadCache, inspect_data_file, _same_file_bytes
+from .download_cache import DownloadCache, inspect_data_file, same_file_bytes
 from .common import merge_intervals
 from .database import Database, annotation_db_filename, is_complete_database
 from .exon import Exon
@@ -42,7 +42,7 @@ from .normalization import normalize_chromosome, normalize_strand
 from .search import find_nearest_locus
 from .sequence_data import SequenceData, fasta_index_path, fasta_index_files
 from .species import Species, check_species_object
-from .versioned_ids import _split_ens_version, match_version
+from .versioned_ids import match_version, split_versioned_id
 from .transcript import Transcript
 
 
@@ -188,7 +188,7 @@ class Genome(Serializable):
         if species is not None:
             self.species = check_species_object(species)
         elif "species" not in self.__dict__:
-            self.species = Species._reference_names_to_species.get(reference_name)
+            self.species = Species.get_by_reference_name(reference_name)
         self._assembly_accession = _check_assembly_accession(assembly_accession)
         self._reference_metadata = self._resolve_reference_metadata(reference_metadata)
         # Public access returns copies, so this pinned identity is immutable.
@@ -271,7 +271,24 @@ class Genome(Serializable):
         """
         return genetic_code(self._reference_metadata, contig, compartment=compartment)
 
-    def _source_translation_table(self, transcript_id):
+    def source_translation_table(self, transcript_id):
+        """Return the NCBI translation table declared in the GTF for a transcript.
+
+        Reads installed annotation data only; never downloads or modifies an
+        existing index.
+
+        Parameters
+        ----------
+        transcript_id : str
+            Transcript identifier whose GTF/CDS rows are inspected for
+            ``transl_table`` or ``translation_table`` attributes.
+
+        Returns
+        -------
+        int or None
+            Declared NCBI translation-table ID, or ``None`` if no GTF is
+            configured or the transcript carries no declaration.
+        """
         if not self.requires_gtf:
             return None
         path = self._local_source_path(self._gtf_path_or_url)
@@ -280,6 +297,11 @@ class Genome(Serializable):
                 path, self._gtf_path_or_url, self.download_cache.cache_directory_path,
             )
         return self._annotation_genetic_codes.get(transcript_id)
+
+    @property
+    def gtf_path_or_url(self):
+        """Configured GTF path or URL for this genome, or ``None``."""
+        return self._gtf_path_or_url
 
     @property
     def requires_gtf(self):
@@ -301,6 +323,26 @@ class Genome(Serializable):
     def genome_fasta_path(self):
         """Existing uncompressed DNA path, or None; never downloads data."""
         return self._genome_fasta.installed_path if self.requires_genome_fasta else None
+
+    def genome_fasta_status(self, check=False):
+        """Return the readiness status of configured reference DNA, or ``None``.
+
+        Parameters
+        ----------
+        check : bool, optional
+            When ``True``, verify that the FASTA index opens and matches
+            sequence lengths on disk.
+
+        Returns
+        -------
+        str or None
+            ``None`` if no reference DNA is configured; otherwise one of
+            ``"indexed"``, ``"needs index"``, ``"invalid index"``, or
+            ``"missing"``.
+        """
+        if not self.requires_genome_fasta:
+            return None
+        return self._genome_fasta.status(check=check)
 
     @property
     def fasta(self):
@@ -531,8 +573,17 @@ class Genome(Serializable):
         """
         return self.download_cache.local_path(path_or_url)
 
-    def _annotation_sources(self):
-        """Stable roles, in the same order as their derived indexes."""
+    def annotation_sources(self):
+        """Return configured annotation sources keyed by stable role name.
+
+        Roles (e.g. ``"gtf"``, ``"transcript_fasta_1"``, ``"protein_fasta_1"``)
+        are ordered identically to their derived indexes.
+
+        Returns
+        -------
+        dict of str to str
+            Mapping from role name to configured path or URL.
+        """
         sources = {"gtf": self._gtf_path_or_url} if self.requires_gtf else {}
         for prefix, paths in (
             ("transcript_fasta", self._transcript_fasta_paths_or_urls),
@@ -542,9 +593,30 @@ class Genome(Serializable):
                            for i, source in enumerate(paths or [], 1))
         return sources
 
+    def uses_annotation_checksums(self):
+        """Return whether annotation downloads verify upstream provider MD5 manifests.
+
+        Returns
+        -------
+        bool
+            ``False`` for generic :class:`Genome` instances; subclasses such as
+            :class:`EnsemblRelease` override this for dated platform releases.
+        """
+        return False
+
+    def pinned_source_checksums(self):
+        """Return a copy of upstream source checksums pinned on this genome.
+
+        Returns
+        -------
+        dict of str to dict
+            Mapping from source URL to pinned checksum receipt dictionary.
+        """
+        return {}
+
     def _annotation_source_paths(self):
         return [self._local_source_path(source)
-                for source in self._annotation_sources().values()]
+                for source in self.annotation_sources().values()]
 
     def required_local_files(self):
         paths = []
@@ -564,7 +636,7 @@ class Genome(Serializable):
 
     def _inspect_annotation(self):
         sources = {role: self.download_cache.inspect(source)
-                   for role, source in self._annotation_sources().items()}
+                   for role, source in self.annotation_sources().items()}
         indexes = {}
         for role, path in zip(sources, self._annotation_index_paths()):
             options = {}
@@ -588,12 +660,17 @@ class Genome(Serializable):
             return "incomplete" if present else "missing"
         return "indexed" if all(file.status == "available" for file in indexes.values()) else "not indexed"
 
-    def _annotation_status(self):
-        """How far annotation data is installed; only reads the cache.
+    def annotation_status(self):
+        """Report offline readiness of annotation sources and indexes.
 
-        None if none is configured, else 'missing', 'incomplete' (some files
-        but not every download), 'invalid', 'inaccessible', 'not indexed', or
-        'indexed': every source is usable and every index complete.
+        Only reads the local cache; never downloads or creates files.
+
+        Returns
+        -------
+        str or None
+            ``None`` if no annotation is configured; otherwise one of
+            ``"missing"``, ``"incomplete"`` (some files present), ``"invalid"``,
+            ``"inaccessible"``, ``"not indexed"``, or ``"indexed"``.
         """
         return self._annotation_readiness(*self._inspect_annotation())
 
@@ -952,7 +1029,7 @@ class Genome(Serializable):
             if not indexes and cache.copy_local_files_to_cache and not cache.is_url_format(source):
                 # A legacy copied FASTA may be gone while its old index remains.
                 indexes = fasta_index_files(
-                    cache._cache_path(source, legacy=True), cache.cache_directory_path, source,
+                    cache.cache_path(source, legacy=True), cache.cache_directory_path, source,
                 )
             paths.extend(indexes)
         return list(dict.fromkeys(paths))
@@ -975,7 +1052,7 @@ class Genome(Serializable):
             # A changed original means its copied FASTA needs refreshing first.
             content = local
             if cache.copy_local_files_to_cache and isfile(source) and (
-                not isfile(local) or not _same_file_bytes(source, local, cache.decompress_on_download)
+                not isfile(local) or not same_file_bytes(source, local, cache.decompress_on_download)
             ):
                 content = source
             paths.append(fasta_index_path(
@@ -1063,7 +1140,7 @@ class Genome(Serializable):
         return self._sequence_of_id(self.protein_sequences, "protein_id", protein_id)
 
     def _sequence_of_id(self, sequences, id_column, sequence_id):
-        bare, version = _split_ens_version(sequence_id)
+        bare, version = split_versioned_id(sequence_id)
         fasta_versions = sequences.recorded_versions(bare)
         if self.requires_gtf and (
             len(fasta_versions) > 1 if version is None else not fasta_versions

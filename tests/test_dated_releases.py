@@ -231,7 +231,7 @@ def _dated_release_problems(species):
 
 
 def test_every_dated_release_table_entry_uses_platform_layout(monkeypatch):
-    species = [s for s in Species._latin_names_to_species.values() if s.dated_releases]
+    species = [s for s in Species.all() if s.dated_releases]
     directories = {}
     for entry in species:
         accession, provider = entry.dated_releases

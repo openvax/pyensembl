@@ -57,7 +57,7 @@ def test_readiness_rejects_invalid_source_even_with_an_index(tmp_path, bad_sourc
     )
     assert not genome.installed()
     assert not genome.required_local_files_exist()
-    assert genome._annotation_status() == "invalid"
+    assert genome.annotation_status() == "invalid"
 
 
 def test_empty_files_ok_does_not_accept_directories(tmp_path):
@@ -182,7 +182,7 @@ def test_unreadable_source_is_reported_and_cannot_be_used(tmp_path):
                     cache_directory_path=str(tmp_path / "cache"))
     source.chmod(0)
     try:
-        assert genome._annotation_status() == "inaccessible"
+        assert genome.annotation_status() == "inaccessible"
         assert not genome.installed()
         inspection = genome.inspect_data()["files"]["transcript_fasta_1"]
         assert isinstance(inspection.error, PermissionError)

@@ -26,8 +26,8 @@ import datacache
 from filelock import FileLock, Timeout
 
 from .download_cache import cache_root
-from .common import _remove, parse_md5sum_manifest
-from .genome_fasta import GenomeFasta, _read_json, _write_json
+from .common import parse_md5sum_manifest, read_json, remove_if_exists, write_json
+from .genome_fasta import GenomeFasta
 
 logger = logging.getLogger(__name__)
 _KEY = re.compile(r"^[0-9a-f]{64}$")
@@ -250,7 +250,7 @@ def _check_object_identity(root, directory, identity):
         return
     if not directory.is_dir() or (directory / "object.json").is_symlink():
         raise ValueError("Invalid shared genome FASTA object: %s" % directory)
-    state = _read_json(directory / "object.json")
+    state = read_json(directory / "object.json")
     if state is None and not any(
         not path.name.startswith(".") for path in directory.iterdir()
     ):
@@ -338,7 +338,7 @@ def _remove_staging_files(directory):
     # Only call with the object lock held: nothing else is writing here.
     for path in directory.iterdir():
         if path.name.startswith(".") and not path.is_dir():
-            _remove(path)
+            remove_if_exists(path)
 
 
 class SharedGenomeFasta(GenomeFasta):
@@ -363,7 +363,7 @@ class SharedGenomeFasta(GenomeFasta):
         self._load_reference()
 
     def _load_reference(self):
-        state = _read_json(self.reference_path)
+        state = read_json(self.reference_path)
         if (
             isinstance(state, dict)
             and state.get("source") == self.source
@@ -403,8 +403,8 @@ class SharedGenomeFasta(GenomeFasta):
     def _register(self):
         """Record this release's reference; the caller holds the object lock."""
         with dna_cache_lock(self.root):
-            _write_json(self.reference_path, self._reference_state())
-            _write_json(self.manifest_path, self._reference_state())
+            write_json(self.reference_path, self._reference_state())
+            write_json(self.manifest_path, self._reference_state())
 
     def prepare(self, download=False, overwrite=False, show_progress=False):
         self._load_reference()  # Another process may have registered it.
@@ -421,7 +421,7 @@ class SharedGenomeFasta(GenomeFasta):
             if overwrite or self.installed_path is None:
                 self.directory.mkdir(parents=True, exist_ok=True)
                 _remove_staging_files(self.directory)
-                _write_json(self.directory / "object.json", {"identity": self.identity})
+                write_json(self.directory / "object.json", {"identity": self.identity})
                 self._download(
                     expected_size=self.identity.get("compressed_size"),
                     show_progress=show_progress,
@@ -435,7 +435,7 @@ class SharedGenomeFasta(GenomeFasta):
     def _is_registered(self):
         return (
             self.installed_path is not None
-            and _read_json(self.reference_path) == self._reference_state()
+            and read_json(self.reference_path) == self._reference_state()
         )
 
     def remember(self):
@@ -499,7 +499,7 @@ def _owned_objects(root):
         ]
         if "object.json" not in files or (directory / "object.json").is_symlink():
             continue
-        state = _read_json(directory / "object.json")
+        state = read_json(directory / "object.json")
         if not isinstance(state, dict) or not isinstance(state.get("identity"), dict):
             continue
         identity = state["identity"]
@@ -525,7 +525,7 @@ def prune_genome_fastas(dry_run=False, cache_root=None):
     with dna_cache_lock(root):
         referenced = set()
         for path in _reference_manifests(root):
-            state = _read_json(path)
+            state = read_json(path)
             if not isinstance(state, dict) or not isinstance(state.get("source"), str):
                 raise ValueError(
                     "Cannot safely prune: invalid genome FASTA manifest %s" % path

@@ -62,15 +62,15 @@ class Transcript(LocusWithGenome):
         Conflicting/invalid declarations raise ValueError. Reads installed
         annotation data only; never downloads or changes an existing index.
         """
-        return self.genome._source_translation_table(self.id)
+        return self.genome.source_translation_table(self.id)
 
     @property
     def genetic_code(self):
         """Source declaration before reference defaults, with provenance."""
         return genetic_code(
-            self.genome._reference_metadata, self.contig,
+            self.genome.reference_metadata, self.contig,
             source_table=self.source_translation_table,
-            annotation_source=self.genome._gtf_path_or_url,
+            annotation_source=self.genome.gtf_path_or_url,
         )
 
     @property
@@ -478,7 +478,7 @@ class Transcript(LocusWithGenome):
         if coding_end != transcript_end:
             return None
         compartment = compartment_for_contig(
-            self.contig, self.genome._reference_metadata["contig_compartments"]
+            self.contig, self.genome.contig_compartments
         )
         if compartment != "mitochondrial":
             return None

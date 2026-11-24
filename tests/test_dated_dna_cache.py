@@ -76,8 +76,8 @@ def test_dates_share_download_and_index_and_reopen_read_only(platform, monkeypat
 
     monkeypatch.setattr(cache.datacache, "fetch_bytes", offline)
     monkeypatch.setattr(cache, "urlopen", offline)
-    monkeypatch.setattr("pyensembl.genome_fasta._write_json", offline)
-    monkeypatch.setattr(cache, "_write_json", offline)
+    monkeypatch.setattr("pyensembl.genome_fasta.write_json", offline)
+    monkeypatch.setattr(cache, "write_json", offline)
     forbid_downloads(monkeypatch, "installed dated DNA must work offline")
     try:
         for date in ("2025_12", "2026_04"):
@@ -202,8 +202,8 @@ def test_existing_private_install_stays_unchanged(platform, monkeypatch, explici
 
     monkeypatch.setattr(cache.datacache, "fetch_bytes", forbidden)
     monkeypatch.setattr(cache, "urlopen", forbidden)
-    monkeypatch.setattr(cache, "_write_json", forbidden)
-    monkeypatch.setattr("pyensembl.genome_fasta._write_json", forbidden)
+    monkeypatch.setattr(cache, "write_json", forbidden)
+    monkeypatch.setattr("pyensembl.genome_fasta.write_json", forbidden)
     forbid_downloads(monkeypatch, "preserve legacy private installs")
     try:
         with dated(explicit=explicit) as restored:

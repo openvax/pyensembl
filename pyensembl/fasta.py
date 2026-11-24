@@ -24,7 +24,7 @@ from gzip import GzipFile
 import logging
 from os.path import basename
 
-from .common import _read_progress
+from .common import read_progress
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ class FastaParser(object):
         Generator that yields identifiers paired with sequences.
         """
         description = "Reading " + basename(fasta_path)
-        with open(fasta_path, "rb") as raw, _read_progress(
+        with open(fasta_path, "rb") as raw, read_progress(
             raw, description, show_progress
         ) as report_progress, self._open(fasta_path, raw) as f:
             for line in f:

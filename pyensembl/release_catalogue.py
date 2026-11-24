@@ -8,20 +8,16 @@ from pathlib import Path
 import re
 
 from .assembly import (
-    _matches, catalogue, check_accession, normalize_species, numbered_assembly,
+    assembly_matches, catalogue, check_accession, normalize_species, numbered_assembly,
     species_matches, validate_assembly,
 )
-from .dated_releases import _cached_dates, available_annotation_dates
+from .dated_releases import available_annotation_dates, cached_annotation_dates
 from .download_cache import cache_root
 
 
 @lru_cache(maxsize=1)
 def comparison_evidence():
     return json.loads(files("pyensembl").joinpath("release_comparisons.json").read_text())
-
-
-def _newest_number(species):
-    return max(last for first, last in species.reference_assemblies.values())
 
 
 def available_releases(species=None, *, assembly=None, assembly_accession=None,
@@ -49,7 +45,7 @@ def available_releases(species=None, *, assembly=None, assembly_accession=None,
         raise TypeError("include_alt must be bool")
     selector = assembly_accession or assembly
     if selector is None and species is not None:
-        selector = species.which_reference(_newest_number(species))
+        selector = species.which_reference(species.newest_release)
     rows = []
     # Pinned rapid-release / non-numbered assemblies (e.g. T2T-CHM13v2.0 / hs1).
     if selector is not None and include_alt is None:
@@ -88,12 +84,12 @@ def available_releases(species=None, *, assembly=None, assembly_accession=None,
         for first, last in species.reference_assemblies.values():
             for release in range(first, last + 1):
                 metadata = numbered_assembly(species, release)
-                if _matches(metadata, selector):
+                if assembly_matches(metadata, selector):
                     validate_assembly(metadata, assembly, assembly_accession)
                     rows.append(dict(metadata, release=release, kind="numbered",
                                      provider="ensembl", coverage="legacy", subset=False,
                                      comparisons=[], latest=False))
-    datasets = [r for r in catalogue()["dated"] if _matches(r, selector)
+    datasets = [r for r in catalogue()["dated"] if assembly_matches(r, selector)
                 and (species is None or species_matches(species, r))
                 and (provider is None or provider == r["provider"])]
     if not datasets and not rows and assembly_accession:
@@ -105,7 +101,7 @@ def available_releases(species=None, *, assembly=None, assembly_accession=None,
         validate_assembly(record, assembly, assembly_accession)
         accession, selected_provider = record["assembly_accession"], record["provider"]
         dates = (available_annotation_dates(accession, selected_provider, refresh=True)
-                 if refresh else _cached_dates(accession, selected_provider))
+                 if refresh else cached_annotation_dates(accession, selected_provider))
         dates = sorted(set(record.get("dates", [])) | set(dates or []))
         # Match ordinary construction's default coverage, including accession
         # selection's primary-only default. No cache directory is constructed.
@@ -200,7 +196,7 @@ def cached_dated_releases():
                                 include_alt=coverage == "including-alt",
                                 reference_name=reference.name)]
             else:
-                options = [dict(species=s) for s in Species._latin_names_to_species.values()
+                options = [dict(species=s) for s in Species.all()
                            if s.dated_releases and s.dated_reference_name == reference.name]
             for selection in options:
                 try:

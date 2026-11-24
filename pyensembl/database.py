@@ -24,7 +24,7 @@ import datacache
 from .common import file_digest, file_fingerprint, memoize
 from .normalization import normalize_chromosome, normalize_strand
 from .locus import Locus
-from .versioned_ids import _split_ens_version, match_version
+from .versioned_ids import match_version, split_versioned_id
 
 # Increment when feature-table layout changes. Local source identity is an
 # additional PyEnsembl check, so existing remote databases remain reusable.
@@ -728,7 +728,7 @@ class Database(object):
         """
         if not isinstance(identifier, str) or not identifier.startswith("ENS"):
             return identifier
-        _, version = _split_ens_version(identifier)
+        _, version = split_versioned_id(identifier)
         if version is None and not self._stores_versioned_ids(id_column):
             # Without stored versions, a bare ID can only match itself
             return identifier
@@ -743,7 +743,7 @@ class Database(object):
         table, version_column = self.ID_VERSION_COLUMNS[id_column]
         if not self.column_exists(table, id_column):
             return {}
-        bare, _ = _split_ens_version(identifier)
+        bare, _ = split_versioned_id(identifier)
         has_version = self.column_exists(table, version_column)
         # Stored forms of this stable ID ("bare", "bare.N") sort between
         # bare and bare + "/", since "." < "/"
@@ -756,7 +756,7 @@ class Database(object):
         )
         installed = {}
         for row in self.run_sql_query(sql, query_params=[bare, bare + "/"]):
-            stored_bare, recorded = _split_ens_version(row[0])
+            stored_bare, recorded = split_versioned_id(row[0])
             if stored_bare != bare:
                 continue
             if recorded is None and has_version and row[1]:

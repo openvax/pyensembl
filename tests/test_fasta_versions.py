@@ -25,7 +25,7 @@ from pyensembl import SequenceData
 from pyensembl.common import dump_pickle
 from pyensembl.fasta import _parse_header_id
 from pyensembl.sequence_data import lookup_sequence_with_version_fallback
-from pyensembl.versioned_ids import _split_ens_version
+from pyensembl.versioned_ids import split_versioned_id
 
 from .common import eq_
 
@@ -68,26 +68,26 @@ def test_parse_header_id_does_not_strip_tair_isoform_suffix():
 
 
 # -----------------------------
-# _split_ens_version
+# split_versioned_id
 # -----------------------------
 
 
 def test_split_ens_version_versioned():
-    eq_(_split_ens_version("ENSP00000123456.3"), ("ENSP00000123456", 3))
+    eq_(split_versioned_id("ENSP00000123456.3"), ("ENSP00000123456", 3))
 
 
 def test_split_ens_version_bare():
-    eq_(_split_ens_version("ENSP00000123456"), ("ENSP00000123456", None))
+    eq_(split_versioned_id("ENSP00000123456"), ("ENSP00000123456", None))
 
 
 def test_split_ens_version_non_ens():
     # TAIR isoform suffix is not a version.
-    eq_(_split_ens_version("AT1G01010.1"), ("AT1G01010.1", None))
+    eq_(split_versioned_id("AT1G01010.1"), ("AT1G01010.1", None))
 
 
 def test_split_ens_version_non_integer_suffix():
     # Defensive: an unparseable suffix shouldn't blow up.
-    eq_(_split_ens_version("ENSP00000123456.bogus"), ("ENSP00000123456.bogus", None))
+    eq_(split_versioned_id("ENSP00000123456.bogus"), ("ENSP00000123456.bogus", None))
 
 
 # -----------------------------

@@ -62,8 +62,25 @@ def _require_available(inspection):
     return inspection.path
 
 
-def _same_file_bytes(first, second, decompress=False):
-    """Compare copied local input with its cached counterpart."""
+def same_file_bytes(first, second, decompress=False):
+    """Compare a local input file with its cached counterpart by byte digest.
+
+    Parameters
+    ----------
+    first : str
+        Path to the original local file (possibly gzip-compressed).
+    second : str
+        Path to the cached file.
+    decompress : bool, optional
+        When ``True`` and ``first`` ends with ``.gz``, decompress ``first``
+        before hashing so it can be compared against a decompressed cache
+        copy.
+
+    Returns
+    -------
+    bool
+        ``True`` if both files have identical SHA-256 digests.
+    """
     opener = gzip.open if decompress and first.lower().endswith(".gz") else open
     return file_digest(first, opener=opener) == file_digest(second)
 
@@ -87,7 +104,25 @@ def cache_subdirectory(
     return join(reference_dir, annotation_dir)
 
 
-def _default_cache_directory(reference_name, annotation_name, annotation_version):
+def default_cache_directory(reference_name, annotation_name, annotation_version):
+    """Compute the default on-disk cache directory for an annotation dataset.
+
+    Parameters
+    ----------
+    reference_name : str or None
+        Reference genome name (e.g. ``"GRCh38"``).
+    annotation_name : str or None
+        Annotation source name (e.g. ``"ensembl"``).
+    annotation_version : str or int or None
+        Release number or annotation version (e.g. ``116`` or ``"2026_04"``).
+
+    Returns
+    -------
+    str
+        Filesystem path of the cache directory for this dataset, reusing a
+        pre-2.17 legacy appdirs location if one already exists and no cache
+        environment variable overrides the root.
+    """
     subdirectory = cache_subdirectory(reference_name, annotation_name, annotation_version)
     directory = join(cache_root(), subdirectory[len(CACHE_BASE_SUBDIR) + 1:])
     if not environ.get(CACHE_DIR_ENV_KEY) and not environ.get(SHARED_CACHE_DIR_ENV_KEY):
@@ -182,7 +217,7 @@ class DownloadCache(object):
                 annotation_name=annotation_name,
                 annotation_version=annotation_version,
             )
-            self._cache_directory_path = _default_cache_directory(
+            self._cache_directory_path = default_cache_directory(
                 reference_name, annotation_name, annotation_version
             )
 
@@ -258,15 +293,29 @@ class DownloadCache(object):
         entries retain their historical lookup contract and derived indexes,
         including mirror installs and entries without recorded provenance.
         """
-        path = self._cache_path(path_or_url)
+        path = self.cache_path(path_or_url)
         if not lexists(path):
-            legacy = self._cache_path(path_or_url, legacy=True)
+            legacy = self.cache_path(path_or_url, legacy=True)
             if lexists(legacy):
                 return legacy
         return path
 
-    def _cache_path(self, path_or_url, legacy=False):
-        """Compute a destination in either layout without filesystem access."""
+    def cache_path(self, path_or_url, legacy=False):
+        """Compute the destination cache path for a source without filesystem access.
+
+        Parameters
+        ----------
+        path_or_url : str
+            Source URL or local filesystem path.
+        legacy : bool, optional
+            When ``True``, return the historical basename-only path layout
+            used before source-keyed cache filenames were introduced.
+
+        Returns
+        -------
+        str
+            Destination path inside :attr:`cache_directory_path`.
+        """
         if path_or_url is None or path_or_url == "":
             raise ValueError("Expected non-empty string for path_or_url")
         remote = self.is_url_format(path_or_url)
@@ -336,7 +385,7 @@ class DownloadCache(object):
         if download_if_missing and (overwrite or inspection.status == "missing"):
             # Even an explicit refresh leaves legacy sources and indexes intact.
             # Subsequent lookups prefer this URL-specific destination.
-            cached_path = self._cache_path(url)
+            cached_path = self.cache_path(url)
             return self._fetch(url, cached_path, overwrite, show_progress,
                                **({"validator": validator} if validator is not None else {}))
         if inspection.status == "missing":
@@ -357,7 +406,7 @@ class DownloadCache(object):
                 if source.status == "missing":
                     return cached.path
                 _require_available(source)
-                if _same_file_bytes(local_path, cached_path, self.decompress_on_download):
+                if same_file_bytes(local_path, cached_path, self.decompress_on_download):
                     return cached.path
                 overwrite = True
         source = inspect_data_file(local_path)
@@ -367,7 +416,7 @@ class DownloadCache(object):
         if not self.copy_local_files_to_cache or local_path == abspath(cached_path):
             return local_path
         # A refresh must not overwrite another legacy basename's saved bytes.
-        cached_path = self._cache_path(local_path)
+        cached_path = self.cache_path(local_path)
         return self._fetch(Path(local_path).as_uri(), cached_path, overwrite, show_progress)
 
     def download_or_copy_if_necessary(

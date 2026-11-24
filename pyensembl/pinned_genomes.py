@@ -37,8 +37,8 @@ from weakref import WeakValueDictionary
 from filelock import FileLock
 
 from .annotation_integrity import AnnotationIntegrityError
-from .common import _atomic_output, file_digest
-from .download_cache import _default_cache_directory, inspect_data_file
+from .common import atomic_output, file_digest
+from .download_cache import default_cache_directory, inspect_data_file
 from .genome import Genome
 from .species import check_species_object
 
@@ -478,7 +478,7 @@ class PinnedGenome(Genome):
         cache_dir = (
             os.path.abspath(os.fspath(cache_directory_path))
             if cache_directory_path is not None
-            else _default_cache_directory(
+            else default_cache_directory(
                 assembly.reference_name,
                 assembly.annotation_name,
                 assembly.annotation_version,
@@ -555,7 +555,7 @@ class PinnedGenome(Genome):
         expected_size = spec["size"]
         field_name = {"gtf": "gtf", "transcripts": "transcript-fasta", "proteins": "protein-fasta"}[role]
 
-        destination = Path(self.download_cache._cache_path(url))
+        destination = Path(self.download_cache.cache_path(url))
         destination.parent.mkdir(parents=True, exist_ok=True)
 
         def validate(path):
@@ -568,7 +568,7 @@ class PinnedGenome(Genome):
                     raise FileNotFoundError("Pinned %s source path does not exist: %s" % (role, src))
                 validate(str(src))
                 if overwrite or not destination.is_file() or file_digest(str(destination), "sha256") != expected_sha256:
-                    with open(src, "rb") as reader, _atomic_output(destination, "wb") as writer:
+                    with open(src, "rb") as reader, atomic_output(destination, "wb") as writer:
                         while chunk := reader.read(1 << 20):
                             writer.write(chunk)
                 return str(destination)
@@ -600,13 +600,13 @@ class PinnedGenome(Genome):
                     continue
                 target = cache_dir / asset["resource"].rsplit("/", 1)[-1]
                 if overwrite or not target.is_file() or target.stat().st_size != len(raw):
-                    with _atomic_output(target, "wb") as handle:
+                    with atomic_output(target, "wb") as handle:
                         handle.write(raw)
 
         merged = Path(self._gtf_path_or_url)
         expected_merged_size = os.path.getsize(raw_gtf_path) + sum(len(layer) for layer in gtf_layers)
         if overwrite or not merged.is_file() or merged.stat().st_size != expected_merged_size:
-            with open(raw_gtf_path, "rb") as source, _atomic_output(merged, "wb") as handle:
+            with open(raw_gtf_path, "rb") as source, atomic_output(merged, "wb") as handle:
                 while chunk := source.read(1 << 20):
                     handle.write(chunk)
                 for layer in gtf_layers:
