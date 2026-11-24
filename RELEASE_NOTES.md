@@ -3,6 +3,13 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.39.1
+
+- Promote `AnnotationGeneticCodes.read_gtf()`, `AnnotationGeneticCodes.read_index()`,
+  `AnnotationGeneticCodes.file_state()`, `add_translation_table_declarations()`,
+  `genome_fasta_cache.head_content_length()`, and `ensembl_metadata.fetch_metadata_json()`
+  to documented public APIs instead of private underscore helpers.
+
 ## 2.39.0
 
 - Route remote metadata and checksum manifest GET requests (`annotation_integrity`,

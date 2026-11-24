@@ -54,7 +54,7 @@ def test_source_override_index_or_legacy_stream(tmp_path, monkeypatch, transcrip
                     for column in ('transl_table', 'translation_table'):
                         connection.execute('ALTER TABLE "%s" DROP COLUMN "%s"' % (table, column))
         else:
-            monkeypatch.setattr(AnnotationGeneticCodes, '_read_gtf', lambda *a: pytest.fail('new index should retain declarations'))
+            monkeypatch.setattr(AnnotationGeneticCodes, 'read_gtf', lambda *a: pytest.fail('new index should retain declarations'))
         before = snapshot(tmp_path)
         tx = genome.transcript_by_id("ENST1.2")
         assert tx.translation_table == expected
@@ -62,8 +62,8 @@ def test_source_override_index_or_legacy_stream(tmp_path, monkeypatch, transcrip
         assert tx.genetic_code.source == source
         if source == 'annotation':
             assert tx.genetic_code.source_url == str(tmp_path / 'source.gtf')
-        monkeypatch.setattr(AnnotationGeneticCodes, '_read_index', lambda *a: pytest.fail('reuse in-memory result'))
-        monkeypatch.setattr(AnnotationGeneticCodes, '_read_gtf', lambda *a: pytest.fail('reuse in-memory result'))
+        monkeypatch.setattr(AnnotationGeneticCodes, 'read_index', lambda *a: pytest.fail('reuse in-memory result'))
+        monkeypatch.setattr(AnnotationGeneticCodes, 'read_gtf', lambda *a: pytest.fail('reuse in-memory result'))
         assert tx.translation_table == expected
         assert snapshot(tmp_path) == before
 

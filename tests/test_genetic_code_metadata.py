@@ -212,14 +212,14 @@ def test_overrides_distinguish_objects_but_preserve_storage_identity(tmp_path):
 def test_api_taxa_are_retained_and_validated_offline_after_selection(monkeypatch):
     details = json.loads((DATA / "assembly_metadata/dog-details.json").read_text())
     links = json.loads((DATA / "assembly_metadata/dog-ftplinks.json").read_text())
-    monkeypatch.setattr(ensembl_metadata, "_get_json", lambda path: details if path.endswith("details") else links)
+    monkeypatch.setattr(ensembl_metadata, "fetch_metadata_json", lambda path: details if path.endswith("details") else links)
     genome = EnsemblRelease.from_ensembl(details["genome_id"])
     assert (genome.taxon_id, genome.species_taxon_id) == (9615, 9612)
     assert genome.reference_metadata["taxon_source"].endswith("/details")
     encoded = genome.to_json()
     monkeypatch.setattr(requests.sessions.Session, "request", lambda *a, **k: pytest.fail("network"))
     with monkeypatch.context() as offline:
-        offline.setattr(ensembl_metadata, "_get_json", lambda *a: pytest.fail("metadata request while loading"))
+        offline.setattr(ensembl_metadata, "fetch_metadata_json", lambda *a: pytest.fail("metadata request while loading"))
         assert EnsemblRelease.from_json(encoded).genetic_code("MT").table_id == 2
     details["taxonomy_id"] = "9606"
     with pytest.raises(ValueError, match="disagree"):
