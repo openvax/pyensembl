@@ -3,6 +3,13 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.42.1
+
+- Simplify runtime dependency declaration from `datacache[progress]>=1.34.0,<2.0.0`
+  to `datacache>=1.34.0,<2.0.0` now that `datacache` includes `tqdm` in its
+  base package, while keeping `pyfaidx` for indexed random FASTA access and
+  preserving the empty `pyensembl[progress]` compatibility extra (#500).
+
 ## 2.42.0
 
 - Add shared subtle cyan CLI help and table styling in `pyensembl.cli.help`
