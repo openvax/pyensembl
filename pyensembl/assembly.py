@@ -38,7 +38,24 @@ def numbered_assembly(species, release):
     )
 
 
-def _matches(record, selector):
+def assembly_matches(record, selector):
+    """Return whether an assembly catalogue record matches ``selector``.
+
+    Parameters
+    ----------
+    record : dict
+        Catalogue record with keys such as ``assembly``, ``assembly_name``,
+        ``assembly_accession``, ``reference_name``, and optional ``aliases``.
+    selector : str or None
+        Build name, full assembly name, versioned accession, or ``None``
+        (matches every record).
+
+    Returns
+    -------
+    bool
+        ``True`` if ``selector`` is ``None`` or case-insensitively matches
+        one of the record's names or aliases.
+    """
     if selector is None:
         return True
     if not isinstance(selector, str) or not selector.strip():
@@ -58,12 +75,12 @@ def species_matches(species, record):
 
 def species_for_record(record):
     name = record.get("species")
-    return Species._latin_names_to_species.get(name)
+    return Species.get_by_latin_name(name)
 
 
 def records_for_selector(selector, species=None):
     records = catalogue()["dated"]
-    matches = [r for r in records if _matches(r, selector)]
+    matches = [r for r in records if assembly_matches(r, selector)]
     if species is not None:
         matches = [r for r in matches if species_matches(species, r)]
     return matches
@@ -75,7 +92,7 @@ def infer_species(selector):
         # Historical numbered-only assembly names are valid assertions too.
         matches = [
             r for rows in catalogue()["numbered"].values() for r in rows.values()
-            if _matches(r, selector)
+            if assembly_matches(r, selector)
         ]
     species_names = {r.get("species") for r in matches}
     if len(species_names) == 1:
@@ -86,7 +103,7 @@ def infer_species(selector):
 
 
 def validate_assembly(record, assembly=None, accession=None):
-    if assembly is not None and not _matches(record, assembly):
+    if assembly is not None and not assembly_matches(record, assembly):
         raise ValueError(
             "Assembly %r conflicts with selected %s (%s)"
             % (assembly, record.get("assembly_name") or record.get("assembly"),
@@ -116,7 +133,7 @@ def dated_assembly(date, species=None, assembly=None, accession=None, provider=N
         raise ValueError("provider must be one lowercase directory name")
     selector = accession or assembly
     all_records = catalogue()["dated"]
-    candidates = [r for r in all_records if _matches(r, selector)]
+    candidates = [r for r in all_records if assembly_matches(r, selector)]
     if species is not None:
         compatible = [r for r in candidates if species_matches(species, r)]
         if selector and candidates and not compatible:

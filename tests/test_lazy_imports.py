@@ -136,3 +136,82 @@ def test_public_objects_come_from_their_defining_modules():
     assert pyensembl.Genome.__module__ == "pyensembl.genome"
     assert pyensembl.cached_release is pyensembl.ensembl_release.cached_release
     assert pyensembl.MAX_ENSEMBL_RELEASE == pyensembl.ensembl_versions.MAX_ENSEMBL_RELEASE
+
+
+def test_import_creates_no_ensembl_releases_until_convenience_genome_accessed(tmp_path):
+    """Importing pyensembl or reference_name builds zero EnsemblRelease objects (#510)."""
+    (tmp_path / "pyensembl" / "GRCh38" / "ensembl93").mkdir(parents=True)
+    result = run_python(textwrap.dedent("""
+        import json, os, sys
+
+        root = os.environ["PYENSEMBL_CACHE_DIR"]
+        cache_events = []
+
+        def record_cache_reads(event, args):
+            if event in ("open", "os.listdir", "os.scandir", "sqlite3.connect") and args:
+                path = args[0]
+                if isinstance(path, (str, bytes, os.PathLike)) and os.fsdecode(path).startswith(root):
+                    cache_events.append([event, os.fsdecode(path)])
+
+        sys.addaudithook(record_cache_reads)
+
+        import pyensembl
+        assert "pyensembl.ensembl_release" not in sys.modules
+        assert "pyensembl.reference_name" not in sys.modules
+
+        # Patching EnsemblRelease.__init__ before importing reference_name proves
+        # importing reference_name creates zero EnsemblRelease instances.
+        import pyensembl.ensembl_release as er
+        constructed = []
+        real_init = er.EnsemblRelease.__init__
+
+        def counting_init(self, *args, **kwargs):
+            constructed.append((args, kwargs))
+            return real_init(self, *args, **kwargs)
+
+        er.EnsemblRelease.__init__ = counting_init
+
+        import pyensembl.reference_name as reference_name
+        real_select = reference_name.genome_for_reference_name
+        reference_name.genome_for_reference_name = lambda *a, **kw: (_ for _ in ()).throw(
+            AssertionError("genome_for_reference_name must not run at import")
+        )
+        # Non-convenience helpers work without triggering convenience genomes.
+        assert reference_name.normalize_reference_name("grch38") == "GRCh38"
+        before_access = dict(
+            constructed=len(constructed),
+            cache_size=len(er.EnsemblRelease._genome_cache),
+            cache_events=list(cache_events),
+            grch36_bound="ensembl_grch36" in vars(reference_name),
+            grch37_bound="ensembl_grch37" in vars(reference_name),
+            grch38_bound="ensembl_grch38" in vars(reference_name),
+        )
+
+        # Now restore genome_for_reference_name and access only ensembl_grch38.
+        reference_name.genome_for_reference_name = real_select
+        genome = pyensembl.ensembl_grch38
+        after_access = dict(
+            release=genome.release,
+            constructed_gt_zero=len(constructed) > 0,
+            grch36_bound="ensembl_grch36" in vars(reference_name),
+            grch37_bound="ensembl_grch37" in vars(reference_name),
+            grch38_bound="ensembl_grch38" in vars(reference_name),
+        )
+        print(json.dumps(dict(before=before_access, after=after_access)))
+    """), tmp_path)
+    data = json.loads(result)
+    assert data["before"] == dict(
+        constructed=0,
+        cache_size=0,
+        cache_events=[],
+        grch36_bound=False,
+        grch37_bound=False,
+        grch38_bound=False,
+    )
+    assert data["after"] == dict(
+        release=pyensembl.MAX_ENSEMBL_RELEASE,
+        constructed_gt_zero=True,
+        grch36_bound=False,
+        grch37_bound=False,
+        grch38_bound=True,
+    )

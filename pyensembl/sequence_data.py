@@ -23,7 +23,7 @@ from collections import Counter
 import pickle
 from .common import dump_pickle, file_digest, file_fingerprint, load_pickle
 from .fasta import first_fasta_id, parse_fasta_dictionary
-from .versioned_ids import _split_ens_version, match_version
+from .versioned_ids import match_version, split_versioned_id
 
 
 logger = logging.getLogger(__name__)
@@ -128,7 +128,7 @@ def lookup_sequence_with_version_fallback(sequence_data, identifier, version=Non
     if sequence is not None:
         return sequence
     if identifier.startswith("ENS") and "." in identifier:
-        bare, version = _split_ens_version(identifier)
+        bare, version = split_versioned_id(identifier)
         if version is not None:
             sequence = sequence_data.get(bare)
             if sequence is not None:
@@ -152,7 +152,7 @@ def _pickle_lost_versions(fasta_path, fasta_dictionary):
     except (OSError, EOFError, ValueError, zlib.error):
         # An unreadable header can't show the pickle is stale; keep using it
         return False
-    bare, version = _split_ens_version(first_id)
+    bare, version = split_versioned_id(first_id)
     return (
         version is not None
         and first_id not in fasta_dictionary
@@ -260,7 +260,7 @@ class SequenceData(object):
                 )
                 continue
             self._fasta_dictionary[identifier] = sequence
-            bare, version = _split_ens_version(identifier)
+            bare, version = split_versioned_id(identifier)
             if version is not None:
                 if bare in self._stripped_index:
                     # Two FASTA entries collide on the same bare ENS ID with
@@ -271,7 +271,7 @@ class SequenceData(object):
                     self._version_conflicts.setdefault(bare, {existing}).add(
                         identifier
                     )
-                    _, existing_version = _split_ens_version(existing)
+                    _, existing_version = split_versioned_id(existing)
                     if existing_version is None or version > existing_version:
                         self._stripped_index[bare] = identifier
                 else:
@@ -356,7 +356,7 @@ class SequenceData(object):
             return None
         if sequence_id in self.fasta_dictionary:
             return sequence_id
-        bare, _ = _split_ens_version(sequence_id)
+        bare, _ = split_versioned_id(sequence_id)
         installed = {form: self._versions[form] for form in self._versioned_forms(bare)}
         if bare in self.fasta_dictionary:
             installed[bare] = None
@@ -364,7 +364,7 @@ class SequenceData(object):
 
     def recorded_versions(self, sequence_id):
         """Sorted versions that FASTA headers record for this stable ID."""
-        bare, _ = _split_ens_version(sequence_id)
+        bare, _ = split_versioned_id(sequence_id)
         return sorted(self._versions[form] for form in self._versioned_forms(bare))
 
     def _versioned_forms(self, bare):

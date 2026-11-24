@@ -101,7 +101,7 @@ def test_renamed_species_are_found_by_every_name():
 
 
 def _boundary_urls():
-    for species in Species._latin_names_to_species.values():
+    for species in Species.all():
         releases = set()
         for start, end in species.reference_assemblies.values():
             releases |= {start, end}

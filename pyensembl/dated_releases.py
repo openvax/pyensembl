@@ -119,7 +119,7 @@ def fetch_all_dated_releases(expire_after=AVAILABLE_EXPIRE_AFTER, timeout=10):
             *probe.dated_releases, timeout=timeout, expire_after=expire_after)}
     except OSError as error:
         logger.info("Using cached dated releases: %s", error)
-        return {s.latin_name: _cached_dates(*s.dated_releases) for s in species}
+        return {s.latin_name: cached_annotation_dates(*s.dated_releases) for s in species}
 
     def fetch(s):
         try:
@@ -208,8 +208,22 @@ def _require_dates(path):
         raise ValueError("no annotation dates listed")
 
 
-def _cached_dates(assembly_accession, provider):
-    """Dates from the cached listing, or None; never uses the network."""
+def cached_annotation_dates(assembly_accession, provider):
+    """Return annotation dates from the local cached listing without network access.
+
+    Parameters
+    ----------
+    assembly_accession : str
+        Versioned GCA or GCF accession, e.g. ``"GCA_000001405.29"``.
+    provider : str
+        Provider directory, e.g. ``"ensembl"`` or ``"community"``.
+
+    Returns
+    -------
+    list of str or None
+        Sorted ``YYYY_MM`` dates parsed from the cached listing, or ``None``
+        if no cached listing exists or it contains no dates.
+    """
     _, path = _listing_location(assembly_accession, provider)
     try:
         return _dates_in(path) or None

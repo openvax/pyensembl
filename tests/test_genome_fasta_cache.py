@@ -521,8 +521,8 @@ def test_warm_lookups_only_stat_files(shared_cache, monkeypatch):
 
     monkeypatch.setattr(GenomeFasta, "prepare", unexpected)
     monkeypatch.setattr(cache.SharedGenomeFasta, "prepare", unexpected)
-    monkeypatch.setattr("pyensembl.genome_fasta._read_json", unexpected)
-    monkeypatch.setattr(cache, "_read_json", unexpected)
+    monkeypatch.setattr("pyensembl.genome_fasta.read_json", unexpected)
+    monkeypatch.setattr(cache, "read_json", unexpected)
     monkeypatch.setattr(cache, "FileLock", unexpected)
     for _ in range(3):
         assert genome.sequence("1", 3, 10) == "GTNNTTAA"

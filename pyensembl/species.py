@@ -84,6 +84,60 @@ class Species(Serializable):
         return species
 
     @classmethod
+    def all(cls):
+        """Return every registered :class:`Species` in registration order.
+
+        Returns
+        -------
+        list of Species
+            Registered species objects.
+        """
+        return list(cls._latin_names_to_species.values())
+
+    @classmethod
+    def get_by_latin_name(cls, latin_name):
+        """Look up a registered species by its canonical latin name.
+
+        Parameters
+        ----------
+        latin_name : str or None
+            Normalized latin name (e.g. ``"homo_sapiens"``).
+
+        Returns
+        -------
+        Species or None
+            Matching registered species, or ``None`` if not registered.
+        """
+        return cls._latin_names_to_species.get(latin_name)
+
+    @classmethod
+    def all_reference_names(cls):
+        """Return every registered reference assembly name.
+
+        Returns
+        -------
+        list of str
+            Reference assembly names registered across all species.
+        """
+        return list(cls._reference_names_to_species.keys())
+
+    @classmethod
+    def get_by_reference_name(cls, reference_name):
+        """Look up the registered species that owns ``reference_name``.
+
+        Parameters
+        ----------
+        reference_name : str or None
+            Exact reference assembly name (e.g. ``"GRCh38"``).
+
+        Returns
+        -------
+        Species or None
+            Matching registered species, or ``None`` if not registered.
+        """
+        return cls._reference_names_to_species.get(reference_name)
+
+    @classmethod
     def all_registered_latin_names(cls):
         """
         Returns latin name of every registered species.
@@ -235,6 +289,17 @@ class Species(Serializable):
         if is_dated_release(release) or self.which_reference(release) in self.assemblies_without_ncrna:
             return ("cdna",)
         return ("cdna", "ncrna")
+
+    @property
+    def newest_release(self):
+        """Newest numbered Ensembl release supported for this species.
+
+        Returns
+        -------
+        int
+            Maximum release number across :attr:`reference_assemblies`.
+        """
+        return max(end for _, end in self.reference_assemblies.values())
 
     @property
     def current_reference_name(self):

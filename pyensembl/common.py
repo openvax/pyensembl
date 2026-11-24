@@ -13,6 +13,7 @@
 from contextlib import contextmanager
 from functools import wraps
 import hashlib
+import json
 import os
 from pathlib import Path
 import pickle
@@ -64,20 +65,52 @@ def file_fingerprint(path, *, ctime=True, include_dev=False):
     return fields
 
 
-def _staging_path(directory, name):
-    # Dot files in cache directories are always staging files.
+def staging_path(directory, name):
+    """Return a unique temporary dot-file path for staging writes.
+
+    Parameters
+    ----------
+    directory : str or os.PathLike
+        Directory that will hold the final published file.
+    name : str
+        Base filename of the target file.
+
+    Returns
+    -------
+    pathlib.Path
+        Unique staging path in ``directory``. Dot files in cache directories
+        are always staging files.
+    """
     return Path(directory) / (".%s.%s.tmp" % (name, uuid4().hex))
 
 
-def _remove(path):
+def remove_if_exists(path):
+    """Unlink ``path`` if it exists, ignoring ``FileNotFoundError``.
+
+    Parameters
+    ----------
+    path : str or os.PathLike
+        File path to remove.
+    """
     try:
         os.unlink(path)
     except FileNotFoundError:
         pass
 
 
-def _publish(staged, path):
-    """Durably replace path with a complete staged file."""
+def publish_file(staged, path):
+    """Durably replace ``path`` with a complete staged file.
+
+    Flushes ``staged`` to disk via ``os.fsync``, atomically renames it onto
+    ``path``, and attempts to fsync the containing directory.
+
+    Parameters
+    ----------
+    staged : str or os.PathLike
+        Path to the completed temporary staging file.
+    path : str or os.PathLike
+        Final destination path.
+    """
     with open(staged, "r+b") as handle:
         os.fsync(handle.fileno())
     os.replace(staged, path)
@@ -94,27 +127,56 @@ def _publish(staged, path):
 
 
 @contextmanager
-def _atomic_output(path, mode="wb"):
-    """Write a file that appears complete or not at all.
+def atomic_output(path, mode="wb"):
+    """Open a temporary staging file and atomically publish it on success.
 
-    The staging file is created like any new file (0o666 less umask), so a
-    group-shared cache stays readable by other users.
+    The staging file is created like any new file (``0o666`` less umask), so
+    a group-shared cache stays readable by other users. If an exception is
+    raised before the context exits cleanly, the staging file is removed and
+    ``path`` is left untouched.
+
+    Parameters
+    ----------
+    path : str or os.PathLike
+        Final destination file path.
+    mode : str, optional
+        File open mode passed to :func:`open` (default ``"wb"``).
+
+    Yields
+    ------
+    file object
+        Open handle to the staging file.
     """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    staged = _staging_path(path.parent, path.name)
+    staged = staging_path(path.parent, path.name)
     try:
         descriptor = os.open(staged, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666)
         with open(descriptor, mode) as handle:
             yield handle
-        _publish(staged, path)
+        publish_file(staged, path)
     finally:
-        _remove(staged)
+        remove_if_exists(staged)
 
 
 @contextmanager
-def _read_progress(raw, description, enabled):
-    """Yield a callable that reports how much of an open binary file was read."""
+def read_progress(raw, description, enabled):
+    """Yield a callback that reports bytes read from an open binary file.
+
+    Parameters
+    ----------
+    raw : file object
+        Open binary file supporting ``fileno()`` and ``tell()``.
+    description : str
+        Label displayed on the progress bar.
+    enabled : bool
+        When ``False``, yields a no-op callback without importing ``tqdm``.
+
+    Yields
+    ------
+    callable
+        Zero-argument function that advances the progress bar to ``raw.tell()``.
+    """
     if not enabled:
         yield lambda: None
         return
@@ -128,9 +190,43 @@ def _read_progress(raw, description, enabled):
         yield lambda: bar.update(raw.tell() - bar.n)
 
 
+def read_json(path):
+    """Read and decode a JSON file, returning ``None`` if missing or invalid.
+
+    Parameters
+    ----------
+    path : str or os.PathLike
+        Path to the JSON file.
+
+    Returns
+    -------
+    object or None
+        Decoded JSON value, or ``None`` if the file cannot be read or parsed.
+    """
+    try:
+        with open(path) as handle:
+            return json.load(handle)
+    except (OSError, ValueError):
+        return None
+
+
+def write_json(path, value):
+    """Atomically serialize ``value`` as JSON to ``path``.
+
+    Parameters
+    ----------
+    path : str or os.PathLike
+        Destination JSON file path.
+    value : object
+        JSON-serializable value to write.
+    """
+    with atomic_output(path, "w") as handle:
+        json.dump(value, handle)
+
+
 def dump_pickle(obj, filepath):
     # Atomic, so an interrupted write never leaves a truncated index behind.
-    with _atomic_output(filepath) as f:
+    with atomic_output(filepath) as f:
         pickle.dump(obj, file=f)
 
 

@@ -131,7 +131,7 @@ def test_existing_non_vertebrate_species_stay_on_main_ensembl():
         "drosophila_melanogaster",
         "caenorhabditis_elegans",
     ):
-        species = Species._latin_names_to_species[latin_name]
+        species = Species.get_by_latin_name(latin_name)
         assert species.ensembl_genomes is False
         release = EnsemblRelease(release=110, species=species)
         assert release.server == ENSEMBL_FTP_SERVER
@@ -145,7 +145,7 @@ def test_xenopus_picks_assembly_by_release():
     and resolve to the right assembly per release."""
     from pyensembl.ensembl_url_templates import ENSEMBL_FTP_SERVER
 
-    xenopus = Species._latin_names_to_species["xenopus_tropicalis"]
+    xenopus = Species.get_by_latin_name("xenopus_tropicalis")
     assert xenopus.division == "vertebrates"
     assert xenopus.ensembl_genomes is False
 

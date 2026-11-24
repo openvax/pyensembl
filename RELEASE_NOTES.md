@@ -3,6 +3,26 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.40.0
+
+- Promote all cross-module underscore helpers to documented public APIs with NumPy
+  docstrings: `versioned_ids.split_versioned_id()`, `common.atomic_output()`,
+  `common.publish_file()`, `common.staging_path()`, `common.remove_if_exists()`,
+  `common.read_progress()`, `common.read_json()`, `common.write_json()`,
+  `download_cache.default_cache_directory()`, `download_cache.same_file_bytes()`,
+  `DownloadCache.cache_path()`, `assembly.assembly_matches()`, and
+  `dated_releases.cached_annotation_dates()` (#519).
+- Add public `Species` registry accessors (`Species.all()`, `Species.get_by_latin_name()`,
+  `Species.all_reference_names()`, `Species.get_by_reference_name()`,
+  `Species.newest_release`) and public `Genome`/`EnsemblRelease` APIs
+  (`annotation_sources()`, `annotation_status()`, `genome_fasta_status()`,
+  `source_translation_table()`, `gtf_path_or_url`, `uses_annotation_checksums()`,
+  `pinned_source_checksums()`, `pin_source_checksum()`), removing all cross-module
+  reads/mutations of private attributes and deduplicating newest-release lookups (#519).
+- Add AST boundary tests preventing cross-module private imports/attribute access (#519)
+  and strengthen lazy-import subprocess tests confirming zero `EnsemblRelease`
+  construction or cache inspection on `import pyensembl` (#510).
+
 ## 2.39.1
 
 - Promote `AnnotationGeneticCodes.read_gtf()`, `AnnotationGeneticCodes.read_index()`,

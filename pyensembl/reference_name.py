@@ -23,7 +23,7 @@ def normalize_reference_name(name):
     If no matching reference is found, raise an exception.
     """
     lower_name = name.strip().lower()
-    for reference in Species._reference_names_to_species.keys():
+    for reference in Species.all_reference_names():
         if reference.lower() == lower_name:
             return reference
     from .pinned_genomes import lookup_pinned_alias, resolve_pinned_assembly
@@ -37,8 +37,9 @@ def normalize_reference_name(name):
 
 def find_species_by_reference(reference_name):
     normalized = normalize_reference_name(reference_name)
-    if normalized in Species._reference_names_to_species:
-        return Species._reference_names_to_species[normalized]
+    species = Species.get_by_reference_name(normalized)
+    if species is not None:
+        return species
     from .pinned_genomes import resolve_pinned_assembly
 
     return find_species_by_name(resolve_pinned_assembly(normalized).species)
@@ -62,11 +63,11 @@ def genome_for_reference_name(reference_name, allow_older_downloaded_release=Tru
     release of Ensembl for the reference.
     """
     reference_name = normalize_reference_name(reference_name)
-    if reference_name not in Species._reference_names_to_species:
+    species = Species.get_by_reference_name(reference_name)
+    if species is None:
         from .pinned_genomes import PinnedGenome
 
         return PinnedGenome.cached(reference_name)
-    species = find_species_by_reference(reference_name)
     (min_ensembl_release, max_ensembl_release) = species.reference_assemblies[
         reference_name
     ]
