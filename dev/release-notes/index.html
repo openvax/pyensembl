@@ -1098,6 +1098,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2420" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.42.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2410" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1592,6 +1603,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2420" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.42.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2410" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2010,6 +2032,21 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
+<h2 id="2420">2.42.0<a class="headerlink" href="#2420" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Add shared subtle cyan CLI help and table styling in <code>pyensembl.cli.help</code>
+  (<code>color_enabled</code>, <code>style_help</code>, <code>style_table_header</code>, <code>classify_status</code>,
+  <code>style_status</code>, <code>HelpFormatter</code>, <code>HelpArgumentParser</code> with <code>color=False</code> on
+  Python 3.14+ and plain <code>format_help()</code>), matching the OpenVax toolkit palette:
+  one cyan hue (<code>\033[36m</code>), bold cyan headings/table headers, bold <code>usage:</code>,
+  and dim/yellow status cells only, gated on TTY plus <code>NO_COLOR</code> and <code>TERM=dumb</code>
+  (#514).</li>
+<li>Apply <code>HelpArgumentParser</code> to <code>pyensembl.cli.parser</code>, bold cyan headers and
+  dim/yellow status styling to <code>pyensembl.cli.formatting.format_table()</code>,
+  <code>list</code>, <code>dirs</code>, <code>inspect</code>, <code>verify</code>, and <code>available</code>, and ensure every CLI
+  entry module (<code>pyensembl/shell.py</code>, <code>pyensembl/cli/main.py</code>) carries the
+  <code># PYTHON_ARGCOMPLETE_OK</code> marker within its first 1024 bytes (#514).</li>
+</ul>
 <h2 id="2410">2.41.0<a class="headerlink" href="#2410" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Distinguish unambiguous FASTA contig naming aliases (such as <code>1</code> vs <code>chr1</code>,
