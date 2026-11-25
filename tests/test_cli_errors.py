@@ -26,8 +26,15 @@ def run_cli(arguments, cache):
     command = Path(sys.executable).parent / ("pyensembl.exe" if os.name == "nt" else "pyensembl")
     # Subprocesses must import the same package as their parent, including when
     # these tests run from an extracted source archive beside an editable env.
+    repository = str(Path(shell.__file__).resolve().parents[1])
+    existing_pythonpath = os.environ.get("PYTHONPATH")
+    pythonpath = (
+        os.pathsep.join([repository, existing_pythonpath])
+        if existing_pythonpath
+        else repository
+    )
     environment = dict(os.environ, PYENSEMBL_CACHE_DIR=str(cache),
-                       PYTHONPATH=str(Path(shell.__file__).resolve().parents[1]))
+                       PYTHONPATH=pythonpath)
     return subprocess.run([str(command), *arguments], env=environment,
                           capture_output=True, text=True, timeout=30)
 

@@ -4,6 +4,7 @@ site_url: https://openvax.github.io/pyensembl/
 repo_url: https://github.com/openvax/pyensembl
 repo_name: openvax/pyensembl
 edit_uri: blob/main/docs/
+strict: true
 theme:
   name: material
   font: false

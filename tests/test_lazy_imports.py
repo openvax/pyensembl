@@ -11,11 +11,14 @@ import pyensembl
 
 REPOSITORY = Path(pyensembl.__file__).resolve().parents[1]
 
-# Modules that make an import slow. Importing the package or the command-line
-# module must load none of them; commands import them when they run.
+# Modules that make an import slow. Importing the package must load none of
+# them (including ``datacache``); importing the CLI modules may load the
+# stdlib-only ``datacache.cli_help`` helper (and lazy ``datacache``), but must
+# load no heavy runtime or download/database submodules.
 HEAVY_MODULES = (
     "pandas", "numpy", "pyarrow", "polars", "gtfparse", "pyfaidx", "sqlite3",
-    "datacache", "serializable", "urllib.request", "http.client",
+    "datacache.download", "datacache.cache", "datacache.database_helpers",
+    "requests", "filelock", "serializable", "urllib.request", "http.client",
     "pyensembl.database", "pyensembl.genome", "pyensembl.ensembl_release",
     "pyensembl.download_cache", "pyensembl.reference_name", "pyensembl.species",
     "pyensembl.sequence_data", "pyensembl.fasta_cache",
@@ -39,7 +42,9 @@ def run_python(code, cache):
     str
         What the code printed.
     """
-    environment = dict(os.environ, PYENSEMBL_CACHE_DIR=str(cache), PYTHONPATH=str(REPOSITORY))
+    existing = os.environ.get("PYTHONPATH")
+    pythonpath = os.pathsep.join([str(REPOSITORY), existing]) if existing else str(REPOSITORY)
+    environment = dict(os.environ, PYENSEMBL_CACHE_DIR=str(cache), PYTHONPATH=pythonpath)
     result = subprocess.run([sys.executable, "-c", code], env=environment,
                             capture_output=True, text=True, timeout=60)
     assert result.returncode == 0, result.stderr
@@ -47,6 +52,14 @@ def run_python(code, cache):
 
 
 def test_importing_package_and_cli_loads_no_heavy_modules(tmp_path):
+    package_loaded = run_python(
+        "import json, sys, pyensembl; "
+        "print(json.dumps(sorted(m for m in %r if m in sys.modules)))"
+        % (HEAVY_MODULES + ("datacache",),),
+        tmp_path,
+    )
+    assert json.loads(package_loaded) == []
+
     loaded = run_python(
         "import json, sys, pyensembl, pyensembl.shell, pyensembl.cli, "
         "pyensembl.cli.help, pyensembl.cli.parser; "

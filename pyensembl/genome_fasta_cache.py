@@ -202,8 +202,42 @@ def _dated_object_directory(root, identity):
             / provider / "toplevel" / masking / "fasta" / _identity_key(identity)[:16])
 
 
-def head_content_length(url, *, timeout=60, max_retries=3, retry_backoff=0.5):
-    """Fetch Content-Length via HEAD with bounded retries on transient errors."""
+def head_content_length(
+    url, *, timeout=60, max_retries=3, retry_backoff=0.5, offline=None
+):
+    """Fetch Content-Length via HEAD with bounded retries on transient errors.
+
+    Enforces ``DATACACHE_OFFLINE`` / ``OPENVAX_OFFLINE`` (or explicit
+    ``offline``) via :func:`datacache.require_online` before issuing any
+    remote request.
+
+    Parameters
+    ----------
+    url : str
+        URL to probe with an HTTP ``HEAD`` request.
+    timeout : float, optional
+        Per-attempt socket timeout in seconds. Default is ``60``.
+    max_retries : int, optional
+        Maximum number of attempts on transient HTTP or transport errors.
+        Default is ``3``.
+    retry_backoff : float, optional
+        Initial delay in seconds before retrying, doubled on each attempt.
+        Default is ``0.5``.
+    offline : bool or None, optional
+        Explicitly forbid (``True``) or allow (``False``) remote requests.
+        Default ``None`` honors ``DATACACHE_OFFLINE`` and ``OPENVAX_OFFLINE``.
+
+    Returns
+    -------
+    int
+        Parsed ``Content-Length`` header in bytes.
+
+    Raises
+    ------
+    datacache.OfflineError
+        If offline mode forbids probing a remote URL.
+    """
+    datacache.require_online(url, offline=offline)
     last_error = None
     for attempt in range(max_retries):
         try:
@@ -310,6 +344,8 @@ def _remote_identity(source):
                 "checksum": [int(value) for value in checksum],
                 "compressed_size": length,
             }
+    except datacache.OfflineError:
+        raise
     except (OSError, URLError, ValueError, TypeError, KeyError, UnicodeError):
         pass
     logger.warning(

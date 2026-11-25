@@ -635,3 +635,57 @@ def test_unconfigured_release_explains_how_to_use_installed_dna(
         "Use EnsemblRelease(82, genome_fasta=True) for Ensembl DNA"
     )):
         EnsemblRelease(82).sequence("MT", 1, 4)
+
+
+def test_head_content_length_enforces_offline_mode(monkeypatch):
+    import datacache
+
+    monkeypatch.delenv("DATACACHE_OFFLINE", raising=False)
+    monkeypatch.delenv("OPENVAX_OFFLINE", raising=False)
+
+    called = []
+
+    def fake_urlopen(request, **kwargs):
+        called.append(request.full_url)
+        response = io.BytesIO()
+        response.headers = {"Content-Length": "1234"}
+        return response
+
+    monkeypatch.setattr(cache, "urlopen", fake_urlopen)
+    url = "https://ftp.ensembl.org/pub/release-81/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.toplevel.fa.gz"
+
+    monkeypatch.setenv("OPENVAX_OFFLINE", "1")
+    with pytest.raises(datacache.OfflineError, match="OPENVAX_OFFLINE=1"):
+        cache.head_content_length(url, max_retries=3, retry_backoff=0)
+    assert called == []
+
+    # Explicit offline=False overrides environment offline mode.
+    assert cache.head_content_length(url, offline=False) == 1234
+    assert called == [url]
+
+    # Explicit offline=True blocks even when env vars are unset.
+    monkeypatch.delenv("OPENVAX_OFFLINE", raising=False)
+    with pytest.raises(datacache.OfflineError, match="offline=True"):
+        cache.head_content_length(url, offline=True)
+    assert len(called) == 1
+
+
+def test_shared_dna_download_fails_offline_without_creating_partial_cache(
+    tmp_path, monkeypatch
+):
+    import datacache
+
+    monkeypatch.setenv("PYENSEMBL_CACHE_DIR", str(tmp_path))
+    monkeypatch.delenv("DATACACHE_OFFLINE", raising=False)
+    monkeypatch.setenv("OPENVAX_OFFLINE", "1")
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("offline mode must block before issuing HTTP requests")
+
+    monkeypatch.setattr(cache, "urlopen", forbidden)
+    genome = release(81)
+    with pytest.raises(datacache.OfflineError, match="OPENVAX_OFFLINE=1"):
+        genome.download_genome_fasta()
+    assert not cache.dna_cache_root().exists()
+    assert not genome._genome_fasta.reference_path.exists()
+

@@ -157,10 +157,16 @@ def test_help_formatter_strips_rst_backticks():
 
 def test_subprocess_help_when_piped_has_no_ansi_escapes(tmp_path):
     command = Path(sys.executable).parent / ("pyensembl.exe" if os.name == "nt" else "pyensembl")
+    existing_pythonpath = os.environ.get("PYTHONPATH")
+    pythonpath = (
+        os.pathsep.join([str(REPOSITORY), existing_pythonpath])
+        if existing_pythonpath
+        else str(REPOSITORY)
+    )
     environment = dict(
         os.environ,
         PYENSEMBL_CACHE_DIR=str(tmp_path),
-        PYTHONPATH=str(REPOSITORY),
+        PYTHONPATH=pythonpath,
         TERM="xterm-256color",
     )
     environment.pop("NO_COLOR", None)
@@ -369,3 +375,13 @@ def test_list_available_verify_and_inspect_tables_use_shared_palette(tmp_path, m
     assert ANSI_YELLOW + "missing" + ANSI_RESET in inspect_styled
     assert ANSI_DIM + "-" + ANSI_RESET in inspect_styled
     assert sgr_codes(inspect_styled) <= {"0", "1;36", "2", "33"}
+
+
+def test_cli_help_reexports_datacache_cli_help_symbols():
+    import datacache.cli_help as shared_cli_help
+    from pyensembl.cli import help as pyensembl_cli_help
+
+    assert set(shared_cli_help.__all__) <= set(pyensembl_cli_help.__all__)
+    for name in shared_cli_help.__all__:
+        assert getattr(pyensembl_cli_help, name) is getattr(shared_cli_help, name)
+
