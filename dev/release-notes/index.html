@@ -1098,6 +1098,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2421" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.42.1
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2420" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1603,6 +1614,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2421" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.42.1
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2420" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2032,6 +2054,13 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
+<h2 id="2421">2.42.1<a class="headerlink" href="#2421" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Simplify runtime dependency declaration from <code>datacache[progress]&gt;=1.34.0,&lt;2.0.0</code>
+  to <code>datacache&gt;=1.34.0,&lt;2.0.0</code> now that <code>datacache</code> includes <code>tqdm</code> in its
+  base package, while keeping <code>pyfaidx</code> for indexed random FASTA access and
+  preserving the empty <code>pyensembl[progress]</code> compatibility extra (#500).</li>
+</ul>
 <h2 id="2420">2.42.0<a class="headerlink" href="#2420" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Add shared subtle cyan CLI help and table styling in <code>pyensembl.cli.help</code>
