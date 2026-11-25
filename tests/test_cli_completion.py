@@ -10,6 +10,11 @@ from pyensembl import shell
 REPOSITORY = Path(shell.__file__).resolve().parents[1]
 
 
+def _subprocess_pythonpath():
+    existing = os.environ.get("PYTHONPATH")
+    return os.pathsep.join([str(REPOSITORY), existing]) if existing else str(REPOSITORY)
+
+
 def complete(line, cache, tmp_path):
     """Ask the console script for completions of ``line``, as a shell would.
 
@@ -33,7 +38,7 @@ def complete(line, cache, tmp_path):
         os.environ,
         PYENSEMBL_CACHE_DIR=str(cache),
         # Use this checkout, also when tests run from an extracted source archive.
-        PYTHONPATH=str(REPOSITORY),
+        PYTHONPATH=_subprocess_pythonpath(),
         _ARGCOMPLETE="1",
         COMP_LINE=line,
         COMP_POINT=str(len(line)),
@@ -120,10 +125,11 @@ def test_release_completion_skips_download_code(tmp_path):
     probe = (
         "import sys; from pyensembl import shell; shell.complete_release(''); "
         "print(' '.join(sorted(m for m in ('pyensembl.download_cache', 'pyensembl.database', "
-        "'datacache', 'sqlite3', 'urllib.request', 'http.client') if m in sys.modules)))"
+        "'datacache.download', 'datacache.cache', 'requests', 'filelock', "
+        "'sqlite3', 'urllib.request', 'http.client') if m in sys.modules)))"
     )
     environment = dict(os.environ, PYENSEMBL_CACHE_DIR=str(make_cache(tmp_path)),
-                       PYTHONPATH=str(REPOSITORY))
+                       PYTHONPATH=_subprocess_pythonpath())
     result = subprocess.run([sys.executable, "-c", probe], env=environment,
                             capture_output=True, text=True, timeout=60)
     assert result.returncode == 0, result.stderr
@@ -163,13 +169,14 @@ def test_parser_and_help_modules_load_no_heavy_imports(tmp_path):
     probe = (
         "import json, sys; "
         "import pyensembl.cli.help, pyensembl.cli.parser, pyensembl.cli.main; "
-        "heavy = ('pandas', 'numpy', 'pyarrow', 'gtfparse', 'pyfaidx', 'sqlite3', 'datacache'); "
+        "heavy = ('pandas', 'numpy', 'pyarrow', 'gtfparse', 'pyfaidx', 'sqlite3', "
+        "'datacache.download', 'datacache.cache', 'requests', 'filelock'); "
         "print(json.dumps([m for m in heavy if m in sys.modules]))"
     )
     environment = dict(
         os.environ,
         PYENSEMBL_CACHE_DIR=str(tmp_path),
-        PYTHONPATH=str(REPOSITORY),
+        PYTHONPATH=_subprocess_pythonpath(),
     )
     result = subprocess.run(
         [sys.executable, "-c", probe],

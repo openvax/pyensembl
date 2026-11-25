@@ -28,10 +28,10 @@ classifiers = [
 dependencies = [
     # Tab completion for the pyensembl command; it has no dependencies.
     "argcomplete>=3,<4",
-    # datacache>=1.34 includes tqdm in its base dependencies (progress bars are
-    # always available) and keeps `import datacache` lazy so `--release` tab
-    # completion stays fast.
-    "datacache>=1.34.0,<2.0.0",
+    # datacache>=1.38 provides the shared stdlib-only datacache.cli_help module,
+    # includes tqdm in its base dependencies (progress bars are always available),
+    # and keeps `import datacache` lazy so `--release` tab completion stays fast.
+    "datacache>=1.38.0,<2.0.0",
     "gtfparse>=2.9.0,<4.0.0",
     "serializable>=0.2.1,<2.0.0",
     # Indexed random access for FASTA contigs (GenomeFasta).

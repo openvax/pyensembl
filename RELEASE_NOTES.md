@@ -3,6 +3,20 @@
 Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as [Git tags](https://github.com/openvax/pyensembl/tags).
 
+## 2.43.0
+
+- Deduplicate `pyensembl.cli.help` onto the shared stdlib-only
+  `datacache.cli_help` module, bumping the dependency to
+  `datacache>=1.38.0,<2.0.0` while preserving every public symbol exported by
+  `pyensembl.cli.help`.
+- Enforce `datacache.require_online()` in
+  `genome_fasta_cache.head_content_length()` and propagate
+  `datacache.OfflineError` out of shared DNA remote-identity probing so
+  `OPENVAX_OFFLINE` / `DATACACHE_OFFLINE` / `--offline` refuse remote HEAD and
+  metadata probes immediately without creating partial cache directories.
+- Enable `strict: true` in `mkdocs.yml` so documentation builds fail on any
+  broken links, omitted files, or warnings.
+
 ## 2.42.1
 
 - Simplify runtime dependency declaration from `datacache[progress]>=1.34.0,<2.0.0`
