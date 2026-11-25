@@ -1098,6 +1098,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2430" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.43.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2421" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1614,6 +1625,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#2430" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.43.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#2421" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2054,6 +2076,20 @@
 <h1 id="release-notes">Release notes<a class="headerlink" href="#release-notes" title="Permanent link">&para;</a></h1>
 <p>Changes in each published version, newest first. These notes start at 2.27.2;
 earlier versions are available as <a href="https://github.com/openvax/pyensembl/tags">Git tags</a>.</p>
+<h2 id="2430">2.43.0<a class="headerlink" href="#2430" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Deduplicate <code>pyensembl.cli.help</code> onto the shared stdlib-only
+  <code>datacache.cli_help</code> module, bumping the dependency to
+  <code>datacache&gt;=1.38.0,&lt;2.0.0</code> while preserving every public symbol exported by
+  <code>pyensembl.cli.help</code>.</li>
+<li>Enforce <code>datacache.require_online()</code> in
+  <code>genome_fasta_cache.head_content_length()</code> and propagate
+  <code>datacache.OfflineError</code> out of shared DNA remote-identity probing so
+  <code>OPENVAX_OFFLINE</code> / <code>DATACACHE_OFFLINE</code> / <code>--offline</code> refuse remote HEAD and
+  metadata probes immediately without creating partial cache directories.</li>
+<li>Enable <code>strict: true</code> in <code>mkdocs.yml</code> so documentation builds fail on any
+  broken links, omitted files, or warnings.</li>
+</ul>
 <h2 id="2421">2.42.1<a class="headerlink" href="#2421" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Simplify runtime dependency declaration from <code>datacache[progress]&gt;=1.34.0,&lt;2.0.0</code>
