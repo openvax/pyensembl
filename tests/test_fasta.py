@@ -1,4 +1,4 @@
-"""Unit tests for pyensembl.fasta backed by datacache.fasta."""
+"""Unit tests for pyensembl.fasta."""
 
 import gzip
 import logging
