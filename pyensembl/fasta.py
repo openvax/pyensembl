@@ -18,11 +18,18 @@ Unfortunately, small errors creep in to different FASTA files on the
 Ensembl FTP server that no proper FASTA parser lets you skip over.
 """
 
-
 from contextlib import nullcontext
 from gzip import GzipFile
+import io
 import logging
+import os
 from os.path import basename
+
+from datacache.fasta import (
+    first_fasta_id as datacache_first_fasta_id,
+    iter_fasta_records,
+    parse_fasta_header_id,
+)
 
 from .common import read_progress
 
@@ -47,28 +54,7 @@ def _parse_header_id(line):
         raise TypeError(
             "Expected header line to be of type %s but got %s" % (bytes, type(line))
         )
-
-    if len(line) <= 1:
-        raise ValueError("No identifier on FASTA line")
-
-    # split line at first space to get the unique identifier for
-    # this sequence
-    space_index = line.find(b" ")
-    if space_index >= 0:
-        identifier = line[1:space_index]
-    else:
-        identifier = line[1:]
-
-    # GENCODE protein/cDNA FASTAs use a pipe-delimited header packing the
-    # versioned protein ID, transcript ID, gene ID, etc., e.g.
-    #   >ENSP00000493376.2|ENST00000641515.2|ENSG00000186092.7|...
-    # The leading field is the canonical identifier for this sequence;
-    # everything after the first '|' is cross-reference metadata.
-    pipe_index = identifier.find(b"|")
-    if pipe_index >= 0:
-        identifier = identifier[:pipe_index]
-
-    return identifier.decode("ascii")
+    return parse_fasta_header_id(line[1:].decode("ascii"), split_pipe=True)
 
 
 class FastaParser(object):
@@ -95,64 +81,42 @@ class FastaParser(object):
         Generator that yields identifiers paired with sequences.
         """
         description = "Reading " + basename(fasta_path)
-        with open(fasta_path, "rb") as raw, read_progress(
-            raw, description, show_progress
-        ) as report_progress, self._open(fasta_path, raw) as f:
-            for line in f:
-                line = line.rstrip()
-
-                if len(line) == 0:
+        with (
+            open(fasta_path, "rb") as raw,
+            read_progress(raw, description, show_progress) as report_progress,
+            self._open(fasta_path, raw) as binary_stream,
+            io.TextIOWrapper(binary_stream, encoding="ascii") as text_stream,
+        ):
+            for record in iter_fasta_records(
+                text_stream,
+                source_name=str(fasta_path),
+                ignore_comments=True,
+                allow_empty_header=True,
+                allow_pre_header=True,
+                on_header=report_progress,
+            ):
+                identifier = parse_fasta_header_id(
+                    record.header.rstrip(), split_pipe=True
+                )
+                if not identifier:
+                    logger.warning(
+                        "Unable to parse ID from header line: >%s",
+                        record.header,
+                    )
                     continue
-
-                # have to slice into a bytes object or else I get a single integer
-                first_char = line[0:1]
-
-                if first_char == b">":
-                    report_progress()
-                    id_and_seq = self._read_header(line)
-                    if id_and_seq is not None:
-                        yield id_and_seq
-
-                elif first_char == b";":
-                    # semicolon are comment characters
+                if not record.sequence:
+                    logger.warning("No sequence data for '%s'", identifier)
                     continue
-                else:
-                    self.current_lines.append(line)
-        # the last sequence is still in the lines buffer after we're done with
-        # the file so make sure to yield it
-        id_and_seq = self._current_entry()
-        if id_and_seq is not None:
-            yield id_and_seq
+                yield identifier, record.sequence
 
     def _open(self, fasta_path, raw):
         """
         Read an open text or gzip-compressed file as a stream of bytes.
         """
-        if fasta_path.endswith("gz") or fasta_path.endswith("gzip"):
+        lower = os.fspath(fasta_path).lower()
+        if lower.endswith("gz") or lower.endswith("gzip"):
             return GzipFile(fileobj=raw, mode="rb")
         return nullcontext(raw)
-
-    def _current_entry(self):
-        # when we hit a new entry, if this isn't the first
-        # entry of the file then put the last one in the dictionary
-        if self.current_id:
-            if len(self.current_lines) == 0:
-                logger.warning("No sequence data for '%s'", self.current_id)
-            else:
-                sequence = b"".join(self.current_lines)
-                sequence = sequence.decode("ascii")
-                return self.current_id, sequence
-
-    def _read_header(self, line):
-        previous_entry = self._current_entry()
-
-        self.current_id = _parse_header_id(line)
-
-        if len(self.current_id) == 0:
-            logger.warning("Unable to parse ID from header line: %s", line)
-
-        self.current_lines = []
-        return previous_entry
 
 
 def parse_fasta_dictionary(fasta_path, show_progress=False):
@@ -176,8 +140,6 @@ def parse_fasta_dictionary(fasta_path, show_progress=False):
 
 def first_fasta_id(fasta_path):
     """Identifier of the first record in a FASTA file, or None if it has none."""
-    with open(fasta_path, "rb") as raw, FastaParser()._open(fasta_path, raw) as f:
-        for line in f:
-            if line.startswith(b">"):
-                return _parse_header_id(line.rstrip())
-    return None
+    return datacache_first_fasta_id(
+        fasta_path, split_pipe=True, encoding="ascii"
+    )
