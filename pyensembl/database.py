@@ -522,7 +522,7 @@ class Database(object):
         contig: str | int,
         position: int,
         end: int | None = None,
-        strand: str | None = None,
+        strand: str | int | None = None,
         distinct: bool = False,
         sorted: bool = False,
     ) -> list[Any]:
@@ -578,7 +578,8 @@ class Database(object):
 
         query_params = [contig, end, position]
 
-        if strand:
+        if strand is not None:
+            strand = normalize_strand(strand)
             query += " AND strand = ?"
             query_params.append(strand)
 
@@ -593,7 +594,7 @@ class Database(object):
 
     def distinct_column_values_at_locus(
         self, column: str, feature: str, contig: str | int, position: int,
-        end: int | None = None, strand: str | None = None,
+        end: int | None = None, strand: str | int | None = None,
     ) -> list[Any]:
         """
         Gather all the distinct values for a property/column at some specified
